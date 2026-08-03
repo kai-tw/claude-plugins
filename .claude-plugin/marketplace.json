@@ -1,5 +1,6 @@
 {
   "name": "kai-workflow",
+  "description": "Shared planning workflow for Kai's Flutter projects — process only; architecture rules stay in each project's .claude/rules/.",
   "owner": {
     "name": "Kai"
   },
