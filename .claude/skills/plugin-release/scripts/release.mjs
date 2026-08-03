@@ -77,29 +77,41 @@ step(1, `bump plugin.json to ${next}`);
 manifest.version = next;
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
-step(2, 'run repo checks before anything is published');
-for (const script of ['validate.mjs', 'check-version-bump.mjs']) {
-  try {
-    console.log(run('node', [`.github/scripts/${script}`]));
-  } catch (e) {
-    run('git', ['checkout', '--', relative(root, manifestPath)]); // leave the tree as found
-    die(`${script} failed — bump reverted:\n${e.stdout ?? e.message}`);
-  }
+step(2, 'structural checks on the working tree');
+// Only validate.mjs can run here. check-version-bump.mjs reads git history, and
+// at this point the bump exists solely in the working tree — it would compare
+// the still-unbumped HEAD and fail every release by construction. It runs in
+// step 4, once there is a commit for it to look at.
+try {
+  console.log(run('node', ['.github/scripts/validate.mjs']));
+} catch (e) {
+  run('git', ['checkout', '--', relative(root, manifestPath)]); // leave the tree as found
+  die(`validate.mjs failed — bump reverted:\n${e.stdout ?? e.message}`);
 }
 
 step(3, 'commit');
 run('git', ['add', relative(root, manifestPath)]);
 run('git', ['commit', '-m', `release(${plugin}): ${next}`]);
 
-step(4, 'tag + push');
+step(4, 'confirm the commit records a bump');
+try {
+  console.log(run('node', ['.github/scripts/check-version-bump.mjs']));
+} catch (e) {
+  die(
+    `check-version-bump.mjs failed AFTER committing — the release commit is in\n` +
+      `    place but wrong. Inspect and fix by hand:\n${e.stdout ?? e.message}`,
+  );
+}
+
+step(5, 'tag + push');
 // `claude plugin tag` also checks plugin.json agrees with the marketplace entry.
 console.log(run('claude', ['plugin', 'tag', '--push', `plugins/${plugin}`]));
 run('git', ['push', 'origin', 'HEAD']);
 
-step(5, 'update the locally installed copy');
+step(6, 'update the locally installed copy');
 console.log(run('claude', ['plugin', 'update', `${plugin}@${marketplace.name}`]));
 
-step(6, 'VERIFY the installed cache matches source');
+step(7, 'VERIFY the installed cache matches source');
 const cache = join(
   process.env.HOME,
   `.claude/plugins/cache/${marketplace.name}/${plugin}/${next}`,

@@ -56,17 +56,24 @@ unrelated edits. Commit or stash those first.
 ## What it does, and why the order is fixed
 
 1. **Bump** `plugin.json`.
-2. **Run both repo checks** — before anything is published. On failure it
-   reverts the bump and stops, leaving the tree as it found it.
+2. **`validate.mjs`** — structural checks, before anything is published. On
+   failure it reverts the bump and stops, leaving the tree as it found it.
 3. **Commit.**
-4. **Tag and push.** The tag must come after the commit it points at, which is
-   why this cannot be a pre-commit gate. `claude plugin tag` also validates that
+4. **`check-version-bump.mjs`.** This one reads *git history*, so it cannot run
+   with the others in step 2 — at that point the bump exists only in the working
+   tree, and the check would compare the still-unbumped `HEAD` and fail every
+   release by construction.
+5. **Tag and push.** Same reason, one step later: a tag can only point at a
+   commit that already exists. `claude plugin tag` also validates that
    `plugin.json` and the marketplace entry agree — a plain `git tag` does not.
-5. **Update the local install.**
-6. **Verify** the installed cache contains every file that exists in source.
+6. **Update the local install.**
+7. **Verify** the installed cache contains every file that exists in source.
 
-Step 6 is the one that matters. Steps 1–5 all succeeded during the dart-lsp
-incident; the failure was only visible by looking inside the cache. If it
+Steps 4 and 5 are both downstream of the commit for the same underlying reason:
+anything that inspects committed history has to wait for the commit.
+
+Step 7 is the one that matters. Every earlier step succeeded during the dart-lsp
+incident; the failure was visible only by looking inside the cache. If it
 reports missing files, the release did not land — do not report success.
 
 ## After a release
