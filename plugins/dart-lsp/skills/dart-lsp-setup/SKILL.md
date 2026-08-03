@@ -1,9 +1,39 @@
 ---
 name: dart-lsp-setup
-description: Repair a Dart language server that is not running — when an LSP operation returns "No LSP server available for file type .dart", Claude Code reports 'failed to start LSP server "dart"', or Dart/Flutter go-to-definition and find-references stop working.
+description: Fix a Dart language server that is not running or not yet ready — when an LSP operation returns "No LSP server available for file type .dart", Claude Code reports 'failed to start LSP server "dart"', Dart navigation stops working, or a workspace symbol search comes back empty for a symbol that certainly exists.
 ---
 
-# Fixing the Dart language server
+# Dart language server: not ready vs not running
+
+**Read this first if a query returned nothing.** An empty result early in a
+session usually means the index is still building, not that the symbol is
+unused — see "Warm-up" below. Only work the repair ladder if the server is
+genuinely absent.
+
+## Warm-up: the first query is slow, and one operation lies
+
+The Dart analysis server indexes the whole package graph before it can answer
+project-wide questions. On a large Flutter app (~1,500 files) that measured
+**~40-65 seconds** on the first query of a session. After that, the same query
+returns in ~0.0s.
+
+Two behaviours, measured, that differ in how safe they are:
+
+- **`findReferences` blocks until the index is ready.** It waited 39s and then
+  returned the correct 399 references. Slow, never wrong — just let it finish.
+- **`workspaceSymbol` answers early with an empty list.** It returned 0 matches
+  for a class that has 62, purely because indexing had not finished.
+
+So: **an empty `workspaceSymbol` result is not evidence that a symbol does not
+exist.** Never conclude a symbol is unused, or delete anything, based on an
+empty workspace-symbol result early in a session. Re-run it once something
+else has warmed the server, or confirm with `findReferences` (which blocks) or
+a plain text search before acting.
+
+The other operations were not measured; treat a suspiciously empty result from
+any of them the same way.
+
+# Repairing a server that is not running
 
 This plugin declares one LSP server: `dart language-server --protocol=lsp`,
 which ships inside the Dart SDK (and inside the Flutter SDK at

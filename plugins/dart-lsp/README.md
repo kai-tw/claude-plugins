@@ -28,6 +28,24 @@ Without one, Claude falls back to text search on a Flutter codebase, which
 misses aliased imports and re-exports and cannot tell two same-named symbols
 apart.
 
+## Warm-up
+
+The analysis server indexes the whole package graph before it can answer
+project-wide questions. On a ~1,500-file Flutter app the first query of a
+session measured **~40-65 seconds**; afterwards the same query returns in
+~0.0s. This is the Dart analysis server's normal cold start, not a fault of
+the plugin.
+
+One caveat worth knowing, because the two behaviours differ:
+
+| Operation | Cold behaviour |
+| --- | --- |
+| `findReferences` | **Blocks** until the index is ready, then returns the correct result. Slow, never wrong. |
+| `workspaceSymbol` | **Answers early with an empty list** — 0 matches for a class that has 62. |
+
+So an empty workspace-symbol result early in a session is not evidence that a
+symbol does not exist. Re-run it once the server is warm.
+
 ## Troubleshooting
 
 Two messages mean the server is not running:
