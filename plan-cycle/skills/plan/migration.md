@@ -29,8 +29,8 @@ shrinks.
 
 ## What "in compliance" means
 
-- **Lint-enforced rules** (`novel_glide_lints`): the file passes
-  `dart run novel_glide_lints` after the change. The `/plan` engineer
+- **Lint-enforced rules**: the file passes the project's lint command
+  after the change. The `/plan` engineer
   commit gate (closeout.md Step 5.5 leg 1) enforces this — a lint-dirty
   diff does not commit. (A pre-existing failure in a file the PR does NOT
   touch is the previous author's in-flight work, not the current PR's —
