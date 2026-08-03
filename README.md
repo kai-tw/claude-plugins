@@ -22,6 +22,22 @@ To develop against a local checkout instead:
 claude --plugin-dir ~/GitHub/claude-workflow/plan-cycle
 ```
 
+## Why this marketplace is private
+
+The plugin here carries process that is specific to how Kai works: the house
+rules and the incidents behind them, the Notion KB conventions, the review
+judgment. That is not shareable material, so it lives in a private marketplace.
+
+Generally useful tooling belongs in the **public** marketplace instead —
+[`kai-tw/claude-plugins`](https://github.com/kai-tw/claude-plugins), which holds
+`dart-lsp` and `session-journal`. Before adding anything here, check whether it
+is actually general; if it is, it goes there.
+
+**`plan-cycle` assumes `session-journal@kai-tw` is installed.** The cycle records
+which threads are in flight and where each one lives, and that journal is the
+public plugin's job — including its three hooks (inject, nudge, cleanup) that no
+skill file can replace. Do not vendor a copy here.
+
 ## Per-project setup
 
 Two things each consuming project must provide:
