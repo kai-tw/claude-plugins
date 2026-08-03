@@ -109,7 +109,33 @@ console.log(run('claude', ['plugin', 'tag', '--push', `plugins/${plugin}`]));
 run('git', ['push', 'origin', 'HEAD']);
 
 step(6, 'update the locally installed copy');
-console.log(run('claude', ['plugin', 'update', `${plugin}@${marketplace.name}`]));
+// `claude plugin update` defaults to user scope and errors out if the plugin
+// lives anywhere else, so read the scope back rather than assuming it. A plugin
+// may also be released without being installed here at all — that is a normal
+// state, not a failure, but it means nothing local can be verified.
+const installed = JSON.parse(
+  readFileSync(join(process.env.HOME, '.claude/plugins/installed_plugins.json'), 'utf8'),
+);
+const scopes = [
+  ...new Set((installed.plugins?.[`${plugin}@${marketplace.name}`] ?? []).map((e) => e.scope)),
+];
+
+if (scopes.length === 0) {
+  console.log(`  ⚠ not installed locally — released and tagged, but nothing here to update or verify`);
+  console.log(`\n✔ ${plugin} ${next} released and tagged (not installed locally)`);
+  process.exit(0);
+}
+
+for (const scope of scopes) {
+  try {
+    console.log(run('claude', ['plugin', 'update', `${plugin}@${marketplace.name}`, '--scope', scope]));
+  } catch (e) {
+    die(
+      `update failed at scope "${scope}" — the release is pushed and tagged, but\n` +
+        `    this machine still runs the old copy:\n    ${(e.stderr ?? e.message).trim()}`,
+    );
+  }
+}
 
 step(7, 'VERIFY the installed cache matches source');
 const cache = join(
