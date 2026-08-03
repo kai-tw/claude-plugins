@@ -19,9 +19,16 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+// Probing for something that may not exist is normal here (a missing base
+// commit, an untagged version). Silence git's stderr so an expected miss does
+// not leave a stray `fatal:` in the CI log looking like a real failure.
 const gitOrNull = (...args) => {
   try {
-    return git(...args);
+    return execFileSync('git', args, {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
   } catch {
     return null;
   }
@@ -79,6 +86,12 @@ for (const name of readdirSync(pluginsDir)) {
     );
   } else {
     console.log(`✔ ${name}: ${before} → ${after} (${changed.length} file(s) changed)`);
+    // A bump is a release. Surface the tag command at the moment it applies —
+    // the tag can only be made after this commit exists, so this is a reminder
+    // rather than a gate.
+    if (!gitOrNull('rev-parse', '--verify', `refs/tags/${name}--v${after}`)) {
+      console.log(`  ↳ not tagged yet:  claude plugin tag --push plugins/${name}`);
+    }
   }
 }
 
