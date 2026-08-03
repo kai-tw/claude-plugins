@@ -49,6 +49,11 @@ Two things each consuming project must provide:
 Architecture guidance goes in the project's own `.claude/rules/`; optional
 project-specific PM vocabulary goes in `.claude/pm-vocabulary.txt`.
 
+If the project runs work in worktrees, invoke the **`worktree-setup`** skill
+once per repo. It derives that project's `.worktreeinclude` and init step from
+what the project actually generates, instead of copying a file list that
+encodes some other project's build.
+
 ## The layering rule
 
 The plugin ships **process**, never **architecture**. The split follows one
