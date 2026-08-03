@@ -22,6 +22,33 @@ To develop against a local checkout instead:
 claude --plugin-dir ~/GitHub/claude-workflow/plan-cycle
 ```
 
+## Per-project setup
+
+Two things each consuming project must provide:
+
+1. **Gitignore the ledger.** `bin/plan-cycle` writes session-scoped state into
+   the project tree. Add to the project's `.gitignore`:
+
+   ```
+   .claude/.plan-cycle/
+   ```
+
+   Skip this and a per-session ledger lands in a commit.
+
+2. **State the Notion KB root page id in the project's `CLAUDE.md`.** The
+   archivist resolves every database by title among that page's children, so
+   this is the only Notion id a project records. Every call passes it:
+
+   ```
+   node <plugin>/skills/archivist/scripts/notion_payload.mjs <cmd> … --root <page-id>
+   ```
+
+   Omitting it aborts on purpose — a default root would write one project's
+   plans into another project's workspace.
+
+Architecture guidance goes in the project's own `.claude/rules/`; optional
+project-specific PM vocabulary goes in `.claude/pm-vocabulary.txt`.
+
 ## The layering rule
 
 The plugin ships **process**, never **architecture**. The split follows one
