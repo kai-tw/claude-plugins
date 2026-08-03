@@ -1,0 +1,13 @@
+{
+  "name": "kai-workflow",
+  "owner": {
+    "name": "Kai"
+  },
+  "plugins": [
+    {
+      "name": "plan-cycle",
+      "source": "./plan-cycle",
+      "description": "Gated planning cycle with Stop-hook enforcement, shared across Kai's Flutter projects."
+    }
+  ]
+}

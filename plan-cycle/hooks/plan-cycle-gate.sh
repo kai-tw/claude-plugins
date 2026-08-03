@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# plan-cycle-gate.sh — Stop-hook adapter for the plan-cycle ledger.
+#
+# WHY THIS EXISTS
+#   `bin/plan-cycle check` decides whether an active /plan cycle has advanced
+#   past a plan phase whose row never landed. It reports that as exit 1 + a
+#   human-readable reason on stdout. Claude Code's Stop hook speaks a different
+#   language: a JSON object on stdout with {"decision":"block","reason":...}.
+#   This adapter is the translation layer, nothing more.
+#
+#   It deliberately does NOT run project validation (formatters, builds, tests).
+#   Those belong to each project's own Stop hook — they differ per repo, and
+#   folding them in here would make the plugin un-shareable.
+#
+# SESSION ISOLATION
+#   The ledger is keyed by session id so concurrent sessions never see each
+#   other's cycle. The id arrives on this hook's stdin; we pass it as an
+#   ARGUMENT rather than exporting an environment variable, matching the
+#   contract `bin/plan-cycle` expects.
+#
+# FAILING OPEN
+#   Every failure path here exits 0 with no output — no ledger, no jq, an
+#   unreadable session id. A planning gate that blocks turn-end because a
+#   helper was missing would be worse than the decay it exists to prevent.
+
+set -uo pipefail
+
+input=$(cat)
+
+# No jq → fail open rather than block every turn on a tooling gap.
+command -v jq >/dev/null 2>&1 || exit 0
+
+sid=$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)
+
+gate="$(dirname "${BASH_SOURCE[0]}")/../bin/plan-cycle"
+[ -x "$gate" ] || exit 0
+
+out=$(bash "$gate" --session "$sid" check 2>/dev/null)
+ec=$?
+
+# The script is silent and exits 0 when no cycle is active, so this hook is
+# invisible for every non-/plan turn.
+if [ "$ec" -eq 1 ] && [ -n "$out" ]; then
+  reason=$(printf '=== Plan-cycle gate ===\n%s\n' "$out" | jq -Rs .)
+  printf '{"decision": "block", "reason": %s}\n' "$reason"
+fi
+
+exit 0

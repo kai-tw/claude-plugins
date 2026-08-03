@@ -1,0 +1,5 @@
+# Per-session plan-cycle ledgers. Written by bin/plan-cycle into the consuming
+# project's tree; this entry only matters when the plugin repo is itself the
+# working tree during development.
+.claude/.plan-cycle/
+.DS_Store
