@@ -67,6 +67,19 @@ Everything mechanical lives in one script, `scripts/journal.sh` (init / inject /
 
 The journal is **local-only**. The storage directory ignores *itself* — `journal.sh init` writes a `*` `.gitignore` inside `docs/session-journal/`, so your task notes stay out of version control without the plugin ever touching your project's own `.gitignore`. Deletion uses `trash` where available (recoverable) and falls back to `rm`. Nothing is sent anywhere; there is no network access in any script.
 
+## Troubleshooting
+
+**Nothing appears at session start.** Work through these in order:
+
+1. **Did you restart?** The `SessionStart` hook only fires on a new session — installing mid-session changes nothing until you start one.
+2. **Is `jq` on PATH?** `command -v jq`. Every hook parses its payload with it. If it is missing the `SessionStart` hook says so in-session; the other two hooks degrade quietly, so fix `jq` and restart rather than reading anything into their silence.
+3. **Is the plugin enabled?** `claude plugin list` — installed and enabled are different states.
+4. **Did the store get created?** `ls docs/session-journal/`. It appears on first write, not at install; until a thread is recorded there is legitimately nothing to inject, and you will see the "no session journal yet" prompt instead.
+
+**The hooks never fail your session.** Every one of them exits 0 on every path, by design — a journal problem must not stop you from working. The cost is that most failures are quiet, which is why the checks above go from loudest to quietest.
+
+**A thread points at a worktree that no longer exists.** Nothing prunes threads for you: `_active.md` is maintained by the skill, so tell Claude the thread is closed and it will remove it. Per-session detail files *are* garbage-collected automatically (14 days, chain-aware).
+
 ## Uninstall
 
 ```bash

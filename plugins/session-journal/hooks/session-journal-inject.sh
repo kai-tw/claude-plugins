@@ -15,6 +15,20 @@
 
 input=$(cat)
 
+# Every output path below goes through jq, so without it this hook emits nothing
+# and still exits 0 — the journal silently stops working while the plugin looks
+# installed and healthy. That is the exact failure class this plugin exists to
+# prevent, so say it out loud on the one channel that still works: a hand-built
+# JSON literal (fixed text, nothing to escape). Still exit 0 — a missing
+# dependency must not stop the session from starting.
+if ! command -v jq >/dev/null 2>&1; then
+  # Without jq we cannot parse agent_type, so match the raw payload instead;
+  # otherwise every spawned subagent would repeat this warning.
+  case "$input" in *'"agent_type"'*) exit 0 ;; esac
+  printf '%s' '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"session-journal is installed but its required dependency jq is not on PATH, so NOTHING is being journaled and no state will survive compaction or /clear. Tell the user this now, plainly, before doing anything else: they should install jq (brew install jq, apt install jq) and restart the session."}}'
+  exit 0
+fi
+
 # Subagents fire SessionStart too, carrying an agent_type. The journal is the
 # MAIN session's continuity surface — don't inject it into every spawned
 # sub-agent (noise + tokens). agent_type is only present in subagent contexts.
