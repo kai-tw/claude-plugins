@@ -1,0 +1,32 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "dart-lsp",
+  "version": "1.0.0",
+  "description": "Dart/Flutter language server (Dart Analysis Server in LSP mode) for code intelligence",
+  "author": {
+    "name": "Kai",
+    "url": "https://github.com/kai-tw"
+  },
+  "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/dart-lsp",
+  "license": "MIT",
+  "keywords": [
+    "dart",
+    "flutter",
+    "lsp",
+    "language-server"
+  ],
+  "lspServers": {
+    "dart": {
+      "command": "dart",
+      "args": [
+        "language-server",
+        "--protocol=lsp",
+        "--client-id=claude-code"
+      ],
+      "extensionToLanguage": {
+        ".dart": "dart"
+      },
+      "startupTimeout": 120000
+    }
+  }
+}

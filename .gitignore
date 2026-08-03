@@ -1,0 +1,6 @@
+# macOS
+.DS_Store
+
+# Local Claude Code state written when this directory is registered
+# as a directory marketplace
+.claude/settings.local.json

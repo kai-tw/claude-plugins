@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "kai-tw",
+  "description": "Kai's Claude Code plugins",
+  "owner": {
+    "name": "Kai",
+    "url": "https://github.com/kai-tw"
+  },
+  "plugins": [
+    {
+      "name": "dart-lsp",
+      "description": "Dart/Flutter language server (Dart Analysis Server in LSP mode) for code intelligence",
+      "source": "./plugins/dart-lsp",
+      "category": "development",
+      "author": {
+        "name": "Kai",
+        "url": "https://github.com/kai-tw"
+      },
+      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/dart-lsp"
+    }
+  ]
+}
