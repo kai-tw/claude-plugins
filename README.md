@@ -21,6 +21,7 @@ claude plugin install dart-lsp@kai-tw
 | Plugin | Description |
 | --- | --- |
 | [dart-lsp](plugins/dart-lsp) | Dart/Flutter language server (Dart Analysis Server in LSP mode) for code intelligence |
+| [session-journal](plugins/session-journal) | Cross-session task-state journal — which threads are in flight and where each one lives, surviving context compaction, `/clear`, and resume |
 
 ## License
 

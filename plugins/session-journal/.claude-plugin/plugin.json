@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "session-journal",
+  "version": "1.0.0",
+  "description": "Cross-session task-state journal — which threads are in flight and where each one lives, surviving context compaction, /clear, and resume",
+  "author": {
+    "name": "Kai",
+    "url": "https://github.com/kai-tw"
+  },
+  "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/session-journal",
+  "license": "MIT",
+  "keywords": [
+    "journal",
+    "memory",
+    "compaction",
+    "worktree",
+    "context"
+  ],
+  "skills": [
+    "./skills/session-journal"
+  ],
+  "hooks": "./hooks/hooks.json"
+}
