@@ -15,6 +15,9 @@
     "lsp",
     "language-server"
   ],
+  "skills": [
+    "./skills/dart-lsp-setup"
+  ],
   "lspServers": {
     "dart": {
       "command": "dart",

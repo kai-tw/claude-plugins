@@ -28,6 +28,37 @@ Without one, Claude falls back to text search on a Flutter codebase, which
 misses aliased imports and re-exports and cannot tell two same-named symbols
 apart.
 
+## Troubleshooting
+
+Two messages mean the server is not running:
+
+```
+failed to start LSP server "dart"
+No LSP server available for file type .dart for operation goToDefinition on file ...
+```
+
+Almost always the cause is one of:
+
+- **The SDK is not on PATH.** Flutter works in your terminal, but Claude Code
+  was launched from an environment that never sourced your shell profile. Add
+  the SDK's `bin` directory to your PATH and fully restart Claude Code.
+- **No Dart SDK installed.** Install [Flutter](https://docs.flutter.dev/get-started/install)
+  (bundles Dart) or the [Dart SDK](https://dart.dev/get-dart) alone.
+- **Another plugin already claims `.dart`.** Claude Code keeps one server per
+  extension and reports `already registered a server for that extension` for
+  the loser. Disable whichever is redundant.
+- **Installed mid-session.** LSP servers spawn at session start; restart Claude
+  Code.
+
+If PATH cannot be fixed, point the plugin at the binary directly: set
+`lspServers.dart.command` in the installed manifest to the absolute path from
+`which dart` (`where dart` on Windows). This is overwritten by plugin updates,
+so prefer the PATH fix.
+
+This plugin also ships a **`dart-lsp-setup` skill**, so Claude can walk you
+through the above itself when it hits the error — you can just ask it why Dart
+navigation is not working.
+
 ## Notes
 
 - The server is the Dart Analysis Server run in LSP mode (`--protocol=lsp`),
