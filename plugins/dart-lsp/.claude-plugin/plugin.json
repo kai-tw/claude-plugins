@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "dart-lsp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Dart/Flutter language server (Dart Analysis Server in LSP mode) for code intelligence",
   "author": {
     "name": "Kai",

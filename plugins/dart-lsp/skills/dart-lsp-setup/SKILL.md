@@ -17,21 +17,27 @@ project-wide questions. On a large Flutter app (~1,500 files) that measured
 **~40-65 seconds** on the first query of a session. After that, the same query
 returns in ~0.0s.
 
-Two behaviours, measured, that differ in how safe they are:
+Measured behaviours, which differ in how safe they are:
 
 - **`findReferences` blocks until the index is ready.** It waited 39s and then
-  returned the correct 399 references. Slow, never wrong — just let it finish.
+  returned the correct 399 references. Slow, never wrong — let it finish.
 - **`workspaceSymbol` answers early with an empty list.** It returned 0 matches
   for a class that has 62, purely because indexing had not finished.
 
-So: **an empty `workspaceSymbol` result is not evidence that a symbol does not
-exist.** Never conclude a symbol is unused, or delete anything, based on an
-empty workspace-symbol result early in a session. Re-run it once something
-else has warmed the server, or confirm with `findReferences` (which blocks) or
-a plain text search before acting.
+A cold server can also return a result that is **partial rather than empty** —
+observed on another language server in the same session, where the first
+`findReferences` returned 3 of the eventual 45, all from the file already open.
+That is the more dangerous shape: 0 looks obviously wrong, but 3 looks like an
+answer.
 
-The other operations were not measured; treat a suspiciously empty result from
-any of them the same way.
+So, before acting on any low or empty count early in a session:
+
+- Never conclude a symbol is unused, and never delete anything, on that basis.
+- Re-run once the server is warm — a warm query returns in ~0.0s, so a slow
+  query is itself a sign you are still cold.
+- Cross-check the file list against a plain text search. Text search
+  over-matches, so it is a poor rename tool but a good floor: the LSP result
+  should not contain *fewer* files than grep finds.
 
 # Repairing a server that is not running
 

@@ -44,7 +44,13 @@ One caveat worth knowing, because the two behaviours differ:
 | `workspaceSymbol` | **Answers early with an empty list** — 0 matches for a class that has 62. |
 
 So an empty workspace-symbol result early in a session is not evidence that a
-symbol does not exist. Re-run it once the server is warm.
+symbol does not exist. Re-run it once the server is warm — a warm query returns
+in ~0.0s, so a slow query is itself a sign you are still cold.
+
+Language servers can also return a **partial** result while cold rather than an
+empty one, which is harder to notice: a count that looks plausible is not
+proof of completeness. Cross-check against a text search before acting on a
+low count.
 
 ## Troubleshooting
 
