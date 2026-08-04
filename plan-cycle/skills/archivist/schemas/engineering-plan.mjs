@@ -89,6 +89,14 @@ export const body = [
     hint: '先一行 policy（reviewer 抓的重點）：transient vs conclusive / recoverable vs terminal / retry-eligible vs hard-fail 的處理原則。\n再 7 欄矩陣：\n| Source (file + symbol) | Exception (具體子類別) | Evidence | Catch site | Log call | State/persistence effect | User-facing fallback |\nEvidence 必須真實引用（throw 來源 file:line、框架 doc URL、platform 觀察、prior incident ID）——「可能會 throw」不算。Log call 寫完整：LogSystem.error("message", error: e, stackTrace: st)。走過每個 external boundary（await / parse / API call / domain exception / concurrent producer）。標準見 `error-handling.md`（conclusive-only write / exhaustive arm / no-silent-failure / predicate-over-catch）。\n最後 race 子表：| Race | Handling |——每行要嘛 lock（說明 primitive：Lock/Mutex/Completer）要嘛 accept last-write-wins（說明 convergence path 與原因）。',
   },
   {
+    key: 'Startup',
+    kind: 'table',
+    required: true,
+    criteria: ['c12'],
+    description: '啟動與初始化順序：policy 一行 + 5 欄矩陣 + 順序相依子表',
+    hint: '為什麼是獨立章節：初始化 bug 是**順序**問題，不是狀態問題——四狀態矩陣問「這個畫面在 X 狀態長怎樣」，而初始化壞在「A 在 B 之前發生」，格子裡看不到。它們在單元測試中也**結構性不可見**：測試直接呼叫 `init()`，證明不了「app 從來沒呼叫 init()」。\n先一行 policy：這次改動有沒有新增啟動期工作？沒有就寫「無新增啟動期工作」+ 一句理由，不要留空表。\n再 5 欄矩陣：\n| 元件 (file + symbol) | 建構時機 (eager / lazy / 首次讀取) | 依賴什麼先就緒 | 依賴未就緒時的行為 | 誰證明它真的跑了 |\n最後一欄是本章節的重點，**不接受「單元測試涵蓋」**——單元測試呼叫 init() 證明的是邏輯正確，不是路徑被走到。可接受的證明：device / integration test 走真實流程、啟動期 log 斷言、或一個會在未初始化時 fail-loud 的守衛。fire-and-forget 的副作用元件（無 widget 消費、只驅動導航 / 訂閱 / 排程）必須**明確建構**，lazy 就等於死掉。\n第 3、4 欄要對得起來：依賴未就緒時「靜默用預設值」是最常見的靜默失敗——若行為是這個，說明為何可接受。\n最後順序相依子表：| 先 | 後 | 為何不可交換 | 交換了會怎樣 |——只列真正有順序相依的配對。',
+  },
+  {
     key: 'Conformance',
     kind: 'table',
     required: false,

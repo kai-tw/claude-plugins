@@ -28,6 +28,11 @@ hit '\bawait\b|parse|fromJson|plugin|googleapis|MethodChannel|XmlDocument|ZIP|ex
   && echo "  - Error handling        (boundaries the §Error-handling matrix must cover)"
 hit 'schemaVersion|persisted.?schema|migration|VersionedJson|metadata\.json|changed.*signature|wrapper.*delet|caller' \
   && echo "  - Migration & back-compat (schema / caller / wrapper-gate; run tool/version_diff.sh)"
+# Startup is deliberately broad: an initialization defect is invisible to unit
+# tests, so a missed flag costs more than a spurious one. Any DI registration,
+# constructor-time subscription, or app-entry change earns the dimension.
+hit 'register(Lazy|Factory|Singleton|FactoryParam)|setup_dependencies|main\.dart|runApp|\bbootstrap|\binit\(\)|\bensureInitialized|lazy: *false|keepAlive|constructor.*(listen|subscribe)|\.listen\(|WidgetsBinding|SharedPreferences\.getInstance|openDatabase|\bmigrate\b' \
+  && echo "  - Startup & init order  (construction timing / dependency order the §Startup table must cover)"
 echo
 
 echo "## Track-2 (security/privacy plan-mode) trigger:"

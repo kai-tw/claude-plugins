@@ -17,4 +17,5 @@ export const CRITERIA = {
   c9:  { n: 9,  label: 'Testability' },
   c10: { n: 10, label: 'Abstraction, reuse & ownership' },
   c11: { n: 11, label: 'Migration & back-compat' },
+  c12: { n: 12, label: 'Startup & initialization order' },
 };

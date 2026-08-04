@@ -396,6 +396,20 @@ to print the full section questionnaire with descriptions and hints):
   stays load-bearing** for those; a populated discovery log there is the
   EXPECTED state whenever the plan defers a leaf/primitive choice, not a
   tracer miss.
+- **§Startup** — construction timing and dependency order for everything the
+  change brings up at launch. Separate from §Error handling because the defects
+  differ in kind: an error-handling gap is a missing branch, a startup gap is a
+  wrong *order*, and no state matrix can express "A ran before B". Separate from
+  the design spec's four states for the same reason — those describe a screen at
+  rest, not the sequence that got it there.
+  The column that carries the section is **"proves it ran"**, and a unit test
+  never satisfies it: tests call `init()` directly, so they pass identically
+  whether or not the app ever reaches it. Cite a device or integration run, a
+  startup-log assertion, or a guard that fails loud. Give any fire-and-forget
+  component — one that drives navigation, subscriptions, or scheduling with no
+  widget consuming it — an eager construction, because lazy plus no consumer is
+  dead code that every test still reports green.
+  No startup-time work? Say so with a reason. An empty table is a finding.
 - **§Conformance** — the acceptance contract that makes nothing in the spec
   droppable. One row per **product-plan** commitment (success metric / scope item
   the user approved) **and** per **design-spec** observable item (each

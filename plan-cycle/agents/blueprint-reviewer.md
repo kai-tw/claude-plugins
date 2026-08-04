@@ -632,6 +632,43 @@ plan and the whole body are already in hand.
   contradicts itself after a rev (`I1`), or re-derives an upstream ruling at
   length instead of citing it (`I2`).
 
+### Criterion 12 — Startup & initialization order
+
+Score against the §Startup authoring requirements — run:
+`node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+and read the §Startup hint. The plan's §Startup table is the artefact being scored.
+
+This criterion exists because initialization defects evade the other eleven.
+They are **ordering** faults, so the four-state matrix cannot express them — it
+asks what a screen looks like in state X, never whether A ran before B. And they
+are **structurally invisible to unit tests**, which call `init()` directly and
+therefore cannot fail when the app never calls it at all.
+
+- Does every component the change constructs at startup appear as a row?
+- Is each row's construction timing explicit (eager / lazy / on-first-read),
+  rather than left to whatever the DI container defaults to?
+- **Is the "proves it ran" column real?** "Unit test covers it" is **not** an
+  answer and scores **≤ 4** on its own — a unit test proves the logic, never the
+  path. Acceptable: a device or integration test driving the real flow, a
+  startup-log assertion, or a guard that fails loud when the dependency is
+  missing.
+- Any fire-and-forget side-effect component (drives navigation, subscriptions,
+  scheduling; no widget consumes it) constructed **eagerly**? Lazy plus no
+  consumer means dead on device while every test stays green — score **≤ 3** and
+  name the component.
+- Do columns 3 and 4 agree? "Falls back to a default when the dependency isn't
+  ready" is the most common silent failure — accept it only with a stated reason.
+- Does the ordering sub-table list every genuinely order-dependent pair, with
+  what breaks if swapped — not just a restatement of the call sequence?
+
+A 10 has a row per startup component, a real proof for each, and an ordering
+sub-table whose "what breaks if swapped" answers are concrete. A 2 has §Startup
+missing, or filled in with construction timings copied from the DI container
+without asking whether anything reaches them.
+
+Score **N/A** when the plan genuinely adds no startup-time work and says so with
+a reason. An empty table with no policy line is not N/A — it is a 2.
+
 ## Stage 3: Aggregate and rank
 
 ### Consolidate the dimension findings (before aggregating)
@@ -729,6 +766,7 @@ no saved artifact, no chat prose.
 | 9 | Testability | X/10 | §Blocks (ctor collaborators = the seam) | ... |
 | 10 | Abstraction/reuse/ownership | X/10 | §Composition · §Blocks | ... |
 | 11 | Migration & back-compat | X/10 | §Migration impact · Stage-1d diff | ... |
+| 12 | Startup & init order | X/10 | §Startup (or N/A with a stated reason) | ... |
 | **Total (informational; verdict is per-dimension ≥ 8)** | | **XX/NN** | | |
 
 ### Strengths
