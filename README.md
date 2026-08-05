@@ -127,10 +127,20 @@ exist. Two mechanisms, by what is being referred to:
   the owning **skill** ("the `qa` skill") rather than a path, because that text
   is shown in listings where nothing can expand it.
 
-One path is deliberately *not* rewritten:
-`.claude/skills/feedback-ledger/entries/` is the **project's** data directory,
-resolved from the git root by `plan-feedback` and read by `plan-cycle`'s
-close-out gate. It belongs to the consuming repo, not to this plugin.
+One path is deliberately *not* a plugin path at all: the feedback ledger's
+entries are the **project's** data, resolved from the git root and living at
+`docs/feedback-ledger/entries/`. It sits under `docs/` rather than
+`.claude/skills/feedback-ledger/` precisely because the skill ships with this
+plugin — writing data into a skill directory the consuming project does not
+have would leave an orphan folder with no `SKILL.md` beside it.
+
+`feedback.sh` holds the only definition of that path and exposes it as
+`plan-feedback dir`; `plan-cycle`'s close-out gate asks for it instead of
+keeping a second copy. Two copies of a path that must always agree is a defect
+waiting for the day they don't — and here the stale copy would have failed
+*silently*, because a wrong path reads as "no retro filed" and blocks close-out
+forever rather than erroring. Relocating the ledger is now one line in
+`feedback.sh`.
 
 ## The ledger
 

@@ -2,7 +2,7 @@
 # feedback.sh — the one mechanical interface to the feedback ledger.
 #
 # One feedback item = one markdown file under
-# `.claude/skills/feedback-ledger/entries/<category>/`. Four categories, fixed:
+# `docs/feedback-ledger/entries/<category>/`. Four categories, fixed:
 # process · code-review · security-review · privacy-review.
 #
 # WHY per-file instead of the old single-table ledger: the table was appended by
@@ -30,7 +30,17 @@ root() {
 }
 
 ROOT=$(root)
-BASE="$ROOT/.claude/skills/feedback-ledger/entries"
+
+# THE one definition of where entries live. `plan-cycle`'s close-out gate reads
+# the same directory to check a cycle filed its retro, and used to hardcode this
+# path a second time — two copies of a path that must always agree is a defect
+# waiting for the day they don't. That gate now asks for it (`plan-feedback
+# dir`), so relocating the ledger is this line and nothing else.
+#
+# Under `docs/`, not `.claude/skills/`: the skill itself ships with the plugin,
+# so a consuming project has no `.claude/skills/feedback-ledger/` of its own —
+# writing data there would leave an orphan directory with no SKILL.md beside it.
+BASE="$ROOT/docs/feedback-ledger/entries"
 
 die() { printf 'feedback: %s\n' "$1" >&2; exit 1; }
 
@@ -53,6 +63,9 @@ plan-feedback — feedback ledger operations
   count [category]       Per-category counts; bare `count` covers all four.
   over [n]               Print categories with more than n entries (default 5).
                          Exit 1 if any is over, 0 if none. Silent when none.
+  dir                    Print the entries directory. This script owns that
+                         path; anything else needing it asks here rather than
+                         keeping a second copy that can drift.
 
   category: process | code-review | security-review | privacy-review
   source:   founder | agent | runner
@@ -164,6 +177,7 @@ case "${1:-}" in
   list)  shift; cmd_list "${1:-}" ;;
   count) shift; cmd_count "${1:-}" ;;
   over)  shift; cmd_over "${1:-}" ;;
+  dir)   printf '%s\n' "$BASE" ;;
   ''|-h|--help|help) usage ;;
   *) usage; exit 1 ;;
 esac

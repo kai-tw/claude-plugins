@@ -139,8 +139,10 @@ one-line fix riding along downgrade a real structural change.
 ### Rule surface
 
 Apply **every rule** in `.claude/rules/` that scopes to a changed path,
-plus the folder-scoped
-`CLAUDE.md` of each feature the diff touches. Those files are
+plus the folder-scoped `CLAUDE.md` of every **directory** the diff
+touches — not just feature folders. A project's densest brief often sits
+outside its feature tree (an embedded web view, a native bridge, a build
+harness), and "each feature" silently excludes exactly those. Those files are
 path-scoped and auto-load on the files you read, so what you receive is
 already what binds — read each in full, do not pre-select sections
 (`ls .claude/rules/` if you need the inventory).

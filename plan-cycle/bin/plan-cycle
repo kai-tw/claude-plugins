@@ -255,8 +255,15 @@ EOF
     if [ -f "$LEDGER" ]; then
       pr_opened=$(jq -r '.pr_opened // false' "$LEDGER" 2>/dev/null)
       slug=$(jq -r '.slug // ""' "$LEDGER" 2>/dev/null)
-      FEEDBACK="$ROOT/.claude/skills/feedback-ledger/entries"
-      if [ "$pr_opened" = "true" ] && [ -n "$slug" ] && [ "$slug" != "?" ] \
+      # Ask the ledger where it keeps entries rather than hardcoding it here.
+      # This path used to be written out in two places that had to agree; the
+      # copy in this file is the one that would have gone stale silently,
+      # because a wrong path here reads as "no entry filed" and blocks
+      # close-out forever instead of erroring. Fail open if the lookup fails
+      # for any reason — a gate that cannot find the ledger must not become an
+      # unclearable ledger.
+      FEEDBACK=$("$(dirname "${BASH_SOURCE[0]}")/plan-feedback" dir 2>/dev/null) || FEEDBACK=""
+      if [ -n "$FEEDBACK" ] && [ "$pr_opened" = "true" ] && [ -n "$slug" ] && [ "$slug" != "?" ] \
          && ! grep -rFq "$slug" "$FEEDBACK" 2>/dev/null; then
         cat >&2 <<EOF
 plan-cycle: CLEAR REFUSED — no runner-feedback entry for this cycle.
