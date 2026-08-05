@@ -132,7 +132,7 @@ Concretely, for the auth seam: `GoogleAuthApi` holds
 `BehaviorSubject<bool>.seeded(false)` fed from
 `GoogleSignIn.instance.authenticationEvents`; `AuthApi`,
 `AuthRepository`, and `AuthObserveSignInUseCase` all surface
-`ValueStream<bool>`. `CloudSyncSettingsNotifier` subscribes via
+`ValueStream<bool>`. `CloudSyncSettingsCubit` subscribes via
 `authObserveSignInUseCase(_provider).listen(_onAuthSignInChanged)`
 — no `_seedAuthState()` method, no paired
 `AuthIsSignInUseCase`, no `unawaited(instance._seedAuthState())`
@@ -300,7 +300,7 @@ class FakeXxxObserveUseCase implements XxxObserveUseCase {
 
 Two 2026-05-10 incidents drove this class — `CloudSpaceTileCubit` (fix: dropped
 the auth subscription; the per-tile holder is mount-gated by `effectiveSignedIn`
-at the page level) and `CloudSyncSettingsNotifier` (fix: the auth seam was rewritten
+at the page level) and `CloudSyncSettingsCubit` (fix: the auth seam was rewritten
 to `ValueStream<bool>` per the structural rule above, retiring the eager-seed
 dance). The full dual-fix history lives in git + the decision log, not here — the
 test-relevant takeaway is the COLDOPEN-A pattern + mutation pin above.

@@ -150,7 +150,7 @@ Example shape, from a reader app that ingests untrusted archives:
 [Backend / analytics / cloud storage]
    │
    ▼  [BOUNDARY 5: secure storage ↔ OS keystore]
-[iOS Keychain / Android Keystore]
+[iOS / macOS Keychain / Android Keystore]
 ```
 
 A CRM with a REST backend and no untrusted-file ingest has a completely
@@ -263,7 +263,7 @@ Skip hotspots whose boundary is out of scope for this change.
 | 4 | **XML parsing** | "Find every XML parse call (`XmlDocument.parse`, `xml` package usage, OPF / NCX / `container.xml` parsing) in the diff. For each: `file:line`, parser config (DTD allowed?, external entities allowed?, entity-expansion limit, max depth). Return as table." |
 | 5 | **OAuth / token storage** | "Find every read/write of OAuth access tokens, refresh tokens, ID tokens, or session credentials in the diff. For each: `file:line`, storage backend (`flutter_secure_storage`, `SharedPreferences`, plain file, in-memory, Keychain options, Keystore options). Flag any plaintext storage explicitly. Return as bulleted list." |
 | 6 | **Logger / Crashlytics calls** | "Find every `LogSystem.error` / `LogSystem.warning` / `LogSystem.info` / `LogSystem.event` (and any `FirebaseCrashlytics.recordError`, `FirebaseAnalytics.logEvent`) call introduced or modified in the diff. For each: `file:line`, log level, fields/arguments being logged. Flag any that include book titles, filenames, selected text, search queries, CFI strings, highlight content, TTS text, query strings, or path values. Return as table." |
-| 7 | **Lockfile diffs** | "Run `git diff HEAD -- pubspec.lock package-lock.json`. List every dependency changed (added, removed, version bumped). For each: package name, old version, new version, ecosystem (pub / npm). If lockfiles are missing or untracked, say so. Return as table." |
+| 7 | **Lockfile diffs** | "Run `git diff HEAD -- pubspec.lock '*package-lock.json'`. List every dependency changed (added, removed, version bumped). For each: package name, old version, new version, ecosystem (pub / npm). If lockfiles are missing or untracked, say so. Return as table." |
 | 8 | **Platform channel handlers** | "Find every `MethodChannel` / `EventChannel` / `BasicMessageChannel` registered or invoked in the diff. For each: `file:line`, channel name, method name, argument types. Return as bulleted list." |
 | 9 | **File I/O on user filenames** | "Find every `File`, `Directory`, `FileSystemEntity` API call in the diff where the path argument originates from user input or EPUB content. For each: `file:line`, API used, source of the path (user-typed, EPUB entry name, intent extra, deep link param, network response). Return as table." |
 | 10 | **Manifest / build flags** | "Read `android/app/src/main/AndroidManifest.xml`, `ios/Runner/Info.plist`, and any build config diffs (`build.gradle`, `Podfile`, `*.entitlements`). List exported components (`exported='true'` activities/services/receivers/providers), URL schemes, ATS exceptions (`NSAppTransportSecurity`), NSC flags (`networkSecurityConfig`, `cleartextTrafficPermitted`), `allowBackup`, permission requests added. Return as bulleted list grouped by file." |

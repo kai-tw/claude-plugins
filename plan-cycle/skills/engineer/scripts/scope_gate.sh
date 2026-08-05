@@ -22,7 +22,7 @@ hit() { grep -qiE "$1" "$plan" 2>/dev/null; }
 echo "## Suggested defect dimensions (engineer confirms; never drop a flagged one):"
 hit 'cross-feature|setup_dependencies|register(Lazy|Factory|Singleton|FactoryParam)|new (use case|repository|abstraction)|portal|Overlay\.of|Draggable\.feedback|presentation.*presentation' \
   && echo "  - Coupling & Layering   (edge direction / new abstraction / portal scope)"
-hit 'state shape|state shape|persisted|shared mutable|concurren|\brace\b|account|sync path|StreamSubscription|re-entran' \
+hit 'state shape|state holder|\bcubit\b|\bnotifier\b|persisted|shared mutable|concurren|\brace\b|account|sync path|StreamSubscription|re-entran' \
   && echo "  - Correctness & Race    (temporal: race / ordering / re-entrancy / guard)"
 hit '\bawait\b|parse|fromJson|plugin|googleapis|MethodChannel|XmlDocument|ZIP|extract' \
   && echo "  - Error handling        (boundaries the §Error-handling matrix must cover)"
