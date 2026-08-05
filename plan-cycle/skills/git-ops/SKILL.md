@@ -205,9 +205,23 @@ git diff origin/main <branch-tip> -- <owned-path>   # EMPTY = fully merged
 gh pr view <PR#> --json state,mergedAt              # state MERGED confirms it
 ```
 
-Empty diff over the paths your branch owns = landed. Note `gh`'s `mergedAt` is
-**UTC** — `2026-06-25T17:51Z` is 06-26 ~01:51 Taiwan, so a timestamp that reads
-"yesterday" can be tonight's merge.
+**Read the PR's state first, and treat the diff as the follow-up.** A content
+diff answers "is this content present on main" — never "was this branch's work
+accepted". Those come apart in both directions, and the difference decides what
+you do next:
+
+- **CLOSED, not MERGED** is a real disposition, not a near-miss. The approach was
+  rejected or superseded, and its paths on `main` may still look settled because
+  a *different* fix rewrote them. Deleting such a branch is usually right, but
+  say so as "abandoned, superseded by `<commit>`" — never as "already merged",
+  or the next reader inherits a false history. (GitHub keeps `refs/pull/N/head`
+  forever, so the abandoned diff stays readable at the PR URL after you delete
+  the branch — that is what makes deletion safe.)
+- **A non-empty diff on a merged PR** usually means `main` moved on afterwards,
+  not that work was lost. Check what last touched those paths before alarming.
+
+Note `gh`'s `mergedAt` is **UTC** — `2026-06-25T17:51Z` is 06-26 ~01:51 Taiwan,
+so a timestamp that reads "yesterday" can be tonight's merge.
 
 **If the branch was already deleted** (the per-PR delete button, or a prior
 session already ran teardown), `<branch-tip>` won't resolve — and "branch not
