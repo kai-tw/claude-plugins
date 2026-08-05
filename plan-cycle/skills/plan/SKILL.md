@@ -271,9 +271,9 @@ the task **by name** — never hardcode a Notion id here.
 ### Step 3 — Analyze the task → decide which phases to open
 
 **Before opening the PM phase, pull the usage baseline.** When the task is a
-*should we build this* question and its outcome is a metric GA4 tracks
-(adoption / retention / engagement / a specific event), run
-`node .claude/skills/ga-triage/scripts/ga4.mjs overview|events` **first** — one
+*should we build this* question and its outcome is a metric the project's
+analytics already tracks (adoption / retention / engagement / a specific event),
+query it through the project's own usage-data skill **first** — one
 query, before any phase opens. Competitor research answers "how do others do
 this"; the baseline answers "does anyone here reach it", and the second can make
 the first moot for a fraction of the cost. *Measured:* a reading-time-estimate
@@ -538,7 +538,7 @@ directly. A round has five steps, and **the founder appears exactly once**:
    `violation` → fix it **in place** — **no deferred, no dismiss** — and
    re-spawn. Loop to green, **cap 3 rounds**; escalate earlier once the finding
    turns from error into judgment (§Gate loop policy). For an **engineer** plan
-   this cell is `bash .claude/skills/engineer/scripts/plan_lint.sh <draft>` —
+   this cell is `plan-lint <draft>` —
    clear every HARD failure, eyeball every ADVISORY. Cheap either way, so it runs
    before the founder's time is spent.
 3. **Resolve — the one founder round.** Put **every** open question and every
@@ -992,7 +992,7 @@ report (§After code) is already on it; pressing the button stays theirs.
    can't pass silently.
 
    ```bash
-   bash .claude/skills/feedback-ledger/scripts/feedback.sh add process \
+   plan-feedback add process \
      --source runner --cycle <slug> --title "Cycle retro: <slug>" <<'BODY'
    …gate R/H/L · friction · the mandatory subtraction candidate…
    BODY
@@ -1015,7 +1015,7 @@ the rev'd plan *before* implementation resumes** — per §Gate loop policy
 (§Re-audit every plan change — a divergence rev is a plan change like any other;
 audit-first). Re-request user approval for the
 delta, and re-upload to Notion (Iron Law 6). Read
-`.claude/skills/plan/divergence.md` for the exact procedure.
+`${CLAUDE_PLUGIN_ROOT}/skills/plan/divergence.md` for the exact procedure.
 
 ## Process retro (the subtraction channel)
 
@@ -1085,16 +1085,16 @@ Two execution mechanisms:
 | `designer` | `skills/designer/SKILL.md` | Skill (in-thread) / session |
 | `engineer` | `skills/engineer/SKILL.md` | Skill (in-thread) / session |
 | `translator` | `lib/i18n/CLAUDE.md` ownership split | Agent / sonnet |
-| `qa` | `.claude/skills/qa/SKILL.md` (+ `agents/qa.md`) | Agent / sonnet |
+| `qa` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` (+ `agents/qa.md`) | Agent / sonnet |
 | `blueprint-reviewer` | the engineering plan (scope-gated dimensions) | Agent / **caller-picks** (see §Model tiering) |
 | `security-reviewer` | `review/rules/security/` | Agent / opus |
 | `privacy-reviewer` | `review/rules/privacy/` | Agent / opus |
 | `code-reviewer` | the diff | Agent / opus |
 | `conformance-reviewer` | the plan's residue after QA's spec tests | Agent / opus |
-| `test-reviewer` | `.claude/skills/qa/SKILL.md` vs every test in the diff | Agent / opus |
+| `test-reviewer` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` vs every test in the diff | Agent / opus |
 | `feasibility-reviewer` | the upstream plan vs downstream deliverability | Agent / opus |
 | `ux-reviewer` | `review/rules/ux/` (the design spec's usability) | Agent / opus |
-| `archivist` | `.claude/skills/archivist/SKILL.md` | Skill (in-thread) / session |
+| `archivist` | `${CLAUDE_PLUGIN_ROOT}/skills/archivist/SKILL.md` | Skill (in-thread) / session |
 
 ### Model tiering
 

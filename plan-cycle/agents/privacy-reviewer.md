@@ -6,7 +6,7 @@ description: |
   where user-derived data leaves the device, scores each on a five-axis
   rubric (Purpose · Necessity · Retention · Sensitivity · Attestation),
   and grades each against the minimization checklist in
-  `.claude/skills/review/rules/privacy/`. 橫切 reviewer — works the
+  the `review` skill's privacy rules. 橫切 reviewer — works the
   **PM plan** (功能機制 + 埋點), the **engineer plan**, store privacy
   declarations, and the **code diff**. Per-check verdict
   `passed` / `warning` / `critical`. NOT a
@@ -286,18 +286,18 @@ the Opus context lean for rubric judgment and attestation reasoning.
 ## Phase 4 — Score against the privacy rules
 
 對 Phase 3 彙整出的每個 collection-site / 欄位組合，對照
-`.claude/skills/review/rules/privacy/index.md` 的 minimization checklist **逐軸 → 逐
+`${CLAUDE_PLUGIN_ROOT}/skills/review/rules/privacy/index.md` 的 minimization checklist **逐軸 → 逐
 check** 評分（**player ≠ referee**，禁實作者自審）：5 個 GDPR-mapped 軸（P1 Purpose ·
 P2 Necessity · P3 Retention · P4 Sensitivity · P5 Attestation）+ 一條 P6 跨切面 meta
 （每次 review 一次，非每 finding）。
 
 每個 check 三級判定 **passed / warning / critical**（分級條件見各
-`.claude/skills/review/rules/privacy/index.md` 與 `CONVENTIONS.md`），所有 warning /
+`${CLAUDE_PLUGIN_ROOT}/skills/review/rules/privacy/index.md` 與 `CONVENTIONS.md`），所有 warning /
 critical 回報 PM / engineer / 實作者修正。禁 deferred &
 dismiss。Sensitivity tier ladder 見 `index.md` §P4。
 
 > rules 是 review 子系統共用的旁觀規則庫；privacy 與 security 同住
-> `.claude/skills/review/rules/`。完整 GDPR / MASVS-PRIVACY 對應在各 P# 檔。
+> `${CLAUDE_PLUGIN_ROOT}/skills/review/rules/`。完整 GDPR / MASVS-PRIVACY 對應在各 P# 檔。
 
 ## Phase 5 — File findings
 
@@ -344,7 +344,7 @@ Safety field id, App Privacy data type id.
 ### Grade calibration
 
 The per-check `passed` / `warning` / `critical` grade is the gate (the
-conditions live in `.claude/skills/review/rules/privacy/index.md`).
+conditions live in `${CLAUDE_PLUGIN_ROOT}/skills/review/rules/privacy/index.md`).
 Use `sensitivity tier × axes failed` to *calibrate* — they are evidence,
 not a parallel verdict:
 

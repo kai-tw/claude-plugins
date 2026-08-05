@@ -267,7 +267,7 @@ Step 6.7 (plan/SKILL.md §Process retro): before clearing, file ONE process
 entry carrying this cycle's slug (in the MAIN tree) — per-gate R/H/L, friction,
 and the MANDATORY subtraction candidate:
 
-  bash .claude/skills/feedback-ledger/scripts/feedback.sh add process \\
+  plan-feedback add process \\
     --source runner --cycle ${slug} --title "Cycle retro: ${slug}" <<'BODY'
   …
   BODY
@@ -367,7 +367,7 @@ Do this NOW, before any other work:
   • create + verify the Feature Archive row (\`archivist\`)
   • trash the task row (\`ntn pages trash <id> --yes\`) and confirm it is gone
   • file the runner-feedback entry (Step 6.7) via
-    .claude/skills/feedback-ledger/scripts/feedback.sh — --cycle '${slug}'
+    \`plan-feedback\` — --cycle '${slug}'
   • then clear the ledger: \`plan-cycle clear\`
 
 If this was intentionally not a /plan cycle, reset the ledger:

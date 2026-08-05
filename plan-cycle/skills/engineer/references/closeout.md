@@ -60,7 +60,7 @@ If the divergence is **scope** (product plan didn't authorize this),
 route to the PM role. If **UI** (design spec didn't cover this state /
 surface / token), route to the designer role. If **security** (new
 attack surface), route to the `security-reviewer`. Read
-`.claude/skills/engineer/references/escalation.md` for the
+`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/escalation.md` for the
 verbatim-handback protocol when this role is invoked mid-flow from
 another skill.
 

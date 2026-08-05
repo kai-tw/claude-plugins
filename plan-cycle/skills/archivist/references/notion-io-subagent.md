@@ -6,8 +6,8 @@ own context:
 - **Reads** are a single `ntn datasources query <ds> --filter '<json>' --json`
   (server-side filter + sort) that returns only the matching rows' **properties**
   — no page-body fan-out. Build the filter with
-  `node .claude/skills/archivist/scripts/notion_payload.mjs filter <db> Prop=Val …`.
-- **Writes** run through `node .claude/skills/archivist/scripts/notion_payload.mjs
+  `notion-payload filter <db> Prop=Val …`.
+- **Writes** run through `notion-payload
   <create|update> <manifest> --commit`, which drives `ntn` per row and prints only
   the distilled result (✓ lines + a `[{title,id,url}]` JSON) — the page bodies
   never re-enter context.
@@ -71,7 +71,7 @@ mode and return URLs + a verdict. Do NOT echo the row bodies back.
 Manifest: <PATH to manifest.json>  (db "<key>", mode <create|update>).
 
 Steps:
-1. node .claude/skills/archivist/scripts/notion_payload.mjs <create|update> <PATH> --commit
+1. notion-payload <create|update> <PATH> --commit
    (the builder validates + encodes, then for create: POSTs each page via
    `ntn api v1/pages` + writes the body via `ntn pages edit` + verifies the
    `<!-- archivist-generated -->` marker; for update: PATCHes properties.)

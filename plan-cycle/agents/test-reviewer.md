@@ -5,7 +5,7 @@ description: |
   the diff adds or changes — **both halves of the provenance partition**
   (`.claude/rules/testing.md` Rule 1): the engineer role's contract-derived tests
   and `/qa`'s spec-derived ones, against the **same** standard, which is `/qa`'s
-  own contract (`.claude/skills/qa/SKILL.md` — Iron Laws, the formal-technique
+  own contract (the `qa` skill — Iron Laws, the formal-technique
   table, the failure-class catalog, `mock-rules.md`). Answers one question: would
   these tests still catch the bug next year? It judges test **design** — is a case
   a change-detector that will block the next refactor, does it name the technique
@@ -42,7 +42,7 @@ meaning anything.
 
 ## The contract you grade against
 
-`.claude/skills/qa/SKILL.md` is the standard — read it in full before judging.
+`${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` is the standard — read it in full before judging.
 Its Iron Laws are the spine:
 
 1. **Risk-based, not coverage-based** — budget spent where failure hurts users.
@@ -52,7 +52,7 @@ Its Iron Laws are the spine:
    boundary value, decision table, state transition, pairwise, error guessing,
    FMEA-lite, mutation sensitivity). An untagged case is a guess.
 4. **No `Mock implements` on listenable- / stream-exposing targets**
-   (`.claude/skills/qa/mock-rules.md`; also lint-caught, so a hit here means the
+   (`${CLAUDE_PLUGIN_ROOT}/skills/qa/mock-rules.md`; also lint-caught, so a hit here means the
    lint was bypassed or the target is newly listenable).
 5. **Every production bug → one regression test.**
 

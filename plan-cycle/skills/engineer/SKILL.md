@@ -68,7 +68,7 @@ produce the engineering-plan artifact.
 >    boundaries, DI wiring, data flow sequences, platform-channel
 >    surfaces, lint-rule identifiers. They do **not** redraft the
 >    product problem (PM's job) or the visual layout (designer's
->    job). Read `.claude/skills/engineer/references/abstraction.md` when
+>    job). Read `${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/abstraction.md` when
 >    translating an upstream brief.
 > 3. **Audit before save.** Every plan self-checks its affected layers
 >    against the canonical `.claude/rules/` entry for each concern,
@@ -229,7 +229,7 @@ The source product plan + design spec come from the **feature's Notion
 task** — its linked Product Plan row and Design Plan row. Invoke the
 `archivist` skill to read them (it has the DB ids + MCP — references
 the DBs by name, ids live in
-`.claude/skills/archivist/references/notion-kb.md`).
+`${CLAUDE_PLUGIN_ROOT}/skills/archivist/references/notion-kb.md`).
 
 - **Source product plan** (always required) — the Product Plan row on
   the feature's Notion task — and the problem, target user, success
@@ -318,12 +318,16 @@ constraint honoured here costs a sentence; missed here, it ships.
 
 **Phase 3 is assembly (串連), not per-block design.** Every code artifact
 the plan introduces — state holder, use case, repository, DTO, widget, exception,
-… — has a **design SOP** that carries its design procedure;
-`.claude/skills/engineer/references/sop/router.md` is the index. For each
-artifact, find it in the router and **read its SOP first** — the SOP tells
+… — may have a **design SOP** carrying its design procedure. That layer is the
+**project's**, not this plugin's: a per-artifact SOP encodes one project's
+architecture, so shipping one here would hand every other project confidently
+wrong procedure. The project's `.claude/rules/` names its SOP index when it keeps
+one. For each artifact, find it there and **read its SOP first** — the SOP tells
 you what to determine, in what order, and which lower blocks to design
-before it (blocks stack: designing a state holder sends you to the use-case rule,
+before it (blocks stack: designing a state holder sends you to the use-case SOP,
 then the repository SOP; walk the stack down to the leaves, then back up).
+A project with no SOP layer takes each artifact's constraints from
+`.claude/rules/` directly; the assembly discipline below is unchanged either way.
 The plan body records the **assembly** — which blocks the feature needs, how
 they wire to each other, and each block's feature-specific instantiation —
 **citing the block's SOP for its internal shape and `.claude/rules/` for its
@@ -331,8 +335,8 @@ constraints, never re-deriving either inline.**
 
 Translate the upstream brief into concrete code shapes. Each of
 the following maps to a section of the engineering plan row body
-(section schema: `engineering-plan` body in `.claude/skills/archivist/scripts/notion_payload.mjs` —
-run `node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+(section schema: `engineering-plan` body in `notion-payload` —
+run `notion-payload hints engineering-plan`
 to print the full section questionnaire with descriptions and hints):
 
 - **§Composition** — lead with a **Mermaid composition graph** (Notion
@@ -344,8 +348,9 @@ to print the full section questionnaire with descriptions and hints):
   `Block | Layer | File (NEW/MOD/DEL) | Interface | SOP`. **Interface =
   class name + method-signature list only — no method bodies, no logic
   pseudo-code** — with the ctor collaborators (test seams) named. Each
-  block is produced by walking its SOP (→ `references/sop/router.md`; each
-  SOP's **Output** names what drops in here). **Presentation rows cite the
+  block is produced by walking its SOP when the project keeps one (each SOP's
+  **Output** names what drops in here; leave the column `—` when it does not).
+  **Presentation rows cite the
   design-spec section** (component-table row / state / breakpoint); every
   visual decision sources from the spec, never invented — push back to the
   designer role if a decision is missing (Iron Law 8). A layer with no
@@ -381,7 +386,7 @@ to print the full section questionnaire with descriptions and hints):
   that *explicitly* names the throw — a guessed `file:line` is
   counter-evidence, omit the row; do **not** invent exceptions to look
   thorough. Hold every row to the Evidence-column standard — run
-  `node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+  `notion-payload hints engineering-plan`
   and read the §Error handling hint (evidence sources (a)–(d); "could maybe throw"
   is not evidence). **Each tracer
   self-verifies its own cites resolve** (mechanical, in-agent — it already
@@ -440,13 +445,13 @@ review — so author the draft against the **same rubric the reviewer
 scores** (`.claude/agents/blueprint-reviewer.md` §"Criterion 1–11" — the SSOT,
 not re-copied), then **self-score the draft and lift anything < 8 before
 spawning the reviewer**. Run
-`.claude/skills/engineer/scripts/scope_gate.sh <plan-path>` to scope the
+`plan-scope-gate <plan-path>` to scope the
 in-scope dimensions, design each plan section for the criterion it earns,
 and grade yourself first. This raises the floor so the reviewer's first
 pass confirms rather than iterates; it does **not** retire the
 independent gate (player ≠ referee — you can't self-catch blind spots).
 Full protocol (the criterion→section routing map + the self-score gate):
-`.claude/skills/engineer/references/review-loop.md` §"Author against the
+`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/review-loop.md` §"Author against the
 dimensions FIRST".
 
 **Co-create as you sketch (Iron Law 11a).** The sketch is where the
@@ -488,7 +493,7 @@ users, and pre-existing callers of any API being changed:
 - **Lint surface** — when adding to a feature that has
   pre-existing `.claude/rules/` violations (e.g., `sl<T>()`
   outside the allowlist, `Mock implements` on a listenable),
-  per `.claude/skills/plan/migration.md` policy those violations stop being exempt
+  per `${CLAUDE_PLUGIN_ROOT}/skills/plan/migration.md` policy those violations stop being exempt
   once the file is being re-touched. Either fix in this plan or
   surface as a follow-up TODO with rationale.
 - **Release artifacts** — fastlane store metadata, release notes,
@@ -692,7 +697,7 @@ none of it auto-loads while you are drafting a Notion plan row.
 | Performance ceilings | `code-style.md §Performance & Complexity` |
 | Preferences | `preference.md` |
 | Test seams | `testing.md` + the `/qa` skill |
-| Migration & back-compat | `.claude/skills/plan/migration.md`, `data.md §Versioned JSON` |
+| Migration & back-compat | `${CLAUDE_PLUGIN_ROOT}/skills/plan/migration.md`, `data.md §Versioned JSON` |
 | Platform channels, embedded views | the owning folder's `CLAUDE.md` |
 | Platform divergence | `lib/features/reader/CLAUDE.md §Page-turn platform divergence` |
 | Cloud sync / three-storage | `lib/features/cloud_sync/CLAUDE.md §Conflict model`, `lib/features/book_storage/CLAUDE.md §Three-Storage SRP Contract` |
@@ -711,7 +716,7 @@ Phase 2, so the audit context is already hot; re-priming cold
 context. Split the work by *kind*, not by parallelism:
 
 - **Deterministic structural gate →
-  `.claude/skills/engineer/scripts/plan_lint.sh <plan-path>`.** Fixed
+  `plan-lint <plan-path>`.** Fixed
   output. **Hard checks** (gate the exit code): the plan isn't a
   skeleton, and no banned placeholder (`TBD`, `decide later`,
   `as needed`, …) survives un-routed. Plus an **advisory** bilingual
@@ -747,7 +752,7 @@ before the user is asked to approve in Phase 10. Iron Law 9 binds: this
 phase is non-skippable.
 
 The loop, in brief — full protocol in
-**`.claude/skills/engineer/references/review-loop.md`**:
+**`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/review-loop.md`**:
 
 1. **Spawn `blueprint-reviewer`** (foreground; report-only, see
    `.claude/agents/blueprint-reviewer.md`) against the drafted plan, listing
@@ -815,7 +820,7 @@ Author the engineering plan as a **row in the Notion Engineering Plan
 DB** — exactly like the Product Plan / Design Plan rows. Invoke the
 `archivist` skill to write the row (it has the
 DB ids + MCP — reference the DB and the TaskList task **by name**; ids
-live in `.claude/skills/archivist/references/notion-kb.md`). The row:
+live in `${CLAUDE_PLUGIN_ROOT}/skills/archivist/references/notion-kb.md`). The row:
 
 - **Name** = Title Case `"<Feature> — Engineering Plan"` (human-readable,
   never a slug).
@@ -825,10 +830,10 @@ live in `.claude/skills/archivist/references/notion-kb.md`). The row:
   `Notion task:` pointer line in the body** (the relation replaces it).
 - **Date** field.
 - **Row body** = the engineering plan itself, structured as the
-  `engineering-plan` body sections defined in `.claude/skills/archivist/scripts/notion_payload.mjs`
+  `engineering-plan` body sections defined in `notion-payload`
   (per the §Language section below) — each section key becomes a
   `## Heading` in Notion. Run
-  `node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+  `notion-payload hints engineering-plan`
   to print the section questionnaire. **The body carries NO header block** —
   Date / Status / Type|Mode / Source-plan|spec live as Notion DB
   properties + relations (above); never repeat them in the body. The
@@ -969,7 +974,7 @@ Phases 1–10 author and approve the plan; Phases 11–13 cover everything
 that happens **once implementation has started** — a genuinely
 different stage of work, not planning. Full step-by-step protocol for
 all four (including what each deliberately does NOT do) lives in
-**`.claude/skills/engineer/references/closeout.md`**; read it when you
+**`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/closeout.md`**; read it when you
 reach implementation, not while drafting.
 
 - **Phase 11 — Mid-flow divergence.** An engineering decision turns

@@ -97,8 +97,8 @@ the stage the caller names, and nothing else:
 | Stage | Rubric | Shape |
 |---|---|---|
 | **engineering plan** | the 11 scope-gated dimensions in this file | fan-out — one sub-agent per in-scope dimension, then consolidate (Stages 1–4 below) |
-| **PM plan** | `.claude/skills/pm/references/rules.md` | **checklist mode** (below) |
-| **design spec** | `.claude/skills/designer/references/rules.md` | **checklist mode** (below) |
+| **PM plan** | `${CLAUDE_PLUGIN_ROOT}/skills/pm/references/rules.md` | **checklist mode** (below) |
+| **design spec** | `${CLAUDE_PLUGIN_ROOT}/skills/designer/references/rules.md` | **checklist mode** (below) |
 
 ### Checklist mode (PM plan · design spec)
 
@@ -214,15 +214,15 @@ Also read, when relevant to scoring a row:
   count as acceptable in this project.
 - `.claude/rules/code-style.md` — what error-handling discipline the
   codebase enforces (log levels, exception class shape).
-- Run `node .claude/skills/archivist/scripts/notion_payload.mjs criteria engineering-plan`
+- Run `notion-payload criteria engineering-plan`
   for the criteria→sections routing table (which section earns which dimension).
 - For criterion 7 authoring requirements: run
-  `node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+  `notion-payload hints engineering-plan`
   and read the §Error handling hint. Full rubrics stay in this file.
 - Any feature directory the plan touches — to ground "low coupling" /
   "extendable" in the actual existing boundaries.
 
-Run `bash .claude/skills/engineer/scripts/plan_lint.sh <plan-path>` once and
+Run `plan-lint <plan-path>` once and
 read its output. It owns the mechanical comparisons — the named files exist,
 §Conformance rows map to tasks, §-refs resolve, no count points back at a body
 that changed. Take its findings as given rather than re-deriving them; your
@@ -354,7 +354,7 @@ author regardless — you are a fresh agent reading the saved plan).
 Each sub-agent's brief carries: the **plan path**; the dimension's
 **question + score anchors** (below); the **rule files** it must read for
 that dimension; the **engineer rules relevant to it** (read from
-`.claude/skills/engineer/references/rules.md` — one file, so a
+`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/rules.md` — one file, so a
 rule update is auto-included with no brief edit); and the
 `package-explorer` verdict (Package dimension only).
 
@@ -476,7 +476,7 @@ nullable field with no rule for when it's null vs not.
 ### Criterion 7 — Runtime error handling
 
 Score against the §Error handling authoring requirements — run:
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+`notion-payload hints engineering-plan`
 and read the §Error handling hint. The plan's §Error handling table is the artefact
 being scored.
 
@@ -494,7 +494,7 @@ being scored.
   failure → error with stackTrace)?
 
 A 10 passes every item in the §Error handling hint "Sanity check" (run
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+`notion-payload hints engineering-plan`
 → §Error handling). A 2 has §Error handling missing, sparse, or "decide later"-flavoured.
 
 ### Criterion 8 — Package usage
@@ -635,7 +635,7 @@ plan and the whole body are already in hand.
 ### Criterion 12 — Startup & initialization order
 
 Score against the §Startup authoring requirements — run:
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+`notion-payload hints engineering-plan`
 and read the §Startup hint. The plan's §Startup table is the artefact being scored.
 
 This criterion exists because initialization defects evade the other eleven.

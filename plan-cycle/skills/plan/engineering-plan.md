@@ -2,7 +2,7 @@
 
 `Read` this file in Phase 4 of the `/plan` skill to know what an
 approved engineering plan must contain. The gate verifies the
-plan's existence and contents; **authoring** lives in the engineer role (`.claude/skills/engineer/SKILL.md`), which
+plan's existence and contents; **authoring** lives in the engineer role (`${CLAUDE_PLUGIN_ROOT}/skills/engineer/SKILL.md`), which
 this file mirrors at the gate-side level.
 
 The engineering plan converts product and design artifacts into
@@ -20,7 +20,7 @@ The engineering plan exists in two places at once:
    content. The row relates to the feature's TaskList task via the
    **Task** relation (back-ref "Engineering Plans") and its **body**
    is structured as the `engineering-plan` body sections — run
-   `node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+   `notion-payload hints engineering-plan`
    for the section questionnaire (description, hints, criteria per section).
 2. **TaskCreate task list** in the conversation — canonical for
    live status. Tasks 1..N mirror the plan's `## Tasks` list, with

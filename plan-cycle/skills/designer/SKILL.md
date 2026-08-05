@@ -33,7 +33,7 @@ description: |
 >   not). On any blocker / unknown, find the answer yourself first (Notion KB →
 >   design system / code → docs → web) and escalate to the user only when the
 >   search comes up empty.
-> - **Mockups:** render via `.claude/skills/designer/scripts/render-mockups.sh
+> - **Mockups:** render via `render-mockups
 >   <slug>` and surface the output PNGs (`build/design-mockups/<slug>/`) to the
 >   user directly.
 > - **Author the Notion Design Plan row** by invoking the `archivist` skill (no
@@ -72,7 +72,7 @@ description: |
 >    identifiers. M3 widget types and shared-component names ARE
 >    design vocabulary — those stay. Engineering's class hierarchy
 >    belongs in the engineering plan. Read
->    `.claude/skills/designer/abstraction.md` when translating a
+>    `${CLAUDE_PLUGIN_ROOT}/skills/designer/abstraction.md` when translating a
 >    brief or running the Phase 6 self-check.
 > 8. **Every visible element gets every token that applies to it, and
 >    every token it gets holds a concrete value.** The candidate set is
@@ -287,7 +287,7 @@ Lock the hierarchy and the four states (default / empty / loading /
 error) at compact before touching larger breakpoints.
 
 For the section structure (sections, descriptions, authoring hints), run:
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints design-plan`
+`notion-payload hints design-plan`
 
 Compact decisions cascade up:
 
@@ -360,13 +360,13 @@ spec ("Toolbar layout: unchanged — see parent §3") — Iron Law 8 still
 binds every row that does appear.
 
 For column rules run
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints design-plan`
+`notion-payload hints design-plan`
 and read the §Component-by-component spec hint.
 
 ## Phase 6 — Self-check (the abstraction grep)
 
 Before saving, run the self-check from
-`.claude/skills/designer/abstraction.md §Self-check before saving
+`${CLAUDE_PLUGIN_ROOT}/skills/designer/abstraction.md §Self-check before saving
 the spec`. Each engineering-vocabulary hit must be rewritten at the
 design abstraction or moved to **Hand-off to engineering**.
 
@@ -419,7 +419,7 @@ Mechanics: author `tool/design_mockups/specs/<slug>_mockups.dart`
 (`MockupSpec` + `setUp`/`tearDown` registering mock deps), register in
 `run_mockups_test.dart`, then run
 
-    .claude/skills/designer/scripts/render-mockups.sh <slug>
+    render-mockups <slug>
 
 Surface representative PNGs with `SendUserFile`, and pass
 `build/design-mockups/<slug>/` as the Design Plan row's **`Mockups`**
@@ -561,7 +561,7 @@ anyone scanning the backlog.
 If invoked from `/bug-investigate` Phase 6 styling routing, the PM role
 during a plan rev that introduces UI surface, or main-agent triage
 of a `/qa` finding, read
-`.claude/skills/designer/escalation.md` for the verbatim-handback
+`${CLAUDE_PLUGIN_ROOT}/skills/designer/escalation.md` for the verbatim-handback
 protocol. The parent flow expects the ruling forwarded verbatim;
 paraphrase has shipped bugs.
 

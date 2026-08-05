@@ -28,7 +28,7 @@ allowed-tools:
 > **Mission.** Verify whether a Flutter / Dart package can deliver
 > a specific design contract — with source-code evidence — before
 > the engineering plan commits to it. Engineering rule **P3.2**
-> (`.claude/skills/engineer/references/rules.md` §P3) is the rule
+> (`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/rules.md` §P3) is the rule
 > this agent enforces.
 
 > **Iron Law.** Evidence over claims. A README headline saying

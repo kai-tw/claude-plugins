@@ -22,7 +22,7 @@
 #   The fragments are OR'd onto the base pattern. Absent file → base only.
 #
 # Usage:
-#   check-abstraction.sh <plan-file>
+#   pm-abstraction-check <plan-file>
 #
 # Exit codes:
 #   0   Clean — no violations found.

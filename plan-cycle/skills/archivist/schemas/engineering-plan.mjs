@@ -26,8 +26,8 @@
 // 串連 — which blocks + how they wire + feature-specific instantiation.
 //
 // Commands:
-//   node .claude/skills/archivist/scripts/notion_payload.mjs hints     engineering-plan   → section questionnaire
-//   node .claude/skills/archivist/scripts/notion_payload.mjs criteria  engineering-plan   → criteria routing table
+//   notion-payload hints     engineering-plan   → section questionnaire
+//   notion-payload criteria  engineering-plan   → criteria routing table
 export const body = [
   // ── Tier A — At a glance (review surface) ──────────────────────────────
   {

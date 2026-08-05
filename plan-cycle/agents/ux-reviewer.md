@@ -7,7 +7,7 @@ description: |
   usability axes (task completability, orientation & feedback, error prevention &
   recovery, consistency & recognition, reading-first minimalism, and a cross-cutting
   meta axis for reachability / i18n text-expansion / first-run guidance), grading each
-  against the rubric in `.claude/skills/review/rules/ux/`. Fed the drafted design spec
+  against the `review` skill's ux rubric. Fed the drafted design spec
   (+ the approved product plan for the task intent). Per-finding verdict
   passed / warning / critical — a `critical` is an objective
   usability defect (a dead-end state, an unreachable primary control, an unconfirmed
@@ -61,7 +61,7 @@ already asked whether the rule was followed, and you ask what it costs the reade
    WindowSize breakpoints.
 2. **The approved (or drafted) product plan** — the task / outcome each flow exists to
    serve + the non-goals, so you know what "success" the user is reaching for.
-3. **The rubric** — `.claude/skills/review/rules/ux/index.md` — one file holding the six axes,
+3. **The rubric** — `${CLAUDE_PLUGIN_ROOT}/skills/review/rules/ux/index.md` — one file holding the six axes,
    their sub-checks, and every Example.
 
 If the caller did not supply (1)–(2), ask for the Notion task URL and fetch the design

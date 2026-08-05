@@ -12,8 +12,8 @@
 //   hint        — authoring guidance for the LLM filling this section
 //
 // Commands:
-//   node .claude/skills/archivist/scripts/notion_payload.mjs hints product-plan              → list types
-//   node .claude/skills/archivist/scripts/notion_payload.mjs hints product-plan <type>       → questionnaire
+//   notion-payload hints product-plan              → list types
+//   notion-payload hints product-plan <type>       → questionnaire
 
 // ── shared sections (reused across multiple types) ──────────────────────────────
 const PROBLEM = {

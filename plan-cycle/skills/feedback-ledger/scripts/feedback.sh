@@ -45,7 +45,7 @@ slugify() {
 
 usage() {
   cat <<'EOF'
-feedback.sh — feedback ledger operations
+plan-feedback — feedback ledger operations
 
   add <category> --source <who> --title "<one line>" [--cycle <slug>]
         Body is read from STDIN. Creates one file; prints its path.

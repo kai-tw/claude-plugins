@@ -51,17 +51,18 @@ entries use `runner` (the session that just executed a cycle) or `founder`.
 
 ## Operations — always through the script
 
-```bash
-S=.claude/skills/feedback-ledger/scripts/feedback.sh
+`plan-feedback` is this plugin's launcher for the ledger script; it is on the
+Bash tool's `PATH` whenever the plugin is enabled, so call it by bare name.
 
-bash $S add <category> --source <founder|agent|runner> --title "<one line>" \
+```bash
+plan-feedback add <category> --source <founder|agent|runner> --title "<one line>" \
      [--cycle <slug>] <<'BODY'
 …what happened, why it matters, what should change…
 BODY
 
-bash $S list [category]     # date · source · title · path
-bash $S count [category]    # per-category counts (+ TOTAL when bare)
-bash $S over [n]            # categories above n (default 5); silent + exit 0 if none
+plan-feedback list [category]     # date · source · title · path
+plan-feedback count [category]    # per-category counts (+ TOTAL when bare)
+plan-feedback over [n]            # categories above n (default 5); silent + exit 0 if none
 ```
 
 `add` is the only writer — it stamps the frontmatter (`category` / `source` /

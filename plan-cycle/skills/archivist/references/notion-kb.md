@@ -4,7 +4,7 @@ Detailed lookup for the `/archivist` skill: workspace ids, per-database
 schemas, page-content formats, and the synthesis + title conventions.
 `SKILL.md` holds the principles; this file holds the structure you write into.
 The request-body encoding + the synthesis body skeleton are owned by
-`.claude/skills/archivist/scripts/notion_payload.mjs` — run `node .claude/skills/archivist/scripts/notion_payload.mjs schema` to
+`notion-payload` — run `notion-payload schema` to
 print every builder-managed DB's exact fields. All Notion I/O goes through the
 official `ntn` CLI (`ntn datasources query` to read, the builder's `--commit` to
 write); `SKILL.md §Reading` + `§Build request bodies` hold the flow.
@@ -146,7 +146,7 @@ value-add.
 
 ## Request bodies — use the builder, never hand-encode
 
-`.claude/skills/archivist/scripts/notion_payload.mjs` is the source of truth for how a synthesized row
+`notion-payload` is the source of truth for how a synthesized row
 becomes a Notion request — and (with `--commit`) it drives `ntn` to write it. It
 emits standard Notion REST property JSON and validates the option vocabulary per
 DB (each DB has its OWN list; a drifted label fails loudly):
@@ -165,7 +165,7 @@ Feed it `{ "db": "<key>", "rows": [ … ] }`. Without `--commit` it prints the p
 plan (api body + body Markdown) for review; with `--commit` it creates each page
 (`ntn api v1/pages` POST) + writes the body (`ntn pages edit`) + verifies, or in
 `update` mode PATCHes properties (`ntn api v1/pages/<id>`), one row at a time.
-`node .claude/skills/archivist/scripts/notion_payload.mjs schema [db]` prints the
+`notion-payload schema [db]` prints the
 field contract for any DB; the eight keys are `feature-archive`, `decision-log`,
 `tasklist`, `product-plan`, `design-plan`, `engineering-plan`, `release-log`,
 `analytics-catalog`. **Feature KB is not among them** — it has no builder schema;
@@ -180,7 +180,7 @@ Properties: **Name** (title — Title Case) · **Status** (Shipped / Abandoned /
 Superseded) · **Feature Area** (multi-select, Title Case labels mirroring
 `lib/features/`) · **Shipped Date** (date) · **Security Review** (checkbox). The
 exact, current Feature Area vocabulary is whatever `node
-.claude/skills/archivist/scripts/notion_payload.mjs schema feature-archive` prints — and it is *narrower*
+notion-payload schema feature-archive` prints — and it is *narrower*
 than TaskList's Area (no "Preference"), which is exactly why the
 builder validates per DB.
 
@@ -297,7 +297,7 @@ invokes the `archivist` skill to:
    §Feature KB). Event-driven on material change, not a periodic bulk sync.
 3. **Trash the task row** — once the Feature Archive row above is created **and
    verified** (Iron Law 2), trash the task:
-   `node .claude/skills/archivist/scripts/notion_payload.mjs trash <task-id> --commit`
+   `notion-payload trash <task-id> --commit`
    (marker-guarded — it refuses a page lacking the `<!-- archivist-generated -->`
    marker). The plan rows (Product / Design / Engineering Plan) are **kept** as the
    detailed record — the Engineering Plan re-points to the Feature Archive row, and
@@ -311,7 +311,7 @@ The **Implementation checklist** lives in the task PAGE BODY under a
 `## Implementation` heading — one `- [ ]` line per engineering phase / task,
 **mirrored from the engineer role's TaskCreate task list** when that list is
 approved. As each phase lands (a commit), its box is ticked block-level via
-`node .claude/skills/archivist/scripts/notion_payload.mjs check <task-id> "<phase text>" --commit`
+`notion-payload check <task-id> "<phase text>" --commit`
 (toggles the single `to_do`, no full-body re-send) — so the task reads
 "Phase A ✓ · Phase B in progress · …" at a glance. the engineer role's close-out
 does the final check and flips Stage to **Review**.
@@ -362,7 +362,7 @@ Relation property on this DB is **Task**; the synced back-reference on TaskList
 is **Product Plans**. One row per product plan document. Title convention:
 "`<Feature / Initiative> — Product Plan`", e.g. "Conflict Resolution — Product Plan".
 The **row body** is the product plan, structured by Type — run
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints product-plan <type>` for the questionnaire.
+`notion-payload hints product-plan <type>` for the questionnaire.
 
 ## Design Plan DB — schema + format
 
@@ -375,7 +375,7 @@ Relation property on this DB is **Task**; the synced back-reference on TaskList
 is **Design Plans**. One row per design spec document. Title convention:
 "`<Feature / Initiative> — Design Plan`", e.g. "Conflict Resolution — Design Plan".
 The **row body** is the design spec, structured as the `design-plan` body sections — run
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints design-plan` for the questionnaire.
+`notion-payload hints design-plan` for the questionnaire.
 Its last section, **`## Mockups`** (kind `images`), embeds the Phase-7 rendered
 mockups: set the row's `Mockups` field to the `build/design-mockups/<slug>/`
 directory (or an explicit path array); on `… create … --commit` the builder uploads
@@ -396,7 +396,7 @@ their archived feature row). One row per engineering plan document. Title conven
 The engineer role is the natural producer — one row per approved engineering plan,
 linked to its TaskList task. The **row body** is the engineering plan, structured
 as the `engineering-plan` body sections — run
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan` for the questionnaire.
+`notion-payload hints engineering-plan` for the questionnaire.
 
 ## 版本紀錄 (Release Log) — schema
 

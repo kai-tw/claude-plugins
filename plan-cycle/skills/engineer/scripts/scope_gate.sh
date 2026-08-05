@@ -13,7 +13,7 @@ set -uo pipefail
 
 plan="${1:-}"
 if [ -z "$plan" ] || [ ! -f "$plan" ]; then
-  echo "usage: scope_gate.sh <engineering-plan.md>" >&2
+  echo "usage: plan-scope-gate <engineering-plan.md>" >&2
   exit 2
 fi
 

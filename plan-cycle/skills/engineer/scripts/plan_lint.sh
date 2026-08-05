@@ -2,7 +2,7 @@
 # Plan well-formedness lint (deterministic, plan-stage).
 #
 # Two kinds of check against the engineering-plan template
-# (section schema: run `node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`):
+# (section schema: run `notion-payload hints engineering-plan`):
 #
 #   HARD (affect exit code) — language-invariant, safe to gate on:
 #     - not empty / not just the skeleton
@@ -37,7 +37,7 @@ export LC_ALL=en_US.UTF-8
 
 plan="${1:-}"
 if [ -z "$plan" ] || [ ! -f "$plan" ]; then
-  echo "usage: plan_lint.sh <engineering-plan.md>" >&2
+  echo "usage: plan-lint <engineering-plan.md>" >&2
   exit 2
 fi
 

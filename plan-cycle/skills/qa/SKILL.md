@@ -49,7 +49,7 @@ allowed-tools:
 >    fake-forcing); the project's state-management rule §"
 >    Collaborator Seams" carries the production-side seam shape that
 >    keeps tests off the forbidden pattern. Read
->    `.claude/skills/qa/mock-rules.md` for the test-side
+>    `${CLAUDE_PLUGIN_ROOT}/skills/qa/mock-rules.md` for the test-side
 >    enumeration, the hand-written fake template, and the diff-review
 >    checklist.
 > 5. **Every production bug → one regression test.** The regression
@@ -163,7 +163,7 @@ listenable leak — caught deterministically **at author time** by the
 **Wall-clock is not a usable leak signal at this suite size** — 5 min is normal,
 so judge against the line above, not against a fixed "over a minute". For
 accurate RSS measurement (pgid sampler) and known cold-start artifacts, see
-`.claude/skills/qa/testing-forensics.md`.
+`${CLAUDE_PLUGIN_ROOT}/skills/qa/testing-forensics.md`.
 
 **A signature / required-field change demands the FULL suite, never just the
 edited files.** Adding a `required` field to — or changing the constructor of —
@@ -214,7 +214,7 @@ aren't on this macOS PATH — use the Bash tool's own `timeout` parameter.
    listenable leak (Iron Law 4 / `.claude/rules/testing.md` Rule 3
    Prong A). To measure peak RSS and timing for real — instead of
    trusting `ps`, which double-counts shared memory — read
-   `.claude/skills/qa/testing-forensics.md` (the pgid sampler + the
+   `${CLAUDE_PLUGIN_ROOT}/skills/qa/testing-forensics.md` (the pgid sampler + the
    known cold-start non-issues not worth chasing).
 5. **Hand back to caller.** Return: (a) test files created or
    modified, (b) any bugs found while authoring (one-line + minimal
@@ -367,7 +367,7 @@ The buckets below are bug **classes** that have shipped in this
 codebase before. Treat the index as inspiration for risk analysis,
 not an exhaustive ledger — a feature usually activates 2–3 of the
 seven, not all seven. **When a bucket fires, `Read
-.claude/skills/qa/failure-classes.md` §N** for the
+${CLAUDE_PLUGIN_ROOT}/skills/qa/failure-classes.md` §N** for the
 canonical case templates, then re-derive the actual cases with the
 technique catalog above.
 
@@ -409,7 +409,7 @@ the requirement. Rewrite or delete.
 
 When deciding whether a widget test is the right layer (vs. a unit
 test asserting the holder's emit, or a golden test for visual
-regression), `Read .claude/skills/qa/widget-test-decision.md`.
+regression), `Read ${CLAUDE_PLUGIN_ROOT}/skills/qa/widget-test-decision.md`.
 Most test authoring here is unit-level — widget tests of
 `MaterialApp + ScaffoldMessenger + BlocProvider + builder` harnesses
 are the most expensive cell of the pyramid in agent-budget terms.

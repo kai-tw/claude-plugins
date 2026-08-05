@@ -76,7 +76,7 @@ description: |
 >    state-field names, or repo / use-case / data-source names.
 >    Engineering vocabulary in a plan pre-commits engineering
 >    decisions before the problem is validated and rots the moment a
->    class is renamed. Read `.claude/skills/pm/abstraction.md` when
+>    class is renamed. Read `${CLAUDE_PLUGIN_ROOT}/skills/pm/abstraction.md` when
 >    translating an implementation-flavored brief.
 > 7. **Co-create — never finalize over an open question.** The plan is
 >    discussed *with the user*, not unilaterally generated. Every open
@@ -248,11 +248,13 @@ judgment stay on this thread.
 
 ### Usage data grounds the outcome, too
 
-When the problem or the measurable outcome is a metric GA4 tracks (adoption /
-retention / engagement / a specific event), pull the **real baseline + problem
-size** via `/ga-triage`'s fetch layer —
-`node .claude/skills/ga-triage/scripts/ga4.mjs overview|events|report` — and cite
-it, instead of inventing a number or deferring to first data review (P1.1). At low
+When the problem or the measurable outcome is a metric the project's analytics
+already tracks (adoption / retention / engagement / a specific event), pull the
+**real baseline + problem size** through whatever fetch layer that project
+provides — a usage-data skill of its own, or the analytics console — and cite
+it, instead of inventing a number or deferring to first data review (P1.1).
+Having no fetch layer is itself worth stating on the plan; it is not a reason to
+skip the question. At low
 traffic the signal is **directional, not significant** — say so on the plan; data
 grounds the decision, product judgment still leads.
 
@@ -299,7 +301,7 @@ just audit criteria — the Phase 6 gate is the BACKSTOP, not the first line of 
 catches was cheaper to avoid here than to rewrite there.
 
 For the section structure of the chosen artifact type, run:
-`node .claude/skills/archivist/scripts/notion_payload.mjs hints product-plan <type>`
+`notion-payload hints product-plan <type>`
 (e.g. `hints product-plan one-pager`). Crisp prose. No fluff. No hedging. Visible reasoning —
 name the trade-offs you considered and rejected. Decision-forcing —
 end with a concrete next move, not "let me know what you think."
@@ -333,7 +335,7 @@ plain language instead.
 Before saving, run the mechanical gate:
 
 ```bash
-.claude/skills/pm/scripts/check-abstraction.sh <draft-file>
+pm-abstraction-check <draft-file>
 ```
 
 If it exits non-zero, rewrite or remove every flagged line. The plan
@@ -477,7 +479,7 @@ the plan IS the deliverable and code is elsewhere).
 
 If invoked from `/bug-investigate`, the designer role, or main-agent triage
 of a `/qa` finding that surfaces a scope question, read
-`.claude/skills/pm/escalation.md` for the verbatim-handback
+`${CLAUDE_PLUGIN_ROOT}/skills/pm/escalation.md` for the verbatim-handback
 protocol. The parent flow expects the ruling forwarded verbatim;
 paraphrase has shipped bugs.
 

@@ -21,14 +21,14 @@
 //   schemas/<plan-type>.mjs — add a new plan type there, not here.
 //
 // USAGE
-//   node notion_payload.mjs create   <manifest.json | -> [--commit]   # dry-run, or create via ntn
-//   node notion_payload.mjs update   <manifest.json | -> [--commit]   # dry-run, or PATCH props via ntn
-//   node notion_payload.mjs filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
+//   notion-payload create   <manifest.json | -> [--commit]   # dry-run, or create via ntn
+//   notion-payload update   <manifest.json | -> [--commit]   # dry-run, or PATCH props via ntn
+//   notion-payload filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
 //       date props also accept <,<=,>,>= and the literal `today`, e.g. "Check Date<=today"
-//   node notion_payload.mjs schema   [db]                  # print embedded schema(s)
-//   node notion_payload.mjs hints    <db>                  # print section questionnaire
-//   node notion_payload.mjs criteria <db>                  # print criteria→sections routing table
-//   node notion_payload.mjs --help
+//   notion-payload schema   [db]                  # print embedded schema(s)
+//   notion-payload hints    <db>                  # print section questionnaire
+//   notion-payload criteria <db>                  # print criteria→sections routing table
+//   notion-payload --help
 //
 //   Manifest (create):  { "db": "<key>", "rows": [ {<props + body sections | content>}, … ] }
 //   Manifest (update):  { "db": "<key>", "rows": [ { "page_id": "…", <props> }, … ] }
@@ -475,7 +475,7 @@ function build(manifest, mode) {
   if (!manifest || typeof manifest !== 'object') fail('manifest must be a JSON object');
   const dbKey = manifest.db;
   const def = DB[dbKey];
-  if (!def) fail(`unknown db "${dbKey}". Valid: ${Object.keys(DB).join(', ')}`);
+  if (!def) fail(unknownDb(dbKey));
   const rows = manifest.rows;
   if (!Array.isArray(rows) || rows.length === 0) fail('manifest.rows must be a non-empty array');
   return { dbKey, rows: rows.map((r) => buildRow(dbKey, def, r, mode)) };
@@ -724,7 +724,7 @@ const todayISO = () => {
 };
 function buildFilter(dbKey, pairs) {
   const def = DB[dbKey];
-  if (!def) fail(`unknown db "${dbKey}". Valid: ${Object.keys(DB).join(', ')}`);
+  if (!def) fail(unknownDb(dbKey));
   if (pairs.length === 0) fail('filter needs at least one Prop=Val');
   const clauses = pairs.map((p) => {
     // Property names never contain <, >, =, so the first such char is the operator.
@@ -776,8 +776,8 @@ function printSchema(only) {
   const keys = only ? [only] : Object.keys(DB);
   for (const k of keys) {
     const def = DB[k];
-    if (!def) { console.error(`unknown db "${k}". Valid: ${Object.keys(DB).join(', ')}`); process.exitCode = 1; return; }
-    console.log(`\n${k}  (parent data_source_id: ${def.ds})`);
+    if (!def) { console.error(unknownDb(k)); process.exitCode = 1; return; }
+    console.log(`\n${k}  (parent data_source_id: ${def.ds ?? '— pass --root to resolve'})`);
     console.log(`  title: ${def.title}`);
     console.log('  properties:');
     for (const [name, spec] of Object.entries(def.props)) {
@@ -826,7 +826,7 @@ function schemaLive(only) {
   let anyDrift = false;
   for (const k of keys) {
     const def = DB[k];
-    if (!def) { console.error(`unknown db "${k}". Valid: ${Object.keys(DB).join(', ')}`); process.exitCode = 1; return; }
+    if (!def) { console.error(unknownDb(k)); process.exitCode = 1; return; }
     const live = JSON.parse(ntn(['api', `v1/data_sources/${def.ds}`]));
     const liveProps = live.properties || {};
     const drift = [];
@@ -877,7 +877,7 @@ function printSectionList(dbKey, typeKey, sections) {
 function printHints(dbKey, typeKey) {
   if (!dbKey) { console.error('hints requires a db argument. Valid: ' + Object.keys(DB).join(', ')); process.exitCode = 1; return; }
   const def = DB[dbKey];
-  if (!def) { console.error(`unknown db "${dbKey}". Valid: ${Object.keys(DB).join(', ')}`); process.exitCode = 1; return; }
+  if (!def) { console.error(unknownDb(dbKey)); process.exitCode = 1; return; }
 
   if (def.bodyByType) {
     if (!typeKey) {
@@ -885,7 +885,7 @@ function printHints(dbKey, typeKey) {
       console.log(`This DB has multiple body structures by Type. Available types:\n`);
       for (const [t, sections] of Object.entries(def.bodyByType))
         console.log(`  ${t.padEnd(20)} ${sections.map((s) => s.key).join(' · ')}`);
-      console.log(`\nUsage: node notion_payload.mjs hints ${dbKey} <type>`);
+      console.log(`\nUsage: notion-payload hints ${dbKey} <type>`);
       return;
     }
     const sections = def.bodyByType[typeKey];
@@ -902,7 +902,7 @@ function printHints(dbKey, typeKey) {
 function printCriteria(dbKey) {
   if (!dbKey) { console.error('criteria requires a db argument. Valid: ' + Object.keys(DB).join(', ')); process.exitCode = 1; return; }
   const def = DB[dbKey];
-  if (!def) { console.error(`unknown db "${dbKey}". Valid: ${Object.keys(DB).join(', ')}`); process.exitCode = 1; return; }
+  if (!def) { console.error(unknownDb(dbKey)); process.exitCode = 1; return; }
   if (!def.body) { console.error(`"${dbKey}" has no structured body sections with criteria.`); process.exitCode = 1; return; }
 
   const map = {};
@@ -923,20 +923,20 @@ function printCriteria(dbKey) {
   }
 }
 
-const HELP = `notion_payload.mjs — Archivist Notion request builder + writer (via the ntn CLI)
+const HELP = `notion-payload — Archivist Notion request builder + writer (via the ntn CLI)
 
-  node notion_payload.mjs create   <manifest.json | -> [--commit]   dry-run, or create pages via ntn
-  node notion_payload.mjs update   <manifest.json | -> [--commit]   dry-run, or PATCH properties via ntn
-  node notion_payload.mjs set      <db> <page-id> Prop=Val […] [--commit]     one-row property flip, no manifest
-  node notion_payload.mjs filter   <db> Prop=Val […] [--json]       build a Notion query filter (+ ds id)
-  node notion_payload.mjs trash    <page-id> [--commit]             trash a page (marker-guarded; close-out)
-  node notion_payload.mjs check    <page-id> <match> [--uncheck] [--commit]   toggle one checklist box
-  node notion_payload.mjs append   <page-id> [md-file|-] [--commit]           append blocks to a page body
-  node notion_payload.mjs comment  <page-id> <text|-> [--commit]              post a comment (e.g. review findings)
-  node notion_payload.mjs schema   [db] [--live]                    embedded schema, or --live drift vs Notion
-  node notion_payload.mjs hints    <db> [type]                      section questionnaire
-  node notion_payload.mjs criteria <db>                             criteria→sections routing table
-  node notion_payload.mjs --help
+  notion-payload create   <manifest.json | -> [--commit]   dry-run, or create pages via ntn
+  notion-payload update   <manifest.json | -> [--commit]   dry-run, or PATCH properties via ntn
+  notion-payload set      <db> <page-id> Prop=Val […] [--commit]     one-row property flip, no manifest
+  notion-payload filter   <db> Prop=Val […] [--json]       build a Notion query filter (+ ds id)
+  notion-payload trash    <page-id> [--commit]             trash a page (marker-guarded; close-out)
+  notion-payload check    <page-id> <match> [--uncheck] [--commit]   toggle one checklist box
+  notion-payload append   <page-id> [md-file|-] [--commit]           append blocks to a page body
+  notion-payload comment  <page-id> <text|-> [--commit]              post a comment (e.g. review findings)
+  notion-payload schema   [db] [--live]                    embedded schema, or --live drift vs Notion
+  notion-payload hints    <db> [type]                      section questionnaire
+  notion-payload criteria <db>                             criteria→sections routing table
+  notion-payload --help
 
 DBs: ${Object.keys(DB).join(', ')}
 Plan body schemas: schemas/product-plan.mjs (by Type), schemas/design-plan.mjs, schemas/engineering-plan.mjs
@@ -975,6 +975,11 @@ Use "-" to read the manifest from stdin.`;
 // absent under the root are DELETED from the registry rather than left with a
 // null id, so the existing `unknown db "x". Valid: …` error names exactly the
 // databases this project actually has.
+//
+// "Absent" and "titled differently" look identical from here, and only one of
+// them is a legitimate state. `unknownDb` below tells them apart in the error
+// text so a mistitled database is never mistaken for one the project chose not
+// to keep.
 
 const DB_TITLE = {
   'feature-archive': 'Feature Archive',
@@ -984,8 +989,57 @@ const DB_TITLE = {
   'design-plan': 'Design Plan',
   'engineering-plan': 'Engineering Plan',
   'release-log': 'Release Log',
-  'analytics-catalog': 'Analytics Catalog',
+  'analytics-catalog': 'Analytics Event Catalog',
 };
+
+// A project may title its databases in its own language. Those titles are the
+// project's, not the workflow's, so they are read from an optional file rather
+// than baked in here — the same split as `.claude/pm-vocabulary.txt`.
+//
+//   .claude/kb-databases.txt
+//   <registry-key> = <exact Notion database title>
+//
+// Blank lines and #-comments ignored. Absent file → the English titles above.
+const DB_TITLE_OVERRIDE_FILE = '.claude/kb-databases.txt';
+
+function loadTitleOverrides() {
+  const path = `${process.env.CLAUDE_PROJECT_DIR || '.'}/${DB_TITLE_OVERRIDE_FILE}`;
+  let text;
+  try { text = readFileSync(path, 'utf8'); } catch { return; }
+  for (const line of text.split('\n')) {
+    const s = line.trim();
+    if (!s || s.startsWith('#')) continue;
+    const i = s.indexOf('=');
+    if (i < 1) fail(`${DB_TITLE_OVERRIDE_FILE}: bad line "${s}", expected <key> = <title>`);
+    const key = s.slice(0, i).trim();
+    const title = s.slice(i + 1).trim();
+    if (!(key in DB_TITLE)) {
+      fail(`${DB_TITLE_OVERRIDE_FILE}: unknown key "${key}". `
+        + `Valid: ${Object.keys(DB_TITLE).join(', ')}`);
+    }
+    if (!title) fail(`${DB_TITLE_OVERRIDE_FILE}: "${key}" has an empty title`);
+    DB_TITLE[key] = title;
+  }
+}
+
+// Registry keys dropped during resolution because no child database carried
+// their title. Kept so `unknownDb` can say WHY the key is gone.
+const MISSING_DB = new Map();
+
+// Every "unknown db" error routes through here. A key the plugin does not have
+// is a typo; a key it has but this workspace did not yield is a title mismatch,
+// and the fix is a line in the override file — not a different command.
+function unknownDb(key) {
+  const valid = `Valid: ${Object.keys(DB).join(', ')}`;
+  const wantedTitle = MISSING_DB.get(key);
+  if (!wantedTitle) return `unknown db "${key}". ${valid}`;
+  return `unknown db "${key}". ${valid}\n\n`
+    + `  "${key}" IS a database this plugin knows, but no child database titled\n`
+    + `  "${wantedTitle}" exists under the KB root. Either this project does not\n`
+    + `  keep that database, or it titles it differently — if the latter, map it:\n\n`
+    + `    ${DB_TITLE_OVERRIDE_FILE}\n`
+    + `    ${key} = <the exact title in Notion>`;
+}
 
 // Property names whose option list belongs to the project, not the workflow.
 // Everything else keeps the registry's static vocabulary so a typo fails fast,
@@ -998,6 +1052,7 @@ function resolveRegistry(rootId) {
       + 'its CLAUDE.md). Refusing to guess: a default root would write this '
       + "project's plans into another project's Notion workspace.");
   }
+  loadTitleOverrides();
 
   // Child databases of the root page, by title.
   let children;
@@ -1023,7 +1078,7 @@ function resolveRegistry(rootId) {
   const resolvedDs = {};
   for (const key of Object.keys(DB)) {
     const dbId = byTitle.get(DB_TITLE[key]);
-    if (!dbId) { delete DB[key]; continue; }
+    if (!dbId) { MISSING_DB.set(key, DB_TITLE[key]); delete DB[key]; continue; }
     // `resolve` prints TSV unless asked for JSON.
     const res = JSON.parse(ntn(['datasources', 'resolve', dbId, '--json']));
     const dsId = res.data_sources?.[0]?.id;
@@ -1069,16 +1124,36 @@ function main() {
   if (!cmd || cmd === '--help' || cmd === '-h') { console.log(HELP); return; }
 
   // `--root <page-id>` is consumed here, before the positional split below would
-  // mistake the id for a manifest path. Every remaining command reads the
-  // registry, so resolution happens once, up front, for all of them.
+  // mistake the id for a manifest path.
   const rootIdx = argv.indexOf('--root');
   const rootId = rootIdx === -1 ? undefined : argv[rootIdx + 1];
   if (rootId) { pos.splice(pos.indexOf(rootId), 1); }
-  try {
-    resolveRegistry(rootId);
-  } catch (e) {
-    if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; return; }
-    throw e;
+
+  // Resolve the project's KB only for the commands that actually need a data
+  // source id or the project-owned vocabulary. Resolution costs one API call
+  // plus one per database — several seconds, and it needs the network.
+  //
+  // The structural commands (`hints`, `criteria`) need neither: they print
+  // section skeletons and grading criteria straight out of schemas/, and a
+  // planning cycle calls them repeatedly. Making them pay for the workspace
+  // they never touch bought nothing and made an offline `hints` impossible.
+  // The page-id commands (`trash` / `check` / `append` / `comment`) address a
+  // page directly and never consult the registry at all.
+  //
+  // Consequence to know: an unresolved registry lists the plugin's full set of
+  // databases, not the project's subset, so `hints`/`criteria` will answer for
+  // a database this workspace does not keep. That is correct — they are asking
+  // about the SCHEMA, not about the workspace.
+  const NEEDS_KB = new Set(['create', 'update', 'set', 'filter']);
+  // `schema` is the discovery command: keep it usable offline, but resolve when
+  // the caller supplied a root (then it reports real ds ids + live vocabulary).
+  if (NEEDS_KB.has(cmd) || (cmd === 'schema' && (flags.has('--live') || rootId))) {
+    try {
+      resolveRegistry(rootId);
+    } catch (e) {
+      if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; return; }
+      throw e;
+    }
   }
 
   if (cmd === 'schema') { if (flags.has('--live')) schemaLive(pos[0]); else printSchema(pos[0]); return; }
@@ -1121,7 +1196,7 @@ function main() {
     if (pos.length < 3) { console.error('set requires <db> <page-id> Prop=Val […]'); process.exitCode = 1; return; }
     try {
       const def = DB[pos[0]];
-      if (!def) fail(`unknown db "${pos[0]}". Valid: ${Object.keys(DB).join(', ')}`);
+      if (!def) fail(unknownDb(pos[0]));
       const row = { page_id: pos[1] };
       for (const p of pos.slice(2)) {
         const i = p.indexOf('=');

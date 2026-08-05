@@ -11,7 +11,7 @@
 //   hint        — authoring guidance for the LLM filling this section
 //
 // Commands:
-//   node .claude/skills/archivist/scripts/notion_payload.mjs hints  design-plan   → section questionnaire
+//   notion-payload hints  design-plan   → section questionnaire
 // §Problem is deliberately ABSENT: the product plan owns the problem statement,
 // and its own hint used to say "從 product plan 抽取" — an admitted duplicate.
 // Read the product plan for the problem (designer Iron Law 1); don't restate it.

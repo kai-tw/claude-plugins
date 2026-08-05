@@ -5,7 +5,7 @@ description: |
   Attacker-minded defender. Identifies vulnerabilities, files findings
   with CWE + CVSS v3.1 + class-eliminating remediation, and grades each
   threat against the threat-model checklist in
-  `.claude/skills/review/rules/security/`. 橫切 reviewer — works the
+  the `review` skill's security rules. 橫切 reviewer — works the
   **PM plan** (功能機制攻擊面 + 埋點), the **engineer plan** (threat
   model), and the **code diff**. Per-threat verdict
   `passed` / `warning` / `critical`. NOT a
@@ -287,11 +287,11 @@ the Opus context lean for the parts that need adversarial reasoning.
 
 對審查對象（PM plan 功能機制攻擊面 + 埋點 / engineer plan threat model /
 Phase 3 彙整的 code 證據），對照
-`.claude/skills/review/rules/security/index.md` 的 threat-model checklist
+`${CLAUDE_PLUGIN_ROOT}/skills/review/rules/security/index.md` 的 threat-model checklist
 **逐母規則 (P1–P6) → 逐 threat (P#.k)** 旁觀審查（**player ≠ referee**，禁
 實作者自審）：每個 threat 逐項問「目前是否已防禦?」→ 標
 **`passed` / `warning` / `critical`**（分級條件見各
-`.claude/skills/review/rules/security/index.md` 與 `CONVENTIONS.md`）。
+`${CLAUDE_PLUGIN_ROOT}/skills/review/rules/security/index.md` 與 `CONVENTIONS.md`）。
 
 - Do not classify severity from a recon hit alone. A grade comes from
   threat model + reachability + impact, not from "this string appeared
@@ -304,7 +304,7 @@ Phase 3 彙整的 code 證據），對照
   re-judge each letter**.
 
 > rules 是 review 子系統共用的旁觀規則庫；security 與 privacy 同住
-> `.claude/skills/review/rules/`。完整 CWE / CVSS / Detection-signal 推導
+> `${CLAUDE_PLUGIN_ROOT}/skills/review/rules/`。完整 CWE / CVSS / Detection-signal 推導
 > 留在 `index.md` 各節的 `← NNN` 追溯標記指向的退役 lesson（追溯用）。
 
 ## Phase 5 — File findings

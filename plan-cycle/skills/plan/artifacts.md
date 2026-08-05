@@ -22,7 +22,7 @@ TaskList task via the **Task** relation. the PM role authors it.
   its linked Product Plan.
 - The **row body** is structured as the `product-plan` body sections for
   the chosen Type — run
-  `node .claude/skills/archivist/scripts/notion_payload.mjs hints product-plan <type>`
+  `notion-payload hints product-plan <type>`
   for the section questionnaire.
 
 ## Design specs — Notion **Design Plan DB**
@@ -35,7 +35,7 @@ TaskList task. the designer role authors it.
 - One row per feature, linked to the same task as the product plan;
   revisions update the same row.
 - The **row body** is structured as the `design-plan` body sections — run
-  `node .claude/skills/archivist/scripts/notion_payload.mjs hints design-plan`
+  `notion-payload hints design-plan`
   for the section questionnaire (descriptions, hints per section).
 
 ## Engineering plans — Notion **Engineering Plan DB**
@@ -47,8 +47,8 @@ Plans"). the engineer role authors it.
 - One row per feature, linked to the same task as the product + design
   plans; revisions update the same row.
 - The **row body** is structured as the `engineering-plan` body sections
-  defined in `.claude/skills/archivist/scripts/notion_payload.mjs` — run
-  `node .claude/skills/archivist/scripts/notion_payload.mjs hints engineering-plan`
+  defined in `notion-payload` — run
+  `notion-payload hints engineering-plan`
   to print the section questionnaire. Paired with a TaskCreate task list
   in the conversation (row body canonical for content, task list
   canonical for live status).
@@ -80,7 +80,7 @@ blocks, and metric values + units. The full rule lives in the
 tailored to its own artifact. There is no shared rule file.
 
 Per the "No repo pointers" convention in
-`.claude/skills/archivist/references/notion-kb.md`, repo pointers
+`${CLAUDE_PLUGIN_ROOT}/skills/archivist/references/notion-kb.md`, repo pointers
 (file paths, class / method names, line numbers) are **scrubbed from
 bodies entirely** — they are not "kept in English", they are removed.
 **The Engineering Plan DB is exempt** (see that section's carve-out): its

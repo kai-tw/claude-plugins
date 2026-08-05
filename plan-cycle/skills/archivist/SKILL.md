@@ -45,14 +45,14 @@ improvise structure:
   Log · TaskList · the plan DBs · Release Log · Analytics), the
   KB-reference-page rule, and the synthesis + title conventions with worked
   examples. Read it before any create/update.
-- **`.claude/skills/archivist/scripts/notion_payload.mjs`** — the request builder
+- **`notion-payload`** — the request builder
   + writer, and the SINGLE SOURCE OF TRUTH for the property encoding (standard
   Notion REST JSON: dates, checkboxes, multi-select, relations, url props) AND the
   synthesis body skeleton (Feature Archive + Decision Log). You feed it clean
   synthesized rows; without `--commit` it prints the per-row plan, with `--commit`
   it drives `ntn` to create/update + write the Markdown body + verify — validating
   every option against the DB's vocabulary. NEVER hand-encode a Notion property —
-  run the builder. `node .claude/skills/archivist/scripts/notion_payload.mjs schema [db]`
+  run the builder. `notion-payload schema [db]`
   prints the exact fields per DB; it covers all eight DBs, split by body shape —
   run `schema <db>` to confirm. FIVE take a **section-keyed body** (the builder assembles
   each `## section` field and rejects a raw `content` string): `feature-archive`,
@@ -106,7 +106,7 @@ command:
 
   ```
   # build the filter from the registry (picks the right operator per type):
-  node .claude/skills/archivist/scripts/notion_payload.mjs filter tasklist Status=Next
+  notion-payload filter tasklist Status=Next
   # → prints the ds id + filter JSON + the ready ntn command, e.g.:
   ntn datasources query <ds> --filter '{"property":"Status","select":{"equals":"Next"}}' --json
   ```
@@ -199,7 +199,7 @@ instead of silently minting a new option. Schemas in `references/notion-kb.md`.
 — the encoding is non-obvious (dates as `{start,end}`, checkboxes as bools,
 multi-select as `[{name}]`, relations as `[{id}]`, url props under the property's
 literal name) and a silent mis-encode costs a failed write + a slow retry.
-Synthesize clean rows, then run `.claude/skills/archivist/scripts/notion_payload.mjs
+Synthesize clean rows, then run `notion-payload
 <create|update> <manifest> --commit` — it validates, encodes, drives `ntn` per row
 (create = POST properties + `ntn pages edit` body + verify the marker; update =
 PATCH properties), and prints the resulting URLs. Run it without `--commit` first
@@ -248,9 +248,9 @@ to review the per-row plan.
 4. Synthesize the row(s) into a clean manifest — properties + body sections
    (Title Case names; Feature Area from the DB's own vocabulary). The builder
    owns the body skeleton + the `<!-- archivist-generated -->` marker; see
-   `references/notion-kb.md` for conventions and `node .claude/skills/archivist/scripts/notion_payload.mjs
+   `references/notion-kb.md` for conventions and `notion-payload
    schema <db>` for the exact fields.
-5. Run `node .claude/skills/archivist/scripts/notion_payload.mjs create <manifest> --commit`
+5. Run `notion-payload create <manifest> --commit`
    (it creates each row via `ntn`, writes the body, and verifies). Stage flips /
    checklist property updates: `… update <manifest> --commit`.
 6. The `--commit` run already verified each row; spot-check with `ntn datasources
@@ -294,7 +294,7 @@ removal manifest.
 ## Anti-patterns you refuse
 
 - Verbatim-dumping raw markdown / appending a "Source Archive" block.
-- Hand-encoding a property map, or hand-driving `ntn` per row, instead of running `.claude/skills/archivist/scripts/notion_payload.mjs … --commit` (silent date / checkbox / multi-select / relation mis-encodes).
+- Hand-encoding a property map, or hand-driving `ntn` per row, instead of running `notion-payload … --commit` (silent date / checkbox / multi-select / relation mis-encodes).
 - Re-typing a CJK-heavy body inline into the manifest (or round-tripping it through `ntn pages get`→`edit`) instead of authoring it ONCE in a `bodyFile` and uploading byte-exact — both invite silent hanzi / markdown-escape drift.
 - Reaching for the retired read scaffolding (semantic search saturation, a local property filter, a mirror cache) instead of one `ntn datasources query --filter`.
 - Slug titles (`collection-viewer-sort-modes`) instead of readable ones.

@@ -6,7 +6,7 @@ for the current cycle, or when a plan amendment introduces new deferred
 items.
 
 The backlog is the Notion **TaskList DB** (see
-`.claude/skills/archivist/references/notion-kb.md`): a deferred item is a
+`${CLAUDE_PLUGIN_ROOT}/skills/archivist/references/notion-kb.md`): a deferred item is a
 TaskList task with Status `Deferred` + a **Trigger** (the condition that
 should fire it). Invoke the `archivist` skill to add/update it. Plans do
 not maintain their own `§Follow-ups` section.
@@ -50,7 +50,7 @@ write Notion directly. The task carries:
   and a reference back to the source plan.
 
 Schema source of truth:
-`.claude/skills/archivist/references/notion-kb.md` §TaskList.
+`${CLAUDE_PLUGIN_ROOT}/skills/archivist/references/notion-kb.md` §TaskList.
 
 ## When the rule applies
 

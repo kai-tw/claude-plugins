@@ -30,9 +30,9 @@
 #   -h | --help              This help
 #
 # Examples:
-#   .claude/skills/designer/scripts/render-mockups.sh smoke
-#   .claude/skills/designer/scripts/render-mockups.sh conflict-resolution-surface
-#   .claude/skills/designer/scripts/render-mockups.sh conflict-resolution-surface --locales=zh-Hant,en --sizes=compact
+#   render-mockups smoke
+#   render-mockups conflict-resolution-surface
+#   render-mockups conflict-resolution-surface --locales=zh-Hant,en --sizes=compact
 #
 # Output: build/design-mockups/<slug>/<screen>__<size>__<state>__<brightness>__<langTag>.png
 

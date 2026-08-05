@@ -10,7 +10,7 @@ description: |
   techniques (equivalence partitioning, boundary analysis, decision tables,
   state transition, pairwise, error guessing, FMEA-lite, mutation sensitivity),
   the failure-class catalog, and the category checklist in
-  `.claude/skills/qa/SKILL.md` — that skill is your complete contract. Spawned
+  the `qa` skill — that skill is your complete contract. Spawned
   by the `/plan` launcher as the QA phase, and by the `/qa` skill on direct
   invocation, so the `flutter test` output + the write→run→fix loop are born and
   die in this throwaway context instead of persisting in the caller's. NOT a
@@ -28,7 +28,7 @@ allowed-tools:
 
 # QA (Test Authoring) — isolated executor
 
-> **Your complete contract is `.claude/skills/qa/SKILL.md`.** Read it in full
+> **Your complete contract is `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md`.** Read it in full
 > before authoring a line of test code — its Iron Laws, test-design technique
 > catalog, failure-class catalog, category checklist, mock rules, and hand-back
 > format all bind you. This file carries only what is specific to running as an
@@ -87,7 +87,7 @@ Return ONLY:
 
 ## What this agent does NOT do
 
-Everything in `.claude/skills/qa/SKILL.md §What this skill does NOT do` applies:
+Everything in `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md §What this skill does NOT do` applies:
 no bug fixes (regression test + one-line note only), no `docs/test-plans/`
 authoring, no lint / format / build (the Stop hook + the `/plan` engineer commit
 gate own those), no commit. Plus, as an isolated executor: it does **not**

@@ -56,14 +56,31 @@ Two things each consuming project must provide:
    this is the only Notion id a project records. Every call passes it:
 
    ```
-   node <plugin>/skills/archivist/scripts/notion_payload.mjs <cmd> … --root <page-id>
+   notion-payload <cmd> … --root <page-id>
    ```
 
    Omitting it aborts on purpose — a default root would write one project's
-   plans into another project's workspace.
+   plans into another project's workspace. Only the commands that actually need
+   a data source or the project's live vocabulary resolve the KB
+   (`create` / `update` / `set` / `filter`, and `schema` when you pass a root);
+   the structural ones a planning cycle calls over and over — `hints`,
+   `criteria` — read the embedded schemas and stay offline and instant.
 
-Architecture guidance goes in the project's own `.claude/rules/`; optional
-project-specific PM vocabulary goes in `.claude/pm-vocabulary.txt`.
+Architecture guidance goes in the project's own `.claude/rules/`. Two optional
+files let a project extend the plugin without editing it:
+
+| File | Extends |
+|---|---|
+| `.claude/pm-vocabulary.txt` | the PM abstraction checker's leaky-term list — one extended-regex fragment per line |
+| `.claude/kb-databases.txt` | the Notion database titles resolved under the KB root — `<registry-key> = <exact title>`, one per line |
+
+`kb-databases.txt` exists because a project may title its databases in its own
+language. The plugin's defaults are English (`Release Log`, `TaskList`, …); a KB
+that calls one of them `版本紀錄` maps it there rather than renaming the database
+or teaching the plugin one project's vocabulary. Get it wrong and the failure
+now says so — a registry key the plugin knows but the workspace did not yield
+reports the title it looked for and points at this file, instead of the database
+silently vanishing from the registry.
 
 If the project runs work in worktrees, invoke the **`worktree-setup`** skill
 once per repo. It derives that project's `.worktreeinclude` and init step from
@@ -85,6 +102,35 @@ A rule with a file path belongs to the project, because projects disagree:
 CherishCRM is Riverpod, NovelGlide is Cubit. Shipping either one's architecture
 here would hand the other actively wrong guidance. There is deliberately no
 SOP layer in this plugin — architecture guidance lives in `.claude/rules/`.
+
+## How this plugin refers to its own files
+
+A plugin installs to `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`
+— a path that no skill file can hardcode and that moves on every version bump.
+So nothing here refers to itself by a project-relative `.claude/skills/…` path;
+that would resolve inside the *consuming project*, where these files do not
+exist. Two mechanisms, by what is being referred to:
+
+- **Scripts → a bare command.** `bin/` is on the Bash tool's `PATH` whenever the
+  plugin is enabled, so every script has a launcher there and is invoked by name
+  from anywhere: `plan-cycle`, `notion-payload`, `plan-lint`, `plan-scope-gate`,
+  `pm-abstraction-check`, `render-mockups`, `plan-feedback`. The implementations
+  stay with the skills that own them; `bin/` holds three-line `exec` launchers.
+  Names carry a `plan-`/`pm-` prefix where the bare word would be too generic
+  for a global `PATH`, or would collide with a skill of the same name
+  (`plan-feedback` vs the `feedback-ledger` skill).
+- **Files to read → `${CLAUDE_PLUGIN_ROOT}/skills/…`.** The harness expands that
+  token when it injects a `SKILL.md`, so a skill body gets a real absolute path.
+  It does **not** expand inside reference files an agent opens with `Read`, or
+  inside YAML frontmatter — there the token stays literal and the reader
+  substitutes the plugin root it was already given. Frontmatter therefore names
+  the owning **skill** ("the `qa` skill") rather than a path, because that text
+  is shown in listings where nothing can expand it.
+
+One path is deliberately *not* rewritten:
+`.claude/skills/feedback-ledger/entries/` is the **project's** data directory,
+resolved from the git root by `plan-feedback` and read by `plan-cycle`'s
+close-out gate. It belongs to the consuming repo, not to this plugin.
 
 ## The ledger
 

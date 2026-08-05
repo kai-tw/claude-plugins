@@ -61,7 +61,7 @@ badge-polish task the founder said 「metadata syncing 不應該隱形」; the o
 framed an `AskUserQuestion` with 「全組 badge polish（建議）」 as the recommended
 option, the founder picked it, then corrected — 「我只是想換 metadata syncing 的
 icon 樣式」. The `(Recommended)`-first convention
-(`.claude/skills/plan/SKILL.md §Two interaction rules`, the `(Recommended)`
+(`${CLAUDE_PLUGIN_ROOT}/skills/plan/SKILL.md §Two interaction rules`, the `(Recommended)`
 label) actively pulls toward the big build here — this is its **counter-rule**:
 on a detail adjustment the narrow option is the default pick. HOW: proceed on the
 one item; surface the broader option only as a **non-recommended** aside ("the
@@ -76,7 +76,7 @@ founder graded three dismissals of a missing-`onError` finding — two precedent
 appeals rejected, only "the source is a pure broadcast controller fed solely by
 `.add()`, so it structurally cannot emit an error" accepted. **If precedent is
 your only defense, that is the signal to FIX, not dismiss.** This extends
-`.claude/skills/review/SKILL.md §Verdict per finding` (which already demands a
+`${CLAUDE_PLUGIN_ROOT}/skills/review/SKILL.md §Verdict per finding` (which already demands a
 specific, written rationale) with the founder's bar: a sibling-pattern citation
 can *pass* that written rule while still failing here.
 
@@ -104,7 +104,7 @@ Shipped-vs-Superseded, a store-listing change) BEFORE dispatching. Founder
 taxonomy: **a passed precursor verification spike that de-risked a later plan is
 `Shipped`** (it delivered its verification) — Superseded is only for a plan
 replaced by a successor. The archivist owns the batch-side discipline
-(`.claude/skills/archivist/SKILL.md`); this is the confirm-timing overlay.
+(`${CLAUDE_PLUGIN_ROOT}/skills/archivist/SKILL.md`); this is the confirm-timing overlay.
 
 **繁體中文 prose uses full-width punctuation.** In Chinese prose to the founder —
 Notion plan bodies, chat, commit messages — use `，。：；！？（）`, not their
@@ -190,7 +190,7 @@ the same as the current X" is the highest-risk line in any plan** — it reads a
 verified and is usually assumed. HOW: read the declaration before asserting its
 shape; read every call site a "matches existing" claim covers and quote it; when
 a design element is renamed, grep the whole plan body for the old name. This
-extends the engineer role's evidence rules (`.claude/skills/engineer/rules/`,
+extends the engineer role's evidence rules (`${CLAUDE_PLUGIN_ROOT}/skills/engineer/rules/`,
 the P3 family) from external-package claims to internal-code claims.
 
 **Implement the APPROVED plan's mechanism verbatim — don't reinvent a simpler
@@ -357,7 +357,7 @@ is emptied; and emptying from the shell is TCC-blocked
 TCC-protected). HOW: for a "space is critical" request, tell the user the final
 step is theirs — empty the Trash manually in Finder (⌘⇧⌫); the shell cannot do
 it. (The use-`trash`-not-`rm` directive is also stated in
-`.claude/skills/archivist/SKILL.md`.)
+`${CLAUDE_PLUGIN_ROOT}/skills/archivist/SKILL.md`.)
 
 **Dispatching a sub-agent: forbid its commit, and match the model to the task.**
 Two standing defaults govern every sub-agent you spawn. (1) **Tell it NOT to commit
@@ -413,8 +413,8 @@ in the foreground and let it finish.
   `CLAUDE.md §Worktree + PR`.
 - **Not the Notion / status-write mechanism.** *When* to confirm an outward status
   flip lives here; *how* to write it (payload builder, marker guard, close-out
-  trash) is `.claude/skills/archivist/`.
+  trash) is `${CLAUDE_PLUGIN_ROOT}/skills/archivist/`.
 - **Not the commit gate.** The four-leg commit discipline (codegen → lint/format
-  → tests → `/review` → auth) is `.claude/skills/engineer/references/closeout.md
+  → tests → `/review` → auth) is `${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/closeout.md
   §Step 5.5`; this skill only supplies the founder-judgment overlays (dismiss
   reasons, verify-before-commit-for-layout, etc.).

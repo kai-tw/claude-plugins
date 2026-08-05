@@ -4,7 +4,7 @@
 // blueprint-reviewer.md §Criterion N — this registry is the routing layer only.
 //
 // Keys follow `c<N>` convention; referenced in plan body section `criteria` arrays.
-// Run: node .claude/skills/archivist/scripts/notion_payload.mjs criteria <db>  to see the routing table.
+// Run: notion-payload criteria <db>  to see the routing table.
 export const CRITERIA = {
   c1:  { n: 1,  label: 'Time complexity' },
   c2:  { n: 2,  label: 'Space complexity' },

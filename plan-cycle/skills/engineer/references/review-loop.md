@@ -27,7 +27,7 @@ happens when the draft is authored against, *and self-scored on*, the
 
 ### 1. Scope the dimensions
 
-Run `.claude/skills/engineer/scripts/scope_gate.sh <plan-path>`
+Run `plan-scope-gate <plan-path>`
 (advisory) to enumerate which defect dimensions are in scope and whether
 the Track-2 (security/privacy plan-mode) trigger fires. Keyword
 heuristic — confirm the set yourself; never *drop* a flagged dimension
@@ -48,15 +48,15 @@ criterion's checklist *is* your authoring target, read generatively:
 
 Each criterion is satisfied in a specific plan section — design for it
 *there* while drafting, not retroactively. The routing table is generated
-from `.claude/skills/archivist/scripts/notion_payload.mjs` (SSOT — section `criteria` fields); run:
+from `notion-payload` (SSOT — section `criteria` fields); run:
 
 ```
-node .claude/skills/archivist/scripts/notion_payload.mjs criteria engineering-plan
+notion-payload criteria engineering-plan
 ```
 
 The criteria numbers are the same ones in `blueprint-reviewer.md §Criterion N`
 — that file is still the rubric SSOT (1–10 anchors, specific questions);
-`.claude/skills/archivist/scripts/notion_payload.mjs` is the routing SSOT (which section earns which dimension).
+`notion-payload` is the routing SSOT (which section earns which dimension).
 
 ### 4. Self-score before you spawn — raise the floor, don't replace the gate
 
