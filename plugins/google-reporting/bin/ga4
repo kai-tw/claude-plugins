@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Google Analytics 4 (GA4 Data API) reader.
+#
+# A launcher, not an implementation — the script lives with the skill that
+# owns it (see the exec line). It exists so skill files, agent files, and this
+# plugin's own prose can invoke it by BARE NAME: the plugin's bin/ is on the
+# Bash tool's PATH whenever the plugin is enabled, while the install path
+# (~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/) is not knowable
+# from a project-relative reference and changes on every version bump.
+set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+exec node "$here/../scripts/ga4.mjs" "$@"
