@@ -429,6 +429,19 @@ has been dispatched — default: **ship a beta to Firebase via the
      "post-ship verification pending") clears off the TaskList
      once owner confirms PASSED — don't carry already-passed
      gates as dead text.
+4. **Reclaim the cycle's disk footprint** — invoke the
+   **`reclaim-space` skill**, which owns the sweep and the judgment
+   around it (measurement discipline, fail-closed version scan,
+   deliberate omissions). A shipped cycle leaves several gigabytes of
+   build output and machine-wide tool cache behind, and nothing else in
+   the flow ever removes it; on a full disk that accumulation is what
+   eventually blocks the next build.
+   - **This step, and not earlier.** Cleaning at the end of a *test
+     run* is wrong: review rework re-runs the build and pays the
+     rebuild twice. Stage 1 runs after Phase 12 returns clean, which
+     is the first moment the artefacts are genuinely dead.
+   - Report the skill's **freed** figure, never the per-target sizes it
+     lists — the reason is in that skill and is not restated here.
 
 Stage 1 is non-skippable. The cost of skipping is **stale
 "in-flight" tasks** that the next planning cycle has to
