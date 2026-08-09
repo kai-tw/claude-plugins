@@ -160,12 +160,23 @@ reserved to you.)
    from `l10n.yaml`) — the authoritative per-locale ledger of not-yet-translated
    keys; confirm no targeted locale was left behind. Never call
    `flutter analyze` / `dart analyze` directly (deny-listed — root `CLAUDE.md`).
-7. **Report back.** Hand the launcher: (a) the keys + per-locale values (English
+7. **Re-run the duplicate check — fixed, not optional.** Run
+   `dart run tool/translations/check_duplicate_translations.dart` again after
+   writing all five files. This is a different check than step 2's pre-mint
+   lookup: step 2 only stops you duplicating a key that *already* existed;
+   this one catches a value that turned out identical only after translation,
+   or two keys you minted in this same pass that landed on the same value.
+   Any new **SAFE** group involving a key you just authored gets merged now
+   (you own minting + merging) unless a call site outside your control
+   already references both keys — in that case leave it and flag it under
+   item 8(e) instead of merging silently.
+8. **Report back.** Hand the launcher: (a) the keys + per-locale values (English
    included) you wrote, (b) for each tone-sensitive key, the options you
    considered + why, (c) **the explicit ja / zh / zh_Hant sign-off list** the
    founder should review before commit, (d) anything you pushed back on (unclear
    intent, pass-through key, term drift), (e) any duplicate-value merge
-   candidates you found.
+   candidates you found — from **both** the step 2 pre-check and the step 7
+   post-write re-check.
 
 ## When to push back (do not translate around the problem)
 
