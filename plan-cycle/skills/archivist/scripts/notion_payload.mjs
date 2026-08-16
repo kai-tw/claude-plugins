@@ -27,6 +27,8 @@
 //       date props also accept <,<=,>,>= and the literal `today`, e.g. "Check Date<=today"
 //   notion-payload schema   [db]                  # print embedded schema(s)
 //   notion-payload hints    <db>                  # print section questionnaire
+//   notion-payload template <db>                  # print a skeleton body to fill in
+//   notion-payload sections <db>                  # print key::heading-regex (for scripts)
 //   notion-payload criteria <db>                  # print criteria→sections routing table
 //   notion-payload --help
 //
@@ -874,28 +876,89 @@ function printSectionList(dbKey, typeKey, sections) {
   }
 }
 
-function printHints(dbKey, typeKey) {
-  if (!dbKey) { console.error('hints requires a db argument. Valid: ' + Object.keys(DB).join(', ')); process.exitCode = 1; return; }
+// Shared lookup for `hints` / `sections` / `template` — one resolver so the
+// three can never disagree about which sections a db+type has.
+// Returns the section array, or null after printing the error (exit code set).
+function resolveSections(dbKey, typeKey, cmd) {
+  if (!dbKey) { console.error(`${cmd} requires a db argument. Valid: ` + Object.keys(DB).join(', ')); process.exitCode = 1; return null; }
   const def = DB[dbKey];
-  if (!def) { console.error(unknownDb(dbKey)); process.exitCode = 1; return; }
+  if (!def) { console.error(unknownDb(dbKey)); process.exitCode = 1; return null; }
 
   if (def.bodyByType) {
     if (!typeKey) {
-      console.log(`# ${dbKey} — body section questionnaire\n`);
-      console.log(`This DB has multiple body structures by Type. Available types:\n`);
-      for (const [t, sections] of Object.entries(def.bodyByType))
-        console.log(`  ${t.padEnd(20)} ${sections.map((s) => s.key).join(' · ')}`);
-      console.log(`\nUsage: notion-payload hints ${dbKey} <type>`);
-      return;
+      console.error(`"${dbKey}" has one body structure per Type. Valid: ${Object.keys(def.bodyByType).join(', ')}`);
+      console.error(`Usage: notion-payload ${cmd} ${dbKey} <type>`);
+      process.exitCode = 1; return null;
     }
     const sections = def.bodyByType[typeKey];
-    if (!sections) { console.error(`unknown type "${typeKey}" for "${dbKey}". Valid: ${Object.keys(def.bodyByType).join(', ')}`); process.exitCode = 1; return; }
-    printSectionList(dbKey, typeKey, sections);
-    return;
+    if (!sections) { console.error(`unknown type "${typeKey}" for "${dbKey}". Valid: ${Object.keys(def.bodyByType).join(', ')}`); process.exitCode = 1; return null; }
+    return sections;
   }
 
-  if (!def.body) { console.error(`"${dbKey}" has no structured body sections (opaque content — the authoring role owns it).`); process.exitCode = 1; return; }
-  printSectionList(dbKey, null, def.body);
+  if (!def.body) { console.error(`"${dbKey}" has no structured body sections (opaque content — the authoring role owns it).`); process.exitCode = 1; return null; }
+  return def.body;
+}
+
+function printHints(dbKey, typeKey) {
+  const def = dbKey ? DB[dbKey] : null;
+  // `hints` with no type on a by-Type db lists the types instead of erroring —
+  // it is the discovery entry point the authoring roles call first.
+  if (def?.bodyByType && !typeKey) {
+    console.log(`# ${dbKey} — body section questionnaire\n`);
+    console.log(`This DB has multiple body structures by Type. Available types:\n`);
+    for (const [t, sections] of Object.entries(def.bodyByType))
+      console.log(`  ${t.padEnd(20)} ${sections.map((s) => s.key).join(' · ')}`);
+    console.log(`\nUsage: notion-payload hints ${dbKey} <type>`);
+    return;
+  }
+  const sections = resolveSections(dbKey, typeKey, 'hints');
+  if (!sections) return;
+  printSectionList(dbKey, typeKey ?? null, sections);
+}
+
+// ── sections printer (machine-readable; plan_lint.sh consumes this) ───────────
+// One line per section: `<key>::<heading regex>`. The regex ORs the English key
+// with the section's `aliases` — headings are translated to 繁體中文 per the
+// authoring skill's §Language, so an English-only match would false-negative.
+// This exists so nothing outside schemas/ keeps its own copy of the section
+// list; that duplication is what let a retired section linger in the linter.
+function printSections(dbKey, typeKey) {
+  const sections = resolveSections(dbKey, typeKey, 'sections');
+  if (!sections) return;
+  for (const s of sections)
+    console.log(`${s.key}::${[s.key, ...(s.aliases ?? [])].join('|')}`);
+}
+
+// ── template printer ──────────────────────────────────────────────────────────
+// A skeleton body to fill in. `hints` states the per-section rules (including
+// the 禁-lists, which an example cannot show); this shows the SHAPE — heading
+// order, the density I3 asks for, and where an I4 decision note goes.
+const STUB = {
+  para: '<一句話說完；講不完才第二句>',
+  bullets: '- <一條一個裁定或事實>\n- <同上>',
+  table: '| <欄> | <欄> |\n|---|---|\n| <值> | <值> |',
+  checklist: '- [ ] <可勾掉的一件事>',
+  raw: '<依 hints 的結構填>',
+};
+
+function printTemplate(dbKey, typeKey) {
+  const sections = resolveSections(dbKey, typeKey, 'template');
+  if (!sections) return;
+  console.log(`<!-- ${dbKey}${typeKey ? ` (${typeKey})` : ''} skeleton.`);
+  console.log(`     Per-section rules + 禁-lists: notion-payload hints ${dbKey}${typeKey ? ` ${typeKey}` : ''}`);
+  console.log(`     I3 — 條列為主，每行都要答得出「我承載哪個裁定或事實」，答不出來就刪.`);
+  console.log(`     I4 — 裁定的那一行下面附一行 〔使用者〕 或 〔自行裁定〕 + 理由；改了就地覆寫.`);
+  console.log(`     Delete every placeholder and this comment before saving. -->`);
+  for (const s of sections) {
+    console.log(`\n## ${s.key}${s.required ? '' : '   <!-- optional; delete if 不適用 -->'}`);
+    console.log(STUB[s.kind] ?? STUB.raw);
+  }
+  // The example must not start any line with `#` — a template whose comment
+  // survives into the body would otherwise register a phantom heading with
+  // every tool that greps for `^## `, plan_lint.sh included.
+  console.log(`\n<!-- 決策註記範例（放在被裁定的那一行正下方，不要集中在一處）：`);
+  console.log(`     | \`ReaderShell\` | 承載分頁與捲動位置 | 既有 |`);
+  console.log(`     〔自行裁定〕沿用 ReaderShell 而非新增 wrapper——它已持有捲動位置，新增等於第二真相源。 -->`);
 }
 
 // ── criteria printer ──────────────────────────────────────────────────────────
@@ -934,7 +997,9 @@ const HELP = `notion-payload — Archivist Notion request builder + writer (via 
   notion-payload append   <page-id> [md-file|-] [--commit]           append blocks to a page body
   notion-payload comment  <page-id> <text|-> [--commit]              post a comment (e.g. review findings)
   notion-payload schema   [db] [--live]                    embedded schema, or --live drift vs Notion
-  notion-payload hints    <db> [type]                      section questionnaire
+  notion-payload hints    <db> [type]                      section questionnaire (rules + 禁-lists)
+  notion-payload template <db> [type]                      skeleton body to fill in (shape + I3/I4)
+  notion-payload sections <db> [type]                      key::heading-regex, one per line (for scripts)
   notion-payload criteria <db>                             criteria→sections routing table
   notion-payload --help
 
@@ -1158,6 +1223,8 @@ function main() {
 
   if (cmd === 'schema') { if (flags.has('--live')) schemaLive(pos[0]); else printSchema(pos[0]); return; }
   if (cmd === 'hints') { printHints(pos[0], pos[1]); return; }
+  if (cmd === 'sections') { printSections(pos[0], pos[1]); return; }
+  if (cmd === 'template') { printTemplate(pos[0], pos[1]); return; }
   if (cmd === 'criteria') { printCriteria(pos[0]); return; }
   if (cmd === 'filter') {
     try { printFilter(pos[0], pos.slice(1), flags.has('--json')); }

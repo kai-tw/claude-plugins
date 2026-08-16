@@ -43,8 +43,25 @@ fi
 
 fail=0
 
+# Section definitions straight from schemas/engineering-plan.mjs, one
+# `Key::<heading regex>` per line — read once. Empty when node is missing or we
+# run outside the plugin tree; every caller then degrades to an announced skip
+# rather than a wrong answer. Keeping a copy of this list here is what let a
+# retired section linger in the linter, so there is no fallback list.
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+SECTION_DEFS="$(node "$here/../../archivist/scripts/notion_payload.mjs" \
+  sections engineering-plan 2>/dev/null || true)"
+[ -n "$SECTION_DEFS" ] || echo "ADVISORY  schema unreadable (node missing, or run outside the plugin tree) — the §Conformance↔§Tasks and section-presence checks below are SKIPPED, not passed"
+
+# The heading regex for one section key. Empty if unknown.
+section_pat() {
+  printf '%s\n' "$SECTION_DEFS" | awk -F'::' -v k="$1" '$1 == k { print $2; exit }'
+}
+
 # Body of the first section whose heading matches $1 (bilingual regex).
+# An empty pattern matches nothing — never the whole file.
 section_body() {
+  [ -n "$1" ] || return 0
   awk -v pat="$1" '
     /^##+ / { inside = ($0 ~ pat) ? 1 : 0; if (inside) next }
     inside  { print }
@@ -134,8 +151,8 @@ fi
 #    naming `Conformance 2/3/6`, a row naming `Task 15`, or an
 #    `Impl block-or-task` column naming the block) — a row this misses may
 #    still be covered, so it prints and the author confirms.
-conf_body="$(section_body 'Conformance|符合性|對照')"
-tasks_body="$(section_body 'Tasks|任務|工作清單')"
+conf_body="$(section_body "$(section_pat 'Conformance')")"
+tasks_body="$(section_body "$(section_pat 'Tasks')")"
 conf_nums="$(printf '%s\n' "$conf_body" | grep -oE '^\|[[:space:]]*[0-9]+[[:space:]]*\|' | grep -oE '[0-9]+' || true)"
 if [ -n "$conf_nums" ] && [ -n "$tasks_body" ]; then
   # Numbers a task claims, ranges (20–25) expanded.
@@ -167,29 +184,23 @@ if [ -n "$conf_nums" ] && [ -n "$tasks_body" ]; then
 fi
 
 # 5. ADVISORY — required-section presence (bilingual; never gates).
-#    Each entry: "Label::<english-regex>|<chinese-regex>" matched against `## ` headings.
-sections=(
-  "Summary::Summary|摘要|總結"
-  "Composition::Composition|組合|裝配"
-  "Risks::Risks|風險"
-  "Migration impact::Migration impact|Migration|遷移|相容性|向後相容"
-  "Blocks::Blocks|積木|區塊"
-  "Data flow::Data flow|資料流"
-  "Error handling::Error handling|錯誤處理"
-  "Tasks::Tasks|任務|工作清單"
-  "Revision history::Revision history|修訂.*(歷史|紀錄)|變更紀錄"
-)
-headings="$(grep -E '^#{2,3} ' "$plan" 2>/dev/null || true)"
-echo "ADVISORY  required-section presence (bilingual; confirm any 'confirm' by eye):"
-for entry in "${sections[@]}"; do
-  label="${entry%%::*}"
-  pat="${entry##*::}"
-  if grep -qiE "$pat" <<< "$headings"; then
-    echo "        ok       $label"
-  else
-    echo "        confirm  $label  (no heading matched /$pat/ — translated differently? or missing)"
-  fi
-done
+#    The list comes from schemas/engineering-plan.mjs, never from a copy here:
+#    a second copy is how a retired section stayed in this linter, telling every
+#    correct plan to add a heading that must not exist.
+if [ -n "$SECTION_DEFS" ]; then
+  headings="$(grep -E '^#{2,3} ' "$plan" 2>/dev/null || true)"
+  echo "ADVISORY  required-section presence (bilingual; confirm any 'confirm' by eye):"
+  while IFS= read -r entry; do
+    [ -n "$entry" ] || continue
+    label="${entry%%::*}"
+    pat="${entry##*::}"
+    if grep -qiE "$pat" <<< "$headings"; then
+      echo "        ok       $label"
+    else
+      echo "        confirm  $label  (no heading matched /$pat/ — translated differently? or missing)"
+    fi
+  done <<< "$SECTION_DEFS"
+fi
 
 # 6. ADVISORY — §-refs resolving to no heading in THIS file. Most are upstream
 #    (`§Non-goals`, `§AC`); a renamed internal section shows up in the same

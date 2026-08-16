@@ -20,6 +20,8 @@ The engineering plan exists in two places at once:
    content. The row relates to the feature's TaskList task via the
    **Task** relation (back-ref "Engineering Plans") and its **body**
    is structured as the `engineering-plan` body sections — run
+   `notion-payload template engineering-plan` for the skeleton to fill
+   (shape + where `I4` decision notes go) and
    `notion-payload hints engineering-plan`
    for the section questionnaire (description, hints, criteria per section).
 2. **TaskCreate task list** in the conversation — canonical for

@@ -286,8 +286,9 @@ catches was cheaper to avoid here than to rewrite there.
 Lock the hierarchy and the four states (default / empty / loading /
 error) at compact before touching larger breakpoints.
 
-For the section structure (sections, descriptions, authoring hints), run:
-`notion-payload hints design-plan`
+For the skeleton to fill (shape + where `I4` decision notes go), run
+`notion-payload template design-plan`; for the per-section rules and 禁-lists,
+`notion-payload hints design-plan`.
 
 Compact decisions cascade up:
 

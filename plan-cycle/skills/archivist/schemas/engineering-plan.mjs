@@ -32,6 +32,7 @@ export const body = [
   // ── Tier A — At a glance (review surface) ──────────────────────────────
   {
     key: 'Summary',
+    aliases: ['摘要', '總結'],
     kind: 'para',
     required: true,
     criteria: [],
@@ -40,6 +41,7 @@ export const body = [
   },
   {
     key: 'Composition',
+    aliases: ['組合', '裝配'],
     kind: 'raw',
     required: true,
     criteria: ['c4', 'c5', 'c10'],
@@ -48,6 +50,7 @@ export const body = [
   },
   {
     key: 'Risks',
+    aliases: ['風險'],
     kind: 'table',
     required: true,
     criteria: ['c3'],
@@ -56,6 +59,7 @@ export const body = [
   },
   {
     key: 'Migration impact',
+    aliases: ['Migration', '遷移', '相容性', '向後相容'],
     kind: 'raw',
     required: true,
     criteria: ['c11'],
@@ -65,6 +69,7 @@ export const body = [
   // ── Tier B — The blocks (the assembly) ─────────────────────────────────
   {
     key: 'Blocks',
+    aliases: ['積木', '區塊'],
     kind: 'raw',
     required: true,
     criteria: ['c4', 'c5', 'c8', 'c9', 'c10'],
@@ -74,6 +79,7 @@ export const body = [
   // ── Tier C — Behaviour detail (implementer reference) ──────────────────
   {
     key: 'Data flow',
+    aliases: ['資料流'],
     kind: 'raw',
     required: true,
     criteria: ['c1', 'c2', 'c3', 'c6'],
@@ -82,6 +88,7 @@ export const body = [
   },
   {
     key: 'Error handling',
+    aliases: ['錯誤處理'],
     kind: 'table',
     required: true,
     criteria: ['c7'],
@@ -90,6 +97,7 @@ export const body = [
   },
   {
     key: 'Startup',
+    aliases: ['啟動', '初始化'],
     kind: 'table',
     required: true,
     criteria: ['c12'],
@@ -98,6 +106,7 @@ export const body = [
   },
   {
     key: 'Conformance',
+    aliases: ['符合性', '對照'],
     kind: 'table',
     required: false,
     criteria: [],
@@ -107,6 +116,7 @@ export const body = [
   // ── Tier D — Execution ─────────────────────────────────────────────────
   {
     key: 'Tasks',
+    aliases: ['任務', '工作清單'],
     kind: 'bullets',
     required: true,
     criteria: [],
@@ -116,6 +126,7 @@ export const body = [
   // ── Tier E — Trail (appendix) ──────────────────────────────────────────
   {
     key: 'Revision history',
+    aliases: ['修訂歷史', '修訂紀錄', '變更紀錄'],
     kind: 'bullets',
     required: true,
     criteria: [],
