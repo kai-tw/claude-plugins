@@ -4,7 +4,7 @@ Phase 8 confirms the plan **complies with the project's rules** —
 layer direction, naming, DI scope, log calls, i18n surface. Rule
 compliance is necessary but not sufficient. A plan that passes audit
 can still be O(N²) on a hot path, leaky across feature boundaries,
-or carry an §Error handling matrix that ticks every cell while
+or carry an §Error policy matrix that ticks every cell while
 missing half the real failure modes.
 
 This phase scores the plan across the reviewer's scope-gated

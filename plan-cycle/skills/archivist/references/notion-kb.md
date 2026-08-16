@@ -85,8 +85,8 @@ git, not in the KB.
 
 **One exemption: the Engineering Plan DB.** Its rows are read by engineers
 and reviewers, not browsed as knowledge, and its own body schema mandates
-the pointers — §Blocks is a file inventory (`File (NEW/MOD/DEL)` is a
-column), §Composition's nodes are class names, §Error handling's evidence
+the pointers — §Classes is a file inventory (`File (NEW/MOD/DEL)` is a
+column), §Data flow's graph nodes are `Class.method`, §Error policy's evidence
 is `file:symbol`. Scrubbing them there would delete the section's content,
 not its navigation. The exemption covers **that DB only** — Feature
 Archive, Decision Log, TaskList, Product Plan, and Design Plan rows are

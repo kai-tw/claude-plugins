@@ -8,8 +8,8 @@
 #     - not empty / not just the skeleton
 #     - no banned placeholders (TBD / decide later / as needed / ...) except
 #       where a line routes via `## Open questions` / `pending PM|designer|user`
-#     - every §Blocks file marked (MOD)/(DEL) exists in the repo
-#     - every numbered §Conformance row is claimed by ≥1 §Tasks entry
+#     - every §Classes file marked (MOD)/(DEL) exists in the repo
+#     - every numbered §Conformance row is claimed by ≥1 §Conformance ↔ Class.method
 #
 #   ADVISORY (printed, never affects exit code) — anything a correct plan can
 #   trip: section presence (headings are TRANSLATED to 繁體中文 under the
@@ -21,7 +21,7 @@
 #   `blueprint-reviewer` owns the judgment; this script owns the
 #   comparisons. Everything here is a
 #   comparison a reviewer should never be spent on: does the thing the plan
-#   names actually exist, does every promise map to a task, does every pointer
+#   names actually exist, does every promise map to a method, does every pointer
 #   resolve. Measured motivation — one cycle wrote the same call-site count
 #   wrong three revisions running, and another asserted a method signature that
 #   did not exist, each burning an opus round-trip. Judgement items (silent
@@ -51,7 +51,7 @@ fail=0
 here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 SECTION_DEFS="$(node "$here/../../archivist/scripts/notion_payload.mjs" \
   sections engineering-plan 2>/dev/null || true)"
-[ -n "$SECTION_DEFS" ] || echo "ADVISORY  schema unreadable (node missing, or run outside the plugin tree) — the §Conformance↔§Tasks and section-presence checks below are SKIPPED, not passed"
+[ -n "$SECTION_DEFS" ] || echo "ADVISORY  schema unreadable (node missing, or run outside the plugin tree) — the §Conformance, §Data flow and section-presence checks below are SKIPPED, not passed"
 
 # The heading regex for one section key. Empty if unknown.
 section_pat() {
@@ -75,7 +75,7 @@ if [ "${nonblank:-0}" -lt 30 ]; then
   fail=1
 fi
 
-# 2. HARD — banned placeholders (template §Error handling) — allowed only
+# 2. HARD — banned placeholders (template §Error policy) — allowed only
 #    on a line that names an Open-questions route.
 placeholders="$(grep -nEi '\b(TBD|decide later|as needed|as appropriate|handle( errors)? appropriately|figure (it )?out)\b' "$plan" 2>/dev/null \
   | grep -viE 'Open questions|pending (PM|designer|user)' || true)"
@@ -85,7 +85,7 @@ if [ -n "$placeholders" ]; then
   fail=1
 fi
 
-# 3. §Blocks file reality — the plan's highest-risk sentence is "same as the
+# 3. §Classes file reality — the plan's highest-risk sentence is "same as the
 #    existing X". A (MOD)/(DEL) row naming a file that isn't in the repo is
 #    that sentence, already false. The marker applies to every file token on
 #    its row; a row carrying both markers is ambiguous and is skipped.
@@ -128,59 +128,123 @@ if [ -n "$repo_files" ]; then
         path_in_repo "$tok" && premature="${premature}${tok}"$'\n'
       fi
     done <<< "$tokens"
-  done <<< "$(section_body 'Blocks|積木|區塊')"
+  done <<< "$(section_body "$(section_pat 'Classes')")"
 
   if [ -n "$missing" ]; then
-    echo "FAIL  §Blocks marks file(s) (MOD)/(DEL) that are not in the repo — the plan asserts an edit to something that doesn't exist:"
+    echo "FAIL  §Classes marks file(s) (MOD)/(DEL) that are not in the repo — the plan asserts an edit to something that doesn't exist:"
     printf '%s' "$missing" | sort -u | sed 's/^/        /'
     fail=1
   fi
   if [ -n "$premature" ]; then
-    echo "ADVISORY  §Blocks (NEW) file(s) that already exist — expected mid-implementation, wrong at first draft:"
+    echo "ADVISORY  §Classes (NEW) file(s) that already exist — expected mid-implementation, wrong at first draft:"
     printf '%s' "$premature" | sort -u | sed 's/^/        /'
   fi
   if [ -n "$ambiguous" ]; then
-    echo "ADVISORY  §Blocks row(s) carrying both NEW and MOD/DEL — not checked; split the row if the markers apply to different files:"
+    echo "ADVISORY  §Classes row(s) carrying both NEW and MOD/DEL — not checked; split the row if the markers apply to different files:"
     printf '%s' "$ambiguous" | sort -u | sed 's/^/        /'
   fi
 fi
 
-# 4. ADVISORY — §Conformance ↔ §Tasks, the anti-drop inverse. A row nobody
-#    builds is a promise the plan already broke. Advisory rather than hard
-#    because plans link the two ends by more than one convention (a task
-#    naming `Conformance 2/3/6`, a row naming `Task 15`, or an
-#    `Impl block-or-task` column naming the block) — a row this misses may
-#    still be covered, so it prints and the author confirms.
+# ── The closure checks ────────────────────────────────────────────────────────
+# Everything below is a comparison between two things the plan already wrote.
+# They live here, not in blueprint-reviewer's rubric, because a script settles
+# them for free and deterministically — and because two verdicts on one question
+# can disagree. The reviewer is told to take these as given.
+
+# Every `Class.method` the plan defines: the ### class blocks' table rows.
+# A contract row starts `| method |` under a `### <Class>` heading.
+contract_methods="$(awk '
+  /^### / { cls = $0; sub(/^### +/, "", cls); gsub(/[`*]/, "", cls); next }
+  cls != "" && /^\|/ {
+    line = $0; gsub(/^\| *| *\|$/, "", line)
+    split(line, f, /  *\| */); m = f[1]; gsub(/[` ]/, "", m)
+    if (m != "" && m !~ /^-+$/ && m != "method" && m !~ /^</) print cls "." m
+  }
+' "$plan" | sort -u)"
+
+# 4. HARD — §Conformance rows must point at a Class.method the plan defines.
+#    A row naming something that does not exist is a promise with no owner, and
+#    it is the one direction nothing else catches (a missed requirement produces
+#    no class, so absence is invisible to every other section).
 conf_body="$(section_body "$(section_pat 'Conformance')")"
-tasks_body="$(section_body "$(section_pat 'Tasks')")"
-conf_nums="$(printf '%s\n' "$conf_body" | grep -oE '^\|[[:space:]]*[0-9]+[[:space:]]*\|' | grep -oE '[0-9]+' || true)"
-if [ -n "$conf_nums" ] && [ -n "$tasks_body" ]; then
-  # Numbers a task claims, ranges (20–25) expanded.
-  claimed="$(printf '%s\n' "$tasks_body" \
-    | grep -oE '(Conformance|符合性)[ ：:]*[0-9][0-9/、,，·～－–—[:space:]-]*' \
-    | sed -E 's/^(Conformance|符合性)[ ：:]*//' \
-    | awk '{
-        n = split($0, parts, /[^0-9–—～-]+/)
-        for (i = 1; i <= n; i++) {
-          if (parts[i] == "") continue
-          if (parts[i] ~ /^[0-9]+[–—～-][0-9]+$/) {
-            split(parts[i], r, /[–—～-]/); for (k = r[1]; k <= r[2]; k++) print k
-          } else if (parts[i] ~ /^[0-9]+$/) print parts[i]
-        }
-      }' || true)"
-  uncovered=""
-  while IFS= read -r n; do
-    [ -z "$n" ] && continue
-    grep -qx "$n" <<< "$claimed" && continue
-    # Fallback: the row itself points at a task or an impl block.
-    row="$(grep -E "^\|[[:space:]]*${n}[[:space:]]*\|" <<< "$conf_body" || true)"
-    grep -qE '(Task|任務)[ ：:]*[0-9]+|`' <<< "$row" && continue
-    uncovered="${uncovered}${n} "
-  done <<< "$conf_nums"
-  if [ -n "$uncovered" ]; then
-    echo "ADVISORY  §Conformance row(s) with no discoverable §Tasks link: ${uncovered}"
-    echo "        confirm each is built by something — a task naming 'Conformance <n>', or the row naming its task/block"
+if [ -n "$conf_body" ] && [ -n "$contract_methods" ]; then
+  dangling=""
+  while IFS= read -r row; do
+    case "$row" in \|*) ;; *) continue ;; esac
+    grep -qE '^\|[[:space:]]*[0-9]+[[:space:]]*\|' <<< "$row" || continue
+    # Any `Foo.bar` the row cites must be a method the plan defines.
+    refs="$(grep -oE '`[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*`' <<< "$row" \
+      | tr -d '`' || true)"
+    if [ -z "$refs" ]; then
+      dangling="${dangling}$(grep -oE '^\|[[:space:]]*[0-9]+' <<< "$row" | tr -dc '0-9')(無 Class.method) "
+      continue
+    fi
+    while IFS= read -r r; do
+      [ -n "$r" ] || continue
+      grep -qxF "$r" <<< "$contract_methods" || dangling="${dangling}${r} "
+    done <<< "$refs"
+  done <<< "$conf_body"
+  if [ -n "$dangling" ]; then
+    echo "FAIL  §Conformance row(s) pointing at no defined method: ${dangling}"
+    echo "        每列的「實作於」要指向 §Classes 某個 class 區塊裡實際存在的 Class.method"
+    fail=1
   fi
+fi
+
+# 5. HARD — §Data flow graph nodes must exist in §Classes. A node naming a class
+#    or method the plan never defines is name drift, and it silently breaks the
+#    race derivation below (which counts edges into state nodes).
+flow_body="$(section_body "$(section_pat 'Data flow')")"
+if [ -n "$flow_body" ] && [ -n "$contract_methods" ]; then
+  unknown=""
+  while IFS= read -r n; do
+    [ -n "$n" ] || continue
+    grep -qxF "$n" <<< "$contract_methods" || unknown="${unknown}${n} "
+  done <<< "$(grep -oE '\["[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"\]' <<< "$flow_body" \
+    | sed -E 's/^\["//; s/"\]$//' | sort -u)"
+  if [ -n "$unknown" ]; then
+    echo "FAIL  §Data flow node(s) not defined in §Classes: ${unknown}"
+    echo "        圖上的 [\"Class.method\"] 節點必須逐字對上某個 class 區塊的一列"
+    fail=1
+  fi
+  grep -qE '\(\[".*"\]\)' <<< "$flow_body" \
+    || echo "ADVISORY  §Data flow has no ([origin]) node — 沒有併發來源的圖回答不了它該回答的問題；真的只有單一入口就明寫一行"
+fi
+
+# 6. HARD — every state node written from ≥2 origins needs an §Error policy row.
+#    This is the whole point of typing the graph: it turns "did you think of a
+#    race" (unfalsifiable) into "did you account for what you drew" (checkable).
+if [ -n "$flow_body" ]; then
+  policy_body="$(section_body "$(section_pat 'Error policy')")"
+  uncovered=""
+  # mermaid declares a node once with its label (`M[("cache")]`) and refers to it
+  # by id everywhere after (`A --> M`), so count edges by ID, not by label.
+  while IFS=' ' read -r id label; do
+    [ -n "$id" ] || continue
+    writers="$(grep -oE -- "--> *${id}\b" <<< "$flow_body" | grep -c . || true)"
+    [ "${writers:-0}" -ge 2 ] || continue
+    grep -qF "$label" <<< "$policy_body" || uncovered="${uncovered}${label} "
+  done <<< "$(grep -oE '[A-Za-z0-9_]+\[\("[^"]+"\)\]' <<< "$flow_body" \
+    | sed -E 's/^([A-Za-z0-9_]+)\[\("(.*)"\)\]$/\1 \2/' | sort -u)"
+  if [ -n "$uncovered" ]; then
+    echo "FAIL  state node(s) written from ≥2 edges with no §Error policy row: ${uncovered}"
+    echo "        圖上被多方寫入的狀態，每一個都要在 §Error policy 的爭用表有一列"
+    fail=1
+  fi
+fi
+
+# 7. ADVISORY — complexity cells carry both halves and a named variable.
+#    An unnamed O(n) is decoration: nobody can falsify it.
+bad_cx="$(grep -nE '^\|' "$plan" | grep -E 'T:|S:' \
+  | grep -vE 'T:[^|]*S:' || true)"
+if [ -n "$bad_cx" ]; then
+  echo "ADVISORY  複雜度格只填了一半（要 T: 和 S: 兩半）:"
+  printf '%s\n' "$bad_cx" | cut -c1-120 | sed 's/^/        /'
+fi
+unnamed_o="$(grep -nE 'O\([^)]*[a-z][^)]*\)' "$plan" | grep -vE '[nmk] *=' | grep -E 'T:|S:' || true)"
+if [ -n "$unnamed_o" ]; then
+  echo "ADVISORY  Big-O 沒指名變數（要寫 n=書籍數 之類，否則不可證偽）:"
+  printf '%s\n' "$unnamed_o" | cut -c1-120 | sed 's/^/        /'
 fi
 
 # 5. ADVISORY — required-section presence (bilingual; never gates).

@@ -951,7 +951,9 @@ function printTemplate(dbKey, typeKey) {
   console.log(`     Delete every placeholder and this comment before saving. -->`);
   for (const s of sections) {
     console.log(`\n## ${s.key}${s.required ? '' : '   <!-- optional; delete if 不適用 -->'}`);
-    console.log(STUB[s.kind] ?? STUB.raw);
+    // A section's own `template` wins; the kind-based stub is the fallback for
+    // sections that have not authored one.
+    console.log(s.template ?? STUB[s.kind] ?? STUB.raw);
   }
   // The example must not start any line with `#` — a template whose comment
   // survives into the body would otherwise register a phantom heading with

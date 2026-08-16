@@ -340,11 +340,11 @@ the following maps to a section of the engineering plan row body
 run `notion-payload hints engineering-plan`
 to print the full section questionnaire with descriptions and hints):
 
-- **§Composition** — lead with a **Mermaid composition graph** (Notion
+- **§Classes** — lead with a **Mermaid composition graph** (Notion
   renders it) showing block→block wiring (widget → state holder → use case →
   repository → data source). This is the reviewer's 30-second shape + the
   modular assembly diagram; nodes are feature-prefixed class names.
-- **§Blocks** — the single block inventory: one table row per block,
+- **§Classes** — the single block inventory: one table row per block,
   grouped by feature when more than one —
   `Block | Layer | File (NEW/MOD/DEL) | Interface | SOP`. **Interface =
   class name + method-signature list only — no method bodies, no logic
@@ -388,7 +388,7 @@ to print the full section questionnaire with descriptions and hints):
   counter-evidence, omit the row; do **not** invent exceptions to look
   thorough. Hold every row to the Evidence-column standard — run
   `notion-payload hints engineering-plan`
-  and read the §Error handling hint (evidence sources (a)–(d); "could maybe throw"
+  and read the §Error policy hint (evidence sources (a)–(d); "could maybe throw"
   is not evidence). **Each tracer
   self-verifies its own cites resolve** (mechanical, in-agent — it already
   has the grep open); this thread then adjudicates only which verified
@@ -403,7 +403,7 @@ to print the full section questionnaire with descriptions and hints):
   EXPECTED state whenever the plan defers a leaf/primitive choice, not a
   tracer miss.
 - **§Startup** — construction timing and dependency order for everything the
-  change brings up at launch. Separate from §Error handling because the defects
+  change brings up at launch. Separate from §Error policy because the defects
   differ in kind: an error-handling gap is a missing branch, a startup gap is a
   wrong *order*, and no state matrix can express "A ran before B". Separate from
   the design spec's four states for the same reason — those describe a screen at
@@ -424,12 +424,13 @@ to print the full section questionnaire with descriptions and hints):
   `# | Requirement | Source (product §outcome / design §item) | Impl block-or-task | Code evidence (file:line) | Test (qa id) | Status`.
   **Completeness is the point** (Iron Law 8): walking the product plan + design
   spec, every commitment and every observable item must appear as a row mapped to
-  ≥1 §Tasks entry — a spec item with no row, or a row with no task, is an
-  incomplete plan. Fill `Requirement / Source / Impl` at plan time; `Code evidence`
+  a `Class.method` that §Classes actually defines — a spec item with no row, or a
+  row pointing at nothing, is an
+  incomplete plan. Fill `Requirement / Source / 實作於` at plan time; `Code evidence`
   is filled during implementation (self-cite the file:line that realises the row,
   like a §Error-handling handling decision); `Test` points at the QA acceptance
-  test. This is the **inverse** of §Blocks' "source-from-spec, never invent":
-  §Blocks stops you adding what the spec didn't ask for; §Conformance stops you
+  test. This is the **inverse** of §Classes' "source-from-spec, never invent":
+  §Classes stops you adding what the spec didn't ask for; §Conformance stops you
   dropping what it did. Verified post-code by `conformance-reviewer` + QA
   (Iron Law 7 / 10).
 
@@ -504,14 +505,14 @@ users, and pre-existing callers of any API being changed:
   `pubspec.yaml`. Name the upgrade explicitly; don't piggyback
   it on a feature plan.
 
-## Phase 5 — Test seams (named inside §Blocks, not a section of their own)
+## Phase 5 — Test seams (named inside §Classes, not a section of their own)
 
 This role authors the **contract-derived** tests — that a unit / state holder / widget
 behaves as its own interface promises. They live under `test/**` *outside*
 `test/spec/`, which is `/qa`'s tree; never write into it. `testing.md` Rule 1
 has the partition.
 
-**The seams go in §Blocks' Interface column**, whose ctor collaborator list *is*
+**The seams go in §Classes' Interface column**, whose ctor collaborator list *is*
 the seam — a separate §Testing seams section restated it, and it existed to
 pre-declare seams for `/qa` back when `/qa` wrote every test. You now write the
 contract tests yourself, so there is nobody to pre-declare to. At plan time name:
@@ -622,12 +623,12 @@ Within a single PR, phases can ship as separate commits. Across
 PRs, phase branches stack on the prior phase. State which mode
 you're in.
 
-**§Tasks is a plain list, not a checklist.** It says what to build and in
-what order — that is a *plan*, and it does not change as work lands. Progress
-has two homes already (TaskCreate, canonical for live status; the Notion
-task's `## Implementation` mirror, founder-visible), and a third copy inside
-the plan is the one guaranteed to go stale: the plan is only re-uploaded on a
-rev, so its boxes drift from reality the moment a phase ships without one.
+**The plan body carries no task list.** Tasks live only in TaskCreate (canonical
+for live status) and the Notion task's `## Implementation` mirror
+(founder-visible). A third copy inside the plan body is the one guaranteed to go
+stale — the body is only re-uploaded on a rev, so it drifts the moment a phase
+ships or a task is resequenced. What the plan owns is *content*: §Classes says
+what to build, §Conformance says what it must satisfy.
 
 **Check off the Notion mirror as each phase lands** — the mirror, never the
 plan. After a phase / slice **lands a commit**, invoke the `archivist` skill to
@@ -722,7 +723,7 @@ context. Split the work by *kind*, not by parallelism:
   skeleton, and no banned placeholder (`TBD`, `decide later`,
   `as needed`, …) survives un-routed. Plus an **advisory** bilingual
   section-presence checklist — because the §Language section below
-  translates headings (`## Error handling` → `## 錯誤處理`), section
+  translates headings (`## Error policy` → `## 錯誤處理`), section
   presence can't be a hard English match without false-failing a
   correct plan; the script flags any section it can't locate as
   `confirm` for you to eyeball. Exit 0 = no hard failures.
@@ -745,7 +746,7 @@ surprises.
 Phase 8 confirms the plan **complies with the project's rules** — rule
 compliance is necessary but not sufficient: an audit-clean plan can
 still be O(N²) on a hot path, leaky across feature boundaries, or carry
-an §Error handling matrix that ticks every cell while missing half the
+an §Error policy matrix that ticks every cell while missing half the
 real failure modes. This phase scores the plan across the reviewer's
 scope-gated **design-quality** dimensions that the rule-compliance audit
 doesn't cover, and iterates until every in-scope dimension is ≥ 8,
@@ -873,8 +874,9 @@ user is owed — see Iron Law 11.)
 
 ### Seed TaskCreate
 
-Mirror the row body's `## Tasks` list into TaskCreate
-calls, one task per item. Task 1 is always "Engineering review
+Enumerate the tasks straight into TaskCreate — one per unit of work, derived
+from §Classes (what to build) and §Conformance (what it must satisfy). There is
+no task list in the plan body to mirror. Task 1 is always "Engineering review
 (this artefact)" — the approval gate task. For a **Phased plan**,
 each phase's task group ends with its own `/review` task, plus a
 `/qa` task when that phase adds new observable behavior (§Per-phase
@@ -946,7 +948,7 @@ Plan review: blueprint-reviewer (不落檔; verdict recorded in the plan header)
               verdict: <approve | approve-with-improvements>; every in-scope
               dimension ≥ 8 after <N> cycle(s) | escalated: <dimension>
               accepted at <score> by user
-Interactive review (Iron Law 11): <walked §Summary→§Tasks with the user
+Interactive review (Iron Law 11): <walked §Summary→§Conformance with the user
               start to finish; their changes folded into Rev <n> | no changes requested>
 Plan lint: <PASS | N hard failures 已修> (plan_lint.sh, Phase 8)
 Tasks seeded: <count> (Task 1 = engineering review, awaiting approval;
@@ -990,7 +992,7 @@ reach implementation, not while drafting.
   handling matrix is **enumeration drift**, not divergence — don't stop
   the phase. Find the evidence (throwing `file:line` / framework doc /
   platform observation; no evidence → it probably can't occur here), then
-  route it at the moment you find it: add the row to §Error handling
+  route it at the moment you find it: add the row to §Error policy
   yourself when unambiguous · batch-question the user when ambiguous ·
   escalate to the PM or designer role when the call is product or UI
   scope · defer to a TaskList task when it's rare with a clear trigger.
@@ -1028,8 +1030,8 @@ convention nouns (one-pager, rev). Taiwan vocab: 直書 / 匯入 / 軟體 /
 soften.
 
 **Repo pointers stay.** File paths, class / method names, and line numbers
-belong in an engineering plan — §Blocks *is* a file inventory and
-§Composition's nodes *are* class names, both mandated by this skill's own
+belong in an engineering plan — §Classes *is* a file inventory and
+§Classes's nodes *are* class names, both mandated by this skill's own
 Phase 3 and by the `engineering-plan` body schema. The archivist's
 §No repo pointers convention exempts this DB for that reason: its reader is
 an engineer or a reviewer, and a pointer they can't grep is a pointer they

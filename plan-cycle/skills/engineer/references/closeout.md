@@ -73,7 +73,7 @@ and design spec.
 # Phase 11.5 — Exception discovery and batch resolution
 
 During implementation the implementer encounters exceptions not
-listed in the plan's §Error handling matrix — typically by
+listed in the plan's §Error policy matrix — typically by
 reading framework / plugin docs, by hitting a throw in a test,
 or by walking a code path that turns out to throw an exception
 class the planner missed. These are **enumeration drift** in
@@ -97,7 +97,7 @@ and the Iron-Law-7 zero-`Pending`-rows gate (Phase 12 Step 0) are
 
 ## Exception discovery — route it the moment you find it
 
-When implementation surfaces an exception the plan's §Error handling
+When implementation surfaces an exception the plan's §Error policy
 matrix did not predict, resolve it **there and then** — do not carry a
 queue. First find the evidence (the throwing `file:line`, a framework
 doc, a platform observation). **If you cannot find evidence, the
@@ -106,7 +106,7 @@ it.
 
 Then route by what kind of decision it actually is:
 
-- **(a) Unambiguous → add the row to §Error handling yourself.** Another
+- **(a) Unambiguous → add the row to §Error policy yourself.** Another
   `FileSystemException` from a new code path the existing outer-catch arm
   already covers; another transient cloud exception matching the existing
   transient-vs-conclusive classification. Add it citing the new Source and
@@ -193,9 +193,9 @@ time so the diff stays reviewable. After a FIX edit:
   rebuilt per its own build step.
 - If a FIX touches a layer not covered by the original plan
   (new abstraction, new schema, new API caller), route through
-  Phase 11 (Mid-flow divergence) first — update the Notion row body's
-  §Tasks (via the `archivist`) and re-request approval before
-  landing the edit.
+  Phase 11 (Mid-flow divergence) first — update the affected tasks via
+  `TaskUpdate`, rev the row body's §Classes / §Conformance (via the
+  `archivist`), and re-request approval before landing the edit.
 - If a FIX changes a test seam or coverage target, hand the
   test-authoring work to `/qa` per Iron Law 1 of
   `testing.md` — do not write `test/**` from the engineer role.
@@ -313,9 +313,8 @@ in action 4 is that commit's hash.
 1. **Mark task done** — `TaskUpdate` "Post-implementation code
    review" → `completed`.
 2. **Check off the Notion task's `## Implementation` mirror** — its last
-   unchecked items, via the `archivist`. **Do not copy state into the plan**:
-   §Tasks is a plain list of what was planned, not a progress log (a shipped
-   plan's Status already says it landed).
+   unchecked items, via the `archivist`. **Do not copy state into the plan** —
+   it carries no task list, and a shipped plan's Status already says it landed.
 3. **Revision history entry** — append `Rev N: post-implementation
    /review — <count> findings, <count> FIX / <count> DISMISS /
    <count> DEFER; clean re-review`.

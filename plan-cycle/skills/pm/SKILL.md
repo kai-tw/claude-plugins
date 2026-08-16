@@ -300,11 +300,9 @@ first.
 just audit criteria — the Phase 6 gate is the BACKSTOP, not the first line of defence. Every violation it
 catches was cheaper to avoid here than to rewrite there.
 
-For the chosen artifact type, run **both**:
-`notion-payload template product-plan <type>` — the skeleton to fill, showing the
-density `I3` asks for and where an `I4` decision note goes — and
-`notion-payload hints product-plan <type>` for the per-section rules and 禁-lists
-a skeleton cannot show. Point-form, no hedging (§Plan integrity
+For the section structure of the chosen artifact type, run:
+`notion-payload hints product-plan <type>`
+(e.g. `hints product-plan one-pager`). Point-form, no hedging (§Plan integrity
 `I3`); a rejected option is named only inside the decision note it makes legible
 (`I4`). Decision-forcing — end with a concrete next move, not "let me know what
 you think."

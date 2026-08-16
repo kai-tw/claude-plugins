@@ -291,8 +291,8 @@ Open a phase only when its criterion is met:
 | **designer** | the change produces or alters any user-visible surface | `designer` |
 | **translator** | the change adds or changes user-facing copy needing i18n | `translator` |
 | **engineer** | any non-trivial implementation (always, for code work) | `engineer` |
-| **security** (cross-cutting gate) | **boundary-gated at every stage** — spawn only when the artifact touches a trust boundary / attack surface (PM plan: a new online mechanism, permission boundary, or failure path; engineer plan: §Blocks; code: the diff). Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `security-reviewer` |
-| **privacy** (cross-cutting gate) | **boundary-gated at every stage** — spawn only when the artifact touches a data-egress sink / telemetry / collection (PM plan: new collection or a new event; engineer plan: §Blocks; code: the diff). Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `privacy-reviewer` |
+| **security** (cross-cutting gate) | **boundary-gated at every stage** — spawn only when the artifact touches a trust boundary / attack surface (PM plan: a new online mechanism, permission boundary, or failure path; engineer plan: §Classes; code: the diff). Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `security-reviewer` |
+| **privacy** (cross-cutting gate) | **boundary-gated at every stage** — spawn only when the artifact touches a data-egress sink / telemetry / collection (PM plan: new collection or a new event; engineer plan: §Classes; code: the diff). Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `privacy-reviewer` |
 | **QA test** | any code lands | `qa` |
 | **code review** | after code is written | `code-reviewer` |
 | **conformance** | after code + after QA's spec tests, when an approved product / design plan exists — **residual only**: §Non-goals violations, token-level drift, doc the change made false, and the `spec-should-change` judgment | `conformance-reviewer` |
@@ -470,8 +470,8 @@ is not); when in doubt, spawn (fail-closed).
   in the same batch, and a constraint the engineer-plan gate re-derives anyway.
   The failure-path trigger above is deliberate: that cycle's scope-growing
   decision *did* add a new failure path, and would still fire.
-- **Engineer plan** — gate on **§Blocks**: spawn `security-reviewer` only when
-  §Blocks touches a trust boundary / attack surface, `privacy-reviewer` only
+- **Engineer plan** — gate on **§Classes**: spawn `security-reviewer` only when
+  §Classes touches a trust boundary / attack surface, `privacy-reviewer` only
   when it touches a data-egress sink / telemetry / collection. A
   behavior-preserving refactor (DI rewiring, consolidation, UI plumbing) that
   touches neither skips the corresponding gate.

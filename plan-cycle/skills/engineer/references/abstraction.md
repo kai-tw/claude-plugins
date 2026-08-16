@@ -122,16 +122,14 @@ abstraction:
   residual). Not product risks.
 - **`## Migration impact`** — concrete schema / API / lint impacts
   vs the last release tag.
-- **`## Blocks`** — the block table: per block, class name +
-  method-signature list (no bodies) + file (NEW/MOD/DEL) + layer +
-  SOP. Full feature-prefixed names per `naming.md §Naming`.
-- **`## Data flow`** — sequence per scenario, code-flow level;
-  reference blocks by name. Cite line numbers for *existing* code,
-  named identifiers for new.
-- **`## Error handling`** — a one-line policy + the 7-column matrix
-  + race sub-table, every row evidence-cited.
-- **`## Tasks`** — phase letters + tasks, atomic-PR / atomic-commit
-  mode, pre-gate audit tasks for risky phases.
+- **`## Classes`** — the inventory table (class + layer + kind + file
+  NEW/MOD/DEL + 職責 + 持有狀態), then one `###` block per class carrying its
+  public-method contracts (signature, callee, evidence, complexity, errors) —
+  signatures only, no bodies. Full feature-prefixed names per `naming.md §Naming`.
+- **`## Data flow`** — a mermaid graph whose node names match §Classes
+  verbatim; origins typed, state nodes marked.
+- **`## Error policy`** — a one-line policy + the shared-state contention
+  table derived from that graph, every row evidence-cited.
 
 A plan that reads at the wrong abstraction in any section is
 either ghostwriting an upstream artifact (route the content back

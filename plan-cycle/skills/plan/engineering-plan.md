@@ -24,15 +24,13 @@ The engineering plan exists in two places at once:
    (shape + where `I4` decision notes go) and
    `notion-payload hints engineering-plan`
    for the section questionnaire (description, hints, criteria per section).
-2. **TaskCreate task list** in the conversation — canonical for
-   live status. Tasks 1..N mirror the plan's `## Tasks` list, with
-   task 1 being the engineering review itself.
+2. **TaskCreate task list** in the conversation — **the only task list**,
+   canonical for both content and live status, with task 1 being the
+   engineering review itself.
 
-At plan creation both are seeded from the same content by
-the engineer role. **Status lives only in TaskCreate** (plus the Notion
-task's `## Implementation` mirror for founder visibility) — the plan's
-`## Tasks` is a plain list of what was planned and carries no checkboxes,
-because a plan re-uploaded only on a rev cannot stay honest about progress.
+The engineer role enumerates the tasks straight into TaskCreate from §Classes
+and §Conformance. **The plan body carries no task list** — a copy re-uploaded
+only on a rev cannot stay honest about what was resequenced or shipped.
 
 ## Required contents
 

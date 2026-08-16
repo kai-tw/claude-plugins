@@ -7,7 +7,7 @@ description: |
   (player ≠ referee). The rubric is picked by the artefact's stage: a PM plan or
   design spec gets **checklist mode** — a single pass walking that role's
   `references/rules.md` principle-by-principle, sub-check-by-sub-check, plus the
-  two `§Plan integrity` checks, returning passed / violation / na per item with
+  `§Plan integrity` checks, returning passed / violation / na per item with
   evidence and a three-count gate line (no scores, no fan-out). An
   engineering plan (the Notion Engineering Plan DB row, or the
   in-thread draft before it is posted) — single
@@ -17,7 +17,7 @@ description: |
   runtime error handling, package usage) plus **testability**,
   **abstraction/reuse/ownership**, and **migration/back-compat**. It
   **dispatches one fresh-context sub-agent per in-scope dimension** — which
-  dimensions run is gated by what the plan's §Blocks actually
+  dimensions run is gated by what the plan's §Classes actually
   touch (defect dimensions are non-droppable; maximizers scale to plan
   size) — each grounded in the relevant rules (incl. the engineer
   rules), then **consolidates them into one report** (reconciling, never
@@ -53,11 +53,11 @@ allowed-tools:
 >    failure scenario it causes + the cited section — never a proposed
 >    solution. "Low coupling: 4/10, needs work" is useless; "`BookRepository`
 >    mixes read+write, so read-only state holders must mock write methods →
->    brittle tests, §Blocks" is actionable. **Devising the fix is the
+>    brittle tests, §Classes" is actionable. **Devising the fix is the
 >    engineer's job** (it owns the design); the reviewer names the problem
 >    sharply enough that the engineer can act.
 > 3. **Honest calibration — both directions.** Never inflate to look
->    productive (a "7/10" on a plan with no §Error handling section is
+>    productive (a "7/10" on a plan with no §Error policy section is
 >    grade inflation). Never downgrade because the fix is inconvenient.
 > 4. **Stay at the engineering abstraction.** Speak in classes, layers,
 >    boundaries, data flow, exception taxonomies, package contracts.
@@ -71,7 +71,7 @@ allowed-tools:
 >    *maximizer* dimensions (time, space, scalability, extendability,
 >    testability, abstraction/reuse/ownership) for a small plan, but a
 >    *defect* dimension (coupling, correctness/race, error handling,
->    migration) **must run whenever the plan's §Blocks touch its
+>    migration) **must run whenever the plan's §Classes touch its
 >    surface** — determined by that layer list, not by gut feel. A race
 >    reviewer skipped because "this looked like a UI tweak" is the exact
 >    blind spot the review exists to catch.
@@ -217,15 +217,17 @@ Also read, when relevant to scoring a row:
   for the criteria→sections routing table (which section earns which dimension).
 - For criterion 7 authoring requirements: run
   `notion-payload hints engineering-plan`
-  and read the §Error handling hint. Full rubrics stay in this file.
+  and read the §Error policy hint. Full rubrics stay in this file.
 - Any feature directory the plan touches — to ground "low coupling" /
   "extendable" in the actual existing boundaries.
 
 Run `plan-lint <plan-path>` once and
-read its output. It owns the mechanical comparisons — the named files exist,
-§Conformance rows map to tasks, §-refs resolve, no count points back at a body
-that changed. Take its findings as given rather than re-deriving them; your
-budget belongs on what it cannot decide.
+read its output. It owns every closure comparison — the named files exist,
+§Conformance rows point at a `Class.method` that exists, §Data flow's graph nodes
+match §Classes, every ≥2-origin state node has an §Error policy row, complexity
+cells carry both `T:` and `S:`. **Take its findings as given and never re-derive
+them** — a question a script already settled is not worth a dimension's budget,
+and two verdicts on one question can disagree.
 
 **Shipped / retrospective plans.** If the plan's Status is `Shipped` and
 the tree has moved past it, score the plan's authored **intent** (Iron
@@ -236,7 +238,9 @@ is a different review the caller didn't ask for.
 
 ### 1b — Scope-gate: decide which dimensions to dispatch
 
-From the plan's **§Blocks** (the NEW/MODIFY/DELETE-per-layer list):
+From the plan's **§Classes** inventory table (the NEW/MOD rows, by layer) and the
+`持有狀態` column — the table answers the gating questions directly, so gate on it
+rather than pattern-matching prose:
 
 - **Defect dimensions — surface-gated, non-droppable (Iron Law 6):**
 
@@ -260,14 +264,14 @@ never a silent absence.
 
 **Re-audit scoping — cache by §Block.** When the caller passes a **prior
 `passed` review + the diff since it** (a re-audit, not a first pass), the
-scope-gate becomes a cache **keyed on §Blocks**: a dimension whose gating
-§Blocks are **untouched by the diff** is a HIT — **carry its prior score
-forward, do not re-dispatch.** Re-dispatch only the dimensions whose §Blocks the
-diff changed, plus any defect dimension the changed §Blocks newly trip (Iron Law
+scope-gate becomes a cache **keyed on §Classes**: a dimension whose gating
+§Classes are **untouched by the diff** is a HIT — **carry its prior score
+forward, do not re-dispatch.** Re-dispatch only the dimensions whose §Classes the
+diff changed, plus any defect dimension the changed §Classes newly trip (Iron Law
 6 — a change can newly *trigger* a previously out-of-surface defect dimension;
 that is a MISS, never carried). **Fail-closed: any doubt whether the diff touches
-a dimension's §Blocks is a MISS (re-dispatch), never a HIT.** Record
-carried-vs-redispatched in the log (`Carried (unchanged §Blocks): … ;
+a dimension's §Classes is a MISS (re-dispatch), never a HIT.** Record
+carried-vs-redispatched in the log (`Carried (unchanged §Classes): … ;
 re-dispatched (diff): …`) just as 1b records dispatch — a carried score is an
 auditable decision, never a silent reuse. The all-`passed` bar still spans
 **every** in-scope dimension (carried + re-dispatched), so the verdict covers
@@ -385,7 +389,10 @@ drifts upward over time; resist it.
 
 ### Criterion 1 — Time complexity
 
-Read §Data flow and the hot paths it names; the standard is `code-style.md §Performance & Complexity`. Ask:
+Read the `複雜度` column in §Classes (per-method `T:`) **and** §Data flow's graph
+(composition — an `O(1)` method called inside another class's `O(n)` loop makes
+the path `O(n)`, and only the edge shows that). The standard is
+`code-style.md §Performance & Complexity`. Ask:
 
 - Are hot paths identified (UI frame, list scroll, EPUB render, sync)?
 - Big-O reasoned about for any loop over user data (books, chapters,
@@ -399,7 +406,11 @@ analysis at all (silent guess).
 
 ### Criterion 2 — Space complexity
 
-Read §Data flow + §Blocks (standard: `code-style.md §Performance & Complexity`); §Blocks lists name+method-list with no Dart bodies — score space from §Data flow streaming/resident + held state, dont ding missing bodies:
+Space splits across two columns of §Classes (standard: `code-style.md §Performance
+& Complexity`): the inventory's `持有狀態` is what a class **holds** (the cache
+with no bound lives here), the contract table's `S:` is what a method
+**allocates**. §Classes carries no Dart bodies — score the two columns, don't ding
+missing bodies:
 
 - Large data (EPUB blobs, image buffers, isolate snapshots) streamed or
   fully resident?
@@ -446,7 +457,8 @@ each respects the layer direction. The *cohesion* complement — should the
 unit exist, who owns it — is criterion 10. (`presentation.md §11`: portal-rendered
 widgets re-bridging inherited context is a coupling defect here.)
 
-Read the §Composition graph — it is the coupling/wiring picture. How narrow is the surface each module exposes?
+Read §Data flow's graph (the wiring) against §Classes' `呼叫` column (who each
+method reaches for). How narrow is the surface each module exposes?
 
 - Layer boundaries respected (data ↔ domain ↔ presentation per
   `.claude/rules/architecture.md`)?
@@ -474,27 +486,31 @@ nullable field with no rule for when it's null vs not.
 
 ### Criterion 7 — Runtime error handling
 
-Score against the §Error handling authoring requirements — run:
-`notion-payload hints engineering-plan`
-and read the §Error handling hint. The plan's §Error handling table is the artefact
-being scored.
+Two artefacts: §Error policy (the cross-class rulings) and the
+`Error → 處置` column of §Classes (per method). Run
+`notion-payload hints engineering-plan` and read the §Error policy hint for the
+authoring requirements. `plan_lint` already settled the closure questions — every
+external boundary has a cell, every ≥2-origin state node has a race row — so
+spend your budget on whether the *handling* holds:
 
-- Every external boundary (`await`, parse, plugin call, googleapis,
-  MethodChannel) appears as ≥1 row?
-- Every row carries non-empty Source / Exception / Evidence / Catch site
-  / Log call / State effect / User-facing fallback (no `TBD` placeholders
-  without a matching `## Open questions` route)?
+- Exceptions named as concrete subclasses, not abstract bases, and each
+  backed by real evidence (`throw` site `file:line`, framework doc, platform
+  observation, prior incident) rather than "可能會 throw"?
 - Classification axis named (transient vs conclusive, retry vs hard-fail,
-  recoverable vs terminal) or "no axis needed" justification given?
-- Race-conditions sub-table covers every concurrent-producer pair the
-  data-flow section names?
-- Exceptions sourced from concrete subclasses, not abstract bases?
-- Log levels match `.claude/rules/code-style.md` (expected → info, real
-  failure → error with stackTrace)?
+  recoverable vs terminal) or a stated "no axis needed"?
+- Each race row's handling actually holds — the named primitive really
+  serialises that path, or the accepted last-write-wins has a **real**
+  convergence path and not just the phrase?
+- A caught exception that changes state does so conclusively (`error-handling.md`
+  conclusive-only write / no-silent-failure), and log levels match
+  `.claude/rules/code-style.md` (expected → info, real failure → error with
+  stackTrace)?
+- The plan does **not** claim coverage of await-gap or framework-scheduling
+  races — those are invisible at plan stage, and asserting them is a false
+  assurance, not a strength.
 
-A 10 passes every item in the §Error handling hint "Sanity check" (run
-`notion-payload hints engineering-plan`
-→ §Error handling). A 2 has §Error handling missing, sparse, or "decide later"-flavoured.
+A 10 has every handling decision traceable to a rule or a stated trade-off. A 2
+has §Error policy missing, sparse, or "decide later"-flavoured.
 
 ### Criterion 8 — Package usage
 
@@ -538,8 +554,8 @@ listenable pattern (`.claude/rules/testing.md` Rule 3 — Prong A/B)?
   the design spec (behavioural cells, four states, each motion / transition /
   interaction) and the product plan (success metric, scope commitments)
   *backwards*: an item with no row is an item nothing will ever fail on
-  (`plan_lint.sh` checks the rows map to tasks; only you can check the spec
-  maps to rows)?
+  (`plan_lint.sh` checks each row points at a `Class.method` that exists; only
+  you can check the spec maps to rows — that needs the upstream read)?
 
 A 10 names every seam + fake target so `/qa` writes the test
 without refactoring production first. A 2 designs a state holder testable only by
@@ -549,7 +565,8 @@ mocking a listenable (Prong A leak).
 
 The cohesion complement to criterion 5's edge-direction — runs
 Adding-New-Abstractions **steps 3+4** (grep for an existing accessor before
-declaring a new one; identify the correct owner). Read the §Composition graph (wiring) + §Blocks (each block SOP ref shows what is reused).
+declaring a new one; identify the correct owner). Read §Classes — the `職責`
+column is the ownership claim, and each row's SOP ref shows what is reused.
 
 - Each new unit does one thing (SRP)?
 - No duplicated logic AND no over-extracted single-statement helper (DRY,
@@ -755,16 +772,16 @@ return value — no saved artifact, no chat prose.
 
 | # | Criterion | Score | Cite | Notes |
 |---|---|---|---|---|
-| 1 | Time complexity | X/10 | §Data flow (vs code-style §Performance) | <one-line reason> |
-| 2 | Space complexity | X/10 | §Data flow (vs code-style §Performance) | ... |
-| 3 | Scalability | X/10 | §Risks | ... |
-| 4 | Extendability | X/10 | §Blocks | ... |
-| 5 | Low coupling | X/10 | §Composition | ... |
-| 6 | Design correctness | X/10 | §Data flow | ... |
-| 7 | Error handling | X/10 | §Error handling | ... |
-| 8 | Package usage | X/10 | §Blocks | ... |
-| 9 | Testability | X/10 | §Blocks (ctor collaborators = the seam) | ... |
-| 10 | Abstraction/reuse/ownership | X/10 | §Composition · §Blocks | ... |
+| 1 | Time complexity | X/10 | §Classes `T:` · §Data flow (composition) | <one-line reason> |
+| 2 | Space complexity | X/10 | §Classes `持有狀態` + `S:` | ... |
+| 3 | Scalability | X/10 | §Risks · §Data flow (fan-out) | ... |
+| 4 | Extendability | X/10 | §Classes | ... |
+| 5 | Low coupling | X/10 | §Classes `呼叫` · §Data flow | ... |
+| 6 | Design correctness | X/10 | §Classes `簽名` | ... |
+| 7 | Error handling | X/10 | §Error policy · §Classes `Error → 處置` | ... |
+| 8 | Package usage | X/10 | §Classes | ... |
+| 9 | Testability | X/10 | §Classes (ctor collaborators = the seam) · §Conformance | ... |
+| 10 | Abstraction/reuse/ownership | X/10 | §Classes `職責` | ... |
 | 11 | Migration & back-compat | X/10 | §Migration impact · Stage-1d diff | ... |
 | 12 | Startup & init order | X/10 | §Startup (or N/A with a stated reason) | ... |
 | **Total (informational; verdict is per-dimension ≥ 8)** | | **XX/NN** | | |
@@ -779,7 +796,7 @@ return value — no saved artifact, no chat prose.
 > line** — devising the fix is the engineer's job, not the reviewer's.
 
 **[7. Error handling — 5/10]**
-- §Error handling table omits the Drive 503 / quota boundary; cite
+- §Error policy table omits the Drive 503 / quota boundary; cite
   `lib/.../google_drive_data_source_impl.dart` — there's an
   `await drive.files.create(...)` with no matching row.
 - Failure scenario: a Drive quota-exceeded response goes uncaught → the
@@ -863,7 +880,7 @@ When you finish, return to the caller (one short paragraph):
   resolves the tension; the reviewer does not pick a fix.
 - **Defect dimensions are not scope-droppable** (Iron Law 6): a coupling /
   correctness-race / error-handling / migration reviewer runs whenever the
-  plan's §Blocks touch its surface, regardless of plan size.
+  plan's §Classes touch its surface, regardless of plan size.
 - **Reconcile, never average** (Iron Law 7): a blocking finding from any
   one dimension survives consolidation as blocking. Dropping a blocking
   finding requires a written reason in the log's Consensus-decisions
