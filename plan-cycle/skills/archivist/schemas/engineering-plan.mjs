@@ -10,7 +10,7 @@
 //            inventory).
 //   Tier C — Behaviour detail (implementer reference): Data flow · Error handling.
 //   Tier D — Execution: Tasks (ordered, phase-grouped — folds Sequencing in).
-//   Tier E — Trail (appendix): Decision history · Revision history.
+//   Tier E — Trail (appendix): Revision history.
 //
 // Each section:
 //   key         — the ## heading text emitted in the Notion body (English or 繁中)
@@ -36,7 +36,7 @@ export const body = [
     required: true,
     criteria: [],
     description: '一兩句：在組什麼 + 為什麼（連 upstream product/design row）',
-    hint: '1–2 句講清楚這個 plan 在組什麼、為什麼，並連到 task 的 Product / Design Plan row。不要重抄 product plan 的問題敘述（那是 PM 的）——這裡只給工程讀者一個 30 秒定位。形狀看 §Composition、決策看 §Decision history、風險看 §Risks。',
+    hint: '1–2 句講清楚這個 plan 在組什麼、為什麼，並連到 task 的 Product / Design Plan row。不要重抄 product plan 的問題敘述（那是 PM 的）——這裡只給工程讀者一個 30 秒定位。形狀看 §Composition、風險看 §Risks。',
   },
   {
     key: 'Composition',
@@ -115,19 +115,11 @@ export const body = [
   },
   // ── Tier E — Trail (appendix) ──────────────────────────────────────────
   {
-    key: 'Decision history',
-    kind: 'raw',
-    required: true,
-    criteria: [],
-    description: '工程決策的編號流水紀錄（co-created + 自行裁定），不記選項',
-    hint: '**編號清單**（markdown `1.` `2.` …，非表格），每個決策一項：\n`<決策> — <裁示 + 理由> —— <裁定者>`\n收錄「真正的決策」——有 ≥2 個可行選項的分叉：選了哪個既有抽象來 reuse、邊界放哪、兩個 data-flow 選哪個、什麼 defer 及為何。**不記錄被否決的選項**；若「為什麼不是 X」是理解裁示的關鍵，寫進理由那一句。\n裁定者填 `使用者`（與 user co-create / user 拍板，Iron Law 11）或 `自行裁定`（trivial、低風險、單一明確解，你未問逕自決定——/plan rule 1 的 trivial carve-out）。每筆自行裁定都必須留一項，讓 user 在 section-by-section co-review 一眼掃到並可推翻——decide 可以不問，但不可不記。\n純機械、無分叉的選擇（local 變數命名之類）不是決策，不入清單。cross-feature / 易再浮現的決策於 close-out 時 promote 進 Decision Log DB（沿用現行 Phase 13 流程），不在這裡重複維護。\n**決策改變時，改內文、不疊層**：正文（§Composition / §Blocks / §Data flow …）改成新裁示，本清單新增一項 `#12 取代 #7：<新裁示 + 為何改>`，舊項目原地保留不刪不劃線。完整規則見 `plan/SKILL.md §Plan integrity` 的 `I1`。§Revision history 另記「這次改了什麼、為什麼」（含非決策性修訂），兩者不重複。\n寫入時機：本清單隨 living draft 在既有上傳里程碑 batch 上傳（finalize → rev），勿每筆決策各打一次 Notion。',
-  },
-  {
     key: 'Revision history',
     kind: 'bullets',
     required: true,
     criteria: [],
     description: '變更記錄（audit trail）',
-    hint: '首行固定：YYYY-MM-DD: Created at task list creation.\n每次修訂加一行說明 what changed and why：co-creation 決議落地 / Phase 11 divergence rev（說明偏差原因）/ founder 回饋 / blueprint-reviewer 修正。不要省略；這是計畫演進的 audit trail，月後回溯仍需讀懂。',
+    hint: '首行固定：YYYY-MM-DD: Created at task list creation.\n每次修訂加一行說明 what changed and why：co-creation 決議落地 / Phase 11 divergence rev（說明偏差原因）/ founder 回饋 / blueprint-reviewer 修正。\n一行一次修訂，不展開理由——裁示本身寫在正文被裁定處的決策註記裡（`plan/SKILL.md §Plan integrity` 的 `I4`）。\n不要省略；這是計畫演進的 audit trail，月後回溯仍需讀懂。',
   },
 ];

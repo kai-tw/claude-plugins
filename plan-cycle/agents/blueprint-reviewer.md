@@ -111,9 +111,9 @@ principle → **every** sub-check against the draft and return a verdict each:
 - **na** — only when the artefact genuinely has no surface the sub-check governs;
   say why. Never `na` to dodge a real gap.
 
-Then walk the two plan-integrity checks in `plan/SKILL.md §Plan integrity` (`I1`,
-`I2`) with the same vocabulary — they bind every plan regardless of role, and
-`I1` is the one check that needs the **whole** body read end to end.
+Then walk every plan-integrity check in `plan/SKILL.md §Plan integrity` (`I1`–`I4`)
+with the same vocabulary — they bind every plan regardless of role, and
+`I1` and `I3` need the **whole** body read end to end.
 
 Report **every** sub-check, passes included — the author learns the state of the
 whole artefact from this, not just where it broke — and close with
@@ -628,8 +628,10 @@ plan and the whole body are already in hand.
   plan makes without having read the source. `plan_lint.sh` proves the named
   files exist; whether what the plan says *about* them is true is yours.
 - **Plan integrity** (`plan/SKILL.md §Plan integrity`). A body that
-  contradicts itself after a rev (`I1`), or re-derives an upstream ruling at
-  length instead of citing it (`I2`).
+  contradicts itself after a rev (`I1`), re-derives an upstream ruling at
+  length instead of citing it (`I2`), pads with lines that carry no ruling or
+  fact (`I3`), or rules something without a decision note where it was
+  decided (`I4`).
 
 ### Criterion 12 — Startup & initialization order
 

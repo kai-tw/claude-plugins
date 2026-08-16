@@ -182,7 +182,7 @@ PM role**，不自行改寫（player ≠ referee）：
 - **spec 發明了 plan 沒授權的 user-visible 範圍** —— 新的 surface / state / affordance 不在
   §範圍 也不在 §非目標 裡。
 - **spec 把上游的「例子」當成上游的「裁定」** —— §Proposed approach / §Acceptance criteria /
-  §Success metric / §Non-goals / §Decision history 是已授權、可當 ruling 引；§Product-level risk
+  §Success metric / §Non-goals / 決策註記是已授權、可當 ruling 引；§Product-level risk
   裡由「**例如**」「candidate」「could」引入的數字 / 閾值 / 排序**只是 input**。把後者寫成 binding
   的，常會跟 spec 自己的原則打架——那個矛盾就是 smoke。
 - **plan 的「永不靜默 X」承諾被旁路** —— §非目標 沒封死 time-based / background / aging 的自動

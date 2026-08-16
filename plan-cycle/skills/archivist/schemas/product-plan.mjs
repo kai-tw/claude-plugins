@@ -67,7 +67,7 @@ const PRODUCT_LEVEL_RISK = {
   required: true,
   criteria: [],
   description: '第一條固定是最危險假設 + 便宜驗證法（PM rule P7），其後為殘餘風險',
-  hint: '**第一條必須是最危險假設**，格式：`**最危險假設：**<單一信念> — 驗證法：<便宜驗證>`。\n那是這個計畫成不成立最沒把握的那一句話，不是風險清單的第一項。\n排序參考：想要性（使用者會不會要）通常最先致命 > 存續性（撐不撐得住成本 / 商業模式）\n> 可用性 > 可行性（標準 app 通常最低風險，除非依賴未驗證的平台能力）。\n禁：把「這個做起來難不難」當最危險假設——那是可行性，通常不是最沒把握的那個。\n驗證法要便宜：訪談幾位使用者 / 假門頁面 / 現有數據回查 / 小型 spike——不是「先做完整功能\n再看數據」。若計畫已把完整實作排在驗證之前，退回重排序。\n**其餘各條是殘餘風險**，格式：<風險> — <目前最好的猜測或下一步緩解方式>；涵蓋技術執行、\n外部依賴、時程壓力。不要在這裡重複第一條。\n本區塊不收「open questions」：存檔前所有開放問題都已解決或經使用者明確確認為刻意 defer；\n刻意 defer 的決策（連同 owner / trigger）記在 §Decision history。\n若無殘餘風險，只留第一條即可。',
+  hint: '**第一條必須是最危險假設**，格式：`**最危險假設：**<單一信念> — 驗證法：<便宜驗證>`。\n那是這個計畫成不成立最沒把握的那一句話，不是風險清單的第一項。\n排序參考：想要性（使用者會不會要）通常最先致命 > 存續性（撐不撐得住成本 / 商業模式）\n> 可用性 > 可行性（標準 app 通常最低風險，除非依賴未驗證的平台能力）。\n禁：把「這個做起來難不難」當最危險假設——那是可行性，通常不是最沒把握的那個。\n驗證法要便宜：訪談幾位使用者 / 假門頁面 / 現有數據回查 / 小型 spike——不是「先做完整功能\n再看數據」。若計畫已把完整實作排在驗證之前，退回重排序。\n**其餘各條是殘餘風險**，格式：<風險> — <目前最好的猜測或下一步緩解方式>；涵蓋技術執行、\n外部依賴、時程壓力。不要在這裡重複第一條。\n本區塊不收「open questions」：存檔前所有開放問題都已解決或經使用者明確確認為刻意 defer；\n刻意 defer 的決策在被 defer 的那條旁邊附決策註記（含 owner / trigger）。\n若無殘餘風險，只留第一條即可。',
 };
 
 const NON_GOALS = {
@@ -79,22 +79,13 @@ const NON_GOALS = {
   hint: '明確列出：scope 邊界、被刻意排除的使用情境、不在 v1 裡的 follow-up。\n每條以「not X」或「X is out of scope」開頭。\n禁：留空（Iron Law 3 是硬要求，不是選項）、含糊的「not applicable」。',
 };
 
-const DECISION_HISTORY = {
-  key: 'Decision history',
-  kind: 'raw',
-  required: false,
-  criteria: [],
-  description: '產品決策的編號流水紀錄（co-created + 自行裁定），不記選項',
-  hint: '**編號清單**（markdown `1.` `2.` …，非表格），每個決策一項：\n`<決策> — <裁示 + 理由> —— <裁定者>`\n收錄共創過程中「真正的決策」——有 ≥2 個可行選項的分叉（scope 取捨、方案選擇、metric 定義、什麼 defer 及為何）。**不記錄被否決的選項**；若「為什麼不是 X」是理解裁示的關鍵，寫進理由那一句。\n裁定者填 `使用者`（與 user co-create / 拍板，Iron Law 7）或 `自行裁定`（trivial、低風險、單一明確解，你未問逕自決定——/plan rule 1 的 trivial carve-out）。每筆自行裁定都必須留一項，讓 user 一眼掃到並可推翻——decide 可以不問，但不可不記。\n純敘述、無分叉的內容不入清單（那屬 §Proposed approach）。cross-feature / 易再浮現的決策於 close-out 時 promote 進 Decision Log DB。完全無決策時可省略本節。\n**deferred 決策（defer 到誰、trigger 是什麼）也記在這裡**——不要另開一份「open questions」清單：存檔前所有開放問題都已解決或經使用者明確確認為刻意 defer。\n**決策改變時，改內文、不疊層**：正文改成新裁示，本清單新增一項 `#12 取代 #7：<新裁示 + 為何改>`，舊項目原地保留不刪不劃線。完整規則與理由見 `plan/SKILL.md §Plan integrity` 的 `I1`。\n寫入時機：本清單隨 living draft 在既有上傳里程碑 batch 上傳，勿每筆決策各打一次 Notion。',
-};
-
 const REVISION_HISTORY = {
   key: 'Revision history',
   kind: 'bullets',
   required: true,
   criteria: [],
   description: '變更記錄（audit trail）',
-  hint: '首行固定：YYYY-MM-DD: Created.\n每次修訂加一行說明 what changed and why：co-creation 決議落地 / founder 回饋 / 下游 role 退回 / gate 修正。\n這裡記**所有**修訂（含非決策性的措辭修正）；§Decision history 只記裁示，兩者不重複。\n不要省略；這是計畫演進的 audit trail，月後回溯仍需讀懂。',
+  hint: '首行固定：YYYY-MM-DD: Created.\n每次修訂加一行說明 what changed and why：co-creation 決議落地 / founder 回饋 / 下游 role 退回 / gate 修正。\n一行一次修訂，不展開理由——裁示本身寫在正文被裁定處的決策註記裡（`plan/SKILL.md §Plan integrity` 的 `I4`）。\n不要省略；這是計畫演進的 audit trail，月後回溯仍需讀懂。',
 };
 
 // ── artifact type definitions ──────────────────────────────────────────────────
@@ -116,7 +107,6 @@ export const types = {
     SUCCESS_METRIC,
     NON_GOALS,
     PRODUCT_LEVEL_RISK,
-    DECISION_HISTORY,
     REVISION_HISTORY,
   ],
 
@@ -176,7 +166,6 @@ export const types = {
       hint: '列出：哪些 analytics event 對應 success metric 的移動、怎麼知道 feature 被使用了、怎麼知道它有效。\n不用列所有 event——只列回答 success metric 的那幾個。\n禁：「使用現有埋點就夠了」作為唯一回答（需具體說明）。',
     },
     PRODUCT_LEVEL_RISK,
-    DECISION_HISTORY,
     REVISION_HISTORY,
   ],
 

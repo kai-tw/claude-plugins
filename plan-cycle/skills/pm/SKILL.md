@@ -26,9 +26,9 @@ description: |
 >   adjusts one detail of something that already exists, the narrow reading is the
 >   default pick** — never make a broader rebuild the `(Recommended)` option;
 >   surface the wider scope only as an explicitly non-recommended aside. **Trivial
->   low-stakes decisions** you may resolve yourself, but log each as a `自行裁定`
->   entry in §Decision history so the user can override it in co-review (decide
->   without asking is fine; not logging is not). On any blocker / unknown, find the
+>   low-stakes decisions** you may resolve yourself, but annotate each with a
+>   `〔自行裁定〕` note where it was decided (§Plan integrity `I4`) so the user can
+>   override it in co-review (decide without asking is fine; not recording is not). On any blocker / unknown, find the
 >   answer yourself first (Notion KB → code → docs → web) and escalate to the
 >   user only when the search comes up empty.
 > - **Author the Notion Product Plan row** by invoking the `archivist` skill (you
@@ -302,9 +302,10 @@ catches was cheaper to avoid here than to rewrite there.
 
 For the section structure of the chosen artifact type, run:
 `notion-payload hints product-plan <type>`
-(e.g. `hints product-plan one-pager`). Crisp prose. No fluff. No hedging. Visible reasoning —
-name the trade-offs you considered and rejected. Decision-forcing —
-end with a concrete next move, not "let me know what you think."
+(e.g. `hints product-plan one-pager`). Point-form, no hedging (§Plan integrity
+`I3`); a rejected option is named only inside the decision note it makes legible
+(`I4`). Decision-forcing — end with a concrete next move, not "let me know what
+you think."
 
 **One problem, one user, one outcome per plan.** Two of any of those
 means you have two plans.
@@ -361,7 +362,7 @@ Then verify by judgment:
 
 - **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下，**上限 3 輪**。
   3 輪仍未全 passed → 停止迴圈，依 `plan/SKILL.md §Gate loop policy` 把未解項目白話交回 founder。
-- 它回報**每一條** sub-check（`P#.k` ＋ `I1` / `I2`）的 passed / violation / na 與證據，
+- 它回報**每一條** sub-check（`P#.k` ＋ `I1`–`I4`）的 passed / violation / na 與證據，
   末行 `gate: <V> violations · <P> passed · <N> na` —— 三個數字對不上清單長度，就是它沒走完。
 - 審查中若浮現現有 rules 未涵蓋的新 learning：依 `rules/CONVENTIONS.md` 的 learning
   更新法處理（先查相似 → 合併；無則加 sub-check 或新增母規則 `P<N+1>`；過時可刪）。

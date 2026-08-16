@@ -28,9 +28,9 @@ description: |
 >   rebuild the `(Recommended)` option; surface the wider scope only as an
 >   explicitly non-recommended aside. **Trivial low-stakes decisions** you may
 >   resolve yourself,
->   but log each as a `自行裁定` entry in §Decision history so the user
->   can override it in co-review (decide without asking is fine; not logging is
->   not). On any blocker / unknown, find the answer yourself first (Notion KB →
+>   but annotate each with a `〔自行裁定〕` note where it was decided
+>   (§Plan integrity `I4`) so the user can override it in co-review (decide
+>   without asking is fine; not recording is not). On any blocker / unknown, find the answer yourself first (Notion KB →
 >   design system / code → docs → web) and escalate to the user only when the
 >   search comes up empty.
 > - **Mockups:** render via `render-mockups
@@ -469,7 +469,7 @@ it doesn't again).
 
 - **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下，**上限 3 輪**。
   3 輪仍未全 passed → 停止迴圈，依 `plan/SKILL.md §Gate loop policy` 把未解項目白話交回 founder。
-- 它回報**每一條** sub-check（`P#.k` ＋ `I1` / `I2`）的 passed / violation / na 與證據，
+- 它回報**每一條** sub-check（`P#.k` ＋ `I1`–`I4`）的 passed / violation / na 與證據，
   末行 `gate: <V> violations · <P> passed · <N> na` —— 三個數字對不上清單長度，就是它沒走完。
 - 審查中若浮現現有 rules 未涵蓋的新 learning：依 `rules/CONVENTIONS.md` 的 learning
   更新法處理（先查相似 → 合併；無則加 sub-check 或新增母規則 `P<N+1>`；過時可刪）。
@@ -541,8 +541,8 @@ Next step: <hand-off to engineering, open questions, or follow-up>
 
 **The saved spec body carries no open questions** — by save time every one
 is either resolved or a deferral the user explicitly confirmed (Iron Law 9),
-and a confirmed deferral is a *decision*: log it in §Decision history with
-its owner and trigger, marked `使用者`. (This is why the body has no
+and a confirmed deferral is a *decision*: note it `〔使用者〕` where it was
+deferred, with its owner and trigger. (This is why the body has no
 "Open questions" section; the engineering plan works the same way — the
 heading exists only in the pre-save draft.) Pushback belongs in the same
 place: a flow you would not ship is a ruling to argue for, not a footnote.

@@ -431,7 +431,7 @@ rehomed **by kind**:
   - **`critical` blocks until resolved** — unchanged, and non-negotiable. What is
     dropped is re-deriving the whole judgment each round, not the blocking.
   - **`warning` never triggers a loop** — it goes to the founder to weigh, or is
-    logged in §Decision history as an accepted trade-off.
+    noted at the affected line as an accepted trade-off.
   - **Escalate the moment a finding changes kind.** Any round budget is a
     ceiling, not a quota. Once a finding stops being a *verifiable error* (a wrong
     number, a missing section, a claim the source contradicts) and becomes a
@@ -542,7 +542,7 @@ directly. A round has five steps, and **the founder appears exactly once**:
    for this stage (matrix column ②). **One pass**, then one verification pass
    scoped to the fixes — never loop-to-green (§Gate loop policy). Resolve every
    `critical`; take a `warning` back to the founder only when it would change a
-   decision, else log it in §Decision history as an accepted trade-off. If a
+   decision, else note it at the affected line as an accepted trade-off. If a
    finding *does* reopen a fork, that is a short second Resolve — bounded, and
    still far cheaper than having run the battery twice.
 5. **Finalize + confirm.** Fold everything in, write the final plan, **invoke the
@@ -572,12 +572,12 @@ runtime block points back to.
    to ask, and it is distinct from a *problem* (rule 2).
    - **Trivial-decision carve-out — decide, but log it.** A low-stakes decision
      with one clearly-right or near-indifferent answer you MAY resolve yourself
-     without asking — but every such autonomous call is **logged as an entry in
-     the §Decision history of the plan being authored this phase** (all three
-     plans use that heading), marked `自行裁定`, so the user can scan and
+     without asking — but every such autonomous call is **annotated `〔自行裁定〕`
+     where it was decided** in the plan being authored this phase (§Plan
+     integrity `I4`), so the user can scan and
      override it in the section-by-section co-review. Deciding without asking is
-     allowed; **not** logging it is not. (User-made / co-created decisions share
-     the same list marked `使用者`; cross-feature or likely-to-resurface ones
+     allowed; **not** recording it is not. (User-made / co-created decisions use
+     the same note marked `〔使用者〕`; cross-feature or likely-to-resurface ones
      promote to the Decision Log DB at close-out, as today — the list is the
      per-cycle log, the Decision Log DB its curated subset.)
    - **Scope-matching carve-out — don't inflate a detail adjustment.** When the
@@ -597,27 +597,14 @@ runtime block points back to.
    silently, and never spend the user's time on something the record already
    answers.
 
-**Decision-log writes are milestone-batched, never per-decision.** The
-§Decision history accumulates in the in-thread living draft and reaches Notion
-only at the existing upload milestones (finalize → rev; Iron Law 8 / Step 5) —
-**not** one Notion write per decision.
+**Plan writes are milestone-batched, never per-decision.** The living draft
+accumulates in-thread and reaches Notion only at the existing upload milestones
+(finalize → rev; Iron Law 8 / Step 5) — **not** one Notion write per decision.
 
-**A rev EDITS the body; it never stacks a layer on top of it.** When a decision
-changes, rewrite the affected prose in place — the body always states only what
-is true *now* — and add one `#N 取代 #M：…` entry to §Decision history. Appending
-a `## Rev` section that contradicts text left standing above it is forbidden: it
-makes the reader reconcile the contradiction by hand, and it is how one design
-plan reached 641 lines carrying **four** live self-contradictions (a fully
-token-specced two-button control replaced 150 lines later by a one-button one,
-the original spec untouched; a card design superseded eight lines after it was
-written; a state retired by one rev and reintroduced by a later one; a component
-retired and then un-retired). Product plans do it too — a hard cap set in one rev
-and revoked five lines below, the original ruling never edited.
+**Which write mechanism to use** (`I1` says a rev edits the body — this is how):
 
-**Which write mechanism follows from that:**
-
-- **Purely adding** (new §Decision history entries, new §Conformance rows,
-  nothing existing changes) → have the `archivist` append via
+- **Purely adding** (new §Conformance rows, a new section, nothing existing
+  changes) → have the `archivist` append via
   `notion_payload.mjs append <page-id>` (block-level). Cheapest, and it cannot
   desync what it doesn't touch.
 - **Anything existing changes** (a ruling rewritten, prose corrected, a section
@@ -626,10 +613,7 @@ and revoked five lines below, the original ruling never edited.
   it is what forces the stale occurrences elsewhere in the body to be swept
   (§Re-audit every plan change), which an append can never do.
 
-The O(N²) worry that once made append mandatory everywhere was real but
-mispriced: it bought linear writes at the cost of a body that grew without
-bound and lied about itself. A body kept honest stays small, so full-replace
-stays bounded — and correctness was never the cheaper thing to give up.
+A body kept honest stays small, so full-replace stays bounded.
 
 #### Re-audit every plan change (audit-first, always)
 
@@ -658,20 +642,20 @@ the gate's own call, never the launcher dropping it). The ① cell is cheap —
 always re-run it cold; the cache earns its keep on the Opus gates. Every gate
 still signs off the whole plan.
 
-#### Plan integrity (I1 · I2 — every plan, every role)
+#### Plan integrity (I1 · I2 · I3 · I4 — every plan, every role)
 
-Two constraints bind **every** plan body regardless of which role authored it —
+These constraints bind **every** plan body regardless of which role authored it —
 they govern the artifact, not the role's domain — so they live here once instead
-of as a third copy in each role's checklist. They are **drafting constraints
-first**: honour them while writing. `blueprint-reviewer` grades them (ids `I1` /
-`I2`) on every plan — inside the checklist walk for pm / designer, as a
+of as a copy in each role's checklist. They are **drafting constraints
+first**: honour them while writing. `blueprint-reviewer` grades them by id on
+every plan — inside the checklist walk for pm / designer, as a
 cross-cutting check on the engineer plan — and `plan_lint.sh` catches their
 mechanical tells. `ux-reviewer` catches the provenance half again at ②.
 
 - **I1 — A rev edits the body; it never stacks a layer on top of it.** After any
   revision the body must state only what is true *now*: no two places may give
   different rulings on the same thing. Rewrite the affected prose in place and
-  record the change as one `#N 取代 #M` entry in §Decision history — never append
+  update the decision note there (`I4`) — never append
   a `## Rev` section that contradicts text left standing above it.
   **Reference by name, never by ordinal or count.** "The two gating metrics
   above", "the third constraint" and "§4" all decay silently the moment the thing
@@ -688,12 +672,12 @@ mechanical tells. `ux-reviewer` catches the provenance half again at ②.
   hand to learn what the spec actually said.
 - **I2 — Downstream cites upstream; it does not re-derive it, and does not
   promote what upstream never ruled.** When a plan depends on a ruling made
-  upstream, cite it (`per <upstream> §<section> /
-  Decision #N`) and stop — do not restate its reasoning at equal or greater
+  upstream, cite it (`per <upstream> §<section>`) and stop — do not restate its
+  reasoning at equal or greater
   length. The same applies within one document: a fact is stated in full in the
   section that owns it, and referenced elsewhere.
   **Only a ruling can be cited as one.** §Proposed approach / §Acceptance
-  criteria / §Success metric / §Non-goals / §Decision history are authorized;
+  criteria / §Success metric / §Non-goals and any decision note (`I4`) are authorized;
   a number, default, threshold or ordering that appears under §Product-level
   risk or arrives via "for instance" / "candidate" / "could" is **input**, not
   a ruling — own the call in your own voice (naming the principle it serves)
@@ -707,6 +691,30 @@ mechanical tells. `ux-reviewer` catches the provenance half again at ②.
   *Measured:* both sampled design plans re-argued their product plan's decisions
   in full while also citing them, and `48dp 觸控目標` appeared **seven** times in
   one spec.
+- **I3 — Point-form, one claim per line; the reader gets the plan in a minute.**
+  Bullets and tables carry the body; prose only where a bullet cannot hold the
+  thought. **Every line must answer "which ruling or fact do I carry" — if it
+  answers nothing, delete it.** Rejected alternatives, resolved open questions,
+  the wreckage of a superseded passage, and rationale restated from upstream all
+  fail that test. Rationale that survives is compressed into the same line as the
+  ruling, never given its own paragraph. The opening section must land four
+  things on their own: what is being built, why, the goal, and the execution
+  direction — a reader who stops there has the plan. Length is an outcome of this
+  rule, never a target to hit: a section is as short as saying it once allows,
+  and no shorter.
+- **I4 — A decision is annotated where it was decided; there is no decision
+  section.** Directly under the ruled line, one line:
+  `〔使用者〕<裁示理由>` or `〔自行裁定〕<裁示理由>`. `使用者` = co-created or
+  founder-ruled; `自行裁定` = you decided unasked (the trivial carve-out) — every
+  one of those **must** carry a note, so the founder can scan `〔自行裁定〕` and
+  overturn any of them; deciding without asking is allowed, deciding without
+  recording is not. Rejected options are not recorded; if "why not X" is what
+  makes the ruling legible, it belongs in that one line. A deliberate deferral is
+  a decision — note it with its owner and trigger. When the ruling changes,
+  **overwrite the note in place** with the new ruling and why it changed (`I1`);
+  no numbered log, no superseded entries left standing. Purely mechanical choices
+  with no fork are not decisions. Cross-feature decisions are promoted to the
+  Decision Log DB at close-out, not maintained twice.
 
 #### Worktree isolation (the file-writing boundary)
 

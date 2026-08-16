@@ -24,8 +24,9 @@ description: |
 >   decision / fork / trade-off, ask via `AskUserQuestion` the moment it surfaces,
 >   with the option you'd pick **first** and labeled `(Recommended)` — never bank
 >   a unilateral pick. **Trivial low-stakes decisions** you may resolve yourself,
->   but log each as a `自行裁定` entry in §Decision history so the user can
->   override it in co-review (decide without asking is fine; not logging is not). On any blocker
+>   but annotate each with a `〔自行裁定〕` note where it was decided (§Plan
+>   integrity `I4`) so the user can override it in co-review (decide without
+>   asking is fine; not recording is not). On any blocker
 >   / unknown, find the answer yourself first (Notion KB → codebase recon → docs
 >   → web) and escalate to the user only when the search comes up empty.
 > - **Recon sweep:** dispatch the parallel read-only `general-purpose` recon
@@ -993,7 +994,7 @@ reach implementation, not while drafting.
   yourself when unambiguous · batch-question the user when ambiguous ·
   escalate to the PM or designer role when the call is product or UI
   scope · defer to a TaskList task when it's rare with a clear trigger.
-  Every route leaves a §Decision history entry, so nothing is silent.
+  Every route leaves a decision note where it landed, so nothing is silent.
 - **Phase 12 — Post-implementation review & fix loop.** Non-optional
   per Iron Law 7. Steps 0–5.5 run **per landed phase** for a Phased
   plan (§Per-phase gate, Phase 7), scoped to that phase's diff; Step 6

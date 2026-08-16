@@ -110,8 +110,8 @@ Then route by what kind of decision it actually is:
   `FileSystemException` from a new code path the existing outer-catch arm
   already covers; another transient cloud exception matching the existing
   transient-vs-conclusive classification. Add it citing the new Source and
-  the same fallback, and log one `自行裁定` entry in §Decision history so
-  the founder can scan and override it.
+  the same fallback, and note it `〔自行裁定〕` on that row so the founder
+  can scan and override it.
 - **(b) Ambiguous but engineering-internal → ask the user.** A new
   exception class with multiple plausible fallbacks; an unclear
   retry-vs-fail call.
@@ -123,7 +123,7 @@ Then route by what kind of decision it actually is:
   defer to a TaskList task.** Open it (Status `Deferred` + the Trigger —
   Crashlytics signal above N hits, a plugin major bump, the next feature
   touching this path) via the `archivist` skill, and record the deferral
-  as a `自行裁定` / `使用者` entry in §Decision history.
+  as a `〔自行裁定〕` / `〔使用者〕` note on the affected row.
 
 **Batch the escalations, not the discoveries.** If a phase turns up
 several (b) / (c) / (d) items, consolidate per route — one
@@ -134,12 +134,10 @@ evidence, and the options with your recommendation first.
 
 **Nothing is left silent.** Every discovery ends as a matrix row, an
 answered question, an upstream amendment, or a deferral with a trigger —
-and every one of those leaves a trace in §Decision history. That
-requirement is what a separate `## Exception log` section used to carry;
-it was removed because the decision it deferred cannot actually be
-deferred — the catch block has to be written for the code to compile, so
-"defer the decision" was really "make it provisionally and revisit",
-which §Decision history already records and the code-stage gates already
+and every one of those leaves a decision note where it landed. There is no
+separate exception log: the catch block has to be written for the code to
+compile, so "defer the decision" is really "make it provisionally and
+revisit" — which the note already records and the code-stage gates already
 read against the plan.
 
 

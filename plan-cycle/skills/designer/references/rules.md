@@ -17,7 +17,8 @@ P8 的兩條 provenance → `plan/SKILL.md §Plan integrity` 的 `I2` ＋ ux 的
 
 本檔即完整規則集（母規則 + sub-check + Example 同檔），沒有另外的細節檔；維護慣例見 `../rules/CONVENTIONS.md`。
 
-另有兩條**跨 role 的計畫完整性規則**——`I1`（rev 改內文、不疊層）與 `I2`（下游引用上游、不重推、
+另有一組**跨 role 的計畫完整性規則**——`I1`（rev 改內文、不疊層）、`I3`（重點式、每行都承載
+裁定或事實，答不出來就刪）、`I4`（決策註記寫在被裁定處，不另闢 section）與 `I2`（下游引用上游、不重推、
 不把上游的例子當裁定）——定義在 `plan/SKILL.md §Plan integrity`，起草時一併適用。
 
 ## P1 — 視覺狀態忠實對映底層真實狀態
@@ -207,7 +208,7 @@ the engineer role / `/qa` 讀成既定 doctrine。共同失敗：body 裡 reads-
 
 - **P8.1 上游 candidate ≠ 已授權裁定** — Check: 從 source PM plan 引用數字 / 預設 / 閾值 / 排序前，
   有沒有先定位引文所在 section 並分類？§Proposed approach / §Acceptance criteria / §Success metric /
-  §Non-goals / §Decision history = **已授權、可當 ruling 引**；§Product-level risk / 由「**例如**」
+  §Non-goals / 決策註記 = **已授權、可當 ruling 引**；§Product-level risk / 由「**例如**」
   「for instance」「candidate」「could」引入的例子 = **未授權、只當 input**。把後者當前者 = 違規（且常與
   spec 自身的 universal principle 矛盾 —— 矛盾就是未授權 import 的 smoke）。引用後者時 spec 須 (a) 自己
   做設計判斷並以自己的聲音擁有裁定（引所服務的原則、命名捨棄的 trade-off），或 (b) escalate 回 the PM
@@ -221,7 +222,7 @@ the engineer role / `/qa` 讀成既定 doctrine。共同失敗：body 裡 reads-
   reconciliation、具名 route / state 欄位）在 body 自答？是 → 違規（牴觸 Iron Law 7，且銀行未驗證機制
   當既定設計決策；imperative `push` 對本質 declarative 的 width 重決 pane 數常落在 anti-pattern）。只記
   **可觀察的設計行為**（選取跨 resize 保留、back 回 list、compact 單窗 expanded+ 雙窗），把機制問題在
-  §Decision history 記一項顯式 deferral（裁示＝「路由給 engineering plan / pre-impl gate 決定」，
+  該處附一則顯式 deferral 註記（裁示＝「路由給 engineering plan / pre-impl gate 決定」，
   含 owner + trigger），而非在 body 自答。
   Example: 用 go_router「selectedBookId + 寬度重建堆疊（push detail 變寬、變窄重 push）」回答「compact
   push detail 怎轉 expanded 雙窗格?」→ pre-E gate 證實 mixed-route 是 anti-pattern（imperative push 無法

@@ -25,14 +25,6 @@ export const body = [
     hint: '編號流程：1. Entry point → 2. → ... → N. Success state / exit。\n標出入口（從哪裡觸發）與成功狀態（user 認為任務完成的時刻）。\n分支流程（error / edge case）各開子流程，縮排標示。\n禁工程詞彙（cubit / repository / route name）——只寫使用者行為和畫面反應。',
   },
   {
-    key: 'Decision history',
-    kind: 'raw',
-    required: true,
-    criteria: [],
-    description: '佈局決策的編號流水紀錄（co-created + 自行裁定），每項引設計原則，不記選項',
-    hint: '**編號清單**（markdown `1.` `2.` …，非表格），每個決策一項：\n`<決策> — <裁示 + 理由（引設計原則）> —— <裁定者>`\n裁示理由引一個設計原則（M3 canonical layout / Fitts / hierarchy / reuse / a11y / reading-first）；禁審美形容詞（clean / minimal / elegant）。**不記錄被否決的選項**；若「為什麼選 A 不選 B」是理解裁示的關鍵，寫進理由那一句。\n裁定者填 `使用者`（與 user co-create / 拍板，Iron Law 9）或 `自行裁定`（trivial、低風險、單一明確解，你未問逕自決定——/plan rule 1 的 trivial carve-out）。每筆自行裁定都必須留一項，讓 user 在 co-review 一眼掃到並可推翻——decide 可以不問，但不可不記。\n純機械、無分叉的選擇不是決策，不入清單。\n**決策改變時，改內文、不疊層**：spec 正文（§Flow / §States / §Component-by-component spec …）改成新裁示，本清單新增一項 `#12 取代 #7：<新裁示 + 為何改>`，舊項目原地保留不刪不劃線。完整規則與理由見 `plan/SKILL.md §Plan integrity` 的 `I1`。\n寫入時機：本清單隨 living draft 在既有上傳里程碑 batch 上傳，勿每筆決策各打一次 Notion。',
-  },
-  {
     key: 'States',
     kind: 'table',
     required: true,
@@ -78,7 +70,7 @@ export const body = [
     required: true,
     criteria: [],
     description: '變更記錄（audit trail）',
-    hint: '首行固定：YYYY-MM-DD: Created.\n每次修訂加一行說明 what changed and why：co-creation 決議落地 / founder 回饋 / ux-reviewer 的修正 / 下游 role 退回。\n這裡記**所有**修訂（含非決策性的措辭修正）；§Decision history 只記裁示，兩者不重複。\n不要省略；這是 spec 演進的 audit trail，月後回溯仍需讀懂。',
+    hint: '首行固定：YYYY-MM-DD: Created.\n每次修訂加一行說明 what changed and why：co-creation 決議落地 / founder 回饋 / ux-reviewer 的修正 / 下游 role 退回。\n一行一次修訂，不展開理由——裁示本身寫在 spec 被裁定處的決策註記裡（`plan/SKILL.md §Plan integrity` 的 `I4`）。\n不要省略；這是 spec 演進的 audit trail，月後回溯仍需讀懂。',
   },
   {
     key: 'Mockups',
