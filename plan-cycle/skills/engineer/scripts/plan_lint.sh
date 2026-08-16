@@ -171,7 +171,6 @@ fi
 sections=(
   "Summary::Summary|摘要|總結"
   "Composition::Composition|組合|裝配"
-  "Decisions::Decisions?|決策"
   "Risks::Risks|風險"
   "Migration impact::Migration impact|Migration|遷移|相容性|向後相容"
   "Blocks::Blocks|積木|區塊"
@@ -221,7 +220,7 @@ fi
 stacked="$(grep -nE '^#+ .*(Rev|修訂)[[:space:]]*[0-9]' "$plan" \
   | grep -viE 'Revision history|修訂(歷史|紀錄)|變更紀錄' || true)"
 if [ -n "$stacked" ]; then
-  echo "ADVISORY  rev section(s) stacked on the body — fold into the prose and record the change in §Revision history (I1):"
+  echo "ADVISORY  rev section(s) stacked on the body — fold into the prose and update the decision note there (I1/I4):"
   printf '%s\n' "$stacked" | sed 's/^/        /'
 fi
 
