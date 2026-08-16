@@ -18,8 +18,8 @@
 #   §-refs (most point at the upstream plan), and back-referenced counts.
 #
 # THE MECHANICAL HALF OF THE ENGINEERING-PLAN GATE.
-#   The engineering plan has no `rules-audit` — `blueprint-reviewer` owns the
-#   judgment and this script owns the comparisons. Everything here is a
+#   `blueprint-reviewer` owns the judgment; this script owns the
+#   comparisons. Everything here is a
 #   comparison a reviewer should never be spent on: does the thing the plan
 #   names actually exist, does every promise map to a task, does every pointer
 #   resolve. Measured motivation — one cycle wrote the same call-site count

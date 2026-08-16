@@ -3,9 +3,9 @@
 **Read this BEFORE drafting the design spec.** Every entry constrains the
 writing, and the writing is where honouring it costs a sentence.
 
-**逐條走這張清單的是 `blueprint-reviewer` 的 checklist mode**（`rules-audit` 已退役、被它吸收），
-在 design spec 撰寫後、給 user 看 OQ 前旁觀審查（**player ≠ referee，禁 designer 自審**）；
-任何違規當場修正、禁 deferred & dismiss，迴圈至全 passed。SKILL.md Phase 6 的自查是你自己
+**逐條走這張清單的是 `blueprint-reviewer` 的 checklist mode**，在 design spec 撰寫後、給
+user 看 OQ 前旁觀審查（**player ≠ referee，禁 designer 自審**）；任何違規當場修正、禁
+deferred & dismiss，迴圈至全 passed，上限 3 輪（見 SKILL.md Phase 8）。SKILL.md Phase 6 的自查是你自己
 先擋一輪，**不是**它的替代品——規則你要懂，但審的人不能是你。
 
 **這裡的每一條同時也活在 `ux-reviewer` 的六軸裡**（狀態忠實 → ux P2.1／P2.3；感知通道與

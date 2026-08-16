@@ -107,5 +107,5 @@ founder's call.
 - **Not a plan-cycle state ledger.** Where a cycle *is* lives in
   `.claude/.plan-cycle/` (gitignored, per-session); this holds what the cycle
   *taught us*.
-- **Not `docs/*-reviews/`.** Those stay retired. Reviewers remain 不落檔 — they
-  return findings inline; only the *lesson about the gate* is filed here.
+- **Not a review log.** Reviewers are 不落檔 — they return findings inline; only
+  the *lesson about the gate* is filed here.

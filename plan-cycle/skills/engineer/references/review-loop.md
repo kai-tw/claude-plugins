@@ -184,8 +184,8 @@ Plan review: blueprint-reviewer (不落檔 — verdict returned inline)
 
 The line traces the plan back to its quality verdict so a reader
 of the plan row — months from now, in a different session — can
-audit calibration. The blueprint-reviewer no longer writes a log
-file; the plan header IS the durable record of the verdict. Without
+audit calibration. The blueprint-reviewer writes no log file; the
+plan header IS the durable record of the verdict. Without
 it, the score evaporates; with it, the next planner can compare
 against the rubric.
 

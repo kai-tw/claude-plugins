@@ -3,9 +3,9 @@
 **Read this BEFORE drafting the PM plan.** Every entry constrains the writing,
 and the writing is where honouring it costs a sentence.
 
-**逐條走這張清單的是 `blueprint-reviewer` 的 checklist mode**（`rules-audit` 已退役、被它吸收），
-在 PM plan 撰寫後、給 user 看 OQ 前旁觀審查（**player ≠ referee，禁 PM 自審**）；任何違規
-當場修正、禁 deferred & dismiss，迴圈至全 passed。SKILL.md Phase 5 的自查是你自己先擋一輪，
+**逐條走這張清單的是 `blueprint-reviewer` 的 checklist mode**，在 PM plan 撰寫後、給 user
+看 OQ 前旁觀審查（**player ≠ referee，禁 PM 自審**）；任何違規當場修正、禁 deferred &
+dismiss，迴圈至全 passed，上限 3 輪（見 SKILL.md Phase 6）。SKILL.md Phase 5 的自查是你自己先擋一輪，
 **不是**它的替代品——規則你要懂，但審的人不能是你。
 
 後果另有三處接住：**`feasibility-reviewer`**（對既有事物的斷言有沒有 grep 過〔P1.2〕、

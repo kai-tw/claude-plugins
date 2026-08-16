@@ -24,7 +24,7 @@ finding that surfaces a scope question.
    not landed.
 6. Hand back to the parent flow with: `(a)` the Notion **Product Plan
    row** URL (re-uploaded via the `archivist`), `(b)` the verbatim
-   ruling, `(c)` the rules-audit result (all passed / N 違規已修). Do not paraphrase.
+   ruling, `(c)` the rules audit result (all passed / N 違規已修). Do not paraphrase.
 
 The parent flow expects the ruling forwarded **verbatim**, not
 paraphrased — paraphrase has shipped bugs before. Forwarding a

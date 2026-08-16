@@ -19,8 +19,7 @@ user-derived 資料壓到「達成已記錄 outcome 所需的最小」；拒絕�
 逐項標級後，所有 warning / critical 回報 PM / engineer / 實作者修正，迴圈重審，**直到所有
 check = passed** 才放行。禁 deferred & dismiss。
 
-**檔案格式.** 單一檔 `index.md`；一個 axis / meta 面向是檔內一個 `## P<N>` 節，不再獨立
-成檔。節內：
+**檔案格式.** 單一檔 `index.md`；一個 axis / meta 面向是檔內一個 `## P<N>` 節。節內：
 - `## P<N> — <title>（GDPR 對應）`
 - `**Principle:**` 母規則通則 1–2 句 + 一行三級判定提示。
 - 每個 sub-check 一項 ——
@@ -32,9 +31,8 @@ check = passed** 才放行。禁 deferred & dismiss。
 GDPR 五軸（Purpose / Necessity / Retention / Sensitivity / Attestation）+ 一條跨切面
 meta，不硬湊。
 
-**單一檔.** `index.md` 現在就是完整規則庫 —— index 與 detail 已合併成同一檔，不再是兩個
-互相同步的檔案。新增 / 修改 / 合併 / 刪除時直接編輯對應的 `## P<N>` 節即可；不要為了分工
-再拆出第二個檔案。
+**單一檔.** `index.md` 就是完整規則庫，沒有第二份需要同步的檔案。新增 / 修改 / 合併 /
+刪除時直接編輯對應的 `## P<N>` 節即可；不要為了分工再拆出第二個檔案。
 
 **learning 更新法.**
 1. 先查 `index.md` 是否已有相似 axis / check。

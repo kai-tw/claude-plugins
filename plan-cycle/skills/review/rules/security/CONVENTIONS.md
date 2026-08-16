@@ -19,8 +19,8 @@ passed/違規，而是**三級判定**：
 逐 threat 標級後，**所有 warning / critical 回報 engineer / 實作者修正，迴圈重審，
 直到所有 threat = passed** 才放行。禁 deferred & dismiss。
 
-**檔案格式.** 規則庫是單一檔案 `index.md`；一個 threat-model category 佔一節，不再
-另立 detail 檔 —— index 與 detail 已合一，不存在第二份需要同步的檔案。Body：
+**檔案格式.** 規則庫是單一檔案 `index.md`；一個 threat-model category 佔一節，不
+另立 detail 檔 —— 不存在第二份需要同步的檔案。Body：
 - `## P<N> — <title>`
 - `**Principle:**` 母規則通則 1–2 句（含該類別的 STRIDE 對應），+ 一行「逐 threat 判
   passed/warning/critical、迴圈至全 passed」的判定模式提示。
@@ -29,9 +29,7 @@ passed/違規，而是**三級判定**：
   的分級）>. Example: <≤1 句>`。
 - 母規則只含單一 threat 時（如 P5 / P6），該 threat 一樣攤平成同一種 bullet：
   `- **P<N>.1 …** — Check: …` + `**Example:**`。
-- `（← NNN）` 是 provenance 標記，標出該 threat 收斂自哪條**已刪除**的舊 security
-  lesson #NNN；完整 CWE / MASVS / Detection-signal 原始推導見 **git 歷史**（舊 lessons
-  已於 Phase H lessons→rules cutover 刪除，不再留檔）。
+- 完整 CWE / MASVS / Detection-signal 原始推導見 **git 歷史**。
 
 **收斂原則（重要）.** rule 是**通則的整理**，不是 lessons 的照搬。新增前先問「這是不是
 某個既有 category 的特例 / 某個 STRIDE 類別下的新 threat？」是 → 掛成該母規則的一個
@@ -47,6 +45,5 @@ threat sub-check，**不要**新增 sibling 母規則。`.claude/rules/` 精神�
 4. **無且是全新攻擊面 → 新增一個 `## P<N+1>` 節**（N = 目前最大；刪除留下的洞不回填）。
 5. 過時 / 被平台預設消除的 threat（如某 OS 版本後不再適用）**可刪**。
 
-> 不再 append-only、不保永久編號 —— rule 以「當前一致、已收斂的 threat-model
-> checklist」為目標，歷史軌跡在 git。原 security lessons 的永久編號契約已退役；
-> 原 lessons 已刪除，完整 CWE / CVSS / Detection signal 原始推導見 git 歷史。
+> 不 append-only、不保永久編號 —— rule 以「當前一致、已收斂的 threat-model
+> checklist」為目標，歷史軌跡在 git。

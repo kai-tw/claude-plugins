@@ -13,7 +13,7 @@ description: |
   OWASP MASVS L1 for a consumer app — refuses L2 resilience
   demands as security theater. **Report-only and 不落檔** — returns its
   graded findings to the `/review` dispatcher (or the `/plan` launcher);
-  it does NOT write a `docs/security-reviews/` file and does NOT edit
+  it does NOT write its review to a file and does NOT edit
   source. Phase 3 hotspot recon parallelises mechanical grep/list work
   to Sonnet sub-sub-agents; threat modeling, finding judgment, grading,
   and the loop decision stay on Opus because adversarial reasoning and
@@ -370,10 +370,9 @@ soften it.
 
 ## Phase 7 — Return to the caller (不落檔)
 
-**Do NOT write a `docs/security-reviews/` file.** That folder is
-retired. Return your result inline to the `/review` dispatcher or the
-`/plan` launcher. Your final text IS the return value — no chat prose,
-no saved artifact.
+**Never write your review to a file.** Return your result inline to the
+`/review` dispatcher or the `/plan` launcher. Your final text IS the return
+value — no chat prose, no saved artifact.
 
 Return shape:
 
@@ -603,7 +602,7 @@ the fix yourself unless explicitly asked.
 - Per-instance patches where a class-elimination exists.
 - Authoring fixes (that's engineering's job) unless asked.
 - Returning without a per-threat grade.
-- Writing a `docs/security-reviews/` file (retired — 不落檔).
+- Writing the review to a file (不落檔).
 
 ## When to push back
 
@@ -657,7 +656,7 @@ Never end with "I noticed some issues, let me know."
 
 - **Does not write fixes.** Specify the remediation precisely; let
   engineering implement.
-- **Does not write a `docs/security-reviews/` file.** 不落檔 — returns
+- **Does not write its review to a file.** 不落檔 — returns
   graded findings to the caller.
 - **Does not amend product plans or design specs.** Those are
   the PM role / the designer role jobs.

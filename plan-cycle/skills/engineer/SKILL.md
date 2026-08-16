@@ -783,10 +783,9 @@ out per the review-loop reference.
 
 ## Phase 9 — 每次修訂都重審（audit-first）
 
-**這份計畫沒有 `rules-audit`。** 它的判斷已折進 Phase 8.5 的 `blueprint-reviewer`
-（維度 + 三條橫切檢查），機械比對已折進 Phase 8 的 `plan_lint.sh`
-（`references/rules.md` 開頭有完整對照）。留在這一格的是那道 gate 唯一無法外包的紀律：
-**重審的時機**。
+**這份計畫沒有逐條走查的 checklist gate。** 判斷歸 Phase 8.5 的 `blueprint-reviewer`
+（維度 + 三條橫切檢查），機械比對歸 Phase 8 的 `plan_lint.sh`（`references/rules.md` 開頭
+有完整對照）。留在這一格的是唯一無法外包的紀律：**重審的時機**。
 
 任何對 plan body 的更動——co-creation 決議、founder 回饋、Phase 11 divergence rev、後續
 revision——都要**先重跑 Phase 8 的 `plan_lint.sh`、再把 `blueprint-reviewer` 對改動處
@@ -1047,5 +1046,5 @@ engineer rules（工程計畫的起草約束）不在本檔列舉，全文見 `r
 （`blueprint-reviewer` 判斷、`scripts/plan_lint.sh` 比對）。格式與 learning 更新法見
 `rules/CONVENTIONS.md`。
 
-> `references/rules.md` 是這些可檢查 principle 的 SSOT。Phase 8 的 self-check 不再有第二份
+> `references/rules.md` 是這些可檢查 principle 的 SSOT。Phase 8 的 self-check 沒有第二份
 > 清單 —— 它直接指向 `.claude/rules/` 的各章節（見該 Phase 的對照表）。

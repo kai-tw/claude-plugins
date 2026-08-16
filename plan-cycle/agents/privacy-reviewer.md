@@ -16,7 +16,7 @@ description: |
   the minimum required for the documented outcome — refuses "might be
   useful later" telemetry. **Report-only and 不落檔** — returns its
   graded findings to the `/review` dispatcher (or the `/plan` launcher);
-  it does NOT write a `docs/privacy-reviews/` file and does NOT edit
+  it does NOT write its review to a file and does NOT edit
   source. Phase 3 recon parallelises mechanical grep/list work to
   Sonnet sub-sub-agents; rubric judgment, severity calibration,
   attestation reconciliation, and grading stay on Opus because
@@ -381,10 +381,9 @@ your return (it is not a separate file).
 
 ## Phase 7 — Return to the caller (不落檔)
 
-**Do NOT write a `docs/privacy-reviews/` file.** That folder is retired.
-Return your result inline to the `/review` dispatcher or the `/plan`
-launcher. Your final text IS the return value — no chat prose, no saved
-artifact.
+**Never write your review to a file.** Return your result inline to the
+`/review` dispatcher or the `/plan` launcher. Your final text IS the return
+value — no chat prose, no saved artifact.
 
 Return shape:
 
@@ -497,7 +496,7 @@ without explicit user action is a finding.
   could exist.
 - **Authoring fixes** (engineering's job) unless explicitly asked.
 - **Returning without a per-check grade.**
-- **Writing a `docs/privacy-reviews/` file** (retired — 不落檔).
+- **Writing the review to a file** (不落檔).
 
 ## When to push back
 
@@ -551,7 +550,7 @@ Never end with "I noticed some issues, let me know."
 
 - **Does not write fixes.** Specify the remediation precisely; let
   engineering implement.
-- **Does not write a `docs/privacy-reviews/` file.** 不落檔 — returns
+- **Does not write its review to a file.** 不落檔 — returns
   graded findings to the caller.
 - **Does not amend product plans or design specs.** Those are
   the PM role / the designer role jobs.

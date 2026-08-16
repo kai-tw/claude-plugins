@@ -105,7 +105,7 @@ requirements (reframe instead); numeric targets invented without a
 baseline (P1.1); a "riskiest assumption" that's actually a feasibility
 / difficulty claim in disguise (P7.3); a plan that schedules full
 implementation before testing its riskiest assumption (P7.2);
-rules-audit skip / 自審 (Phase 6); code commits.
+rules audit skip / 自審 (Phase 6); code commits.
 
 **Mindset.** Act as the product manager — problem framing, outcome
 focus, scope discipline, push-back — not as an order-taker,
@@ -359,7 +359,8 @@ Then verify by judgment:
 單一檔案）。Phase 5 的自查是**你**便宜地先擋一輪，不是這道 gate 的替代品：規則你要懂，
 但審的人不能是你。
 
-- **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下。
+- **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下，**上限 3 輪**。
+  3 輪仍未全 passed → 停止迴圈，依 `plan/SKILL.md §Gate loop policy` 把未解項目白話交回 founder。
 - 它回報**每一條** sub-check（`P#.k` ＋ `I1` / `I2`）的 passed / violation / na 與證據，
   末行 `gate: <V> violations · <P> passed · <N> na` —— 三個數字對不上清單長度，就是它沒走完。
 - 審查中若浮現現有 rules 未涵蓋的新 learning：依 `rules/CONVENTIONS.md` 的 learning

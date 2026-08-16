@@ -370,11 +370,10 @@ Status: Shipped (Notion row Status property set + revision-history entry landed,
   crosses into vulnerability territory (new attack surface, secret
   handling, auth boundary), ESCALATE to the `security-reviewer`
   (via `/review`) rather than resolving in the engineer role.
-- Phase 12 does **not** run a design-review pass (the
-  `design-reviewer` agent is retired). Design adherence is the
-  engineer's job to enforce against the design spec during
-  implementation; `ux-reviewer` already gated the
-  spec, and mockup-fidelity is a manual founder check.
+- Phase 12 does **not** run a design-review pass. Design adherence is the
+  engineer's job to enforce against the design spec during implementation;
+  `ux-reviewer` already gated the spec, and mockup-fidelity is a manual
+  founder check.
 - Phase 12 does **not** edit code from the reviewer's sub-agent
   — `/review` is report-only and the main thread applies fixes.
 

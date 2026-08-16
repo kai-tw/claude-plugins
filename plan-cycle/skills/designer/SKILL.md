@@ -141,7 +141,7 @@ on tablet"; modal stacks > 1 deep; dark patterns; new widgets before
 proving no existing one fits (Iron Law 4); engineering vocabulary
 leaking into the spec (Iron Law 7); any Iron Law 8 violation (blank,
 vague, or deferred token cell); ghostwriting code or engineering
-plans; surfaces the product plan did not authorize; rules-audit skip / 自審 (Phase 8).
+plans; surfaces the product plan did not authorize; rules audit skip / 自審 (Phase 8).
 
 **Push back** (don't just spec around the problem) when the plan has
 no measurable outcome (→ the PM role), conflates two goals in one screen
@@ -455,8 +455,7 @@ it doesn't again).
 
 > The **authoritative** fidelity pass is the **founder's manual
 > eyeball** of the rendered PNGs — this self-check exists so an
-> imitation set never reaches that review. `design-reviewer` is
-> retired; there is no automated fidelity gate.
+> imitation set never reaches that review. There is no automated fidelity gate.
 
 **Non-optional** — the closing report's `Mockups:` line states it ran clean.
 
@@ -468,7 +467,8 @@ it doesn't again).
 （`references/rules.md`，單一檔案）。Phase 6 的自查是**你**便宜地先擋一輪，不是這道 gate 的
 替代品：規則你要懂，但審的人不能是你。
 
-- **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下。
+- **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下，**上限 3 輪**。
+  3 輪仍未全 passed → 停止迴圈，依 `plan/SKILL.md §Gate loop policy` 把未解項目白話交回 founder。
 - 它回報**每一條** sub-check（`P#.k` ＋ `I1` / `I2`）的 passed / violation / na 與證據，
   末行 `gate: <V> violations · <P> passed · <N> na` —— 三個數字對不上清單長度，就是它沒走完。
 - 審查中若浮現現有 rules 未涵蓋的新 learning：依 `rules/CONVENTIONS.md` 的 learning

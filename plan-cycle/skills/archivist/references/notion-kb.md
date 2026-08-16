@@ -63,9 +63,8 @@ modules, so those are read live from the database itself. Run
 `schema --live [db] --root <id>` to check the two halves still agree; it reports
 every option present on one side and not the other.
 
-The old **PM Foundation** page — a never-populated verbatim repo-mirror
-placeholder — is **retired**; do not recreate it (the KB is extraction-style,
-not a file dump).
+The KB is extraction-style, not a file dump — never create a page that
+verbatim-mirrors the repo.
 
 ## No repo pointers
 
@@ -302,8 +301,7 @@ invokes the `archivist` skill to:
    marker). The plan rows (Product / Design / Engineering Plan) are **kept** as the
    detailed record — the Engineering Plan re-points to the Feature Archive row, and
    the Product / Design `Task` relation simply goes empty (cosmetic). `Stage =
-   Archived` + clearing `Status` is **no longer** the close signal; `Archived` is
-   now a manual-only label for a soft park.
+   Archived` is a **manual-only** label for a soft park, never the close signal.
 4. **Report to the user** the Feature Archive URL, that the task row was trashed,
    and any remaining local drafts safe to delete.
 

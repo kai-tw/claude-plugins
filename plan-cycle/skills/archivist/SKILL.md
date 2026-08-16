@@ -229,10 +229,9 @@ to review the per-row plan.
    request. Test plans + QA logs are trashed, never Notion'd.
 7. **Never overwrite hand-maintained Notion pages.** A page without an
    `<!-- archivist-generated -->` marker is hand-authored — stop and report.
-8. **The user feedback log is canonical in Notion.** The repo-side
-   `user-feedback-log.md` was migrated there and no longer exists. Append new
-   entries to the Notion page; never recreate a repo copy — that re-opens the
-   two-canonical-copies problem the migration closed.
+8. **The user feedback log is canonical in Notion.** Append new entries to the
+   Notion page; never create a repo-side copy — two canonical copies is exactly
+   the problem this shape avoids.
 9. **Use `trash`, not `rm`** for repo files (directories alike); to remove a
    Notion page use `ntn pages trash <id> --yes`.
 10. **Report Notion URLs** for every page created / updated, plus the removal
@@ -296,7 +295,7 @@ removal manifest.
 - Verbatim-dumping raw markdown / appending a "Source Archive" block.
 - Hand-encoding a property map, or hand-driving `ntn` per row, instead of running `notion-payload … --commit` (silent date / checkbox / multi-select / relation mis-encodes).
 - Re-typing a CJK-heavy body inline into the manifest (or round-tripping it through `ntn pages get`→`edit`) instead of authoring it ONCE in a `bodyFile` and uploading byte-exact — both invite silent hanzi / markdown-escape drift.
-- Reaching for the retired read scaffolding (semantic search saturation, a local property filter, a mirror cache) instead of one `ntn datasources query --filter`.
+- Reaching for read scaffolding (semantic search saturation, a local property filter, a mirror cache) instead of one `ntn datasources query --filter`.
 - Slug titles (`collection-viewer-sort-modes`) instead of readable ones.
 - Ad-hoc Feature Area tags, or raw folder slugs (`cloud_sync`), instead of readable Title Case mirroring `lib/features/`.
 - Deleting a canonical doc before its Notion entry is re-read-verified (`ntn pages get` / `datasources query`).

@@ -10,8 +10,7 @@ description: |
   of "code embodies the approved plan" that /qa's spec tests can't pin) ·
   test-reviewer (test DESIGN, both halves of the test/** partition) ·
   ux-reviewer (design-spec usability) · feasibility-reviewer (downstream
-  deliverability of an upstream plan). All are report-only — the caller acts on the findings. Absorbs the
-  former /security skill; design-reviewer is retired.
+  deliverability of an upstream plan). All are report-only — the caller acts on the findings.
   TRIGGER: code review · review the code · review my changes · review this ·
   review the tests · test review · are these tests any good · 審一下測試 ·
   check my code · review before commit · security review · threat model X ·
@@ -62,9 +61,8 @@ Pick by trigger phrase. If the user asks for "review my changes" without
 specifying, ask once which dimension(s) they mean — don't guess. If they ask for
 several, spawn them in parallel.
 
-**No `design-reviewer`** — it is retired. "Does this design meet the design rules"
-is the `ux-reviewer`; mockup-fidelity is a manual founder check.
-The `conformance-reviewer` is **not** the retired design-reviewer: it checks
+**"Does this design meet the design rules"** is the `ux-reviewer`;
+mockup-fidelity is a manual founder check. The `conformance-reviewer` checks
 **shipped code vs the approved spec** (is a required state / motion / interaction
 actually implemented), not mockup-vs-design-rules.
 
@@ -72,9 +70,7 @@ actually implemented), not mockup-vs-design-rules.
 findings to this dispatcher** (security/privacy/ux/feasibility: each item `passed` /
 `warning` / `critical`, looped until all `passed`;
 code-reviewer / blueprint-reviewer: the consolidated report
-inline).
-There is no `docs/security-reviews/`, `docs/privacy-reviews/`,
-`docs/code-review-logs/`, or `docs/plan-review-logs/` output — all retired.
+inline). No file output.
 
 ## Spawn protocol
 
@@ -144,8 +140,7 @@ When the review target is a **plan row** (a PM / Design / Engineering Plan under
 **Notion comment on that plan row** — invoke the `archivist` skill (`comment
 <page-id> - --commit`, findings piped on stdin). This leaves a durable,
 founder-visible collaboration trail on the plan itself, consistent with the 不落檔
-stance — a comment annotation, **not** a `docs/*-reviews/` file (those stay
-retired).
+stance — a comment annotation, **not** a file.
 
 ### Posting findings to the PR (code / security / privacy reviews)
 
@@ -174,7 +169,7 @@ EOF
 ```
 
 **No open PR → skip both.** The verdicts above are then the whole record; don't
-invent a file to write them to (`docs/*-reviews/` stays retired).
+invent a file to write them to.
 
 ### What "silent skip" means
 

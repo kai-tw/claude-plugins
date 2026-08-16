@@ -468,10 +468,9 @@ The changes follow project conventions."
 
 ## Stage 2: Return to the caller (不落檔)
 
-**Do NOT write a `docs/code-review-logs/` file.** That folder is
-retired. Your Stage 1 result (the **Output Format** block above) IS the
-return value — return it inline to the caller (the `/review` dispatcher
-or the main thread). No saved artifact, no chat prose.
+**Never write your review to a file.** Your Stage 1 result (the **Output
+Format** block above) IS the return value — return it inline to the caller
+(the `/review` dispatcher or the main thread). No saved artifact, no chat prose.
 
 The return MUST include:
 

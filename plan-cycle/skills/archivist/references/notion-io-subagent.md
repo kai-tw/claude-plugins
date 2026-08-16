@@ -12,8 +12,8 @@ own context:
   the distilled result (✓ lines + a `[{title,id,url}]` JSON) — the page bodies
   never re-enter context.
 
-So you no longer delegate inventory sweeps or ordinary writes. **Delegate only the
-one case that still pulls bulk into context:** reading **many full page bodies**
+So do not delegate inventory sweeps or ordinary writes. **Delegate only the
+one case that pulls bulk into context:** reading **many full page bodies**
 for synthesis (e.g. archiving a feature → reading every plan's body), since
 `ntn pages get` returns the whole Markdown body. Run that in a disposable
 subagent so the bodies are born and die there and only your distilled notes

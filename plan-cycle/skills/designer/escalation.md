@@ -17,13 +17,13 @@ finding that surfaces a UX question.
    ruling for the parent flow to consume verbatim.
 4. Pass the rules audit gate (Phase 8 of `SKILL.md`) — spawn `blueprint-reviewer`
    in checklist mode against the amendment (player ≠ referee; no self-audit).
-   Escalations are exactly when anti-patterns surface; loop to all-passed.
+   Escalations are exactly when anti-patterns surface; loop to all-passed, cap 3.
 5. **Re-upload to Notion (the launcher's Iron Law 6).** You have no Notion MCP —
    invoke the `archivist` skill to write the amended **Design Plan row body**.
    An amendment that lives only in chat or a local note has not landed.
 6. Hand back to the parent flow with: `(a)` the Notion **Design Plan
    row** URL (re-uploaded via the `archivist`), `(b)` the verbatim
-   ruling, `(c)` the rules-audit result. Do not paraphrase.
+   ruling, `(c)` the rules audit result. Do not paraphrase.
 
 The parent flow expects the ruling forwarded **verbatim**, not
 paraphrased — paraphrase has shipped bugs before. Forwarding a

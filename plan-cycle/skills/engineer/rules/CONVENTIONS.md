@@ -3,13 +3,13 @@
 `Read` 本檔只在新增 / 修改 / 合併 / 刪除 engineer rule 時。
 
 **這是什麼.** engineer role 的規則庫，組織成**母規則（principle）+ sub-check** 兩層 ——
-母規則是通則、sub-check 是可操作的具體判準。它是**起草約束**：engineering plan 沒有
-`rules-audit` 逐條走這張清單，判斷歸 Phase 8.5 的 `blueprint-reviewer`（維度 + 橫切檢查）、
-機械比對歸 `../scripts/plan_lint.sh`。所以**新增一條規則時要同時回答它由誰把關** ——
+母規則是通則、sub-check 是可操作的具體判準。它是**起草約束**：engineering plan 沒有清單
+走查，判斷歸 Phase 8.5 的 `blueprint-reviewer`（維度 + 橫切檢查）、機械比對歸
+`../scripts/plan_lint.sh`。所以**新增一條規則時要同時回答它由誰把關** ——
 折進哪個 blueprint 維度、或是不是一項 script 檢查；答不出來的那條，寫下去也不會有人執行。
 
-**檔案格式.** 規則庫是單一檔案 `../references/rules.md`；一條母規則佔一節，不再另立
-detail 檔 —— index 與 detail 已合一，不存在第二份需要同步的檔案。Body：
+**檔案格式.** 規則庫是單一檔案 `../references/rules.md`；一條母規則佔一節，不另立
+detail 檔 —— 不存在第二份需要同步的檔案。Body：
 - `## P<N> — <title>`
 - `**Principle:**` 母規則通則 1–2 句（正面、可檢查）。
 - 每個 sub-check 一條 bullet ——
@@ -29,5 +29,5 @@ pattern（具體結構）作答，不像 PM lessons 用 probing question —— 
 4. **無且是全新母原則 → 新增一個 `## P<N+1>` 節**（N = 目前最大；刪除留下的洞不回填）。
 5. 過時 / 被取代的 rule / sub-check **可刪**。
 
-> 不再 append-only、不保永久編號 —— rule 以「當前一致、已收斂的 checklist」為目標，
+> 不 append-only、不保永久編號 —— rule 以「當前一致、已收斂的 checklist」為目標，
 > 歷史軌跡在 git。

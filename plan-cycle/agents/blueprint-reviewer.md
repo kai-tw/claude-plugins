@@ -30,9 +30,7 @@ description: |
   edit the plan, does NOT propose solutions.** The caller (the engineer role
   skill or the user) devises and applies the fixes from the named
   weaknesses. Returns its report inline to the caller (不落檔 — no docs file).
-  Absorbs the retired `rules-audit`: its checklist walk is this agent's checklist
-  mode, its engineering judgment folded into the dimensions and cross-cutting
-  checks, and its mechanical comparisons into `engineer/scripts/plan_lint.sh`.
+  Mechanical comparisons belong to `engineer/scripts/plan_lint.sh`, not here.
 allowed-tools:
   - Bash
   - Read
@@ -138,9 +136,10 @@ Three callers invoke this agent:
 0. **the PM role Phase 6 / the designer role Phase 8** — automatic, after the
    draft and **before the founder sees the open questions**, in checklist mode.
    Every `violation` is fixed in place — no deferred, no dismiss — and you are
-   re-spawned; loop to all-`passed`. Escalate to the founder the moment a finding
-   stops being a verifiable error and becomes a debatable judgment
-   (`plan/SKILL.md §Gate loop policy`).
+   re-spawned; loop to all-`passed`, capped at 3 rounds. Not green by round 3 — or
+   the moment a finding stops being a verifiable error and becomes a debatable
+   judgment — the caller reports to the founder per
+   `plan/SKILL.md §Gate loop policy`.
 1. **the engineer role Phase 8.5** — automatic, after the plan-lint
    pass and before the user-facing approval gate (Iron Law 10). The
    engineer skill reads the weakness on every sub-8 dimension and
@@ -733,10 +732,9 @@ recommended option earns `approve` only if every in-scope dimension is
 
 ## Stage 4: Return the review (不落檔)
 
-**Do NOT write a `docs/plan-review-logs/` file.** That folder is
-retired. Return the report below inline to the caller (the engineer
-role or the `/review` dispatcher). The report IS the return value —
-no saved artifact, no chat prose.
+**Never write your review to a file.** Return the report below inline to the
+caller (the engineer role or the `/review` dispatcher). The report IS the
+return value — no saved artifact, no chat prose.
 
 ### Report format
 

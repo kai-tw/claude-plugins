@@ -3,10 +3,9 @@
 **Read this BEFORE drafting the engineering plan.** Every entry constrains the
 writing, and the writing is where honouring it costs a sentence.
 
-**沒有 `rules-audit` 在審這份計畫。** 原本逐條走這張清單的那道 gate 已按性質拆開：
-判斷全歸 `blueprint-reviewer`（P1.2 → 它的 PM-scope 橫切檢查；P3.2 → criterion 8；
-P3.3／P3.5 → criterion 10 的「第二面」那條；P9.1 → criterion 9；P8.1 不再是獨立檢查，
-計畫抵觸 `.claude/rules/` 一律算成發現它的那個維度的 weakness），機械比對全歸
+**沒有清單走查在審這份計畫。** 判斷全歸 `blueprint-reviewer`（P1.2 → 它的 PM-scope 橫切
+檢查；P3.2 → criterion 8；P3.3／P3.5 → criterion 10 的「第二面」那條；P9.1 → criterion 9；
+P8.1 不是獨立檢查，計畫抵觸 `.claude/rules/` 一律算成發現它的那個維度的 weakness），機械比對全歸
 `../scripts/plan_lint.sh`（點名的檔案在不在、§Conformance 每列有沒有 task、§-ref 通不通）。
 所以在這裡略過的一條，不會有清單走查兜住——只可能被某個判斷它後果的人抓到。
 
@@ -17,22 +16,22 @@ P3.3／P3.5 → criterion 10 的「第二面」那條；P9.1 → criterion 9；P
 
 > **範圍**：本清單只留 **planning 維度**的規則——只有在「撰寫 plan」這件事上才能檢查的條目
 > （PM-scope 授權、套件選型證據、框架內建接地）。**實作正確性**的規則（state-write、portal
-> 重接、per-key 序列化、最小機制、儲存形狀、sync/async I/O、命名、錯誤處理等）已移到
-> **`.claude/rules/`**（path-scoped，編輯對應程式時自動載入、由 code-reviewer 把關），不再於
+> 重接、per-key 序列化、最小機制、儲存形狀、sync/async I/O、命名、錯誤處理等）在
+> **`.claude/rules/`**（path-scoped，編輯對應程式時自動載入、由 code-reviewer 把關），不在
 > plan 期逐條重審。**惟計畫 artifact 本身（含 sketch 程式碼）不得抵觸 canonical rules——見 P8（planning 維度的非抵觸檢查，與「逐條重審實作」不同）。** 對照表：the project's state-management rule（state-write / collaborator seam）· `state.md`（state class / loading code）· `use-cases.md`（fan-in / stream use case）·
 > `error-handling.md`（conclusive-only write / exhaustive arm / no-silent-failure）·
-> `storage-shape.md`〔原 P4〕· `naming.md` · `architecture.md`（§Deleting a wrapper〔原 P1.1〕·
-> §Before inventing a wrapper〔原 P3.1〕· §Minimal, Direct
-> Mechanism〔原 P6〕）· `data.md §Per-Key Serialization`〔原 P2.4〕· `code-style.md §Async`〔原 P7〕· `presentation.md §11`〔原 P5〕。
+> `storage-shape.md` · `naming.md` · `architecture.md`（§Deleting a wrapper ·
+> §Before inventing a wrapper · §Minimal, Direct
+> Mechanism）· `data.md §Per-Key Serialization` · `code-style.md §Async` · `presentation.md §11`。
 > 母規則編號刪除後留洞、不回填（見 CONVENTIONS）：故 P1 只剩 P1.2、P3 有 P3.2–P3.5（P3.1 留洞不回填）；新增母規則 **P8**（計畫服從 canonical rules）、**P9**（design / product spec 覆蓋——反遺漏）。
 
 ## P1 — 重構不得靜默改動 PM 擁有的 user-facing 行為
 
 **Principle:** 重構 / 合併 / 刪除程式結構（wrapper、use case、early-return、guard
 arm、terminal value）時，**user-observable 行為跨層歸 PM 擁有**，工程不得藉重構偷改。
-（內部結構性質的保全——刪 wrapper 要逐 guard 搬遷——已移至 code-time impl 規則
-`.claude/rules/architecture.md §Deleting a wrapper — relocate every guard first`，原
-P1.1 不再於此留洞；本條只留 **PM-scope** 這個 planning 維度——plan 期就要擋下「重構順手
+（內部結構性質的保全——刪 wrapper 要逐 guard 搬遷——歸 code-time impl 規則
+`.claude/rules/architecture.md §Deleting a wrapper — relocate every guard first`；
+本條只留 **PM-scope** 這個 planning 維度——plan 期就要擋下「重構順手
 改了使用者看得到的行為」。）
 
 - **P1.2 重構不得靜默引入 PM 未授權的 user-facing 語意** — Check: engineering task 的描述
@@ -57,9 +56,9 @@ orchestration 前，先確認框架或平台是否已內建該能力，用內建
 source 後才寫（「和現行 X 一樣」是計畫最高風險的一句）；新增任何 field / entity / method /
 wrapper 前先 grep 其 canonical home——blueprint 只在**選定的設計
 空間內**評分、會背書過度建構、不會問「該不該存在」。（**內部** toolbox 接地——發明 wrapper 前
-先列既有 DI / use-case——已移至 code-time impl 規則
+先列既有 DI / use-case——歸 code-time impl 規則
 `.claude/rules/architecture.md §Before inventing a wrapper — enumerate the existing
-toolbox`，原 P3.1 不再於此留洞；本節的內部 dimension 是**驗證斷言 + canonical home**，與那條的
+toolbox`；本節的內部 dimension 是**驗證斷言 + canonical home**，與那條的
 列 toolbox 不同。）沒接地的套件與自管機制都是「會綠的 coin flip」。
 
 - **P3.2 套件選擇對 design contract 驗內部證據、非 README headline** — Check: §Blocks
@@ -92,7 +91,7 @@ toolbox`，原 P3.1 不再於此留洞；本節的內部 dimension 是**驗證�
   preserves」、某 predicate 的行為）在寫入前都已讀過真實 source 嗎？「和現行 X 一樣」是計畫裡
   風險最高的一句（讀來像已驗證、實為假設）—— 未 grep / 未讀宣告就斷言 → 違規；改動某識別字時
   對 plan 全 body sweep 舊名。此為 P3.2 外部證據要求的**內部版**；與已移至 code-time 的「發明
-  wrapper 前列 toolbox」〔原 P3.1〕不同——那條列既有、本條驗證對既有的斷言。
+  wrapper 前列 toolbox」不同——那條列既有、本條驗證對既有的斷言。
   Example: C2 plan 斷言 `parseLocale` 回傳 nullable `KnownLocale?` ＋ `.toLocale()`，實際
   signature 是 `Locale parseLocale(String)` 非 null —— 整條 null→fallback 契約落在不存在的 API
   上，耗掉半數 audit round-trip。

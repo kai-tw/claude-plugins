@@ -384,34 +384,24 @@ Because PM and designer share one round (§Step 4), their two Sanity cells run a
 one batch and their two Adversarial cells as one battery — one Resolve between
 them, not two.
 
-**`rules-audit` is retired; `blueprint-reviewer` is now the ① reviewer for every
-plan.** The old split was one agent walking three role checklists beside a second
-agent judging the same artefact. Measured on the engineer plan, only 2 of its 9
-checks had any counterpart in that second reviewer, yet 2 of the 3 findings that
-actually fired were caught by it too — the overlap was **incidental**, not
-structural: a second careful reader re-finds some of the same things by accident,
-which is an expensive way to buy redundancy. So the *agents* merged while the
-checks were rehomed **by kind**:
+**`blueprint-reviewer` is the ① reviewer for every plan**, with the checks
+rehomed **by kind**:
 
 - **The checklist walk stays a walk, and stays independent.** A PM plan or design
   spec gets `blueprint-reviewer` in **checklist mode** — one pass over that
   role's `references/rules.md`, passed / violation / na per sub-check. An author
   may know its rules; it may never grade itself (player ≠ referee), so this cell
   is never a self-check.
-- **Engineering judgment → the dimensions.** The engineer checklist's judgment
-  items folded into `blueprint-reviewer`'s scored dimensions and cross-cutting
-  checks, where they were already being judged.
+- **Engineering judgment → the dimensions**, inside `blueprint-reviewer`'s scored
+  dimensions and cross-cutting checks.
 - **Design judgment → `ux-reviewer`.** The designer rules also live inside the
   ② usability sweep, so a spec that lies about state, hides a distinction in one
   perceptual channel, or pollutes a shared component surfaces as the usability
   defect it is — with severity attached — rather than only as a rule number.
 - **Comparison → a script.** `engineer/scripts/plan_lint.sh`: the named files
   exist, §Conformance rows map to tasks, §-refs resolve, no count points back at a
-  body that changed. A comparison a script settles should never have cost a review
+  body that changed. A comparison a script settles should never cost a review
   round-trip — the same call-site count was written wrong three revisions running.
-
-Net: one fewer agent, one fewer rubric to maintain, and the referee is still
-never the player.
 
 #### Gate loop policy — loop the checklist, verify the judgment
 
@@ -425,8 +415,11 @@ never the player.
   fixed in place, no deferred and no dismiss, re-spawn, loop. The loop earns its
   keep — one measured cycle took 5 rounds, and a later round caught that the
   author's *fix* was itself wrong (a weak undocumented token substituted where a
-  purpose-built semantic one existed). **Not green by round 3 → escalate to the
-  founder**; the artefact has a structural problem a checklist cannot iterate out.
+  purpose-built semantic one existed). **Not green by round 3 → stop looping and
+  hand the founder a plain-language report**, one entry per unresolved item:
+  **缺失項目 / 原因 / reviewer 評價 / 自提解法**. Write about the plan's defect and
+  what you would do about it — never about the gate, the checklist, or how the bar
+  is set; the founder is ruling on the plan, not on the mechanism.
   The engineer plan's cell is `plan_lint.sh` instead — a script, so it does not
   loop: clear every HARD failure, eyeball every ADVISORY line.
 - **② Adversarial (opus gates) — one pass, then one verification. Never
@@ -455,14 +448,11 @@ surfaced only because the author independently grepped the source. A gate's
 verdict is evidence, not a certificate: when a finding's reasoning is
 load-bearing, verify it against the code before acting on it.
 
-**`blueprint-reviewer` runs on every engineer plan.** It was previously skipped
-on a single-slice increment, on the evidence that both its blocking findings
-there were equally catchable by `rules-audit` + `code-reviewer` — and that
-reasoning died with `rules-audit`. Skipping it now would leave such an increment
-with no judgment gate at all, only a script. The cost stays proportionate
-because its own **Stage 1b scope-gate** already right-sizes the fan-out: a
-single-slice increment dispatches a handful of dimensions plus the three
-cross-cutting checks, not all eleven.
+**`blueprint-reviewer` runs on every engineer plan** — never skipped, not even on
+a single-slice increment, which would otherwise have no judgment gate at all, only
+a script. The cost stays proportionate because its own **Stage 1b scope-gate**
+right-sizes the fan-out: a single-slice increment dispatches a handful of
+dimensions plus the three cross-cutting checks, not all eleven.
 
 **Security / privacy are boundary-gated at EVERY stage — including the PM plan.**
 Decide the two reviewers **independently** (one may be in scope while the other
