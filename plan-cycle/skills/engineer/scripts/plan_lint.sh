@@ -153,14 +153,43 @@ fi
 
 # Every `Class.method` the plan defines: the ### class blocks' table rows.
 # A contract row starts `| method |` under a `### <Class>` heading.
-contract_methods="$(awk '
-  /^### / { cls = $0; sub(/^### +/, "", cls); gsub(/[`*]/, "", cls); next }
-  cls != "" && /^\|/ {
-    line = $0; gsub(/^\| *| *\|$/, "", line)
-    split(line, f, /  *\| */); m = f[1]; gsub(/[` ]/, "", m)
-    if (m != "" && m !~ /^-+$/ && m != "method" && m !~ /^</) print cls "." m
+#
+# NORMALISE, THEN REPORT WHAT WOULD NOT NORMALISE. Real plans write the heading
+# as ``### `Store`（契約，MOD）`` and the first cell as `` `erase({a, b})` `` — a
+# raw read of either yields a name that can never match a `Class.method`
+# citation, so every downstream check silently compares against garbage. Take the
+# leading identifier from each, and surface any cell that still isn't one name
+# rather than letting it rot in the set.
+extract="$(awk '
+  # A class block ends at the next section. Without this the harvest runs on
+  # through §Error policy / §Startup / §Risks and adopts their table rows as
+  # methods of the last class seen — and an identifier-shaped cell there
+  # (`| mirrorCache |`) enters the set as a method that does not exist.
+  /^## / { cls = ""; next }
+  /^### / {
+    cls = $0; sub(/^### +/, "", cls); gsub(/[`*]/, "", cls)
+    sub(/[^A-Za-z0-9_].*$/, "", cls)          # `Store`（契約，MOD） → Store
+    next
   }
-' "$plan" | sort -u)"
+  cls != "" && /^\|/ {
+    if ($0 ~ /^[|: -]+$/) next                 # the |---|---| separator row
+    line = $0; gsub(/^\| *| *\|$/, "", line)
+    split(line, f, /  *\| */); m = f[1]; gsub(/[`* ]/, "", m)
+    if (m == "" || m ~ /^-+$/ || m == "method" || m ~ /^</) next
+    raw = m
+    sub(/\(.*$/, "", m)                        # erase({a,b}) → erase
+    if (m ~ /^[A-Za-z_][A-Za-z0-9_]*$/) print "OK\t" cls "." m
+    else print "BAD\t" cls "\t" raw
+  }
+' "$plan")"
+contract_methods="$(grep '^OK	' <<< "$extract" | cut -f2 | sort -u)"
+malformed="$(grep '^BAD	' <<< "$extract" | cut -f2,3 | sort -u)"
+if [ -n "$malformed" ]; then
+  echo "ADVISORY  §Classes method cell(s) that are not a single method name — 這幾列不會參與比對:"
+  printf '%s\n' "$malformed" | sed 's/\t/ → /' | sed 's/^/        /'
+  echo "        一列一個 method；簽名放 \`簽名\` 欄。多個 method 擠一格（fetch·publish·remove）要拆成多列，"
+  echo "        否則它們的簽名 / 複雜度 / Error 欄不可能同時正確。"
+fi
 
 # 4. HARD — §Conformance rows must point at a Class.method the plan defines,
 #    or declare `全域：<how>` when the requirement genuinely has no owning method
@@ -189,8 +218,12 @@ if [ -n "$conf_body" ] && [ -n "$contract_methods" ]; then
     if grep -qE '全域[：:][^|[:space:]]' <<< "$row"; then
       conf_global=$((conf_global + 1)); continue
     fi
+    # `privacy.md` / `pubspec.yaml` in a Source cell look exactly like
+    # `Class.method`; excluding known file extensions costs one grep and a false
+    # positive here would teach the author to distrust the whole check.
     refs="$(grep -oE '`[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*`' <<< "$row" \
-      | tr -d '`' || true)"
+      | tr -d '`' \
+      | grep -viE '\.(md|dart|yaml|yml|json|arb|sh|mjs|ts|js|lock|txt|png|xml)$' || true)"
     if [ -z "$refs" ]; then
       dangling="${dangling}${first}(無 Class.method，也未標 全域：) "
       continue
