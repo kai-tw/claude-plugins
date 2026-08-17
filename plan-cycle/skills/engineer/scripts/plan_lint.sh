@@ -9,7 +9,14 @@
 #     - no banned placeholders (TBD / decide later / as needed / ...) except
 #       where a line routes via `## Open questions` / `pending PM|designer|user`
 #     - every §Classes file marked (MOD)/(DEL) exists in the repo
-#     - every numbered §Conformance row is claimed by ≥1 §Conformance ↔ Class.method
+#     - every §Conformance row points at a `Class.method` §Classes defines,
+#       or declares `全域：<how it is verified>`
+#     - §Data flow graph nodes exist in §Classes; every ≥2-origin state node has
+#       an §Error policy row
+#
+#   SKIP (printed, exit code unchanged) — a HARD check whose precondition was
+#   empty. It reports WHICH precondition and HOW MUCH went unchecked, and the
+#   verdict degrades to `PASS*`: silence is not a verdict.
 #
 #   ADVISORY (printed, never affects exit code) — anything a correct plan can
 #   trip: section presence (headings are TRANSLATED to 繁體中文 under the
@@ -316,9 +323,16 @@ elif [ -z "$contract_methods" ]; then
   if [ "${flow_pending:-0}" -gt 0 ]; then
     skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method" \
       "圖上有 ${flow_pending} 個 Class.method 節點沒被比對"
-  else
+  elif grep -q '```mermaid' <<< "$flow_body"; then
     skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method" \
-      "圖上沒有 Class.method 節點，這一項本來就無事可比"
+      "圖裡沒有 [Class.method] 節點——圖在，但它沒有可以對回 §Classes 的東西"
+  else
+    # Reachable only with a NON-empty body (the empty case returned above), so
+    # "nothing to compare" would be a lie: the section exists, it just never
+    # got its graph. Naming that as normal is how a missing artefact reads as
+    # a clean result.
+    skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method" \
+      "§Data flow 有內容但沒有 mermaid 圖 —— 這一節缺一張圖，不是沒東西要查"
   fi
 else
   unknown=""; flow_nodes=0
@@ -334,10 +348,19 @@ else
     echo "        圖上的 [\"Class.method\"] 節點必須逐字對上某個 class 區塊的一列"
     fail=1
   fi
-  grep -qE '\(\[.*\]\)' <<< "$flow_body" \
-    || echo "ADVISORY  §Data flow has no ([origin]) node — 沒有併發來源的圖回答不了它該回答的問題；真的只有單一入口就明寫一行"
   echo "NOTE  §Data flow: 檢查 ${flow_nodes} 個 Class.method 節點"
   [ "$flow_nodes" -eq 0 ] && echo "        0 個節點 —— 圖裡沒有可比對的 [Class.method]，這一項等於沒跑，不是通過"
+fi
+
+# The origin check needs only the graph, never `contract_methods` — keeping it
+# inside that guard meant a plan with no graph at all skipped BOTH the node
+# comparison and the one advisory that would have said the graph is missing.
+if [ -n "$flow_body" ] && ! grep -qE '\(\[.*\]\)' <<< "$flow_body"; then
+  if grep -q '```mermaid' <<< "$flow_body"; then
+    echo "ADVISORY  §Data flow has no ([origin]) node — 沒有併發來源的圖回答不了它該回答的問題；真的只有單一入口就明寫一行"
+  else
+    echo "ADVISORY  §Data flow 沒有 mermaid 圖 — race 推導完全沒有輸入；§Error policy 的爭用表因此無從封閉"
+  fi
 fi
 
 # 6. HARD — every state node written from ≥2 origins needs an §Error policy row.
