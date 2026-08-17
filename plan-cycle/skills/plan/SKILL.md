@@ -315,7 +315,7 @@ Authoring main sequence (fixed order, non-overlapping):
 ```
 ┌─ ONE round ──────────────────────────────────────────┐
 │ PM plan draft → [① ENTER WORKTREE] → designer:       │ → engineer plan (own round)
-│   build widgets → translator → render                 │ → code → QA
+│   translator ⇄ build widgets → render                 │ → code → QA
 │   → Sanity → Resolve → Adversarial                    │ →[② push+PR]→ close-out
 └──────────────────────────────────────────────────────┘
 
@@ -336,14 +336,18 @@ Authoring main sequence (fixed order, non-overlapping):
   *Why:* measured, the split cost 2 founder round-trips and 2 opus batteries per
   cycle, and the second battery routinely ran on a draft the founder's answers in
   the first were about to invalidate.
-- **Translation runs INSIDE the designer phase, between building the widgets and
-  rendering them.** `translator` still owns the whole ARB string (keys, the
-  `app_en.arb` source value, all four translations; ja / zh_Hant still need
-  founder sign-off) — what changed is only when it runs. Renders that show real
-  copy are the point: fabricated placeholder text hides exactly what a render
-  exists to expose (a CJK string that wraps, a long locale that overflows), and
-  the founder signs off on the copy **seeing it in place** rather than as a list
-  of strings. The engineer phase only wires ICU + `gen-l10n` + the call sites.
+- **Translation runs INSIDE the designer phase, always before the render.**
+  `translator` still owns the whole ARB string (keys, the `app_en.arb` source
+  value, all four translations; ja / zh_Hant still need founder sign-off) — what
+  changed is only when it runs. Renders that show real copy are the point:
+  fabricated placeholder text hides exactly what a render exists to expose (a CJK
+  string that wraps, a long locale that overflows), and the founder signs off on
+  the copy **seeing it in place** rather than as a list of strings. **New copy
+  runs it before the widgets are built**, because a project that lints
+  "user-facing strings go through `AppLocalizations`" leaves no legal way to
+  build first — a literal is a knowing violation and an ungenerated getter does
+  not compile (`designer` §Phase 6.5). The engineer phase only wires ICU +
+  `gen-l10n` + the call sites.
 - The engineer plan runs its **own** round (same three stages), because it is
   downstream of translator in the DAG and its scope depends on what shipped
   upstream.
@@ -721,6 +725,28 @@ mechanical tells. `ux-reviewer` catches the provenance half again at ②.
   with no fork are not decisions. Cross-feature decisions are promoted to the
   Decision Log DB at close-out, not maintained twice.
 
+#### Revving a cycle that started under an older plan shape
+
+A plan approved before the current section shapes does **not** get retro-fitted.
+Delete this section once no such cycle is in flight.
+
+- **A section the schema dropped, holding rulings, stays** — `freeformBody`
+  permits it. Old `## Decision history` entries that are founder rulings are
+  load-bearing: move each to an inline `〔使用者〕` note at the line it rules
+  (`I4`) as you touch that prose, and leave the rest until you do. Do not delete
+  a ruling to satisfy a shape.
+- **A role boundary that moved does not move the work already done.** A cycle
+  whose design plan predates the designer-ships-widgets hand-off has no
+  `§Widgets`, no renders, and nothing for `design-lint` to read. That cycle keeps
+  the boundary it was approved under: the engineer builds the presentation as
+  before, and those three are `n/a` with the reason stated. Re-running the
+  designer phase to produce artefacts the approved plan never promised is new
+  work, not a migration — if it looks worth doing, that is the founder's call to
+  make explicitly.
+- **The new shape binds the next rev's *content*, not its history.** Write the
+  amended prose to the current questionnaire's cells; don't rewrite settled
+  sections just to change their headings.
+
 #### Worktree isolation (the file-writing boundary)
 
 Concurrent `/plan` sessions share one repo. To keep their edits from colliding,
@@ -914,7 +940,7 @@ When the task is complete, the cycle is **not done until these run** (Iron Law 7
    approval** — the worktree branch targets `$BASE` (`main`) as a review artifact
    the user reviews + merges themselves, so fire `git push` + `gh pr create`
    directly (no `AskUserQuestion` gate). Capture the returned PR number and
-   record it: `bash .claude/hooks/plan-cycle.sh pr-opened <PR#> "$BASE"`.
+   record it: `plan-cycle pr-opened <PR#> "$BASE"`.
 
    **Then stop — the rest of Step 6 waits for the merge.**
 

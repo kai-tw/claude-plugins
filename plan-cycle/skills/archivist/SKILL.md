@@ -261,20 +261,28 @@ to review the per-row plan.
 ## Plan-cycle ledger (mirror every /plan Notion write locally)
 
 `/plan`'s upload obligation (its Iron Law 6) decays out of context over a long
-cycle, so a deterministic Stop-hook gate (`.claude/hooks/plan-cycle.sh`) enforces
+cycle, so a deterministic Stop-hook gate (`plan-cycle`) enforces
 it instead — but the hook can only see a **local ledger that mirrors the Notion
 writes you make**. So whenever a write you perform is part of a `/plan` cycle,
 record it with the matching one-liner **immediately after the write lands**. The
 script is the single source of truth for the path (it resolves one shared ledger
-in the main tree, so it works identically from a worktree); it **no-ops silently
-when no cycle is active**, so these calls are safe to run unconditionally:
+in the main tree, so it works identically from a worktree); it **no-ops when no
+cycle is active**, so these calls are safe to run unconditionally.
+
+**Call it by bare name — `plan-cycle`, which the plugin puts on `PATH`.** Never
+`bash <some>/plan-cycle.sh`: a project-relative path is not knowable from here
+and the plugin does not install one, so such a call fails with
+`No such file or directory` — which looks exactly like the harmless idle-cycle
+no-op and leaves the gate with an empty ledger to check. **A `command not found`
+here is not a no-op, it is the gate being off**: say so plainly in your report
+rather than continuing as if the write were mirrored.
 
 | The Notion write you just made | Mirror it with |
 |---|---|
-| Created the TaskList task (the `/plan` Step 2 anchor) | `bash .claude/hooks/plan-cycle.sh start "<task-slug>" "<Task Name>"` |
-| Flipped the task's **`Stage`** property | `bash .claude/hooks/plan-cycle.sh enter "<Stage>"` (exact label: Product Plan / Design Plan / Translation / Engineering Plan / Security / Privacy / Implementation / Review / QA / Archived) |
-| Created/updated a **Product / Design / Engineering Plan** row (after the Iron-Law-2 verify confirms it) | `bash .claude/hooks/plan-cycle.sh uploaded <pm\|designer\|engineer> <plan-row-url>` — **the URL is required**: it is the proof Gate 1 trusts, and you already have it from the fetch-back. No URL means the write didn't land, so redo the write instead of marking it done. |
-| Closed out (Feature Archive verified + task row trashed) | `bash .claude/hooks/plan-cycle.sh clear` |
+| Created the TaskList task (the `/plan` Step 2 anchor) | `plan-cycle start "<task-slug>" "<Task Name>"` |
+| Flipped the task's **`Stage`** property | `plan-cycle enter "<Stage>"` (exact label: Product Plan / Design Plan / Translation / Engineering Plan / Security / Privacy / Implementation / Review / QA / Archived) |
+| Created/updated a **Product / Design / Engineering Plan** row (after the Iron-Law-2 verify confirms it) | `plan-cycle uploaded <pm\|designer\|engineer> <plan-row-url>` — **the URL is required**: it is the proof Gate 1 trusts, and you already have it from the fetch-back. No URL means the write didn't land, so redo the write instead of marking it done. |
+| Closed out (Feature Archive verified + task row trashed) | `plan-cycle clear` |
 
 Mark `uploaded` only **after** the verify (Iron Law 2) — a conservative
 ledger never produces a false "all clear". A re-uploaded (rev'd) plan just runs

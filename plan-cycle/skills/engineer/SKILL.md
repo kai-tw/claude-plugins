@@ -6,9 +6,12 @@ description: |
   context); it is NOT a standalone user entry point. Engineering
   requests ("engineering plan", "how should we implement X") TRIGGER /plan,
   which dispatches engineering-plan work here — do not invoke this skill
-  directly. Authors / revises an engineering plan (Notion Engineering Plan DB):
-  summary, composition graph, decisions, risks, migration impact, block
-  inventory, data flow, error-handling matrix, phased tasks.
+  directly. Authors / revises an engineering plan (Notion Engineering Plan DB) as
+  a guided questionnaire: summary, §Classes (class inventory plus a per-class
+  public-method contract table — callee, evidence-or-未讀, complexity, errors),
+  a typed §Data flow graph whose nodes match it, error policy, startup order,
+  migration impact, risks, and the §Conformance reverse walk. Tasks live in
+  TaskCreate, not the plan body.
 ---
 
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes

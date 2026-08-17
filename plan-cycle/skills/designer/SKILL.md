@@ -6,9 +6,12 @@ description: |
   own context); it is NOT a standalone user entry point.
   Design requests ("design spec", "wireframe X", "new screen") TRIGGER /plan,
   which dispatches design-spec work here — do not invoke this skill directly.
-  Authors / revises a design spec (Notion Design Plan DB): exhaustive
-  component/token annotations for every WindowSize breakpoint, four
-  states per screen, Material 3 + shared components, reading-first restraint.
+  **Ships the presentation widgets** (StatelessWidget by default; StatefulWidget
+  only for vsync; no data wiring — `design-lint` enforces it), renders them across
+  breakpoint × state × theme, and authors the Design Plan row that carries only
+  what the code cannot say: which condition enters each of the four states, the
+  seam the engineer must wire, and the motion / a11y intent. Material 3 + shared
+  components, reading-first restraint.
 ---
 
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes
@@ -379,10 +382,19 @@ Also verify:
 
 ## Phase 6.5 — Real copy before you render
 
-**Spawn `translator` here**, with the §Localization copy intents, before any
-render. It mints the ARB keys, writes the `app_en.arb` source values and all four
-translations; you then point the widgets at the generated `AppLocalizations`
-getters instead of literals.
+**Spawn `translator`** with the §Localization copy intents, before any render.
+It mints the ARB keys, writes the `app_en.arb` source values and all four
+translations; the widgets then reference the generated `AppLocalizations` getters.
+
+**When the widgets need copy that does not exist yet, run it BEFORE Phase 5
+instead.** A project that lints "every user-facing string goes through
+`AppLocalizations`" leaves no legal way to build first: a literal is a knowing
+violation, and a getter that has not been generated does not compile. So decide
+by what the copy is:
+
+- **New copy** → translator first, then build against the real getters.
+- **Existing keys only** → build first; translator here is a no-op or a small
+  revision pass.
 
 This is why the phase exists at this point rather than after you: **a render with
 fabricated copy hides the thing a render is for.** Placeholder text never wraps
