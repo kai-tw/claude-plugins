@@ -374,8 +374,8 @@ is **Design Plans**. One row per design spec document. Title convention:
 "`<Feature / Initiative> — Design Plan`", e.g. "Conflict Resolution — Design Plan".
 The **row body** is the design spec, structured as the `design-plan` body sections — run
 `notion-payload hints design-plan` for the questionnaire.
-Its last section, **`## Mockups`** (kind `images`), embeds the Phase-7 rendered
-mockups: set the row's `Mockups` field to the `build/design-mockups/<slug>/`
+Its last section, **`## Renders`** (kind `images`), embeds the Phase-7 renders of
+the shipped widgets: set the row's `Renders` field to the `build/design-mockups/<slug>/`
 directory (or an explicit path array); on `… create … --commit` the builder uploads
 every PNG (single-part file upload) and appends them as captioned image blocks
 (caption derived from the `screen__size__state__theme__locale` filename).

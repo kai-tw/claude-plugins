@@ -33,7 +33,7 @@ description: |
 >   without asking is fine; not recording is not). On any blocker / unknown, find the answer yourself first (Notion KB →
 >   design system / code → docs → web) and escalate to the user only when the
 >   search comes up empty.
-> - **Mockups:** render via `render-mockups
+> - **Renders:** build the widgets (Phase 5), then render via `render-mockups
 >   <slug>` and surface the output PNGs (`build/design-mockups/<slug>/`) to the
 >   user directly.
 > - **Author the Notion Design Plan row** by invoking the `archivist` skill (no
@@ -74,14 +74,9 @@ description: |
 >    belongs in the engineering plan. Read
 >    `${CLAUDE_PLUGIN_ROOT}/skills/designer/abstraction.md` when translating a
 >    brief or running the Phase 6 self-check.
-> 8. **Every visible element gets every token that applies to it, and
->    every token it gets holds a concrete value.** The candidate set is
->    component, border radius, padding, margin, icon, background
->    color, foreground color, text style, size — but a token no row in
->    the table carries is simply not a column (Phase 5). What this law
->    forbids is a *present* token left vague, not an *absent* token
->    that never applied. Each cell that appears must hold a
->    **concrete value bound to the design system**:
+> 8. **Every value in the widget is bound to the design system.** Tokens
+>    live in the code you ship (Phase 5), not in a table — but the bar is
+>    unchanged, and a reviewer reads it off the source:
 >    - **Colors** — exact `colorScheme.<role>` (e.g.
 >      `secondaryContainer`, `onSurfaceVariant`). Never raw hex,
 >      never `Colors.*`, never "engineering chooses an appropriate
@@ -98,20 +93,14 @@ description: |
 >    - **Text style** — exact `textTheme.<role>`. Never "body
 >      text", never "small label".
 >
->    A blank column, a vague descriptor ("appropriate", "regular",
->    "comfortable"), or a deferral ("decided by engineering") is a
->    hand-off engineering has to guess at — engineers either pick
->    a value that drifts from the design system or burn a roundtrip
->    asking for the missing token. Same rule applies when a row
->    delegates to a shared widget (`CommonInfoWidget`,
->    `CloudSyncOfflineBanner`, etc.): the **instantiation arguments**
->    (icon, color tint, actions) get concrete values, title / caption
->    get the **copy intent** (the translator phase mints the ARB key
->    and the words), the widget's internal tokens are inherited
->    from the shared widget contract (already locked).
->    `—` is acceptable **only** for "explicitly no value, by design"
->    (e.g. no margin on a row that meets a sibling at zero gap) —
->    not as a placeholder for "didn't decide yet".
+>    A hardcoded hex, a magic number off the scale, or a `Colors.*`
+>    constant is the violation this law exists to catch — it drifts from
+>    the design system the moment the theme changes. When you instantiate
+>    a shared widget (`CommonInfoWidget`, `CloudSyncOfflineBanner`, …),
+>    its internal tokens are already locked: pass the **arguments**
+>    (icon, color tint, actions) and the **copy intent** for title /
+>    caption (the translator phase mints the ARB key and the words),
+>    and do not reach inside.
 > 9. **Co-create the spec — never finalize over an open question.**
 >    The layout is worked out *with the user*, surface by surface, not
 >    drafted unilaterally and presented for sign-off. Every open layout
@@ -133,7 +122,7 @@ description: |
 >    spec is produced; Iron Laws 1–8 govern *what* it must contain.)
 
 **Refuse, with the reason:** freehand pixel mockups divorced from the
-design system (the Phase 7 rendered mockup is the sanctioned
+design system (Phase 5 builds the real widget and Phase 7 renders it — that is the sanctioned
 alternative); aesthetic adjectives without a mechanism; specs missing
 any of the four states (Iron Law 5); hover-only interactions on touch
 targets; arbitrary breakpoints not tied to `WindowSize`; "mobile site
@@ -330,38 +319,41 @@ Canonical transitions:
 - `large` → `extraLarge`: cap content width at ~65–75ch for reading
   surfaces.
 
-## Phase 5 — Component-by-component spec
+## Phase 5 — Build the widgets
 
-For **every visible element** — including implicit ones (spacers,
-dividers, chips inside cards) — one row.
+**You ship the presentation components.** Not a description of them — the real
+`lib/` widgets the app will run. Every token, padding, radius and text style is
+expressed where it belongs: in the code. The plan body then carries only what
+the code cannot say (§States' *when*, §Seam's *meaning*, the a11y and motion
+intent) — which is why the old token table is gone. It measured 172 lines and 48
+empty cells on one spec, restating what a widget file says better.
 
-**The columns are chosen per table, not fixed.** Always: `# / Region`,
-`Component`, `Notes`. Add `Color (bg)`, `Color (fg)`, `Text style`,
-`Padding`, `Margin`, `Border radius`, `Icon`, `Size` **only when at
-least one row actually carries that value** — a column where every
-cell would be `—` is template filler, not spec, and must not appear.
-(One measured spec carried 48 empty cells across 172 lines for exactly
-this reason.)
+**Three constraints, and `design-lint` checks the code rather than your claim
+about it:**
 
-Every cell that *does* appear holds a concrete value per **Iron Law 8**
-— no hand-waves; `—` means "this row explicitly has no such value, by
-design", never "didn't decide" and never "this kind of element never
-has one" (that's the dropped-column case).
+- **Presentation only.** No import of repository / service / cubit / bloc /
+  provider / getIt; no `context.read` / `context.watch` / `BlocBuilder` /
+  `Consumer` / `StreamBuilder`. Data arrives as constructor parameters, actions
+  leave as callbacks.
+- **`StatelessWidget` by default.** The one legitimate reason to hold `State` is
+  **vsync** (`TickerProvider` / `AnimationController`) — animation is
+  intrinsically part of rendering and cannot be lifted out. A `State` with no
+  vsync means the widget should not have one: pass the variation in as a
+  parameter.
+- **Never construct a lifecycle controller** (`FocusNode`, `ScrollController`,
+  `TextEditingController`, `PageController`, `TabController`). The cubit owns
+  them and passes them in. Receiving one is correct; `new`-ing one puts a
+  resource that must be released in a layer with no business releasing it.
 
-When a row delegates to a shared widget (`CommonInfoWidget`,
-`CloudSyncOfflineBanner`, …), spec the **instantiation arguments**
-(icon, color tint, actions) plus the **copy intent** for title/caption
-(the translator phase mints the words) — the widget's own tokens are
-already locked, don't re-spec them. When several rows do this, say it
-once above the table and mark those rows, rather than repeating the
-same sentence down the column. **In delta mode**, the table
-covers only new/changed elements; unchanged rows reference the parent
-spec ("Toolbar layout: unchanged — see parent §3") — Iron Law 8 still
-binds every row that does appear.
+Run it before moving on — it is cheap and it gates Phase 7:
 
-For column rules run
-`notion-payload hints design-plan`
-and read the §Component-by-component spec hint.
+```bash
+design-lint lib/<feature>/presentation/
+```
+
+Names follow `.claude/rules/naming.md`. Reuse a shared widget wherever one fits
+(Iron Law 4) — instantiate it with the arguments and copy intent you need rather
+than rebuilding its internals; its tokens are already locked.
 
 ## Phase 6 — Self-check (the abstraction grep)
 
@@ -372,48 +364,44 @@ design abstraction or moved to **Hand-off to engineering**.
 
 Also verify:
 
-- Every visible element has a corresponding row in the component spec
-  table (Iron Law 8).
-- Every screen specs all four states (Iron Law 5). In delta mode,
-  any new state added by the delta is specced; pre-existing states
-  defer to the parent spec.
+- `design-lint` passes on every delivered widget, and each one appears as a
+  line in §Widgets.
+- Every screen covers all four states (Iron Law 5) — rendered by the widget and
+  entered per §States. In delta mode, any new state added by the delta is
+  covered; pre-existing states defer to the parent spec.
 - Every breakpoint from `compact` through `extraLarge` is covered.
   In delta mode or single-breakpoint mode, the breakpoints not
   affected are explicitly named as "unchanged — see parent" or
   "identical to compact" — never silently omitted.
 - The compact hierarchy survives to extraLarge (Iron Law 3).
 
-## Phase 7 — Render the mockup set
+## Phase 7 — Render what you built
 
-A rendered mockup verifies the component spec's token table — real
-`colorScheme`/`textTheme`/CJK fonts, light **and** dark — surfaced to
-the user so their reaction feeds the still-open spec (Iron Law 9); the
-opposite of a freehand mockup, since every pixel comes from the real
-theme. Full-spec mode already got an early compact-only read via
-§Slice the render (Phase 3); this phase extends that same fixture to
-the complete breakpoint × state × light/dark set.
+**These are not mockups.** Phase 5 shipped the real widgets, so this phase
+mounts *those* widgets and photographs them — real `colorScheme` / `textTheme` /
+CJK fonts, light **and** dark. The whole category of "does the picture match the
+spec" is gone: the picture *is* the thing. What the render still catches is what
+no table ever could — where the design breaks at a breakpoint, at
+`textScaler` 1.5, or in dark mode.
 
-**Render the real thing, never an imitation** — mount the shipping widget and
-mock only its data. A mockup rebuilt from M3 primitives agrees with the spec by
-construction and therefore proves nothing; the whole value is catching where the
-real widget disagrees.
+Surfacing them to the user is Iron Law 9's material: their reaction feeds the
+still-open questions. Full-spec mode already got an early compact-only read via
+§Slice the render (Phase 3); this phase extends that fixture to the complete
+breakpoint × state × light/dark set.
 
-- **An existing screen the spec modifies** → mount the genuine `lib/` widget,
-  substituting only its data dependencies. Reuse whatever fixture registration
-  the project's screenshot harness already has.
-- **A net-new element mapping to an existing shared widget** → use that real
-  widget on the real screen.
-- **Genuinely-bespoke net-new UI** → author a throwaway sketch widget, kept out
-  of the shipping build behind a guard, and referenced at the real insertion
-  point so the surrounding layout is genuine. The engineer role later replaces
-  it with the real state-gated widget. Where the project provides a sketch
-  package and a lint that blocks an unguarded reference, use them and read that
-  package's contract first.
+Mount the widget at its **real insertion point** — the complete page via its
+entry point, not a `Scaffold` wrapped around a fragment; a tab mounts the real
+homepage on that tab. A pushed route renders its own chrome (wrap in a
+`Navigator` so the back button appears); a list-detail flow shows exactly one
+back. Mock **only** the data the widget's parameters need — which is every
+dependency it has, since Phase 5 forbade it from reaching for anything else.
 
-Scope it to the spec's size (§Right-size): full spec renders its
-complete set (every screen × restructured breakpoints × four states ×
-light/dark); delta renders only the changed surface; a one-line copy
-change skips this phase.
+Cover every state §States enumerates. A state with no render is a state nobody
+looked at.
+
+Scope it to the spec's size (§Right-size): full spec renders its complete set
+(every screen × restructured breakpoints × four states × light/dark); delta
+renders only the changed surface; a one-line copy change skips this phase.
 
 Mechanics: author `tool/design_mockups/specs/<slug>_mockups.dart`
 (`MockupSpec` + `setUp`/`tearDown` registering mock deps), register in
@@ -422,46 +410,28 @@ Mechanics: author `tool/design_mockups/specs/<slug>_mockups.dart`
     render-mockups <slug>
 
 Surface representative PNGs with `SendUserFile`, and pass
-`build/design-mockups/<slug>/` as the Design Plan row's **`Mockups`**
+`build/design-mockups/<slug>/` as the Design Plan row's **`Renders`**
 field to the `archivist` (uploads + captions every PNG so the Notion
-plan is self-contained). Fixtures and sketches are throwaway design-phase
-artifacts, not an engineering plan.
+plan is self-contained). The fixture is a throwaway design-phase artifact; the
+widget it mounts is not.
 
 **This phase needs a harness the project supplies** — a headless render step
 that takes a spec slug and emits the breakpoint × state × theme PNG set. Read
 its contract before authoring the first fixture. A project without one still
-runs every other phase; say plainly that mockups are unavailable rather than
-substituting hand-drawn approximations, which is the imitation this phase
-exists to rule out.
+runs every other phase; say plainly that renders are unavailable rather than
+substituting hand-drawn approximations — which would now be describing something
+that already exists.
 
-### Mandatory fidelity self-check — before surfacing the PNGs
+> The **authoritative** pass is the **founder's manual eyeball** of the PNGs.
+> There is no automated fidelity gate, and none is needed for fidelity any more —
+> `design-lint` gates the widget's layer boundaries, and the render shows the
+> widget itself.
 
-Before surfacing any PNG, self-check every screen against
-**mockup-fidelity**: it fails if it hand-builds an imitation widget (a
-hand-rolled `ListTile` list, a fake `AppBar`/nav bar) or
-hand-assembles a partial `Scaffold` instead of mounting the
-**complete** real page via its entry point (a tab mounts the real
-`Homepage` on that tab, not a `Scaffold` around the tab body), using
-the real shared widget, or placing the sketch at its real insertion
-point. A pushed-route page renders its own chrome (wrap in a
-`Navigator` so the back button appears); a list-detail flow shows
-exactly one back.
-
-Resolve every failure — mount the complete real page, swap in the real
-shared widget, or move the sketch — and **re-render** before
-surfacing; a render that isn't the real widget tree is worthless (an
-imitation set has reached the user once before — this check exists so
-it doesn't again).
-
-> The **authoritative** fidelity pass is the **founder's manual
-> eyeball** of the rendered PNGs — this self-check exists so an
-> imitation set never reaches that review. There is no automated fidelity gate.
-
-**Non-optional** — the closing report's `Mockups:` line states it ran clean.
+**Non-optional** — the closing report's `Renders:` line states it ran clean.
 
 ## Phase 8 — Rules audit gate（`blueprint-reviewer`，checklist mode）
 
-撰寫完成後（含 Phase 7 mockup）、**給 user 看 OQ 前**，這份 spec 必須通過 rules audit：由
+撰寫完成後（含 Phase 5 的 widget 與 Phase 7 的 render）、**給 user 看 OQ 前**，這份 spec 必須通過 rules audit：由
 `blueprint-reviewer` 以 **checklist mode** 執行（旁觀者，**player ≠ referee，禁 designer
 自審**）——**逐 principle → 逐 sub-check** 對照 designer 的 rules checklist
 （`references/rules.md`，單一檔案）。Phase 6 的自查是**你**便宜地先擋一輪，不是這道 gate 的
@@ -533,7 +503,7 @@ Source plan: the task's Product Plan row
 Mode: <full / delta (parent: <Design Plan row url>) / single-breakpoint>
 Design diff: <when revving an existing spec — how the new layout differs from the current one; omit only for a brand-new spec>
 Open questions: <all resolved with the user, or the deferrals they explicitly confirmed — none left dangling (Iron Law 9)>
-Mockups: <build/design-mockups/<slug>/ — N PNGs surfaced; or "none (copy-only / pattern-following delta)">
+Renders: <build/design-mockups/<slug>/ — N PNGs surfaced; or "none (copy-only / pattern-following delta)">
 Rules audit: <all passed | N 違規已修, 全 passed> (blueprint-reviewer checklist, Phase 8)
 Stage → Engineering Plan (TaskList task advanced via the archivist skill)
 Next step: <hand-off to engineering, open questions, or follow-up>

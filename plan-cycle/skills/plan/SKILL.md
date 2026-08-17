@@ -719,14 +719,14 @@ mechanical tells. `ux-reviewer` catches the provenance half again at ②.
 #### Worktree isolation (the file-writing boundary)
 
 Concurrent `/plan` sessions share one repo. To keep their edits from colliding,
-every code-bearing cycle runs its **file-writing phases in an isolated worktree**;
-the planning phases (PM / designer / engineer plan — Notion-only) stay in the
-main tree.
+every code-bearing cycle runs its **file-writing phases in an isolated worktree**.
+Only the PM phase is Notion-only and stays in the main tree.
 
 Create the worktree **immediately before the first phase that writes repo files**
-— `translator` if i18n is in scope (it writes ARB), otherwise the `code` phase.
-(The engineer-plan phase, if it falls after `translator` in the DAG, then runs
-inside the worktree — harmless, it only writes Notion.)
+— **the designer phase** when UI is in scope, since it ships the presentation
+widgets (`designer` §Phase 5); otherwise `translator` if i18n is in scope (it
+writes ARB), else the `code` phase. The engineer-plan phase then runs inside the
+worktree — harmless, it only writes Notion.
 
 1. **Precondition.** Ensure the session is on an up-to-date base branch:
    `git fetch && git merge --ff-only @{u}` on whatever branch is the intended PR
