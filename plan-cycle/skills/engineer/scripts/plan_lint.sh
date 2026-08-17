@@ -60,12 +60,24 @@ section_pat() {
 
 # Body of the first section whose heading matches $1 (bilingual regex).
 # An empty pattern matches nothing — never the whole file.
+#
+# A `##` section ends at the next `#` or `##`, NEVER at a `###`. The old rule
+# tested every `^##+ ` line, so a section whose content hangs under `###`
+# subheadings (`## Data flow` → `### 情境 A`) returned a one-byte body — and the
+# checks that read it skipped without a word.
 section_body() {
   [ -n "$1" ] || return 0
   awk -v pat="$1" '
-    /^##+ / { inside = ($0 ~ pat) ? 1 : 0; if (inside) next }
+    /^#{1,2} [^#]/ { inside = ($0 ~ pat) ? 1 : 0; if (inside) next }
     inside  { print }
   ' "$plan"
+}
+
+# A HARD check that never ran must not hide behind PASS.
+skipped=0
+skip_check() {   # skip_check "<what did not run>" "<which precondition was empty>"
+  echo "SKIP  $1 —— $2"
+  skipped=$((skipped + 1))
 }
 
 # 1. HARD — empty / skeleton
@@ -224,7 +236,11 @@ fi
 #    still printed PASS. Identify a data row by what it is not — the separator
 #    and the header — never by the shape of its id.
 conf_body="$(section_body "$(section_pat 'Conformance')")"
-if [ -n "$conf_body" ] && [ -n "$contract_methods" ]; then
+if [ -z "$conf_body" ]; then
+  skip_check "§Conformance ↔ Class.method（HARD）沒跑" "找不到 §Conformance section"
+elif [ -z "$contract_methods" ]; then
+  skip_check "§Conformance ↔ Class.method（HARD）沒跑" "§Classes 沒有可比對的 method（section 名稱不符？或沒有 \`### <Class>\` + \`| method |\` 表）"
+else
   dangling=""; conf_rows=0; conf_global=0
   while IFS= read -r row; do
     case "$row" in \|*) ;; *) continue ;; esac
@@ -269,7 +285,11 @@ fi
 #    of them would examine zero nodes on a legal graph and still print PASS,
 #    which is the same silent-skip failure as the id shape in check 4.
 flow_body="$(section_body "$(section_pat 'Data flow')")"
-if [ -n "$flow_body" ] && [ -n "$contract_methods" ]; then
+if [ -z "$flow_body" ]; then
+  skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "找不到 §Data flow section"
+elif [ -z "$contract_methods" ]; then
+  skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method"
+else
   unknown=""; flow_nodes=0
   flow_list="$(grep -oE '\["?[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"?\]' <<< "$flow_body" \
     | sed -E 's/^\["?//; s/"?\]$//' | sort -u)"
@@ -292,7 +312,9 @@ fi
 # 6. HARD — every state node written from ≥2 origins needs an §Error policy row.
 #    This is the whole point of typing the graph: it turns "did you think of a
 #    race" (unfalsifiable) into "did you account for what you drew" (checkable).
-if [ -n "$flow_body" ]; then
+if [ -z "$flow_body" ]; then
+  skip_check "共享狀態爭用 ↔ §Error policy（HARD）沒跑" "找不到 §Data flow section，無從推導"
+else
   policy_body="$(section_body "$(section_pat 'Error policy')")"
   uncovered=""; state_nodes=0; contended=0
   # mermaid declares a node once with its label (`M[("cache")]`) and refers to it
@@ -393,6 +415,12 @@ if [ -n "$stacked" ]; then
 fi
 
 if [ "$fail" -eq 0 ]; then
-  echo "PASS  no hard failures (advisory lines above still need an eyeball)"
+  if [ "$skipped" -gt 0 ]; then
+    # An unqualified PASS after a check never ran is the failure this whole
+    # script keeps re-learning: the reader takes silence for a verdict.
+    echo "PASS*  no hard failures — 但有 ${skipped} 項 HARD 檢查沒跑（見上方 SKIP）。這不是「通過」，是「沒查」。"
+  else
+    echo "PASS  no hard failures (advisory lines above still need an eyeball)"
+  fi
 fi
 exit "$fail"
