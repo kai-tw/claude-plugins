@@ -111,7 +111,7 @@ produce the engineering-plan artifact.
 >    back to the designer role if one is missing. The plan's
 >    §Conformance matrix must cover the spec completely — every
 >    product-plan commitment and design-spec observable item maps to a
->    row, every row to a task (`references/rules.md` P9) — the anti-drop
+>    row, every row to a `Class.method` §Classes defines — the anti-drop
 >    inverse of "source from the spec, never invent."
 > 9. **Design quality is scored before approval (Phase 8.5).** The
 >    `blueprint-reviewer` sub-agent scores the plan across scope-gated
@@ -312,10 +312,12 @@ deps-graph) parallelises as filesystem read/grep.
 
 ## Phase 3 — Architectural sketch
 
-**Read `references/rules.md` first**, alongside the SOPs below. Its entries are
-drafting constraints, and **nothing walks them as a checklist afterwards** —
-`blueprint-reviewer` judges consequences, `plan_lint.sh` compares facts. A
-constraint honoured here costs a sentence; missed here, it ships.
+**Run `notion-payload template engineering-plan` and `hints engineering-plan`
+first**, alongside the SOPs below. The questionnaire's cells *are* the drafting
+constraints — answering `為何要新增` honestly is the check that nothing else can
+make, because `blueprint-reviewer` scores inside the design space you drew and
+will endorse a well-built thing that should not exist. A constraint honoured
+here costs a sentence; missed here, it ships.
 
 **Phase 3 is assembly (串連), not per-block design.** Every code artifact
 the plan introduces — state holder, use case, repository, DTO, widget, exception,
@@ -357,7 +359,7 @@ to print the full section questionnaire with descriptions and hints):
   designer role if a decision is missing (Iron Law 8). A layer with no
   changes is named ("domain: no change") so the implementer knows it was
   considered, not forgotten. Names are feature-prefixed + role-suffixed per
-  `.claude/rules/naming.md` (`references/rules.md` P8) — naming is
+  `.claude/rules/naming.md` — naming is
   *proposed here*, constrained by the rule, no separate naming section. The
   block's **internal design + method bodies belong to the SOP + the
   implementation, not the plan**; cite the relevant `.claude/rules/` file
@@ -706,10 +708,9 @@ none of it auto-loads while you are drafting a Notion plan row.
 | Security, privacy | the `security-reviewer` / `privacy-reviewer` gates own these — don't self-grade; just make sure the plan gives them something to review |
 | Lint compliance | the project's lint command (the commit gate, not this phase) |
 
-Nothing downstream walks `references/rules.md` as a checklist — this phase is
-the only pass over it, and `blueprint-reviewer` (Phase 8.5) grades the
-*consequences*, not the list. So a concern you wave through here is not
-deferred to a gate; it is decided.
+No downstream gate walks a checklist for this plan — `blueprint-reviewer`
+(Phase 8.5) grades *consequences* and `plan_lint.sh` compares facts. So a
+concern you wave through here is not deferred to a gate; it is decided.
 
 **This is the engineer's own hot-context self-check — do not re-fan-out
 for it.** You just authored the plan and read every affected file in
@@ -785,19 +786,19 @@ out per the review-loop reference.
 
 ## Phase 9 — 每次修訂都重審（audit-first）
 
-**這份計畫沒有逐條走查的 checklist gate。** 判斷歸 Phase 8.5 的 `blueprint-reviewer`
-（維度 + 三條橫切檢查），機械比對歸 Phase 8 的 `plan_lint.sh`（`references/rules.md` 開頭
-有完整對照）。留在這一格的是唯一無法外包的紀律：**重審的時機**。
+**這份計畫沒有逐條走查的 checklist gate。** 起草約束是問卷本身的格子，判斷歸 Phase 8.5 的
+`blueprint-reviewer`（維度 + 三條橫切檢查），機械比對歸 Phase 8 的 `plan_lint.sh`。
+留在這一格的是唯一無法外包的紀律：**重審的時機**。
 
 任何對 plan body 的更動——co-creation 決議、founder 回饋、Phase 11 divergence rev、後續
 revision——都要**先重跑 Phase 8 的 `plan_lint.sh`、再把 `blueprint-reviewer` 對改動處
 ＋其波及範圍重跑一次，才往下（task-list approval / 實作 / resume）**。改了沒重審＝未通過，
 先前的 green 不算數——改動處正是新缺陷進來的地方，而上游那一輪從來沒看過它。
 （範例：一次 rev 把兩個語意不同的 user action 折成同一個 terminal value，悄悄觸發原本被
-其中一 arm 擋掉的導航——`references/rules.md` P1.2。）
+其中一 arm 擋掉的導航——這正是 `blueprint-reviewer` 的 PM-scope 橫切檢查在抓的東西。）
 
-若過程中浮現現有 rules 未涵蓋的新 learning：依 `rules/CONVENTIONS.md` 的 learning
-更新法處理（先查相似 → 合併；無則加 sub-check 或新增母規則 `P<N+1>`；過時可刪）。
+若過程中浮現問卷格子沒問到的新 learning：把它變成 schema 裡的一個欄位或一句 hint
+（`skills/archivist/schemas/engineering-plan.mjs`），不要另立規則檔——問卷問得到的才會被回答。
 
 > 本 role **不自審**、也**不在 plan body 留 `## Memory Audit` 區塊** —— audit 是一道 gate，
 > 不是 plan 的一節。
@@ -1044,10 +1045,13 @@ session-scoped and less audit-relevant for cross-time readers.
 
 ## Rules
 
-engineer rules（工程計畫的起草約束）不在本檔列舉，全文見 `references/rules.md`
-（母規則 + sub-check + Example 同檔）；該檔開頭列出每條現在由誰把關
-（`blueprint-reviewer` 判斷、`scripts/plan_lint.sh` 比對）。格式與 learning 更新法見
-`rules/CONVENTIONS.md`。
+**這個 role 沒有獨立的規則檔。** 起草約束住在問卷的格子裡
+（`skills/archivist/schemas/engineering-plan.mjs`，`notion-payload hints
+engineering-plan` 讀得到）——格子在落筆的那一刻施加約束，比指望作者回想另一個檔案可靠。
 
-> `references/rules.md` 是這些可檢查 principle 的 SSOT。Phase 8 的 self-check 沒有第二份
-> 清單 —— 它直接指向 `.claude/rules/` 的各章節（見該 Phase 的對照表）。
+把關分工：**問卷**問「該不該存在、查證了沒」（§Classes 的 `為何要新增` /
+`既有方法夠嗎`）· **`plan_lint.sh`** 比對事實 · **`blueprint-reviewer`** 判斷後果，
+外加三條橫切檢查（PM-scope 授權、對既有 code 的斷言、plan integrity）。
+
+> Phase 8 的 self-check 沒有第二份清單 —— 它直接指向 `.claude/rules/` 的各章節
+> （見該 Phase 的對照表）。

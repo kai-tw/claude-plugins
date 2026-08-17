@@ -626,7 +626,7 @@ proceeds**: the ① cell to clean (`blueprint-reviewer` checklist mode loop-to-g
 `plan_lint.sh` exit 0), the Adversarial tier one pass
 + one verification, per §Gate loop policy. Audit first, then implement. A revised plan that has not been
 re-audited is **not** approved, regardless of an earlier green pass — the change
-is exactly where a new defect (e.g. an engineer `P3.5` parallel marker the
+is exactly where a new defect (e.g. a parallel-marker second source of truth the
 prior pass never saw) enters. The author never self-audits the rev (player ≠
 referee), and the audit runs *before* the user re-approves the delta, not
 after. **And sweep the whole body when you rev** — that is check `I1` in
@@ -1123,13 +1123,14 @@ in-context to author the phase):
 - `skills/engineer/SKILL.md` (+ `skills/engineer/references/*`,
   `scripts/{plan_lint,scope_gate}.sh`).
 
-**Per-role rules**: `skills/<role>/references/rules.md` — **one file** holding
-every principle with its sub-checks, checks and examples inline. All three are
-drafting contracts walked by their author; each file's header maps which
-downstream gate now catches which principle (`ux-reviewer` for designer,
-`blueprint-reviewer` + `plan_lint.sh` for engineer, `feasibility-reviewer` +
-`ux-reviewer` for pm). (`skills/<role>/rules/` keeps only `CONVENTIONS.md`, the
-maintenance contract for editing that file.)
+**Per-role rules**: `skills/pm/references/rules.md` and
+`skills/designer/references/rules.md` — **one file each** holding every principle
+with its sub-checks, checks and examples inline, walked by `blueprint-reviewer`
+in checklist mode. (`skills/<role>/rules/CONVENTIONS.md` is the maintenance
+contract for editing that file.) **The engineer role has no rules file** — its
+drafting constraints are the questionnaire's own cells
+(`schemas/engineering-plan.mjs`), which apply at the moment of writing rather
+than relying on the author to recall a separate document.
 
 **Launcher detail files:**
 

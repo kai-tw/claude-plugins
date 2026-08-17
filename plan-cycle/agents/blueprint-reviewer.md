@@ -19,8 +19,8 @@ description: |
   **dispatches one fresh-context sub-agent per in-scope dimension** — which
   dimensions run is gated by what the plan's §Classes actually
   touch (defect dimensions are non-droppable; maximizers scale to plan
-  size) — each grounded in the relevant rules (incl. the engineer
-  rules), then **consolidates them into one report** (reconciling, never
+  size) — each grounded in `.claude/rules/` and the section's own authoring
+  requirements, then **consolidates them into one report** (reconciling, never
   averaging). For every weak dimension the review names a **precise,
   evidenced weakness** (what's wrong + the failure scenario + the cited
   section) — it does **NOT** propose the fix; devising the solution is the
@@ -341,7 +341,7 @@ migration path a `<baseline>` user crosses.
 
 For **each in-scope dimension** (per the Stage 1b scope-gate), score it
 with its own brief: the dimension's question + anchors + grounding rule
-files + the engineer rules + the failure-scenario discipline.
+files + the section authoring requirements + the failure-scenario discipline.
 
 **Default: score the dimensions inline on this thread**, one after another,
 each under its own brief. **If — and only if — a sub-agent-spawn tool is
@@ -356,9 +356,9 @@ author regardless — you are a fresh agent reading the saved plan).
 
 Each sub-agent's brief carries: the **plan path**; the dimension's
 **question + score anchors** (below); the **rule files** it must read for
-that dimension; the **engineer rules relevant to it** (read from
-`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/rules.md` — one file, so a
-rule update is auto-included with no brief edit); and the
+that dimension (`.claude/rules/`); the **authoring requirements for the plan
+section it scores** (`notion-payload hints engineering-plan` — one source, so a
+schema update is auto-included with no brief edit); and the
 `package-explorer` verdict (Package dimension only).
 
 Each dimension returns, per finding: a **score** (1–10, anchors below) +
@@ -537,7 +537,7 @@ applicable, avoid a needless new dep? A clean no-new-dependency plan
 scores high here; it is **not** N/A.
 
 A 10 has every dep justified with a source-verified contract match. A 2
-picks a package on name-match alone (engineer rule P3.2 failure mode).
+picks a package on name-match alone (name matched, contract unverified).
 
 ### Criterion 9 — Testability
 

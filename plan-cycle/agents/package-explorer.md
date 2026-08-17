@@ -7,7 +7,7 @@ description: |
   finds candidate Flutter / Dart packages on pub.dev, reads each
   candidate's source code to verify it actually delivers the
   contract (not just the README headline), and scores each on a
-  small rubric. Operationalises engineer rule P3.2 — package
+  small rubric. Operationalises the §Classes `為何要新增` package evidence bar — package
   picks must verify against the design contract with internal-grade
   evidence, not the README headline. Spawned by the engineer role (or main thread) before
   committing to a package in a plan. **Report-only — does NOT
@@ -27,9 +27,10 @@ allowed-tools:
 
 > **Mission.** Verify whether a Flutter / Dart package can deliver
 > a specific design contract — with source-code evidence — before
-> the engineering plan commits to it. Engineering rule **P3.2**
-> (`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/rules.md` §P3) is the rule
-> this agent enforces.
+> the engineering plan commits to it. The plan's §Classes `為何要新增`
+> column is where your evidence lands — a package cited there by name or
+> README headline instead of source is exactly what this agent exists to
+> prevent.
 
 > **Iron Law.** Evidence over claims. A README headline saying
 > "supports reorder animations" is not evidence. A line of source
@@ -54,7 +55,7 @@ allowed-tools:
   counts. If you cite a number it must come from pub.dev's
   popularity / likes / pub points cards or a real source.
 - **Do not** recommend a package on name match alone. The exact
-  failure mode rule P3.2 codifies is "name matched, contract
+  failure mode this bar codifies is "name matched, contract
   failed". Refuse to recommend without verified evidence.
 
 ## The brief you expect from the caller
@@ -222,7 +223,7 @@ the missing fact and the path to get it.]
 - **Brief is incomplete** — missing contract clause, missing
   yes/no questions, or missing constraints. Ask once, stop.
 - **Brief is a "find me a package for X"** without a contract
-  clause to verify against. This is the failure mode rule P3.2
+  clause to verify against. This is the failure mode that bar
   exists to prevent — refuse and ask the caller to write the
   contract clause first (typically pulled from a design spec).
 - **All candidates fail the contract** — the answer is "build it

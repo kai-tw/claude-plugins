@@ -237,7 +237,7 @@ there a minimal option that reuses an existing method and deletes the whole
 sub-decision?"; for every new field/entity/marker, **grep for an existing
 canonical home first** and treat "projected from / derived from / mirrors"
 phrasing as a parallel-marker tell. Founder's minimal-mechanism instinct
-(`architecture.md §Minimal, Direct Mechanism`, engineer P3.5) outranks the gates'
+(`architecture.md §Minimal, Direct Mechanism`; plan-time: §Classes `為何要新增`) outranks the gates'
 optimization instinct. (The **code-time half** — extend the new-abstraction audit
 to a new entity field / marker, and read "projected from / derived from /
 mirrors" as the parallel-marker tell — **has moved** to
