@@ -316,6 +316,14 @@ fi
 #    of them would examine zero nodes on a legal graph and still print PASS,
 #    which is the same silent-skip failure as the id shape in check 4.
 flow_body="$(section_body "$(section_pat 'Data flow')")"
+# Every check below is really preconditioned on "is there a graph", not "is
+# there a section" — a §Data flow full of prose has a body and no graph. Compute
+# it ONCE: the three consumers drifted apart when each tested for itself, and a
+# check that asserts `0 state nodes` about a graph that does not exist reads as
+# a verified result.
+has_graph=0
+[ -n "$flow_body" ] && grep -q '```mermaid' <<< "$flow_body" && has_graph=1
+
 if [ -z "$flow_body" ]; then
   skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "找不到 §Data flow section"
 elif [ -z "$contract_methods" ]; then
@@ -323,7 +331,7 @@ elif [ -z "$contract_methods" ]; then
   if [ "${flow_pending:-0}" -gt 0 ]; then
     skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method" \
       "圖上有 ${flow_pending} 個 Class.method 節點沒被比對"
-  elif grep -q '```mermaid' <<< "$flow_body"; then
+  elif [ "$has_graph" -eq 1 ]; then
     skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method" \
       "圖裡沒有 [Class.method] 節點——圖在，但它沒有可以對回 §Classes 的東西"
   else
@@ -356,7 +364,7 @@ fi
 # inside that guard meant a plan with no graph at all skipped BOTH the node
 # comparison and the one advisory that would have said the graph is missing.
 if [ -n "$flow_body" ] && ! grep -qE '\(\[.*\]\)' <<< "$flow_body"; then
-  if grep -q '```mermaid' <<< "$flow_body"; then
+  if [ "$has_graph" -eq 1 ]; then
     echo "ADVISORY  §Data flow has no ([origin]) node — 沒有併發來源的圖回答不了它該回答的問題；真的只有單一入口就明寫一行"
   else
     echo "ADVISORY  §Data flow 沒有 mermaid 圖 — race 推導完全沒有輸入；§Error policy 的爭用表因此無從封閉"
@@ -368,6 +376,9 @@ fi
 #    race" (unfalsifiable) into "did you account for what you drew" (checkable).
 if [ -z "$flow_body" ]; then
   skip_check "共享狀態爭用 ↔ §Error policy（HARD）沒跑" "找不到 §Data flow section，無從推導"
+elif [ "$has_graph" -eq 0 ]; then
+  skip_check "共享狀態爭用 ↔ §Error policy（HARD）沒跑" "§Data flow 沒有 mermaid 圖，race 無從推導" \
+    "這一節缺一張圖 —— 不是「圖上沒有爭用狀態」"
 else
   policy_body="$(section_body "$(section_pat 'Error policy')")"
   uncovered=""; state_nodes=0; contended=0
