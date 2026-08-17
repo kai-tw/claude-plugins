@@ -74,10 +74,32 @@ section_body() {
 }
 
 # A HARD check that never ran must not hide behind PASS.
+#
+# The SKIP also carries HOW MUCH went unchecked. "no §Data flow in a small plan"
+# and "a full §Conformance table sat there and not one row was verified" are the
+# same state and wildly different news; without the number the reader has to go
+# and count, and whoever would do that was never the one at risk. A count of
+# zero gets its own wording — a bare `0` in a severity line reads as reassurance.
 skipped=0
-skip_check() {   # skip_check "<what did not run>" "<which precondition was empty>"
+skip_check() {   # skip_check "<what did not run>" "<why>" ["<how much went unchecked>"]
   echo "SKIP  $1 —— $2"
+  [ -n "${3:-}" ] && echo "        $3"
   skipped=$((skipped + 1))
+}
+
+# Data rows of a pipe table body — the same "not the separator, not the header"
+# rule check 4 uses, hoisted so it can also run when check 4 cannot.
+count_data_rows() {
+  printf '%s\n' "$1" | awk '
+    /^\|/ {
+      if ($0 ~ /^[|: -]+$/) next
+      first = $0; sub(/^\|[[:space:]]*/, "", first); sub(/[[:space:]]*\|.*$/, "", first)
+      gsub(/[`*]/, "", first)
+      if (first == "" || first == "#" || first == "Requirement" || first == "需求") next
+      n++
+    }
+    END { print n + 0 }
+  '
 }
 
 # 1. HARD — empty / skeleton
@@ -239,7 +261,9 @@ conf_body="$(section_body "$(section_pat 'Conformance')")"
 if [ -z "$conf_body" ]; then
   skip_check "§Conformance ↔ Class.method（HARD）沒跑" "找不到 §Conformance section"
 elif [ -z "$contract_methods" ]; then
-  skip_check "§Conformance ↔ Class.method（HARD）沒跑" "§Classes 沒有可比對的 method（section 名稱不符？或沒有 \`### <Class>\` + \`| method |\` 表）"
+  skip_check "§Conformance ↔ Class.method（HARD）沒跑" \
+    "§Classes 沒有可比對的 method（section 名稱不符？或沒有 \`### <Class>\` + \`| method |\` 表）" \
+    "§Conformance 有 $(count_data_rows "$conf_body") 列在等，這次一列都沒驗"
 else
   dangling=""; conf_rows=0; conf_global=0
   while IFS= read -r row; do
@@ -288,7 +312,14 @@ flow_body="$(section_body "$(section_pat 'Data flow')")"
 if [ -z "$flow_body" ]; then
   skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "找不到 §Data flow section"
 elif [ -z "$contract_methods" ]; then
-  skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method"
+  flow_pending="$(grep -oE '\["?[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"?\]' <<< "$flow_body" | sort -u | grep -c . || true)"
+  if [ "${flow_pending:-0}" -gt 0 ]; then
+    skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method" \
+      "圖上有 ${flow_pending} 個 Class.method 節點沒被比對"
+  else
+    skip_check "§Data flow 節點 ↔ §Classes（HARD）沒跑" "§Classes 沒有可比對的 method" \
+      "圖上沒有 Class.method 節點，這一項本來就無事可比"
+  fi
 else
   unknown=""; flow_nodes=0
   flow_list="$(grep -oE '\["?[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"?\]' <<< "$flow_body" \
