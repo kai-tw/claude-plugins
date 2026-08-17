@@ -68,7 +68,31 @@ for f in $files; do
     fail=1
   fi
 
-  # 3. HARD — a StatefulWidget with no vsync has no reason to exist.
+  # 3. HARD — every value bound to the design system (Iron Law 8). Tokens live
+  #    in this file now, so the bar that used to be enforced by reading a table
+  #    is enforced by reading the source. A raw hex or a `Colors.*` constant
+  #    drifts from the theme the moment the theme changes.
+  hits="$(grep -nE '(Color\(0x|Colors\.[a-zA-Z])' "$f" | grep -viE 'Colors\.transparent' || true)"
+  if [ -n "$hits" ]; then
+    echo "FAIL  $f — hardcoded colour; use colorScheme.<role> so it follows the theme:"
+    printf '%s\n' "$hits" | cut -c1-140 | sed 's/^/        /'
+    fail=1
+  fi
+  hits="$(grep -nE 'TextStyle\(' "$f" | grep -vE 'textTheme|copyWith' || true)"
+  if [ -n "$hits" ]; then
+    echo "ADVISORY  $f — bare TextStyle; prefer textTheme.<role> (copyWith for local tweaks):"
+    printf '%s\n' "$hits" | cut -c1-140 | sed 's/^/        /'
+  fi
+
+  # 4. ADVISORY — an interactive element with no screen-reader label. Grep-level
+  #    only: it proves a label exists, never that it says the right thing —
+  #    that judgment is the ux review's, against the render.
+  if grep -qE '(GestureDetector|InkWell|IconButton|onTap:|onPressed:)' "$f" \
+     && ! grep -qE '(Semantics|semanticLabel|tooltip:|excludeSemantics)' "$f"; then
+    echo "ADVISORY  $f — interactive, but no Semantics / semanticLabel / tooltip anywhere in the file"
+  fi
+
+  # 5. HARD — a StatefulWidget with no vsync has no reason to exist.
   #    Checked per State class so one animated widget in a file does not excuse
   #    the rest.
   stateless_violation="$(awk '

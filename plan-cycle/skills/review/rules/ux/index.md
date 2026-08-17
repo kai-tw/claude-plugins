@@ -12,9 +12,10 @@ critical（＋未接受的 warning）回報 designer 修正 → 迴圈重審，*
 spec（component row／state／section）＋ 明列 failure scenario（具體的困惑一刻）。
 本檔即完整規則集（母規則 + sub-check + Example 同檔），沒有另外的細節檔；維護慣例 + 三級判定見 `CONVENTIONS.md`。
 
-**designer 規則也在這裡。** `blueprint-reviewer` 的 checklist mode 在 Resolve 前逐條查
-「守了沒」；`designer/references/rules.md` 的每一條**同時**也折進上面的 check，因為同一個
-缺陷在這裡要被問的是另一個問題：**使用者會不會因此困惑、有多嚴重**。
+**designer 規則就在這裡，沒有第二份。** designer 交付的是 widget，所以它的便宜 gate 是
+`design-lint`（層邊界 + token，逐檔讀原始碼），判斷這一半全在本檔——而且你評的是
+**渲染出來的畫面與 widget 原始碼**，不是一份描述畫面的文件。問法也不同：不是「守了沒」，
+而是**使用者會不會因此困惑、有多嚴重**。
 
 嚴重度：**critical** = 客觀可用性缺陷（任務無法完成、狀態無出口、主要控制項隱形／不可及、
 破壞性動作無確認、動作無回饋）→ 迴圈修到好。**warning** = 摩擦／困惑的取捨 → 浮到 designer

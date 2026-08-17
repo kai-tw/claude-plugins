@@ -375,6 +375,24 @@ Also verify:
   "identical to compact" — never silently omitted.
 - The compact hierarchy survives to extraLarge (Iron Law 3).
 
+## Phase 6.5 — Real copy before you render
+
+**Spawn `translator` here**, with the §Localization copy intents, before any
+render. It mints the ARB keys, writes the `app_en.arb` source values and all four
+translations; you then point the widgets at the generated `AppLocalizations`
+getters instead of literals.
+
+This is why the phase exists at this point rather than after you: **a render with
+fabricated copy hides the thing a render is for.** Placeholder text never wraps
+the way a real CJK string wraps, never overflows the way a long locale overflows,
+and never reveals that a label reads wrong in context. The founder also signs off
+on ja / zh_Hant copy **seeing it in place**, which is strictly better than
+approving a list of strings.
+
+Do not write ARB values yourself — per-locale voice is `translator`'s (keigo and
+CJK register are exactly where a fabricated translation reads wrong). You own the
+**intent**; it owns the words.
+
 ## Phase 7 — Render what you built
 
 **These are not mockups.** Phase 5 shipped the real widgets, so this phase
@@ -429,31 +447,25 @@ that already exists.
 
 **Non-optional** — the closing report's `Renders:` line states it ran clean.
 
-## Phase 8 — Rules audit gate（`blueprint-reviewer`，checklist mode）
+## Phase 8 — Gate：`design-lint` 全綠
 
-撰寫完成後（含 Phase 5 的 widget 與 Phase 7 的 render）、**給 user 看 OQ 前**，這份 spec 必須通過 rules audit：由
-`blueprint-reviewer` 以 **checklist mode** 執行（旁觀者，**player ≠ referee，禁 designer
-自審**）——**逐 principle → 逐 sub-check** 對照 designer 的 rules checklist
-（`references/rules.md`，單一檔案）。Phase 6 的自查是**你**便宜地先擋一輪，不是這道 gate 的
-替代品：規則你要懂，但審的人不能是你。
+**這個 role 沒有 checklist gate。** 起草約束是問卷本身的格子（`States` 問「什麼時候進入」、
+`Seam` 問「期待什麼可觀察行為」），機械判準歸 `design-lint`，判斷歸 Resolve 之後的
+`ux-reviewer`——它對著**渲染出來的畫面與 widget 原始碼**評分，而不是對著一份描述畫面的文件。
 
-- **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下，**上限 3 輪**。
-  3 輪仍未全 passed → 停止迴圈，依 `plan/SKILL.md §Gate loop policy` 把未解項目白話交回 founder。
-- 它回報**每一條** sub-check（`P#.k` ＋ `I1`–`I4`）的 passed / violation / na 與證據，
-  末行 `gate: <V> violations · <P> passed · <N> na` —— 三個數字對不上清單長度，就是它沒走完。
-- 審查中若浮現現有 rules 未涵蓋的新 learning：依 `rules/CONVENTIONS.md` 的 learning
-  更新法處理（先查相似 → 合併；無則加 sub-check 或新增母規則 `P<N+1>`；過時可刪）。
-- **每次修訂都重審（audit-first）**：任何對 spec body 的更動（co-creation 決議、founder
-  回饋、後續 revision、mid-flow 補 state / surface / token）都要**先重跑至全數 passed，
-  才往下（save / 下一階段 / 實作）**。改了沒重審＝未通過，先前的 green 不算數。
+```bash
+design-lint lib/<feature>/presentation/
+```
 
-這道 gate 與 launcher 在 Resolve 之後派的 `ux-reviewer` **並存**：這裡逐條查規則有沒有守，
-那裡問「就算全合規，使用者會不會困惑」——而且 designer 規則也折進了 `ux-reviewer` 的六軸，
-所以同一個缺陷會以「可用性缺陷」的形態再被評一次嚴重度。
+**每一條 FAIL 當場修，禁 deferred & dismiss**，全綠才往下。ADVISORY 逐條過目：
+semantics label 的有無它查得動，**唸出來對不對只有 `ux-reviewer` 對著 render 判得了**。
 
-> 機制：`/plan` launcher 在 designer phase 撰寫後 spawn `blueprint-reviewer`
-> （stage = design spec）。本 role **不自審**、也**不在 spec body 留 `## Memory Audit`
-> 區塊** —— audit 是一道 gate，不是 spec 的一節。
+**每次修訂都重跑（audit-first）**：任何對 widget 或 spec body 的更動（co-creation 決議、
+founder 回饋、後續 revision、mid-flow 補 state / surface）都要**先重跑 `design-lint`、
+必要時重新 render，才往下**。改了沒重跑＝未通過，先前的綠不算數。
+
+> 本 role **不自審**、也**不在 spec body 留 audit 區塊** —— 判斷那一半是 `ux-reviewer`
+> 的，player ≠ referee。
 
 ## Phase 9 — Save and offer next step
 

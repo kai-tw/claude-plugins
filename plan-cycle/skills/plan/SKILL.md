@@ -313,14 +313,16 @@ plan-only cycles (Notion writes, no app code) skip the worktree.
 Authoring main sequence (fixed order, non-overlapping):
 
 ```
-┌─ ONE round ────────────────────────────┐
-│ PM plan draft → designer plan draft    │ → [① ENTER WORKTREE] → translator
-│   → Sanity → Resolve → Adversarial     │      → engineer plan (its own round)
-└────────────────────────────────────────┘      → code → QA →[② push+PR]→ close-out
+┌─ ONE round ──────────────────────────────────────────┐
+│ PM plan draft → [① ENTER WORKTREE] → designer:       │ → engineer plan (own round)
+│   build widgets → translator → render                 │ → code → QA
+│   → Sanity → Resolve → Adversarial                    │ →[② push+PR]→ close-out
+└──────────────────────────────────────────────────────┘
 
 ① Mandatory node for any app-code-bearing cycle (Iron Law 9): enter the worktree
-  immediately before the FIRST app-code-writing phase — `translator` if i18n is in
-  scope (it writes ARB), else immediately before `code` (§Worktree isolation).
+  immediately before the FIRST phase that writes repo files — **the designer
+  phase** when UI is in scope (it ships the widgets), else `translator` if i18n
+  is in scope, else `code` (§Worktree isolation).
 ② Close-out (Step 6) pushes the branch + opens the PR, then `ExitWorktree keep`.
 ```
 
@@ -334,11 +336,14 @@ Authoring main sequence (fixed order, non-overlapping):
   *Why:* measured, the split cost 2 founder round-trips and 2 opus batteries per
   cycle, and the second battery routinely ran on a draft the founder's answers in
   the first were about to invalidate.
-- **Translation is finished after the designer phase and before the engineer
-  phase** — `translator` is its own gate phase (it owns the ARB keys, the
-  `app_en.arb` source value, and all four translations; ja / zh_Hant still need
-  founder sign-off). The engineer phase only wires ICU + `gen-l10n` + the call
-  sites.
+- **Translation runs INSIDE the designer phase, between building the widgets and
+  rendering them.** `translator` still owns the whole ARB string (keys, the
+  `app_en.arb` source value, all four translations; ja / zh_Hant still need
+  founder sign-off) — what changed is only when it runs. Renders that show real
+  copy are the point: fabricated placeholder text hides exactly what a render
+  exists to expose (a CJK string that wraps, a long locale that overflows), and
+  the founder signs off on the copy **seeing it in place** rather than as a list
+  of strings. The engineer phase only wires ICU + `gen-l10n` + the call sites.
 - The engineer plan runs its **own** round (same three stages), because it is
   downstream of translator in the DAG and its scope depends on what shipped
   upstream.
@@ -375,7 +380,7 @@ it never grades a draft that is about to change.
 | Stage produced | ① Sanity (cheap, before Resolve) | ② Adversarial (opus, judgment, after Resolve) |
 |---|---|---|
 | **PM plan** | `blueprint-reviewer`(checklist mode, pm rules) | `feasibility-reviewer`(designer + engineer lens) ∥ `security-reviewer` — *boundary-gated* ∥ `privacy-reviewer` — *boundary-gated* |
-| **designer plan** | `blueprint-reviewer`(checklist mode, designer rules) | `ux-reviewer`(usability) ∥ `feasibility-reviewer`(engineer lens) |
+| **designer plan** | `design-lint` (script, not an agent — the shipped widgets) | `ux-reviewer`(usability, against the renders + widget source) ∥ `feasibility-reviewer`(engineer lens) |
 | **engineer plan** | `plan_lint.sh` (script, not an agent) | `blueprint-reviewer` ∥ `security-reviewer`(threat model) — *boundary-gated* ∥ `privacy-reviewer`(data flow) — *boundary-gated* |
 | **code (after implementation)** | `code-reviewer` | `security-reviewer`(code) — *boundary-gated on the diff* ∥ `privacy-reviewer`(code sinks) — *boundary-gated on the diff* |
 | **after QA** | — | `conformance-reviewer` — the residue QA's spec tests can't pin ∥ `test-reviewer` — test design, both halves |
@@ -387,9 +392,9 @@ them, not two.
 **`blueprint-reviewer` is the ① reviewer for every plan**, with the checks
 rehomed **by kind**:
 
-- **The checklist walk stays a walk, and stays independent.** A PM plan or design
-  spec gets `blueprint-reviewer` in **checklist mode** — one pass over that
-  role's `references/rules.md`, passed / violation / na per sub-check. An author
+- **The checklist walk stays a walk, and stays independent.** A PM plan gets
+  `blueprint-reviewer` in **checklist mode** — one pass over
+  `pm/references/rules.md`, passed / violation / na per sub-check. An author
   may know its rules; it may never grade itself (player ≠ referee), so this cell
   is never a self-check.
 - **Engineering judgment → the dimensions**, inside `blueprint-reviewer`'s scored
@@ -521,15 +526,15 @@ directly. A round has five steps, and **the founder appears exactly once**:
    need the user, and collect the open questions (each: the question, options,
    your recommendation, what it blocks) — don't surface them yet.
    *In the merged PM + designer round, draft both artifacts here, back-to-back.*
-2. **① Sanity gate (旁觀, player ≠ referee).** For a **pm / designer** artifact,
-   spawn `blueprint-reviewer` in **checklist mode** as an **isolated sub-agent**,
-   naming the stage so it picks that role's rules file
-   (`skills/<role>/references/rules.md`). **The author never audits itself.** Any
+2. **① Sanity gate (旁觀, player ≠ referee).** For a **pm** artifact,
+   spawn `blueprint-reviewer` in **checklist mode** as an **isolated sub-agent**
+   over `skills/pm/references/rules.md`. **The author never audits itself.** Any
    `violation` → fix it **in place** — **no deferred, no dismiss** — and
    re-spawn. Loop to green, **cap 3 rounds**; escalate earlier once the finding
-   turns from error into judgment (§Gate loop policy). For an **engineer** plan
-   this cell is `plan-lint <draft>` —
-   clear every HARD failure, eyeball every ADVISORY. Cheap either way, so it runs
+   turns from error into judgment (§Gate loop policy). For a **designer**
+   artifact this cell is `design-lint <presentation-dir>` and for an **engineer**
+   plan `plan-lint <draft>` — both scripts, so neither loops: clear every HARD
+   failure, eyeball every ADVISORY. Cheap either way, so it runs
    before the founder's time is spent.
 3. **Resolve — the one founder round.** Put **every** open question and every
    load-bearing fork to the user in one `AskUserQuestion` pass. (This is also
@@ -1123,14 +1128,15 @@ in-context to author the phase):
 - `skills/engineer/SKILL.md` (+ `skills/engineer/references/*`,
   `scripts/{plan_lint,scope_gate}.sh`).
 
-**Per-role rules**: `skills/pm/references/rules.md` and
-`skills/designer/references/rules.md` — **one file each** holding every principle
-with its sub-checks, checks and examples inline, walked by `blueprint-reviewer`
-in checklist mode. (`skills/<role>/rules/CONVENTIONS.md` is the maintenance
-contract for editing that file.) **The engineer role has no rules file** — its
-drafting constraints are the questionnaire's own cells
-(`schemas/engineering-plan.mjs`), which apply at the moment of writing rather
-than relying on the author to recall a separate document.
+**Per-role rules**: only `skills/pm/references/rules.md` — one file holding every
+principle with its sub-checks and examples inline, walked by `blueprint-reviewer`
+in checklist mode (`skills/pm/rules/CONVENTIONS.md` is its maintenance contract).
+**The designer and engineer roles have no rules file**: their drafting
+constraints are their questionnaire's own cells (`schemas/design-plan.mjs`,
+`schemas/engineering-plan.mjs`), which apply at the moment of writing rather than
+relying on the author to recall a separate document, and their cheap gate is a
+script over the artefact (`design-lint`, `plan-lint`) rather than a checklist
+over a description of it.
 
 **Launcher detail files:**
 

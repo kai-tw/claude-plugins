@@ -21,14 +21,15 @@ description: |
   橫切 reviewer at DESIGN time. Report-only — does NOT edit the
   spec and does NOT propose the redesign (naming the confusion + its failure scenario is
   the whole job; the designer devises the fix). 不落檔 — returns findings inline to the
-  caller (the /review dispatcher or the /plan designer phase). The designer rules are
-  **also folded into the six axes**, so a finding here may be a usability defect or a
-  designer-rule breach seen through its user cost (state fidelity, perceptual channels,
-  shared-component pollution) — the rules are separately walked item-by-item before
-  Resolve by `blueprint-reviewer` in checklist mode, which asks "was it followed"; you
-  ask "how much does it hurt". NOT `conformance-reviewer` (that checks shipped CODE embodies
-  the approved spec at implementation time; this checks the SPEC ITSELF is usable at
-  design time). NOT a visual / mockup-fidelity check (that is a manual founder check).
+  caller (the /review dispatcher or the /plan designer phase). **The designer rules
+  live only in the six axes** — there is no separate checklist walking them, so a
+  finding here is the only place a state-fidelity, perceptual-channel or
+  shared-component defect is graded. You score the **rendered PNGs and the widget
+  source** the designer shipped, not a document describing them; `design-lint`
+  already settled layer boundaries and tokens mechanically, so spend your budget on
+  what a grep cannot see. NOT `conformance-reviewer` (that checks the engineer wired
+  the right data into these widgets at implementation time; this checks the design
+  itself is usable).
 model: opus
 allowed-tools:
   - Read

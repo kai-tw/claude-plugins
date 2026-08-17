@@ -2,10 +2,10 @@
 name: blueprint-reviewer
 description: |
   Project-specific PLAN review for this project — the independent grader
-  for every plan the cycle produces (PM plan · design spec · engineering plan),
+  for the PM plan and the engineering plan,
   because **an author may know its rules but may never audit itself**
-  (player ≠ referee). The rubric is picked by the artefact's stage: a PM plan or
-  design spec gets **checklist mode** — a single pass walking that role's
+  (player ≠ referee). The rubric is picked by the artefact's stage: a
+  PM plan gets **checklist mode** — a single pass walking that role's
   `references/rules.md` principle-by-principle, sub-check-by-sub-check, plus the
   `§Plan integrity` checks, returning passed / violation / na per item with
   evidence and a three-count gate line (no scores, no fan-out). An
@@ -96,9 +96,13 @@ the stage the caller names, and nothing else:
 |---|---|---|
 | **engineering plan** | the 11 scope-gated dimensions in this file | fan-out — one sub-agent per in-scope dimension, then consolidate (Stages 1–4 below) |
 | **PM plan** | `${CLAUDE_PLUGIN_ROOT}/skills/pm/references/rules.md` | **checklist mode** (below) |
-| **design spec** | `${CLAUDE_PLUGIN_ROOT}/skills/designer/references/rules.md` | **checklist mode** (below) |
 
-### Checklist mode (PM plan · design spec)
+**You do not review the design spec.** The designer ships the widgets, so its
+cheap gate is `design-lint` (layer boundaries + tokens, read off the source) and
+its judgment gate is `ux-reviewer` against the renders. A checklist walk over a
+spec that no longer describes the pixels would grade the wrong artefact.
+
+### Checklist mode (PM plan)
 
 A role's rules file is a **finite, enumerated list**, not a design space — so it
 gets a single pass on this thread, no fan-out and no scoring. Walk **every**
@@ -133,7 +137,7 @@ rather than average). Laws 4 and 6 are dimension-specific and do not apply.
 
 Three callers invoke this agent:
 
-0. **the PM role Phase 6 / the designer role Phase 8** — automatic, after the
+0. **the PM role Phase 6** — automatic, after the
    draft and **before the founder sees the open questions**, in checklist mode.
    Every `violation` is fixed in place — no deferred, no dismiss — and you are
    re-spawned; loop to all-`passed`, capped at 3 rounds. Not green by round 3 — or

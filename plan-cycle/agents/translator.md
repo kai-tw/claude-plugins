@@ -9,7 +9,8 @@ description: |
   it the copy **intent** (what each string says + tone + where it renders); the
   engineer role only wires the generated `AppLocalizations` methods + runs
   `flutter gen-l10n`. Spawned by the `/plan` launcher as the **translator phase**
-  — after the designer phase, before the engineer phase. Follows the per-locale
+  — inside the designer phase, after its widgets are built and before they are
+  rendered, so the renders show real copy. Follows the per-locale
   tone rules in `lib/i18n/CLAUDE.md`, proposes per-locale options for
   tone-sensitive copy, and flags ja / zh / zh_Hant for founder sign-off (an LLM
   can fabricate; MT cannot reliably control Japanese keigo or CJK register).
