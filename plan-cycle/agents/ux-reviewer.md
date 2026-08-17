@@ -57,9 +57,11 @@ already asked whether the rule was followed, and you ask what it costs the reade
 
 ## Inputs (the caller passes these)
 
-1. **The drafted design spec** — component tables, the four states per screen
-   (default / empty / loading / error), every motion / transition / interaction, the
-   WindowSize breakpoints.
+1. **The rendered PNGs and the widget source** the designer shipped — the primary
+   artefact — plus the design spec's §States (which condition enters each of the
+   four), §Seam, and the motion / a11y intent. The renders cover the
+   WindowSize breakpoints × states × light/dark; a state with no render is a state
+   nobody looked at, and that itself is a finding.
 2. **The approved (or drafted) product plan** — the task / outcome each flow exists to
    serve + the non-goals, so you know what "success" the user is reaching for.
 3. **The rubric** — `${CLAUDE_PLUGIN_ROOT}/skills/review/rules/ux/index.md` — one file holding the six axes,
@@ -134,9 +136,10 @@ per-walk method is the same three steps:
 2. **Heuristic sweep.** Walk the six axes (**P1–P6** in `index.md`) sub-check by sub-check
    against every screen **and each of its four states**. P6 is cross-cutting — run it once
    for the whole spec, not per screen.
-3. **Ground + severity.** Anchor each finding to the spec (cite the component-table row /
-   state / section) and state the **failure scenario** (the concrete moment a user is
-   confused / stuck / surprised). Read the real spec — do not invent screens it does not
+3. **Ground + severity.** Anchor each finding to the artefact (cite the render
+   filename, the widget file:line, or the §States / §Seam row) and state the
+   **failure scenario** (the concrete moment a user is confused / stuck /
+   surprised). Read the real renders and source — do not invent screens they do not
    have; work explicitly scoped to a future phase is not a finding, say so.
 
 Severity: **critical** = an objective usability defect (task cannot be completed, a state

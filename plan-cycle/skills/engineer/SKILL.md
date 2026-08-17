@@ -105,10 +105,12 @@ produce the engineering-plan artifact.
 > 8. **Plan covers every affected layer explicitly, and the design
 >    spec completely.** Each affected feature gets a per-layer
 >    (data/domain/presentation) breakdown with files NEW/MODIFY/DELETE;
->    a layer with no changes is named, not omitted. The
->    presentation-layer section cites the design spec by section —
->    every visual decision sources from the spec, never invented; push
->    back to the designer role if one is missing. The plan's
+>    a layer with no changes is named, not omitted. **You do not build the
+>    presentation widgets** — the designer shipped them; what you add is the
+>    mapper from domain state to their parameters, and its correctness is
+>    ruled by the design spec's §States entry conditions. Editing a
+>    delivered widget is a design change without the designer: route it back.
+>    The plan's
 >    §Conformance matrix must cover the spec completely — every
 >    product-plan commitment and design-spec observable item maps to a
 >    row, every row to a `Class.method` §Classes defines — the anti-drop
@@ -353,10 +355,11 @@ to print the full section questionnaire with descriptions and hints):
   pseudo-code** — with the ctor collaborators (test seams) named. Each
   block is produced by walking its SOP when the project keeps one (each SOP's
   **Output** names what drops in here; leave the column `—` when it does not).
-  **Presentation rows cite the
-  design-spec section** (component-table row / state / breakpoint); every
-  visual decision sources from the spec, never invented — push back to the
-  designer role if a decision is missing (Iron Law 8). A layer with no
+  **Presentation is already built** — the designer's §Widgets are the files;
+  your row is the mapper that feeds their parameters, citing the design spec's
+  §Seam (what each parameter means) and §States (which condition enters each
+  state). Push back to the designer role if either is missing, and never edit a
+  delivered widget yourself (Iron Law 8). A layer with no
   changes is named ("domain: no change") so the implementer knows it was
   considered, not forgotten. Names are feature-prefixed + role-suffixed per
   `.claude/rules/naming.md` — naming is
@@ -420,10 +423,9 @@ to print the full section questionnaire with descriptions and hints):
   No startup-time work? Say so with a reason. An empty table is a finding.
 - **§Conformance** — the acceptance contract that makes nothing in the spec
   droppable. One row per **product-plan** commitment (success metric / scope item
-  the user approved) **and** per **design-spec** observable item (each
-  component-table row with behaviour, each of the four states, each motion /
-  transition / interaction the spec names):
-  `# | Requirement | Source (product §outcome / design §item) | Impl block-or-task | Code evidence (file:line) | Test (qa id) | Status`.
+  the user approved) **and** per **design-spec** observable item (each §States
+  entry condition, each §Seam behaviour, each motion / interaction the spec names):
+  `# | Requirement | Source (product §outcome / design §item) | 實作於 (Class.method) | Code evidence (file:line) | Test (qa id) | Status`.
   **Completeness is the point** (Iron Law 8): walking the product plan + design
   spec, every commitment and every observable item must appear as a row mapped to
   a `Class.method` that §Classes actually defines — a spec item with no row, or a

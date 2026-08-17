@@ -268,9 +268,11 @@ intent is unchanged, only the source moved from NotebookLM to the KB.
 
 ## Phase 3 — Design compact first
 
-**Read `references/rules.md` first.** Its entries are drafting constraints, not
-just audit criteria — the Phase 8 gate is the BACKSTOP, not the first line of defence. Every violation it
-catches was cheaper to avoid here than to rewrite there.
+**Run `notion-payload template design-plan` and `hints design-plan` first.** The
+questionnaire's cells *are* the drafting constraints — §States asks which
+condition enters each state, §Seam asks what behaviour you expect of each
+parameter. `design-lint` is the BACKSTOP, not the first line of defence; every
+failure it catches was cheaper to avoid here than to rewrite there.
 
 Lock the hierarchy and the four states (default / empty / loading /
 error) at compact before touching larger breakpoints.
@@ -549,6 +551,10 @@ paraphrase has shipped bugs.
 
 ## Rules
 
-Designer rules（design spec 的起草約束）不在本檔列舉，全文見 `references/rules.md`
-（8 母規則 + sub-check + Example 同檔）；該檔開頭列出每條現在由誰把關。
-格式與 learning 更新法見 `rules/CONVENTIONS.md`。
+**這個 role 沒有獨立的規則檔。** 起草約束住在問卷的格子裡
+（`skills/archivist/schemas/design-plan.mjs`，`notion-payload hints design-plan`
+讀得到）——格子在落筆的那一刻施加約束，比指望作者回想另一個檔案可靠。
+
+把關分工：**問卷**問「什麼時候進入這個狀態、期待什麼可觀察行為」· **`design-lint`**
+逐檔查 widget 的層邊界與 token · **`ux-reviewer`** 對著 render 與原始碼判斷
+「使用者會不會困惑、有多嚴重」——設計規則的判斷那一半全在它的六軸裡，沒有第二份。

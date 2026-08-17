@@ -12,8 +12,11 @@ description: |
   can reach — the judgment that **the SPEC, not the code, is what should change**
   (a test can only fail; it cannot conclude the requirement was wrong). Fed the
   approved product plan, the design spec, the engineering plan's §Conformance
-  matrix, `/qa`'s `test/spec/` inventory, and the uncommitted diff. Per-item verdict
-  present / missing / spec-should-change. Report-only — does NOT fix code, does NOT
+  matrix, `/qa`'s `test/spec/` inventory, and the uncommitted diff. Because the
+  designer now ships the presentation widgets, two of its checks are specific to
+  the hand-off: **a seam wired to the wrong source** (right widget, wrong data or
+  an inverted state mapping) and **an implementation-time edit to a shipped
+  widget**. Per-item verdict present / missing / spec-should-change. Report-only — does NOT fix code, does NOT
   write tests. 不落檔 — returns findings inline to the caller (the /review dispatcher
   or the /plan launcher). NOT `code-reviewer` — it does not judge architecture / DI /
   naming, only whether the right things were built. NOT `/qa` — it writes no test and
@@ -41,8 +44,12 @@ check the *right things were built* — in the residue the ratchet doesn't cover
 ## Inputs
 
 1. **Approved product plan** — success metric + scope commitments.
-2. **Approved design spec** — component table, the four states
-   (default / empty / loading / error), every motion / transition / interaction.
+2. **Approved design spec** — §States (which condition enters each state),
+   §Seam (what each parameter / callback means and the behaviour expected of it),
+   §Widgets (the files the designer shipped), motion and a11y intent.
+   **The designer built the presentation widgets**, so "were the pixels built"
+   is not your question — theirs already are. Yours is whether the engineer wired
+   them to the right data, and whether the diff changed them.
 3. **The engineering plan's §Conformance matrix** — the row-per-requirement contract.
 4. **The uncommitted diff** + touched source:
    ```bash
@@ -75,8 +82,17 @@ Then walk the residue in both directions:
    absence. These four are where this gate's measured findings live:
    - **§Non-goals / scope commitments the code violates.** Nothing fails when the
      code does the thing the plan said it would not do; only a reader catches it.
-   - **Token- / design-level deviation** — renders identically, departs from the
-     spec (a colour role, a spacing step, a radius off the scale).
+   - **The seam wired to the wrong source.** The highest-value check now, and the
+     one nothing else reaches: the widget is correct and still shows the wrong
+     thing because a parameter is fed from the wrong place, or the state mapping
+     is inverted (empty rendered where §States says loading, an error state that
+     the mapping can never enter). Read §States' entry conditions against the
+     mapper the engineer wrote — `design-lint` deliberately cannot see wiring,
+     `ux-reviewer` graded the design and not the data behind it.
+   - **The diff modified a shipped widget.** The designer delivered those files;
+     an implementation-time edit to one is a design change made without the
+     designer. Diff the §Widgets files specifically and flag any change that is
+     not a pure wiring adaptation.
    - **Documentation the change made false** — a class doc, a folder brief, a
      `CLAUDE.md` line that the diff silently invalidated.
    - **Items with no runtime signature at all** that the matrix still owes.
