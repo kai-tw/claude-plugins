@@ -119,7 +119,7 @@ export const body = [
     required: true,
     criteria: ['c9'],
     description: '反遺漏對照表：上游每條承諾 → 實作它的 Class.method → 驗證',
-    hint: '**唯一的反向走查**。其他每一節都按「我們要蓋什麼」索引；漏掉的需求不會產生任何 class、任何 method、任何圖上的節點——**缺席在一個以存在組織起來的結構裡不留痕跡**。所以存檔前**反過來**走一遍 design spec（component 矩陣有行為的格 · 四狀態 · 每個動效 / 轉場 / 互動）+ product plan（success metric · scope 承諾），逐項確認有列。\n| # | Requirement（一句） | Source | 實作於（`Class.method`） | 驗證 |\n`Requirement` 一句話寫清楚要什麼，**不整段抄上游**（`I2`）；`Source` 指回上游章節。\n`實作於` 必須是 §Classes 裡實際存在的 `Class.method`——這一欄可機械查（找不到 = 名字漂移或根本沒做）。\n`驗證` 指向 QA 的 acceptance test id；plan 階段還沒有就寫 `pending`。\n任一可觀察的 spec 項缺列、或列指向不存在的 method → plan incomplete。',
+    hint: '**唯一的反向走查**。其他每一節都按「我們要蓋什麼」索引；漏掉的需求不會產生任何 class、任何 method、任何圖上的節點——**缺席在一個以存在組織起來的結構裡不留痕跡**。所以存檔前**反過來**走一遍 design spec（component 矩陣有行為的格 · 四狀態 · 每個動效 / 轉場 / 互動）+ product plan（success metric · scope 承諾），逐項確認有列。\n| # | Requirement（一句） | Source | 實作於（`Class.method`） | 驗證 |\n`Requirement` 一句話寫清楚要什麼，**不整段抄上游**（`I2`）；`Source` 指回上游章節。\n`實作於` 必須是 §Classes 裡實際存在的 `Class.method`——這一欄可機械查（找不到 = 名字漂移或根本沒做）。\n**真的沒有 owning method 的需求**（某個目錄不得存在、某個死名不得出現在任何檔案、envelope 欄位名這類全域斷言）標 `全域：<怎麼驗>`，例如 `全域：test ! -d lib/core/cloud`。這是合法答案，但**必須寫出怎麼驗**——空著不算，那正是這道檢查要擋的。\n`#` 欄的編號格式隨你（`1` / `X-1` / `C-3` 都行），lint 不管它長怎樣。\n`驗證` 指向 QA 的 acceptance test id；plan 階段還沒有就寫 `pending`。\n任一可觀察的 spec 項缺列、或列指向不存在的 method → plan incomplete。',
     template: '| # | Requirement | Source | 實作於 | 驗證 |\n|---|---|---|---|---|\n| 1 | <一句話的需求> | design spec 的動效章節 | `SyncCubit.start` | TC-07 |',
   },
   {

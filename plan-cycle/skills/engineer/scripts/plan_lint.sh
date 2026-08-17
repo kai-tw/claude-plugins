@@ -162,53 +162,78 @@ contract_methods="$(awk '
   }
 ' "$plan" | sort -u)"
 
-# 4. HARD — §Conformance rows must point at a Class.method the plan defines.
+# 4. HARD — §Conformance rows must point at a Class.method the plan defines,
+#    or declare `全域：<how>` when the requirement genuinely has no owning method
+#    (a directory that must not exist, a dead name that must not appear).
 #    A row naming something that does not exist is a promise with no owner, and
 #    it is the one direction nothing else catches (a missed requirement produces
 #    no class, so absence is invisible to every other section).
+#
+#    THE ROW ID IS THE AUTHOR'S, NOT THIS SCRIPT'S. A previous version required
+#    the first cell to be a bare integer and silently `continue`d otherwise, so a
+#    plan numbering its rows `X-1` / `C-3` had EVERY row skipped while the run
+#    still printed PASS. Identify a data row by what it is not — the separator
+#    and the header — never by the shape of its id.
 conf_body="$(section_body "$(section_pat 'Conformance')")"
 if [ -n "$conf_body" ] && [ -n "$contract_methods" ]; then
-  dangling=""
+  dangling=""; conf_rows=0; conf_global=0
   while IFS= read -r row; do
     case "$row" in \|*) ;; *) continue ;; esac
-    grep -qE '^\|[[:space:]]*[0-9]+[[:space:]]*\|' <<< "$row" || continue
-    # Any `Foo.bar` the row cites must be a method the plan defines.
+    # Separator (`|---|---|`) and header (first cell `#` / `Requirement`).
+    grep -qE '^\|[[:space:]|:-]*$' <<< "$row" && continue
+    first="$(sed -E 's/^\|[[:space:]]*//; s/[[:space:]]*\|.*$//' <<< "$row" | tr -d '`*')"
+    case "$first" in ''|'#'|Requirement|需求) continue ;; esac
+    conf_rows=$((conf_rows + 1))
+    # A requirement with no owning method is legal, but must say how it is
+    # verified — an unexplained blank is the failure this check exists for.
+    if grep -qE '全域[：:][^|[:space:]]' <<< "$row"; then
+      conf_global=$((conf_global + 1)); continue
+    fi
     refs="$(grep -oE '`[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*`' <<< "$row" \
       | tr -d '`' || true)"
     if [ -z "$refs" ]; then
-      dangling="${dangling}$(grep -oE '^\|[[:space:]]*[0-9]+' <<< "$row" | tr -dc '0-9')(無 Class.method) "
+      dangling="${dangling}${first}(無 Class.method，也未標 全域：) "
       continue
     fi
     while IFS= read -r r; do
       [ -n "$r" ] || continue
-      grep -qxF "$r" <<< "$contract_methods" || dangling="${dangling}${r} "
+      grep -qxF "$r" <<< "$contract_methods" || dangling="${dangling}${first}→${r} "
     done <<< "$refs"
   done <<< "$conf_body"
   if [ -n "$dangling" ]; then
     echo "FAIL  §Conformance row(s) pointing at no defined method: ${dangling}"
-    echo "        每列的「實作於」要指向 §Classes 某個 class 區塊裡實際存在的 Class.method"
+    echo "        每列的「實作於」要指向 §Classes 某個 class 區塊裡實際存在的 Class.method，"
+    echo "        或標 \`全域：<怎麼驗>\`（沒有 owning method 的全域斷言，例如某目錄不得存在）"
     fail=1
   fi
+  echo "NOTE  §Conformance: 檢查 ${conf_rows} 列（其中 ${conf_global} 列標為 全域）"
 fi
 
 # 5. HARD — §Data flow graph nodes must exist in §Classes. A node naming a class
 #    or method the plan never defines is name drift, and it silently breaks the
 #    race derivation below (which counts edges into state nodes).
+#    Accept the quoted and unquoted mermaid label forms both — matching only one
+#    of them would examine zero nodes on a legal graph and still print PASS,
+#    which is the same silent-skip failure as the id shape in check 4.
 flow_body="$(section_body "$(section_pat 'Data flow')")"
 if [ -n "$flow_body" ] && [ -n "$contract_methods" ]; then
-  unknown=""
+  unknown=""; flow_nodes=0
+  flow_list="$(grep -oE '\["?[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"?\]' <<< "$flow_body" \
+    | sed -E 's/^\["?//; s/"?\]$//' | sort -u)"
   while IFS= read -r n; do
     [ -n "$n" ] || continue
+    flow_nodes=$((flow_nodes + 1))
     grep -qxF "$n" <<< "$contract_methods" || unknown="${unknown}${n} "
-  done <<< "$(grep -oE '\["[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"\]' <<< "$flow_body" \
-    | sed -E 's/^\["//; s/"\]$//' | sort -u)"
+  done <<< "$flow_list"
   if [ -n "$unknown" ]; then
     echo "FAIL  §Data flow node(s) not defined in §Classes: ${unknown}"
     echo "        圖上的 [\"Class.method\"] 節點必須逐字對上某個 class 區塊的一列"
     fail=1
   fi
-  grep -qE '\(\[".*"\]\)' <<< "$flow_body" \
+  grep -qE '\(\[.*\]\)' <<< "$flow_body" \
     || echo "ADVISORY  §Data flow has no ([origin]) node — 沒有併發來源的圖回答不了它該回答的問題；真的只有單一入口就明寫一行"
+  echo "NOTE  §Data flow: 檢查 ${flow_nodes} 個 Class.method 節點"
+  [ "$flow_nodes" -eq 0 ] && echo "        0 個節點 —— 圖裡沒有可比對的 [Class.method]，這一項等於沒跑，不是通過"
 fi
 
 # 6. HARD — every state node written from ≥2 origins needs an §Error policy row.
@@ -216,21 +241,25 @@ fi
 #    race" (unfalsifiable) into "did you account for what you drew" (checkable).
 if [ -n "$flow_body" ]; then
   policy_body="$(section_body "$(section_pat 'Error policy')")"
-  uncovered=""
+  uncovered=""; state_nodes=0; contended=0
   # mermaid declares a node once with its label (`M[("cache")]`) and refers to it
   # by id everywhere after (`A --> M`), so count edges by ID, not by label.
+  # Quoted and unquoted labels both — see the note on check 5.
   while IFS=' ' read -r id label; do
     [ -n "$id" ] || continue
+    state_nodes=$((state_nodes + 1))
     writers="$(grep -oE -- "--> *${id}\b" <<< "$flow_body" | grep -c . || true)"
     [ "${writers:-0}" -ge 2 ] || continue
+    contended=$((contended + 1))
     grep -qF "$label" <<< "$policy_body" || uncovered="${uncovered}${label} "
-  done <<< "$(grep -oE '[A-Za-z0-9_]+\[\("[^"]+"\)\]' <<< "$flow_body" \
-    | sed -E 's/^([A-Za-z0-9_]+)\[\("(.*)"\)\]$/\1 \2/' | sort -u)"
+  done <<< "$(grep -oE '[A-Za-z0-9_]+\[\("?[^]"]+"?\)\]' <<< "$flow_body" \
+    | sed -E 's/^([A-Za-z0-9_]+)\[\("?(.*[^"])"?\)\]$/\1 \2/' | sort -u)"
   if [ -n "$uncovered" ]; then
     echo "FAIL  state node(s) written from ≥2 edges with no §Error policy row: ${uncovered}"
     echo "        圖上被多方寫入的狀態，每一個都要在 §Error policy 的爭用表有一列"
     fail=1
   fi
+  echo "NOTE  §Error policy: 圖上 ${state_nodes} 個狀態節點，其中 ${contended} 個被多方寫入"
 fi
 
 # 7. ADVISORY — complexity cells carry both halves and a named variable.
