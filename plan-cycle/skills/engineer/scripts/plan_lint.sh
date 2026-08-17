@@ -165,23 +165,43 @@ extract="$(awk '
   # through §Error policy / §Startup / §Risks and adopts their table rows as
   # methods of the last class seen — and an identifier-shaped cell there
   # (`| mirrorCache |`) enters the set as a method that does not exist.
-  /^## / { cls = ""; next }
+  /^## / { if (cls != "" && !seen) print "NOTABLE\t" cls; cls = ""; intable = 0; next }
   /^### / {
+    if (cls != "" && !seen) print "NOTABLE\t" cls
     cls = $0; sub(/^### +/, "", cls); gsub(/[`*]/, "", cls)
     sub(/[^A-Za-z0-9_].*$/, "", cls)          # `Store`（契約，MOD） → Store
+    intable = 0; seen = 0
     next
   }
+  # ONLY the contract table counts — the one opening with the `method` header.
+  # A class block may hold further tables that argue a design decision, and
+  # harvesting those reported their rows as broken method cells: a false
+  # positive landing hardest on the plans that explain themselves best.
   cls != "" && /^\|/ {
+    hdr = $0; gsub(/[`* |]/, "", hdr)
+    if (hdr ~ /^method/) { intable = 1; seen = 1; next }
+    if (!intable) next
     if ($0 ~ /^[|: -]+$/) next                 # the |---|---| separator row
     line = $0; gsub(/^\| *| *\|$/, "", line)
     split(line, f, /  *\| */); m = f[1]; gsub(/[`* ]/, "", m)
-    if (m == "" || m ~ /^-+$/ || m == "method" || m ~ /^</) next
+    if (m == "" || m ~ /^</) next
     raw = m
     sub(/\(.*$/, "", m)                        # erase({a,b}) → erase
     if (m ~ /^[A-Za-z_][A-Za-z0-9_]*$/) print "OK\t" cls "." m
     else print "BAD\t" cls "\t" raw
+    next
   }
+  # The contract table ends at the first line that is not one of its rows.
+  cls != "" && intable { intable = 0 }
+  END { if (cls != "" && !seen) print "NOTABLE\t" cls }
 ' "$plan")"
+# A class block with no contract table harvests nothing — which would otherwise
+# look identical to a class with no public surface. Say it.
+no_table="$(grep '^NOTABLE	' <<< "$extract" | cut -f2 | sort -u)"
+if [ -n "$no_table" ]; then
+  echo "ADVISORY  §Classes block(s) with no \`| method |\` contract table — 它們的 method 不在比對集合裡:"
+  printf '%s\n' "$no_table" | sed 's/^/        /'
+fi
 contract_methods="$(grep '^OK	' <<< "$extract" | cut -f2 | sort -u)"
 malformed="$(grep '^BAD	' <<< "$extract" | cut -f2,3 | sort -u)"
 if [ -n "$malformed" ]; then
@@ -293,6 +313,17 @@ if [ -n "$flow_body" ]; then
     fail=1
   fi
   echo "NOTE  §Error policy: 圖上 ${state_nodes} 個狀態節點，其中 ${contended} 個被多方寫入"
+fi
+
+# 6b. NOTE — claims with a shelf life. `未讀` marks "I did not check"; this marks
+#     "I checked, it is true, and it will stop being true" — the only one of the
+#     two that ROTS SILENTLY, because it reads like a settled fact. Surfacing the
+#     count is what makes a rev re-examine them (§Re-audit every plan change).
+perishable="$(grep -nE '今天成立[：:]' "$plan" || true)"
+if [ -n "$perishable" ]; then
+  perish_n="$(printf '%s\n' "$perishable" | grep -c .)"
+  echo "NOTE  ${perish_n} 處標為「今天成立」——有保鮮期的斷言，每次 rev 都要重新確認:"
+  printf '%s\n' "$perishable" | cut -c1-120 | sed 's/^/        /'
 fi
 
 # 7. ADVISORY — complexity cells carry both halves and a named variable.
