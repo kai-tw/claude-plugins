@@ -36,6 +36,15 @@
 #
 # Usage: plan_lint.sh <engineering-plan.md>
 # Exit: 0 = no hard failures, 1 = hard failure printed above, 2 = bad usage.
+#
+# `PASS*` (a HARD check whose precondition was empty) also exits 0 — deliberate,
+# because a small plan legitimately has no §Data flow. The consequence: healthy,
+# broken, and "you fed me a design plan" are the SAME exit code, and only the
+# printed SKIP lines tell them apart. That is fine for a human reading output.
+# **Before wiring this into any automated gate, give `PASS*` a machine-readable
+# form first** (a `--strict` flag, or exit 2) — a gate that reads only the exit
+# code would treat "3 HARD checks never ran" as a pass, which is the exact
+# failure this script spent eight versions learning to say out loud.
 set -uo pipefail
 
 # CJK-safe bracket expressions — this machine ships no UTF-8 locale, so an
