@@ -16,7 +16,8 @@ description: |
   complexity, scalability, extendability, coupling, design correctness,
   runtime error handling, package usage) plus **testability**,
   **abstraction/reuse/ownership**, and **migration/back-compat**. It
-  **dispatches one fresh-context sub-agent per in-scope dimension** — which
+  **dispatches one fresh-context sub-agent per dimension batch, each writing its
+  scores to JSON that `blueprint-merge` joins and merges** — which
   dimensions run is gated by what the plan's §Classes actually
   touch (defect dimensions are non-droppable; maximizers scale to plan
   size) — each grounded in `.claude/rules/` and the section's own authoring
@@ -94,7 +95,7 @@ the stage the caller names, and nothing else:
 
 | Stage | Rubric | Shape |
 |---|---|---|
-| **engineering plan** | the 11 scope-gated dimensions in this file | fan-out — one sub-agent per in-scope dimension, then consolidate (Stages 1–4 below) |
+| **engineering plan** | the 11 scope-gated dimensions in this file | fan-out — one sub-agent per dimension batch, joined by `blueprint-merge` (Stages 1–4 below) |
 | **PM plan** | `${CLAUDE_PLUGIN_ROOT}/skills/pm/references/rules.md` | **checklist mode** (below) |
 
 **You do not review the design spec.** The designer ships the widgets, so its
@@ -341,22 +342,48 @@ shows the *already-accumulated* release→dev delta; criterion 11 judges that
 **plus** the plan's *described* future schema changes as the combined
 migration path a `<baseline>` user crosses.
 
-## Stage 2: Dispatch one sub-agent per in-scope dimension
+## Stage 2: Dispatch the dimension batches, join their files
 
-For **each in-scope dimension** (per the Stage 1b scope-gate), score it
-with its own brief: the dimension's question + anchors + grounding rule
-files + the section authoring requirements + the failure-scenario discipline.
+Dispatch the in-scope dimensions (Stage 1b) as **batches**, one
+`general-purpose` sub-agent each, grouped so dimensions needing the same greps
+share them. Drop whatever 1b put out of scope; an emptied batch isn't dispatched.
 
-**Default: score the dimensions inline on this thread**, one after another,
-each under its own brief. **If — and only if — a sub-agent-spawn tool is
-actually available to you**, dispatch one fresh-context sub-agent per
-dimension (general-purpose, inline brief, the `code-reviewer` pattern;
-parallel `Agent` calls) for fresh-context isolation. A spawned
-`blueprint-reviewer` typically has NO spawn tool — so inline is the normal path;
-**state which you did in the log.** Either way the *set of dimensions
-scored* is the behavior; per-dimension sub-agent isolation is a
-nice-to-have, not the mechanism (the review stays independent of the plan's
-author regardless — you are a fresh agent reading the saved plan).
+| Batch | Dimensions |
+|---|---|
+| `defect-a` | 5 coupling · 10 abstraction/ownership |
+| `defect-b` | 6 correctness/race · 12 startup |
+| `defect-c` | 7 error handling · 11 migration |
+| `perf` | 1 time · 2 space · 3 scalability |
+| `quality` | 4 extendability · 8 package · 9 testability |
+
+**Each child writes one JSON file per dimension; its return value is not the
+deliverable and you must not wait on it.** Measured: across 19 fan-out reviews
+84 children were dispatched and 2 results ever came back — a nested `Agent` call
+returns `Async agent launched successfully.` and nothing else. So the brief
+names an absolute output path per dimension, `<dir>/<criterion>.json`, where
+`<dir>` is a fresh `mktemp -d` for this round. **Print that path in the report
+header** — the next round passes it as `--prev` and without it the regression
+check has nothing to compare against:
+
+```json
+{"criterion": 7, "dimension": "error-handling", "score": 5,
+ "cites": ["§Error policy"],
+ "weaknesses": [{"problem": "…", "failure_scenario": "…", "severity": "blocking"}]}
+```
+
+`dimension` must be the canonical slug for that criterion — that is the dispatch
+echo-back, and `blueprint-merge` rejects a mismatch instead of you eyeballing it.
+Then join, which is what makes the round real:
+
+```
+blueprint-merge wait <dir> --criteria <in-scope csv>
+```
+
+It blocks until every expected dimension has landed and validated, and exit 1
+names the holes. **Re-dispatch only the names it printed, then run it again.**
+You may not score a dimension yourself to fill a hole and you may not publish
+while one stands — the recorded failure here is not a missing row, it is a round
+that invented the scores that never arrived.
 
 Each sub-agent's brief carries: the **plan path**; the dimension's
 **question + score anchors** (below); the **rule files** it must read for
@@ -370,9 +397,7 @@ Each dimension returns, per finding: a **score** (1–10, anchors below) +
 when X" — a finding with no failure scenario is noise; drop it but log the
 drop) + the **weakness statement** (the problem, NOT a proposed fix) +
 **severity** (a sub-8 weakness blocks `approve`; a sub-6 is a *blocking*
-weakness). When dimensions are dispatched as sub-agents, each also
-**echoes back which dimension it executed** so the Stage-3 consolidator
-can reject a drifted one (a no-op when scored inline).
+weakness) — the five JSON fields above, in that file, nowhere else.
 
 The dimensions are scored 1–10 using the anchors below; cite the plan
 section scored against.
@@ -695,11 +720,14 @@ a reason. An empty table with no policy line is not N/A — it is a 2.
 
 ### Consolidate the dimension findings (before aggregating)
 
-The dimension sub-agents return independently; consolidate on this single
-thread:
+The dimension findings live in files; consolidate on this single thread:
 
-1. **Collect** every sub-agent's findings; verify each echo-back matches the
-   dimension it was dispatched as — reject + re-dispatch a drifted one.
+1. **Collect** with `blueprint-merge report <dir> [--prev <prior round's dir>]`.
+   It emits §Scores, the verdict line and the weaknesses in ascending score, and
+   refuses to merge while any dimension is missing or invalid. `--prev` marks a
+   dimension that **passed last round and is sub-8 now** — say whether that is a
+   real re-break or a re-derivation artefact; unexplained, it is the churn that
+   keeps a plan from closing in its allotted cycles.
 2. **Dedup** — collapse only when findings share the same root cause; the
    merged finding inherits **MAX(severity)** + the **UNION** of
    failure-scenarios; name every constituent dimension.
@@ -757,7 +785,12 @@ recommended option earns `approve` only if every in-scope dimension is
 
 **Never write your review to a file.** Return the report below inline to the
 caller (the engineer role or the `/review` dispatcher). The report IS the
-return value — no saved artifact, no chat prose.
+return value — no saved artifact, no chat prose. (The per-dimension JSON of
+Stage 2 is not your review; it is the input `blueprint-merge` merges into one.)
+
+**§Scores and §Weaknesses are `blueprint-merge report`'s output verbatim** —
+paste, never retype. Retyping is where a score drifts from the file that
+justifies it.
 
 ### Report format
 
@@ -769,6 +802,7 @@ return value — no saved artifact, no chat prose.
 **Options reviewed:** N
 **Weighting:** equal (1× each) | custom: <criterion>=<weight>, ...
 **Dimensions dispatched:** <list> · **not dispatched (surface absent):** <list>
+**Scores dir:** <the mktemp -d path> (pass as `--prev` next round)
 
 ## Option A — <name>
 
