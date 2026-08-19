@@ -23,8 +23,10 @@
 #   - archivist writes a plan DB row (verified) → uploaded <pm|designer|engineer>
 #   - launcher opens the PR (Step 6.0)            → pr-opened
 #   - launcher closes out (archive + trash row)   → clear
-#     (clear REFUSES on a pr_opened cycle until a feedback-ledger entry carries
-#      the cycle slug — the Step 6.7 runner-feedback backstop)
+#     (on a pr_opened cycle whose PR has merged, clear REFUSES until the worktree
+#      + branch are gone (Step 6.6) and a feedback-ledger entry carries the cycle
+#      slug (Step 6.7) — the two close-out steps that leave no Notion trace, so
+#      nothing else would ever notice them missing)
 #
 # LEDGER SCOPE — per session, shared across trees
 #   The ledger is keyed by CLAUDE_CODE_SESSION_ID, so CONCURRENT SESSIONS never
@@ -242,19 +244,72 @@ EOF
         exit 0
         ;;
     esac
-    write_ledger --arg pr "$pr" --arg base "$base" --arg now "$(now)" '
-      .pr_opened = true | .pr = $pr | .base = $base | .updated = $now'
+    # Capture the branch so `clear` can verify the Step 6.6 teardown against git
+    # rather than trust a flag. Step 6.0 runs from INSIDE the worktree, so the
+    # CALLER's cwd names it — read it without `-C "$ROOT"`, which would name the
+    # main tree's branch instead; a 3rd argument overrides for calls made from
+    # elsewhere. A base branch or a detached HEAD records nothing: a base is
+    # never torn down, so recording one would leave a ledger that no teardown can
+    # satisfy, and an unclearable ledger is worse than an unwatched branch.
+    branch="${3:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null)}"
+    case "$branch" in "$base"|HEAD|"") branch="" ;; esac
+    write_ledger --arg pr "$pr" --arg base "$base" --arg br "$branch" --arg now "$(now)" '
+      .pr_opened = true | .pr = $pr | .base = $base | .updated = $now
+      | if $br != "" then .branch = $br else . end'
     ;;
 
   clear)   # close-out (Feature Archive verified + task row trashed) or a reset
-    # Feedback gate (Step 6.7): a FULL cycle (pr_opened) may not clear without
-    # its runner-feedback row — verified against the artifact itself (a
-    # feedback-ledger entry carrying the cycle slug), not a flag. Resets of
-    # never-shipped ledgers (pr_opened=false: Gate-1 escapes, non-cycles) stay
-    # unconditional.
+    # Two gates guard `clear`, both armed only on a FULL cycle (pr_opened) and
+    # both verified against the ARTIFACT rather than a flag: the teardown
+    # (Step 6.6) and the runner-feedback row (Step 6.7). Resets of never-shipped
+    # ledgers (pr_opened=false: Gate-1 escapes, non-cycles) stay unconditional.
     if [ -f "$LEDGER" ]; then
       pr_opened=$(jq -r '.pr_opened // false' "$LEDGER" 2>/dev/null)
       slug=$(jq -r '.slug // ""' "$LEDGER" 2>/dev/null)
+
+      # --- Teardown gate (Step 6.6) -------------------------------------------
+      # `clear` deletes the ledger, so it is the LAST moment anything asks: a
+      # worktree and branch still standing when it succeeds are never mentioned
+      # again by anyone. The arming edge is the MERGE, same as Gate 2 — before it
+      # keeping the worktree is correct (Step 6.6 never auto-removes an unmerged
+      # one). Fail open on an unrecorded branch (ledgers opened before 0.5.0,
+      # plan-only cycles, a `pr-opened` that took no PR number).
+      pr=$(jq -r '.pr // ""' "$LEDGER" 2>/dev/null)
+      base=$(jq -r '.base // "main"' "$LEDGER" 2>/dev/null)
+      branch=$(jq -r '.branch // ""' "$LEDGER" 2>/dev/null)
+      if [ "$pr_opened" = "true" ] && [ -n "$branch" ] && merged_on_base "$pr" "$base"; then
+        left=""
+        wt=$(git -C "$ROOT" worktree list --porcelain 2>/dev/null \
+             | awk -v b="branch refs/heads/$branch" '/^worktree /{p=substr($0,10)} $0==b{print p; exit}')
+        [ -n "$wt" ] && left="$left
+  • worktree at ${wt}
+      ExitWorktree action:\"remove\" discard_changes:true — a SILENT no-op on a
+      worktree from an earlier session, so verify; then git worktree remove --force"
+        git -C "$ROOT" show-ref --verify --quiet "refs/heads/$branch" && left="$left
+  • local branch ${branch}
+      git branch -D ${branch}  (-d refuses: a squash-merge never makes the tip
+      an ancestor)"
+        git -C "$ROOT" show-ref --verify --quiet "refs/remotes/origin/$branch" && left="$left
+  • remote branch origin/${branch}
+      git push origin --delete ${branch}  (already gone on GitHub? git fetch --prune)"
+        if [ -n "$left" ]; then
+          cat >&2 <<EOF
+plan-cycle: CLEAR REFUSED — PR #${pr} merged, but its worktree/branch are still here.
+
+  Cycle:  ${slug}
+  Branch: ${branch}
+
+Step 6.6 (plan/SKILL.md §Step 6) tears these down, and clearing is the last
+moment anything asks — the ledger goes away with it. Still standing:
+${left}
+
+Then re-run: plan-cycle clear
+EOF
+          exit 1
+        fi
+      fi
+
+      # --- Feedback gate (Step 6.7) -------------------------------------------
       # Ask the ledger where it keeps entries rather than hardcoding it here.
       # This path used to be written out in two places that had to agree; the
       # copy in this file is the one that would have gone stale silently,
@@ -373,6 +428,8 @@ is the single most common silent skip. The PR shipped; the close-out is not done
 Do this NOW, before any other work:
   • create + verify the Feature Archive row (\`archivist\`)
   • trash the task row (\`ntn pages trash <id> --yes\`) and confirm it is gone
+  • tear down the worktree + its local AND remote branch (Step 6.6) — \`clear\`
+    verifies this against git and refuses while any of the three survives
   • file the runner-feedback entry (Step 6.7) via
     \`plan-feedback\` — --cycle '${slug}'
   • then clear the ledger: \`plan-cycle clear\`
@@ -387,7 +444,7 @@ EOF
     ;;
 
   *)
-    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base]|clear|status|check}" >&2
+    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|clear|status|check}" >&2
     exit 0
     ;;
 esac

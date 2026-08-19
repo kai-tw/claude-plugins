@@ -940,7 +940,9 @@ When the task is complete, the cycle is **not done until these run** (Iron Law 7
    approval** — the worktree branch targets `$BASE` (`main`) as a review artifact
    the user reviews + merges themselves, so fire `git push` + `gh pr create`
    directly (no `AskUserQuestion` gate). Capture the returned PR number and
-   record it: `plan-cycle pr-opened <PR#> "$BASE"`.
+   record it: `plan-cycle pr-opened <PR#> "$BASE"` — **run it from the worktree**,
+   which is where it reads the branch name that Step 6.6's teardown is verified
+   against (`pr-opened <PR#> <base> <branch>` if you must call it from elsewhere).
 
    **Then stop — the rest of Step 6 waits for the merge.**
 
@@ -1013,6 +1015,11 @@ report (§After code) is already on it; pressing the button stays theirs.
      <branch>`. And if the remote branch is already gone (a per-PR delete button,
      or a prior teardown already ran `git push origin --delete`), that is
      "already done" — not an anomaly to chase.
+
+   On a merged cycle **`plan-cycle clear` checks all three against git** — the
+   worktree, the local branch, `origin/<branch>` — and refuses while any survives.
+   Clearing is the last moment anything asks: the ledger dies with it, so a
+   worktree left standing past this point is never mentioned again.
 7. **File the runner-feedback entry** via the `feedback-ledger` skill — in the
    **main tree**, after the worktree exit (never committed to a feature branch).
    `--cycle` **must carry the cycle's ledger slug** (`plan-cycle.sh status`
