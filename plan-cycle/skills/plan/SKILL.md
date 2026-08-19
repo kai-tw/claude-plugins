@@ -201,6 +201,14 @@ request to change code / open a task
   6. close out → Feature Archive + trash the task row → tell the user
 ```
 
+**One invocation runs to the PR.** Step 6.0 — branch pushed, PR opened — is the
+terminal; everything before it is one continuous run. Phase boundaries are
+**not** user turns: finishing the PM plan does not license asking whether to
+start designer, and a clean gate does not license asking whether to implement.
+**If you cannot cite the § of this contract that requires a stop, there is no
+stop** — report the phase in one line and open the next. The commit gate
+(`engineer` close-out §Step 5.5 leg 4) does cite one, and still binds.
+
 ### Step 1 — Quick exempt check (guardian at the door)
 
 If the request matches the exempt list, say so plainly and proceed — **no task,
