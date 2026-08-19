@@ -33,7 +33,7 @@ run it — none of these fail loud, so you only find out you were wrong later
 mirror).
 
 Scope note: the **discipline** of what must pass before a commit (codegen, lint,
-tests, `/review`, user authorization) lives in `engineer/references/closeout.md
+tests, `/review`) lives in `engineer/references/closeout.md
 §Step 5.5 (Iron Law 10)` — the SSOT. This skill is only the mechanical traps
 around push, merge-verify, worktree teardown, codegen-after-merge, and staging.
 

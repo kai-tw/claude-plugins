@@ -9,8 +9,8 @@ description: |
   `CLAUDE.md §Working agreements` is the always-loaded digest; this is the full
   catalog behind it.)
   CONSULT BEFORE: proposing a solution · choosing how much to build · dismissing
-  a review/gate finding · any irreversible or outward-facing call (store listing,
-  Notion status, push) · collapsing a layout wrapper · contradicting the user on
+  a review/gate finding · any irreversible or outward-facing judgment call (store
+  listing, Notion status) · collapsing a layout wrapper · contradicting the user on
   framework behavior · responding to founder feedback or a correction.
   TRIGGER: how does the founder like X · before I respond to this feedback · the
   founder said X — what should I do · is this in scope · should I do the whole
@@ -37,7 +37,8 @@ only the missing behavioral nuance.
 Read the section that matches what you are about to do. When in doubt between
 two readings of a request, the founder's consistent bias is: **match the exact
 scope and verb of the ask, lead with the safe/secure option, and confirm before
-anything outward-facing.**
+an outward-facing judgment call** (a mechanical step in an approved flow — commit,
+push, PR — is not one; `/plan` §Launcher flow).
 
 ---
 
@@ -414,7 +415,7 @@ in the foreground and let it finish.
 - **Not the Notion / status-write mechanism.** *When* to confirm an outward status
   flip lives here; *how* to write it (payload builder, marker guard, close-out
   trash) is `${CLAUDE_PLUGIN_ROOT}/skills/archivist/`.
-- **Not the commit gate.** The four-leg commit discipline (codegen → lint/format
-  → tests → `/review` → auth) is `${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/closeout.md
+- **Not the commit gate.** The three-leg commit discipline (codegen → lint/format
+  → tests → `/review`) is `${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/closeout.md
   §Step 5.5`; this skill only supplies the founder-judgment overlays (dismiss
   reasons, verify-before-commit-for-layout, etc.).

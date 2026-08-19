@@ -126,17 +126,15 @@ produce the engineering-plan artifact.
 >    the user). This is the pre-approval gate against the *plan*; Iron
 >    Law 7's `/review` is the post-implementation gate against *code*.
 >    Full protocol: Phase 8.5.
-> 10. **Commit requires a clean four-leg gate — lint, tests, `/review`,
->    AND the user.** `git commit` doesn't fire until all four pass:
->    lint + format clean, tests green (affected scope), `/review` clean
->    with every finding verdicted, and the **user** has explicitly
->    authorised the commit *after* seeing the close-out report (not
->    pre-authorised at plan approval — Iron Law 5 covers *what to
->    build*, this covers *what landed*). If the user is absent or
->    silent, leave the diff uncommitted and stop — never commit or
->    stage on their behalf. The `Shipped` status is filled in only
->    after the real commit lands. Full protocol, including the pre-leg
->    codegen-regeneration check: Phase 12 Step 5.5.
+> 10. **Commit requires a clean three-leg gate — lint, tests,
+>    `/review`.** `git commit` doesn't fire until all three pass:
+>    lint + format clean, tests green (affected scope), and `/review`
+>    clean with every finding verdicted. The close-out report ships
+>    **with** the commit, not before it as a gate — Iron Law 5's
+>    approval covers *what to build*, these three cover *what landed*.
+>    The `Shipped` status is filled in only after the real commit
+>    lands. Full protocol, including the pre-leg codegen-regeneration
+>    check: Phase 12 Step 5.5.
 > 11. **Co-create the plan; review it with the user start to finish.**
 >    Two parts, both binding: **(a)** as you sketch (Phase 3), surface
 >    every load-bearing decision/fork/deferral via `AskUserQuestion`
@@ -157,10 +155,7 @@ to the `security-reviewer` for the risk-based call); ghostwriting product or
 design content; blueprint-review skip / 自審 (Phase 8.5); plans missing
 the audit pass (Iron Law 3); plans with Notion-row / TaskCreate drift (Iron Law 4);
 "ship without review" or "skip the review, looks fine" requests
-that bypass Phase 12 (Iron Law 7); "just commit it", "commit on my
-behalf", "auto-commit when review passes", or any pre-authorisation
-to commit before the close-out report is in front of the user
-(Iron Law 10).
+that bypass Phase 12 (Iron Law 7).
 
 **Push back** (don't silently route around the problem) when the
 product plan's success metric is missing or unmeasurable
@@ -653,7 +648,7 @@ implementation task(s) land: (1) the contract-derived tests for that phase's
 new/changed surface are authored here, and the `/qa` task authors the
 spec-derived ones (`testing.md` Rule 1) so "tests green" means something for
 *this* phase, not just pre-existing coverage; (2) run Phase 12's Steps
-0–5.5 — exception-log check, `/review`, verdict loop, the four-leg
+0–5.5 — exception-log check, `/review`, verdict loop, the three-leg
 commit gate — **scoped to that phase's diff**, before starting the next
 phase. Phase 12's Step 6 (close-out: Status flip, Notion revision
 entry) fires **once**, after the final phase's own Step 5.5 passes —
@@ -1009,9 +1004,8 @@ reach implementation, not while drafting.
   (close-out) fires once, after the final phase's Step 5.5. In brief:
   confirm the exception log is clean → invoke `/review` → verdict
   every finding (FIX / DISMISS / ESCALATE / DEFER) → re-review if any
-  CRITICAL existed → the four-leg commit gate (Iron Law 10 — lint,
-  tests, `/review`, and the **user**'s explicit post-report
-  authorisation) → close out (flip `Status` to `Shipped (date,
+  CRITICAL existed → the three-leg commit gate (Iron Law 10 — lint,
+  tests, `/review`) → close out (flip `Status` to `Shipped (date,
   commit)` with the real hash, advance Stage to "Review").
 - **Phase 13 — Close flow.** Phase 12 closes the implementation; Phase
   13 closes the artefacts. **Stage 1** (mandatory, after every Phase

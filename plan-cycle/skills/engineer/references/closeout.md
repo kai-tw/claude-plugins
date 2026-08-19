@@ -226,7 +226,7 @@ sub-agent caches little state. Stop only when:
 
 ## Step 5.5 — Commit gate (Iron Law 10)
 
-Four legs must **all** be green before any `git commit` fires —
+Three legs must **all** be green before any `git commit` fires —
 and they are checked **here, explicitly**, NOT left to the
 turn-end Stop hook (the gate is the source of truth; do not rely
 on the hook running after the commit):
@@ -257,25 +257,14 @@ on the hook running after the commit):
 3. **`/review` clean.** Per Iron Law 7 — `/review` has run, every
    finding has a written verdict, and a re-review confirms clean
    when CRITICALs existed.
-4. **User-authorised.** Surface the close-out report in chat — the
-   affected files, the **lint + test results**, the `/review`
-   cycle count + verdict mix, the plan path, and the proposed
-   commit message — then **explicitly request authorisation** and
-   **wait** for the user's go-ahead (`commit it` / `ship it` /
-   `looks good, commit`). Plan-stage `approved` / `looks good` /
-   `proceed` does **not** carry forward; the authorisation must
-   land *after* the report. Do not pre-stage with `git add` before
-   the report — stage + commit are one user-authorised step. When you
-   **do** stage after authorisation, run `git diff --cached` as its
-   **own** call and read it before `git commit` — confirm only the
-   intended files are staged, and if the index already holds work you
-   did not add (the user's pre-staged changes), `git restore --staged`
-   it first rather than committing it blind.
-
-Only when legs 1–4 are **all** green does `git commit` fire. Legs
-1–2 are mechanical (run them, don't assume); legs 3–4 are the
-review legs. A green lint/test + clean `/review` with no user
-authorisation is still a no-commit (the user is the final gate).
+Only when legs 1–3 are **all** green does `git commit` fire. Legs
+1–2 are mechanical (run them, don't assume); leg 3 is the review leg.
+**Read the index before committing:** run `git diff --cached` as its
+**own** call — confirm only the intended files are staged, and if it
+already holds work you did not add (the user's pre-staged changes),
+`git restore --staged` it first rather than committing it blind.
+Post the close-out report **with** the commit — affected files, lint +
+test results, `/review` cycle count + verdict mix, plan path, hash.
 
 **Leg-3 tooling carve-out.** A **tooling / lint-package** change (a new
 the project's linter AST-visitor rule, an analyzer-plugin tweak) that a
@@ -283,23 +272,15 @@ purpose-built probe has verified — true-positive fires, true-negative
 stays silent, zero false positives — skips the `/review` leg: the
 `code-reviewer` is **off-domain** for AST-visitor / analyzer-plugin code
 and has hallucinated on the analyzer-API surface, so its pass adds no
-signal there. Legs 1–2 and 4 still bind; the carve-out is leg 3 only, and
+signal there. Legs 1–2 still bind; the carve-out is leg 3 only, and
 only for a change whose own probe *is* the correctness evidence. App-code
 changes never qualify.
 
-If the user is absent / silent / says "later": stop here. Leave
-the diff uncommitted, leave the plan status at `In Progress`,
-keep the TaskList task's `Deferred` entry. Re-enter Step 5.5 next
-session when the user returns; do **not** advance to Step 6 with
-an uncommitted diff (the status flip in Step 6 action 4 cites
-a commit hash that does not yet exist — fabricating the hash is
-exactly the failure Iron Law 10 names).
-
-If the user dismisses some part of the diff at Step 5.5 ("revert
-the X change, then commit"): apply the revert as a normal edit,
-re-fire `/review` against the smaller diff (Step 5 cap still
-applies), then return to Step 5.5. The diff that gets committed
-is the diff `/review` saw last, not an earlier snapshot.
+If the user dismisses some part of the diff ("revert the X change"):
+apply the revert as a normal edit, re-fire `/review` against the
+smaller diff (Step 5 cap still applies), then return to Step 5.5. The
+diff that gets committed is the diff `/review` saw last, not an
+earlier snapshot.
 
 ## Step 6 — Close out
 
@@ -307,8 +288,8 @@ is the diff `/review` saw last, not an earlier snapshot.
 Phased plan (earlier phases' Step 5.5 lands their commit and moves on
 to the next phase without running Step 6). Four mandatory actions; run
 all four before declaring close-out. Step 5.5 has already landed the
-user-authorised commit by the time Step 6 starts; the hash referenced
-in action 4 is that commit's hash.
+commit by the time Step 6 starts; the hash referenced in action 4 is
+that commit's hash.
 
 1. **Mark task done** — `TaskUpdate` "Post-implementation code
    review" → `completed`.
