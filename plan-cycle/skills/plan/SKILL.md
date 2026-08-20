@@ -723,17 +723,23 @@ mechanical tells. `ux-reviewer` catches the provenance half again at ②.
   and no shorter.
 - **I4 — A decision is annotated where it was decided; there is no decision
   section.** Directly under the ruled line, one line:
-  `〔使用者〕<裁示理由>` or `〔自行裁定〕<裁示理由>`. `使用者` = co-created or
-  founder-ruled; `自行裁定` = you decided unasked (the trivial carve-out) — every
-  one of those **must** carry a note, so the founder can scan `〔自行裁定〕` and
-  overturn any of them; deciding without asking is allowed, deciding without
-  recording is not. Rejected options are not recorded; if "why not X" is what
-  makes the ruling legible, it belongs in that one line. A deliberate deferral is
-  a decision — note it with its owner and trigger. When the ruling changes,
-  **overwrite the note in place** with the new ruling and why it changed (`I1`);
-  no numbered log, no superseded entries left standing. Purely mechanical choices
-  with no fork are not decisions. Cross-feature decisions are promoted to the
-  Decision Log DB at close-out, not maintained twice.
+  `〔使用者〕「<逐字原話>」 → <本輪怎麼落地>` or `〔自行裁定〕<裁示理由>`.
+  `使用者` = co-created or founder-ruled; `自行裁定` = you decided unasked (the
+  trivial carve-out) — every one of those **must** carry a note, so the founder
+  can scan `〔自行裁定〕` and overturn any of them; deciding without asking is
+  allowed, deciding without recording is not. **The quoted half is the founder's
+  own words — never paraphrased, summarised, or replaced by your reconstruction
+  of their reasoning**: a quote can be diffed against what was actually said, a
+  paraphrase cannot, and each rewrite is another chance to drop the distinction
+  the ruling turned on. Quote the sentence that ruled; your reading of it goes
+  after the arrow, where it sits beside the words it claims to implement — as do
+  rejected options, when "why not X" is what makes the ruling legible. A
+  deliberate deferral is a decision — note it with its owner and trigger. When
+  the ruling changes, **overwrite in place** (`I1`): the half after the arrow
+  freely, the quoted half only by replacing it with the founder's new verbatim
+  words; no numbered log, no superseded entries left standing. Purely mechanical
+  choices with no fork are not decisions. Cross-feature decisions are promoted to
+  the Decision Log DB at close-out, not maintained twice.
 
 #### Revving a cycle that started under an older plan shape
 
@@ -744,7 +750,10 @@ Delete this section once no such cycle is in flight.
   permits it. Old `## Decision history` entries that are founder rulings are
   load-bearing: move each to an inline `〔使用者〕` note at the line it rules
   (`I4`) as you touch that prose, and leave the rest until you do. Do not delete
-  a ruling to satisfy a shape.
+  a ruling to satisfy a shape. Quote whatever surviving wording is most original
+  (`I4`) — if the founder's actual sentence is no longer recoverable, quote the
+  old entry verbatim rather than re-summarising it; the point is that nothing
+  gets re-authored on the way in.
 - **A role boundary that moved does not move the work already done.** A cycle
   whose design plan predates the designer-ships-widgets hand-off has no
   `§Widgets`, no renders, and nothing for `design-lint` to read. That cycle keeps

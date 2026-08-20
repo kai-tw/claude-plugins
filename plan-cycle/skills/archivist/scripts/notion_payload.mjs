@@ -947,7 +947,7 @@ function printTemplate(dbKey, typeKey) {
   console.log(`<!-- ${dbKey}${typeKey ? ` (${typeKey})` : ''} skeleton.`);
   console.log(`     Per-section rules + 禁-lists: notion-payload hints ${dbKey}${typeKey ? ` ${typeKey}` : ''}`);
   console.log(`     I3 — 條列為主，每行都要答得出「我承載哪個裁定或事實」，答不出來就刪.`);
-  console.log(`     I4 — 裁定的那一行下面附一行 〔使用者〕 或 〔自行裁定〕 + 理由；改了就地覆寫.`);
+  console.log(`     I4 — 裁定的那一行下面附一行：〔自行裁定〕+理由，或 〔使用者〕「逐字原話」→ 本輪怎麼落地；引號內是原話，不得改寫.`);
   console.log(`     Delete every placeholder and this comment before saving. -->`);
   for (const s of sections) {
     console.log(`\n## ${s.key}${s.required ? '' : '   <!-- optional; delete if 不適用 -->'}`);

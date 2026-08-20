@@ -422,6 +422,19 @@ if [ -n "$perishable" ]; then
   printf '%s\n' "$perishable" | cut -c1-120 | sed 's/^/        /'
 fi
 
+# 6c. HARD — a `〔使用者〕` note carries the founder's words VERBATIM (`I4`). A note
+#     with no 「」 quote is a paraphrase, and a paraphrase cannot be diffed against
+#     what was actually said. That is where a ruling silently loses the
+#     distinction it turned on — and `I4` licenses an in-place overwrite every
+#     rev, so each one re-authors it. `〔自行裁定〕` is exempt: those words are
+#     yours, there is nothing to quote.
+paraphrased="$(grep -nE '〔使用者〕' "$plan" | grep -v '「' || true)"
+if [ -n "$paraphrased" ]; then
+  echo "FAIL  〔使用者〕 note(s) with no 「逐字原話」——裁示被改寫了 (I4):"
+  printf '%s\n' "$paraphrased" | cut -c1-120 | sed 's/^/        /'
+  fail=1
+fi
+
 # 5. ADVISORY — required-section presence (bilingual; never gates).
 #    The list comes from schemas/engineering-plan.mjs, never from a copy here:
 #    a second copy is how a retired section stayed in this linter, telling every
