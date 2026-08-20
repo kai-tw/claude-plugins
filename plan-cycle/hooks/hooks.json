@@ -9,6 +9,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/search-discipline-inject.sh",
+            "statusMessage": "Loading search discipline..."
+          }
+        ]
+      }
     ]
   }
 }
