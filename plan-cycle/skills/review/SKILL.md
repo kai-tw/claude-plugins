@@ -48,7 +48,7 @@ pass, it does not replace it.
 | User intent | Sub-agent | Reviews | Output |
 |---|---|---|---|
 | Code review (semantic, architectural, lint-uncatchable) | `code-reviewer` | the uncommitted diff | **return to caller** (no file) |
-| Engineering-plan **design quality** (11 scope-gated dimensions) | `blueprint-reviewer` | an engineering plan | **return to caller** (no file) |
+| Engineering-plan **design quality** (5 scope-gated dimensions; the other 7 are graded on the diff by `code-reviewer`) | `blueprint-reviewer` | an engineering plan | **return to caller** (no file) |
 | Plan **rules compliance** (a role's rules checklist, sub-check by sub-check) | `blueprint-reviewer` (checklist mode) | a pm plan or design spec | **return to caller** (no file) |
 | **Security** (threat model, attack surface) | `security-reviewer` | PM plan / engineer plan / code | **return to caller** (no file) |
 | **Privacy** (data-minimization) | `privacy-reviewer` | PM plan / engineer plan / code | **return to caller** (no file) |

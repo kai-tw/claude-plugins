@@ -28,7 +28,7 @@ happens when the draft is authored against, *and self-scored on*, the
 ### 1. Scope the dimensions
 
 Run `plan-scope-gate <plan-path>`
-(advisory) to enumerate which defect dimensions are in scope and whether
+(advisory) to enumerate which plan dimensions are in scope and whether
 the Track-2 (security/privacy plan-mode) trigger fires. Keyword
 heuristic — confirm the set yourself; never *drop* a flagged dimension
 because the script stayed quiet, and add any it missed.

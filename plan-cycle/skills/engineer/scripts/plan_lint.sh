@@ -258,7 +258,7 @@ if [ -n "$malformed" ]; then
   echo "ADVISORY  §Classes method cell(s) that are not a single method name — 這幾列不會參與比對:"
   printf '%s\n' "$malformed" | sed 's/\t/ → /' | sed 's/^/        /'
   echo "        一列一個 method；簽名放 \`簽名\` 欄。多個 method 擠一格（fetch·publish·remove）要拆成多列，"
-  echo "        否則它們的簽名 / 複雜度 / Error 欄不可能同時正確。"
+  echo "        否則它們的簽名 / 呼叫 / Error 欄不可能同時正確。"
 fi
 
 # 4. HARD — §Conformance rows must point at a Class.method the plan defines,
@@ -420,20 +420,6 @@ if [ -n "$perishable" ]; then
   perish_n="$(printf '%s\n' "$perishable" | grep -c .)"
   echo "NOTE  ${perish_n} 處標為「今天成立」——有保鮮期的斷言，每次 rev 都要重新確認:"
   printf '%s\n' "$perishable" | cut -c1-120 | sed 's/^/        /'
-fi
-
-# 7. ADVISORY — complexity cells carry both halves and a named variable.
-#    An unnamed O(n) is decoration: nobody can falsify it.
-bad_cx="$(grep -nE '^\|' "$plan" | grep -E 'T:|S:' \
-  | grep -vE 'T:[^|]*S:' || true)"
-if [ -n "$bad_cx" ]; then
-  echo "ADVISORY  複雜度格只填了一半（要 T: 和 S: 兩半）:"
-  printf '%s\n' "$bad_cx" | cut -c1-120 | sed 's/^/        /'
-fi
-unnamed_o="$(grep -nE 'O\([^)]*[a-z][^)]*\)' "$plan" | grep -vE '[nmk] *=' | grep -E 'T:|S:' || true)"
-if [ -n "$unnamed_o" ]; then
-  echo "ADVISORY  Big-O 沒指名變數（要寫 n=書籍數 之類，否則不可證偽）:"
-  printf '%s\n' "$unnamed_o" | cut -c1-120 | sed 's/^/        /'
 fi
 
 # 5. ADVISORY — required-section presence (bilingual; never gates).

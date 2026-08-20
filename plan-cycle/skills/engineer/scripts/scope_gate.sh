@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# Advisory scope-gate — scan a plan's surfaces and SUGGEST which defect
-# dimensions the blueprint-reviewer panel should dispatch, and whether the Track-2
-# (security/privacy plan-mode) trigger fires.
+# Advisory scope-gate — scan a plan's surfaces and SUGGEST which of the five
+# plan-graded dimensions the blueprint-reviewer panel should dispatch, and
+# whether the Track-2 (security/privacy plan-mode) trigger fires.
+#
+# The five are the ones expensive to reverse once code exists; time, space,
+# scalability, extendability, error handling, testability and startup order are
+# graded on the diff by `code-reviewer` (see `notion-payload criteria
+# engineering-plan`), so they are deliberately not suggested here.
 #
 # ADVISORY ONLY. This is a keyword heuristic; the engineer confirms the actual
 # set. It exists so the deterministic surface-scan isn't re-done by hand each
-# cycle — the maximizer dimensions still scale by judgement, and a defect
-# dimension is never *dropped* just because this script didn't flag it.
+# cycle — a dimension is never *dropped* just because this script didn't flag it.
 #
 # Usage: scope_gate.sh <engineering-plan.md>
 set -uo pipefail
@@ -19,20 +23,21 @@ fi
 
 hit() { grep -qiE "$1" "$plan" 2>/dev/null; }
 
-echo "## Suggested defect dimensions (engineer confirms; never drop a flagged one):"
+echo "## Suggested plan dimensions (engineer confirms; never drop a flagged one):"
 hit 'cross-feature|setup_dependencies|register(Lazy|Factory|Singleton|FactoryParam)|new (use case|repository|abstraction)|portal|Overlay\.of|Draggable\.feedback|presentation.*presentation' \
   && echo "  - Coupling & Layering   (edge direction / new abstraction / portal scope)"
 hit 'state shape|state holder|\bcubit\b|\bnotifier\b|persisted|shared mutable|concurren|\brace\b|account|sync path|StreamSubscription|re-entran' \
   && echo "  - Correctness & Race    (temporal: race / ordering / re-entrancy / guard)"
-hit '\bawait\b|parse|fromJson|plugin|googleapis|MethodChannel|XmlDocument|ZIP|extract' \
-  && echo "  - Error handling        (boundaries the §Error-handling matrix must cover)"
+hit 'pubspec|dependencies:|\^[0-9]+\.[0-9]|新增套件|package_' \
+  && echo "  - Package usage         (new / version-changed dependency; run the 1c package-explorer pre-pass)"
+# Ownership is deliberately broad: a second source of truth reads as a clean
+# addition, so a missed flag costs more than a spurious one. Any new field,
+# entity, method or wrapper — and every projected/derived/mirrors phrasing —
+# earns the dimension.
+hit 'projected from|derived from|mirrors|新增 field|new field|wrapper|helper|manager|_service|canonical' \
+  && echo "  - Abstraction / ownership (canonical home: does this datum already have an owner?)"
 hit 'schemaVersion|persisted.?schema|migration|VersionedJson|metadata\.json|changed.*signature|wrapper.*delet|caller' \
   && echo "  - Migration & back-compat (schema / caller / wrapper-gate; run tool/version_diff.sh)"
-# Startup is deliberately broad: an initialization defect is invisible to unit
-# tests, so a missed flag costs more than a spurious one. Any DI registration,
-# constructor-time subscription, or app-entry change earns the dimension.
-hit 'register(Lazy|Factory|Singleton|FactoryParam)|setup_dependencies|main\.dart|runApp|\bbootstrap|\binit\(\)|\bensureInitialized|lazy: *false|keepAlive|constructor.*(listen|subscribe)|\.listen\(|WidgetsBinding|SharedPreferences\.getInstance|openDatabase|\bmigrate\b' \
-  && echo "  - Startup & init order  (construction timing / dependency order the §Startup table must cover)"
 echo
 
 echo "## Track-2 (security/privacy plan-mode) trigger:"

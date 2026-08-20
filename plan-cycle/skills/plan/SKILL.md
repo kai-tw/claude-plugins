@@ -466,8 +466,12 @@ load-bearing, verify it against the code before acting on it.
 **`blueprint-reviewer` runs on every engineer plan** — never skipped, not even on
 a single-slice increment, which would otherwise have no judgment gate at all, only
 a script. The cost stays proportionate because its own **Stage 1b scope-gate**
-right-sizes the fan-out: a single-slice increment dispatches a handful of
-dimensions plus the three cross-cutting checks, not all eleven.
+right-sizes the fan-out over its **five** dimensions — the ones expensive to
+reverse once code exists — and a single-slice increment dispatches only those
+whose surface it actually touches. The other seven (time, space, scalability,
+extendability, error handling, testability, startup) are graded on the diff by
+`code-reviewer`, which declares them in its `coverage:` line; the split is
+recorded once in `notion-payload criteria engineering-plan`.
 
 **Security / privacy are boundary-gated at EVERY stage — including the PM plan.**
 Decide the two reviewers **independently** (one may be in scope while the other

@@ -11,16 +11,18 @@ description: |
   evidence and a three-count gate line (no scores, no fan-out). An
   engineering plan (the Notion Engineering Plan DB row, or the
   in-thread draft before it is posted) — single
-  approach or multiple candidate options — is instead reviewed across
-  **scope-gated quality dimensions**: the eight base criteria (time/space
-  complexity, scalability, extendability, coupling, design correctness,
-  runtime error handling, package usage) plus **testability**,
-  **abstraction/reuse/ownership**, and **migration/back-compat**. It
+  approach or multiple candidate options — is instead reviewed across the
+  **five dimensions that are expensive to reverse once code exists**: coupling
+  & layering, design correctness & race, package usage, abstraction / reuse /
+  ownership, and migration & back-compat. (Time, space, scalability,
+  extendability, error handling, testability and startup order are graded on
+  the **diff** by `code-reviewer`, where the artefact is real code rather than
+  a table describing hypothetical code.) It
   **dispatches one fresh-context sub-agent per dimension batch, each writing its
   scores to JSON that `blueprint-merge` joins and merges** — which
   dimensions run is gated by what the plan's §Classes actually
-  touch (defect dimensions are non-droppable; maximizers scale to plan
-  size) — each grounded in `.claude/rules/` and the section's own authoring
+  touch (none of the five is droppable once its surface is present)
+  — each grounded in `.claude/rules/` and the section's own authoring
   requirements, then **consolidates them into one report** (reconciling, never
   averaging). For every weak dimension the review names a **precise,
   evidenced weakness** (what's wrong + the failure scenario + the cited
@@ -68,14 +70,13 @@ allowed-tools:
 >    or any project file other than the review log, and do not propose the
 >    solution. The caller (the engineer role or the user) devises and
 >    applies the fixes from the weaknesses you name.
-> 6. **Defect dimensions are not scope-droppable.** Right-sizing may trim
->    *maximizer* dimensions (time, space, scalability, extendability,
->    testability, abstraction/reuse/ownership) for a small plan, but a
->    *defect* dimension (coupling, correctness/race, error handling,
->    migration) **must run whenever the plan's §Classes touch its
+> 6. **None of the five is scope-droppable.** Every dimension left in this
+>    rubric is here because getting it wrong is expensive to reverse once code
+>    exists, so each **must run whenever the plan's §Classes touch its
 >    surface** — determined by that layer list, not by gut feel. A race
 >    reviewer skipped because "this looked like a UI tweak" is the exact
->    blind spot the review exists to catch.
+>    blind spot the review exists to catch. Right-sizing happens at the
+>    surface gate (1b) and nowhere else; there is no cheap tier to trim.
 > 7. **Consolidate by reconciling, never averaging.** A `blocking` finding
 >    from any one dimension stays blocking — never diluted by a high score
 >    elsewhere. When two dimensions flag a tension (e.g. "too coupled" vs
@@ -95,7 +96,7 @@ the stage the caller names, and nothing else:
 
 | Stage | Rubric | Shape |
 |---|---|---|
-| **engineering plan** | the 11 scope-gated dimensions in this file | fan-out — one sub-agent per dimension batch, joined by `blueprint-merge` (Stages 1–4 below) |
+| **engineering plan** | the 5 scope-gated dimensions in this file | fan-out — one sub-agent per dimension batch, joined by `blueprint-merge` (Stages 1–4 below) |
 | **PM plan** | `${CLAUDE_PLUGIN_ROOT}/skills/pm/references/rules.md` | **checklist mode** (below) |
 
 **You do not review the design spec.** The designer ships the widgets, so its
@@ -178,7 +179,7 @@ in a single sentence before proceeding:
 3. **Criterion weights** — equal by default. The verdict gate is **per
    dimension (every in-scope dimension ≥ 8)**, not a weighted total; the
    total is an informational `/NN` over the in-scope dimensions only.
-   Caller may override weights (e.g. "weight error handling 2×") to tune
+   Caller may override weights (e.g. "weight migration 2×") to tune
    that informational summary; reject weights that zero out a dimension.
 
 ## What you do not do
@@ -220,9 +221,9 @@ Also read, when relevant to scoring a row:
   codebase enforces (log levels, exception class shape).
 - Run `notion-payload criteria engineering-plan`
   for the criteria→sections routing table (which section earns which dimension).
-- For criterion 7 authoring requirements: run
-  `notion-payload hints engineering-plan`
-  and read the §Error policy hint. Full rubrics stay in this file.
+- For the authoring requirements of the sections you grade: run
+  `notion-payload hints engineering-plan` and read the §Classes and
+  §Migration impact hints. Full rubrics stay in this file.
 - Any feature directory the plan touches — to ground "low coupling" /
   "extendable" in the actual existing boundaries.
 
@@ -247,21 +248,23 @@ From the plan's **§Classes** inventory table (the NEW/MOD rows, by layer) and t
 `持有狀態` column — the table answers the gating questions directly, so gate on it
 rather than pattern-matching prose:
 
-- **Defect dimensions — surface-gated, non-droppable (Iron Law 6):**
+- **The five dimensions — surface-gated, non-droppable (Iron Law 6):**
 
   | Dimension | Runs when the plan touches… |
   |---|---|
-  | Coupling & Layering | any cross-feature edge / DI registration / new abstraction / portal-rendered widget |
-  | Correctness & Race | state-holder shape / persisted state / a concurrency or account/sync path / a shared mutable map |
-  | Error handling | any `await` / parse / plugin / googleapis / MethodChannel boundary |
-  | Migration & Back-compat | a persisted-schema change / a changed use-case signature with existing callers / a wrapper deletion |
+  | 5 Coupling & Layering | any cross-feature edge / DI registration / new abstraction / portal-rendered widget |
+  | 6 Correctness & Race | state-holder shape / persisted state / a concurrency or account/sync path / a shared mutable map |
+  | 8 Package usage | a new or version-changed dependency (else the 1c pre-pass is negative and it scores on reuse posture) |
+  | 10 Abstraction / reuse / ownership | a new field / entity / method / wrapper whose datum or capability may already have a canonical home |
+  | 11 Migration & Back-compat | a persisted-schema change / a changed use-case signature with existing callers / a wrapper deletion |
 
-- **Maximizer dimensions — scale to plan size:** time, space, scalability,
-  extendability, testability, abstraction/reuse/ownership. Single-slice
-  plan → only the ones the change plausibly affects + testability (cheap,
-  almost always relevant). Phased / full plan → all.
 - **Cross-cutting checks — always:** PM-scope adherence · claims about
   existing code · plan integrity (after criterion 11).
+- **Not yours:** time, space, scalability, extendability, error handling,
+  testability, startup order. They are graded on the diff by `code-reviewer`,
+  which declares a per-dimension `coverage:` line so the move is auditable.
+  Seeing one of them go wrong here is still worth a **non-scored
+  `## Observations` note** — but never a score, and never a round.
 
 Record the decision in the log (`Dimensions dispatched: … ; not dispatched
 (surface absent): …`) so a skipped dimension is an auditable decision,
@@ -272,8 +275,8 @@ never a silent absence.
 scope-gate becomes a cache **keyed on §Classes**: a dimension whose gating
 §Classes are **untouched by the diff** is a HIT — **carry its prior score
 forward, do not re-dispatch.** Re-dispatch only the dimensions whose §Classes the
-diff changed, plus any defect dimension the changed §Classes newly trip (Iron Law
-6 — a change can newly *trigger* a previously out-of-surface defect dimension;
+diff changed, plus any dimension the changed §Classes newly trip (Iron Law
+6 — a change can newly *trigger* a previously out-of-surface dimension;
 that is a MISS, never carried). **Fail-closed: any doubt whether the diff touches
 a dimension's §Classes is a MISS (re-dispatch), never a HIT.** Record
 carried-vs-redispatched in the log (`Carried (unchanged §Classes): … ;
@@ -350,11 +353,9 @@ share them. Drop whatever 1b put out of scope; an emptied batch isn't dispatched
 
 | Batch | Dimensions |
 |---|---|
-| `defect-a` | 5 coupling · 10 abstraction/ownership |
-| `defect-b` | 6 correctness/race · 12 startup |
-| `defect-c` | 7 error handling · 11 migration |
-| `perf` | 1 time · 2 space · 3 scalability |
-| `quality` | 4 extendability · 8 package · 9 testability |
+| `shape` | 5 coupling · 10 abstraction/ownership |
+| `change` | 6 correctness/race · 11 migration |
+| `deps` | 8 package |
 
 **Each child writes one JSON file per dimension; its return value is not the
 deliverable and you must not wait on it.** Measured: across 19 fan-out reviews
@@ -416,68 +417,6 @@ section scored against.
 Default to the lower number when you're between two anchors. Calibration
 drifts upward over time; resist it.
 
-### Criterion 1 — Time complexity
-
-Read the `複雜度` column in §Classes (per-method `T:`) **and** §Data flow's graph
-(composition — an `O(1)` method called inside another class's `O(n)` loop makes
-the path `O(n)`, and only the edge shows that). The standard is
-`code-style.md §Performance & Complexity`. Ask:
-
-- Are hot paths identified (UI frame, list scroll, EPUB render, sync)?
-- Big-O reasoned about for any loop over user data (books, chapters,
-  bookmarks, collections)?
-- Heavy work (>100 ms or unbounded) routed off the UI isolate?
-- Any nested loop, repeated parse, or N+1 read against persisted state?
-
-A 10 names the hot paths and their bounds. A 2 ships an O(N²) loop over
-the user's library without realising. A 5 has a hot path with no
-analysis at all (silent guess).
-
-### Criterion 2 — Space complexity
-
-Space splits across two columns of §Classes (standard: `code-style.md §Performance
-& Complexity`): the inventory's `持有狀態` is what a class **holds** (the cache
-with no bound lives here), the contract table's `S:` is what a method
-**allocates**. §Classes carries no Dart bodies — score the two columns, don't ding
-missing bodies:
-
-- Large data (EPUB blobs, image buffers, isolate snapshots) streamed or
-  fully resident?
-- Caches bounded? Eviction policy named?
-- Isolate snapshot cost considered for `compute()` / `Isolate.spawn`?
-- Any per-book / per-chapter state that grows unbounded with library size?
-
-A 10 names the resident-set envelope and its growth. A 2 loads the full
-EPUB into memory on the UI isolate.
-
-### Criterion 3 — Scalability
-
-How does the design hold at 10× current scale (1000+ books, 100 MB EPUB,
-50+ collections, slow / offline network, 5+ sync devices)?
-
-- Bottlenecks at the user's *existing* scale flagged?
-- Sync / persistence contention paths named?
-- Conflict resolution at scale (not just two-device happy path)?
-- Pagination / lazy load where collection size can grow?
-
-A 10 calls the scaling axis out and shows the design holds. A 2 implicitly
-assumes the user has 10 books and one device.
-
-### Criterion 4 — Extendability
-
-How costly is the *next* feature request?
-
-- A new format / platform layer / provider / engine = N lines vs
-  cross-cutting rewrite?
-- Open/closed observable — adding a variant requires extending, not
-  modifying, the load-bearing class?
-- Abstraction at the right boundary, not premature speculation?
-- New feature can land without touching unrelated features' tests?
-
-A 10 names the extension points and the cost of the next likely
-extension. A 2 conflates responsibilities such that the obvious next
-feature requires editing 5+ files across layers.
-
 ### Criterion 5 — Low coupling
 
 This dimension owns **edge direction** — Adding-New-Abstractions steps 1+2
@@ -513,34 +452,6 @@ in? This is correctness-by-construction, not catch-blocks.
 A 10 makes the wrong state unrepresentable. A 2 has a load-bearing
 nullable field with no rule for when it's null vs not.
 
-### Criterion 7 — Runtime error handling
-
-Two artefacts: §Error policy (the cross-class rulings) and the
-`Error → 處置` column of §Classes (per method). Run
-`notion-payload hints engineering-plan` and read the §Error policy hint for the
-authoring requirements. `plan_lint` already settled the closure questions — every
-external boundary has a cell, every ≥2-origin state node has a race row — so
-spend your budget on whether the *handling* holds:
-
-- Exceptions named as concrete subclasses, not abstract bases, and each
-  backed by real evidence (`throw` site `file:line`, framework doc, platform
-  observation, prior incident) rather than "可能會 throw"?
-- Classification axis named (transient vs conclusive, retry vs hard-fail,
-  recoverable vs terminal) or a stated "no axis needed"?
-- Each race row's handling actually holds — the named primitive really
-  serialises that path, or the accepted last-write-wins has a **real**
-  convergence path and not just the phrase?
-- A caught exception that changes state does so conclusively (`error-handling.md`
-  conclusive-only write / no-silent-failure), and log levels match
-  `.claude/rules/code-style.md` (expected → info, real failure → error with
-  stackTrace)?
-- The plan does **not** claim coverage of await-gap or framework-scheduling
-  races — those are invisible at plan stage, and asserting them is a false
-  assurance, not a strength.
-
-A 10 has every handling decision traceable to a rule or a stated trade-off. A 2
-has §Error policy missing, sparse, or "decide later"-flavoured.
-
 ### Criterion 8 — Package usage
 
 Score every external dependency the plan introduces or relies on.
@@ -567,28 +478,6 @@ scores high here; it is **not** N/A.
 
 A 10 has every dep justified with a source-verified contract match. A 2
 picks a package on name-match alone (name matched, contract unverified).
-
-### Criterion 9 — Testability
-
-Can the design be tested without the forbidden `Mock implements`
-listenable pattern (`.claude/rules/testing.md` Rule 3 — Prong A/B)?
-
-- State-holder collaborator seams two-callback or narrow-interface
-  (the project's state-management rule in `.claude/rules/`), not `Stream` /
-  `ChangeNotifier`-bearing concretes?
-- Hand-written-fake targets named where a `Stream`-exposing port is
-  unavoidable?
-- Phase-5 test seams + coverage targets named in the plan?
-- **Every observable upstream promise pinned by a §Conformance row** — walk
-  the design spec (behavioural cells, four states, each motion / transition /
-  interaction) and the product plan (success metric, scope commitments)
-  *backwards*: an item with no row is an item nothing will ever fail on
-  (`plan_lint.sh` checks each row points at a `Class.method` that exists; only
-  you can check the spec maps to rows — that needs the upstream read)?
-
-A 10 names every seam + fake target so `/qa` writes the test
-without refactoring production first. A 2 designs a state holder testable only by
-mocking a listenable (Prong A leak).
 
 ### Criterion 10 — Abstraction, reuse & ownership (cohesion)
 
@@ -678,43 +567,6 @@ plan and the whole body are already in hand.
   length instead of citing it (`I2`), pads with lines that carry no ruling or
   fact (`I3`), or rules something without a decision note where it was
   decided (`I4`).
-
-### Criterion 12 — Startup & initialization order
-
-Score against the §Startup authoring requirements — run:
-`notion-payload hints engineering-plan`
-and read the §Startup hint. The plan's §Startup table is the artefact being scored.
-
-This criterion exists because initialization defects evade the other eleven.
-They are **ordering** faults, so the four-state matrix cannot express them — it
-asks what a screen looks like in state X, never whether A ran before B. And they
-are **structurally invisible to unit tests**, which call `init()` directly and
-therefore cannot fail when the app never calls it at all.
-
-- Does every component the change constructs at startup appear as a row?
-- Is each row's construction timing explicit (eager / lazy / on-first-read),
-  rather than left to whatever the DI container defaults to?
-- **Is the "proves it ran" column real?** "Unit test covers it" is **not** an
-  answer and scores **≤ 4** on its own — a unit test proves the logic, never the
-  path. Acceptable: a device or integration test driving the real flow, a
-  startup-log assertion, or a guard that fails loud when the dependency is
-  missing.
-- Any fire-and-forget side-effect component (drives navigation, subscriptions,
-  scheduling; no widget consumes it) constructed **eagerly**? Lazy plus no
-  consumer means dead on device while every test stays green — score **≤ 3** and
-  name the component.
-- Do columns 3 and 4 agree? "Falls back to a default when the dependency isn't
-  ready" is the most common silent failure — accept it only with a stated reason.
-- Does the ordering sub-table list every genuinely order-dependent pair, with
-  what breaks if swapped — not just a restatement of the call sequence?
-
-A 10 has a row per startup component, a real proof for each, and an ordering
-sub-table whose "what breaks if swapped" answers are concrete. A 2 has §Startup
-missing, or filled in with construction timings copied from the DI container
-without asking whether anything reaches them.
-
-Score **N/A** when the plan genuinely adds no startup-time work and says so with
-a reason. An empty table with no policy line is not N/A — it is a 2.
 
 ## Stage 3: Aggregate and rank
 
@@ -808,20 +660,15 @@ justifies it.
 
 ### Scores
 
+`blueprint-merge report`'s table, pasted — the five rows are:
+
 | # | Criterion | Score | Cite | Notes |
 |---|---|---|---|---|
-| 1 | Time complexity | X/10 | §Classes `T:` · §Data flow (composition) | <one-line reason> |
-| 2 | Space complexity | X/10 | §Classes `持有狀態` + `S:` | ... |
-| 3 | Scalability | X/10 | §Risks · §Data flow (fan-out) | ... |
-| 4 | Extendability | X/10 | §Classes | ... |
-| 5 | Low coupling | X/10 | §Classes `呼叫` · §Data flow | ... |
+| 5 | Low coupling | X/10 | §Classes `呼叫` · §Data flow | <one-line reason> |
 | 6 | Design correctness | X/10 | §Classes `簽名` | ... |
-| 7 | Error handling | X/10 | §Error policy · §Classes `Error → 處置` | ... |
-| 8 | Package usage | X/10 | §Classes | ... |
-| 9 | Testability | X/10 | §Classes (ctor collaborators = the seam) · §Conformance | ... |
+| 8 | Package usage | X/10 | §Classes · `package-explorer` verdict | ... |
 | 10 | Abstraction/reuse/ownership | X/10 | §Classes `職責` | ... |
 | 11 | Migration & back-compat | X/10 | §Migration impact · Stage-1d diff | ... |
-| 12 | Startup & init order | X/10 | §Startup (or N/A with a stated reason) | ... |
 | **Total (informational; verdict is per-dimension ≥ 8)** | | **XX/NN** | | |
 
 ### Strengths
@@ -833,13 +680,11 @@ justifies it.
 > Name the problem + failure scenario + citation. **No `Suggestion:`
 > line** — devising the fix is the engineer's job, not the reviewer's.
 
-**[7. Error handling — 5/10]**
-- §Error policy table omits the Drive 503 / quota boundary; cite
-  `lib/.../google_drive_data_source_impl.dart` — there's an
-  `await drive.files.create(...)` with no matching row.
-- Failure scenario: a Drive quota-exceeded response goes uncaught → the
-  upload throws into the zone handler and the book is left half-synced
-  with no user feedback.
+**[11. Migration & back-compat — 5/10]**
+- §Migration impact has no row for the deleted `BookMetadataWrapper`; cite
+  §Classes, which marks it (DEL) while three callers still resolve it.
+- Failure scenario: an existing install updates, the boot path resolves a
+  deleted symbol and the library reads empty — recoverable only by reinstall.
 
 **[5. Low coupling — 6/10]**
 - `BookRepository` carries both read and write surface; read-only state holders
@@ -857,24 +702,23 @@ justifies it.
 
 | Criterion | A | B | C |
 |---|---|---|---|
-| 1. Time complexity | 8 | 6 | 9 |
+| 5. Low coupling | 8 | 6 | 9 |
 | ... | | | |
 | **Total** | XX | YY | ZZ |
 
 ### Trade-offs
 
-- A is strongest on coupling and extendability; weakest on error
-  handling.
-- B is strongest on time / space complexity (uses streaming); weakest
-  on scalability (single-device assumption).
-- C ties A on total but trades extendability for simpler package
+- A is strongest on coupling and ownership; weakest on migration.
+- B leaves the persisted schema untouched; weakest on coupling (its sync
+  layer reaches across two features).
+- C ties A on total but trades a cleaner boundary for a heavier package
   surface.
 
 ## Recommendation
 
 **Option A**, with the three improvements above applied before
-implementation. Driving factor: error-handling gaps in A are fixable
-in-plan; B's scalability gap requires rearchitecting the sync layer.
+implementation. Driving factor: A's migration gap is fixable in-plan;
+B's coupling gap requires rearchitecting the sync layer.
 
 ## Verdict
 

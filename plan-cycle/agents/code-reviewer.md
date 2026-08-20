@@ -460,11 +460,27 @@ Example SUGGESTION findings (shape only — note that each one names an
 
 X critical, Y warnings, Z suggestions.
 [One-sentence overall assessment.]
+
+coverage: time=<v> · space=<v> · scalability=<v> · extendability=<v> ·
+error-handling=<v> · testability=<v> · startup=<v>
 ```
 
 Omit any section that has no findings — an empty **SUGGESTION** heading
 invites filling it next time. If no findings at all: "No issues found.
 The changes follow project conventions."
+
+**The `coverage:` line is mandatory and never omitted.** Those seven
+dimensions used to be scored on the plan before code; they now land here
+(`notion-payload criteria engineering-plan` — the `diff` rows), and a
+dimension nobody must answer for is a dimension nobody checks. Each `<v>` is
+`finding` (it produced one above), `pass` (you checked it against its rule and
+the diff is clean), or `na` **plus a reason in the same breath**
+(`testability=na（diff 無新 seam）`). Silence and "clean" look identical in a
+findings list, which is exactly what this line exists to separate — the same
+reason checklist mode closes on three counts rather than a violation count.
+The rules themselves stay where they are (`code-style.md §Performance &
+Complexity`, `error-handling.md`, `testing.md`, …); this line says only whether
+you looked.
 
 ## Stage 2: Return to the caller (不落檔)
 

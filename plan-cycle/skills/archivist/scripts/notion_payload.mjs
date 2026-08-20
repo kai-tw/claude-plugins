@@ -978,13 +978,14 @@ function printCriteria(dbKey) {
     }
 
   console.log(`# ${dbKey} — criteria routing\n`);
-  console.log(`Criterion → plan section(s) where it is earned.`);
-  console.log(`Full rubric (1–10 anchors, questions): blueprint-reviewer.md §Criterion N.\n`);
-  console.log(`| Criterion | Earned in plan section(s) |`);
-  console.log(`|---|---|`);
+  console.log(`Criterion → which gate grades it → plan section(s) where it is earned.`);
+  console.log(`  plan = blueprint-reviewer, before code (rubric: blueprint-reviewer.md §Criterion N)`);
+  console.log(`  diff = code-reviewer, on real code (rule: the owning .claude/rules/ file)\n`);
+  console.log(`| Criterion | Graded on | Earned in plan section(s) |`);
+  console.log(`|---|---|---|`);
   for (const [key, crit] of Object.entries(CRITERIA)) {
     const sections = (map[key] ?? []).map((s) => `§${s}`).join(', ') || '*(cross-cutting)*';
-    console.log(`| ${crit.n} — ${crit.label} | ${sections} |`);
+    console.log(`| ${crit.n} — ${crit.label} | ${crit.where ?? '?'} | ${sections} |`);
   }
 }
 
