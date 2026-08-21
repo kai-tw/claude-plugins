@@ -39,6 +39,17 @@
         "url": "https://github.com/kai-tw"
       },
       "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/google-reporting"
+    },
+    {
+      "name": "guardrails",
+      "description": "Turns corrections into rules that fire — a bounded inbox, a fusion gate, and hooks that speak at the moment of the mistake",
+      "source": "./plugins/guardrails",
+      "category": "productivity",
+      "author": {
+        "name": "Kai",
+        "url": "https://github.com/kai-tw"
+      },
+      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/guardrails"
     }
   ]
 }
