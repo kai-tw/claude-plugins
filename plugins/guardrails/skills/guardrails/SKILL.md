@@ -35,6 +35,27 @@ mattered is dismissed too. **A bloated rule set is worse than no rule set.**
 
 ## Filing
 
+**File without asking.** If it clears the three gates below, it goes in — do not
+surface it as a suggestion and wait for a yes. An inbox that costs a round-trip
+to fill is an inbox that stays empty, and the correction that was never filed is
+the whole problem this exists to solve. Founder ruling, 2026-08-21:「有過門檻的
+都自動 file 好了，那邊本來就是要廣泛收集的地方」.
+
+The gates, all three:
+
+1. **Silent** — it hands back a confident wrong answer rather than an error.
+   Anything that errors out announces itself and needs no entry.
+2. **Actually hit** — it happened. Not a hazard someone imagined.
+3. **Still true in another repo** — otherwise it belongs to that project's own
+   memory rather than here.
+
+A cause you have not diagnosed is still worth filing: say so in the body and it
+waits for whoever works it out. Losing it is the only unacceptable outcome.
+
+`entries/` is git-tracked, so filing writes to the working tree; committing
+stays a deliberate act.
+
+
 ```bash
 gr add tool --source founder --title "<one line>" <<'BODY'
 What happened, and what it cost. Name the command or the claim.
