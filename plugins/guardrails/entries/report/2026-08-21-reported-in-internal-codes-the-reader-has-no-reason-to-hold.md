@@ -27,3 +27,12 @@ next:
 Silent in the way this whole category is silent: a report dense with identifiers
 reads as precise, and nothing signals that it failed to land. The reader does
 not object every time — he just receives less than the report claimed to give.
+
+**Second instance, same day.** Described a proposed change as adding an
+「開場注入層」— a phrase I coined for a layer in my own design, used as if it
+were shared vocabulary. Kai:「什麼意思？session start hook？」
+
+Not an identifier this time but invented jargon, which is the same failure with
+a friendlier surface: a coined term reads as precise and is a lookup the reader
+cannot perform, because it exists nowhere but in my own head. The plain name was
+available and shorter — SessionStart hook.
