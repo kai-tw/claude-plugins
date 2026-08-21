@@ -1,0 +1,450 @@
+#!/usr/bin/env bash
+# plan-cycle.sh — the /plan upload-enforcement ledger.
+#
+# WHY THIS EXISTS
+#   The /plan SKILL.md is loaded ONCE when the cycle starts. Over a long
+#   cycle (PM → designer → engineer → code → QA → close-out, dozens of turns,
+#   often summarized) its upload obligation (Iron Law 6: "a plan not in Notion
+#   does not exist") decays out of the active context, and the model reverts to
+#   authoring plans in chat and never invoking archivist. Prose can't fix a
+#   context-persistence problem — the deterministic Stop hook can.
+#
+#   This script is a tiny local ledger that mirrors the archivist's Notion
+#   writes. The Stop hook calls `check` every turn and BLOCKS turn-end when the
+#   cycle has advanced PAST a plan phase whose Notion row never landed — exactly
+#   the way `stop-validate.sh` already makes `dart format` / renderer build
+#   un-skippable. Enforcement lives in the hook, not in the model's memory, so
+#   it survives summarization.
+#
+# WHO WRITES IT  (all calls are byproducts of archivist's existing Notion ops,
+#                 so the decay-prone launcher needs no new memory-dependent step)
+#   - archivist creates the TaskList task   → start  <slug> "<title>"
+#   - archivist flips the TaskList Stage     → enter  "<Stage>"
+#   - archivist writes a plan DB row (verified) → uploaded <pm|designer|engineer>
+#   - launcher opens the PR (Step 6.0)            → pr-opened
+#   - launcher closes out (archive + trash row)   → clear
+#     (on a pr_opened cycle whose PR has merged, clear REFUSES until the worktree
+#      + branch are gone (Step 6.6) and a feedback-ledger entry carries the cycle
+#      slug (Step 6.7) — the two close-out steps that leave no Notion trace, so
+#      nothing else would ever notice them missing)
+#
+# LEDGER SCOPE — per session, shared across trees
+#   The ledger is keyed by CLAUDE_CODE_SESSION_ID, so CONCURRENT SESSIONS never
+#   see each other's cycle (you can multi-open freely — one session's gap never
+#   blocks another). Within one session it lives in the MAIN working tree
+#   (resolved via git-common-dir), so that session's planning phases (main tree)
+#   and code/close-out phases (worktree) read and write ONE file. It is
+#   gitignored — never in a commit or a worktree checkout. The in-thread
+#   archivist's Bash calls and this session's Stop hook share the session id, so
+#   the writer and the checker always resolve the same file. A session-id
+#   mismatch degrades to "no file → no block" (never a false block on unrelated
+#   work). Note: resuming a cycle in a BRAND-NEW session won't inherit the old
+#   session's ledger (it keys to the new id) — enforcement simply restarts;
+#   Notion Stage still reflects reality.
+#
+# Mutators no-op when no cycle is active; `check` is silent (exit 0) then too —
+# so the hook is invisible for non-/plan work.
+
+set -uo pipefail
+
+# --- locate the single shared ledger (main tree, via git-common-dir) ---------
+main_root() {
+  local cdir
+  cdir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 1
+  [ -n "$cdir" ] || return 1
+  dirname "$cdir"   # .../<main-tree>/.git  →  .../<main-tree>
+}
+
+# Optional leading `--session <id>` lets the Stop hook pass the id it reads from
+# its stdin as an ARGUMENT — so we never set or export an environment variable.
+# Writers (archivist) pass nothing and we fall back to reading the harness's
+# pre-existing CLAUDE_CODE_SESSION_ID (READ-ONLY; we never mutate the env).
+SESSION_OVERRIDE=""
+if [ "${1:-}" = "--session" ]; then
+  SESSION_OVERRIDE="${2:-}"
+  shift 2>/dev/null || true   # drop --session
+  shift 2>/dev/null || true   # drop the id
+fi
+
+ROOT=$(main_root) || { echo "plan-cycle: not in a git repo" >&2; exit 0; }
+LEDGER_DIR="$ROOT/.claude/.plan-cycle"
+STALE_DAYS=14   # an abandoned ledger past this age stops gating (hygiene)
+
+# Per-session key → concurrent sessions never collide. Sanitize to a safe
+# filename; fall back to "active" only for manual CLI runs with no session.
+SID="${SESSION_OVERRIDE:-${CLAUDE_CODE_SESSION_ID:-}}"
+SID=$(printf '%s' "$SID" | tr -cd 'A-Za-z0-9._-')
+[ -n "$SID" ] || SID="active"
+LEDGER="$LEDGER_DIR/${SID}.json"
+
+# --- stage / phase ordering --------------------------------------------------
+# A plan phase's row must be in Notion once the cycle's Stage has advanced
+# strictly PAST that phase's authoring stage. Security/Privacy share the
+# Engineering Plan index (they are gates WITHIN the engineer phase), so entering
+# them never false-blocks on an engineer draft still in its audit loop.
+stage_idx() {
+  case "$1" in
+    "Product Plan")               echo 0 ;;
+    "Design Plan")                echo 1 ;;
+    "Translation")                echo 2 ;;
+    "Engineering Plan")           echo 3 ;;
+    "Security"|"Privacy")         echo 3 ;;
+    "Implementation")             echo 4 ;;
+    "Review"|"QA")                echo 5 ;;
+    "Archived")                   echo 6 ;;
+    *)                            echo -1 ;;
+  esac
+}
+
+# A stage that marks a plan phase "expected" (so phases never entered — e.g.
+# designer on a non-UI cycle — are never gated). Inferred from stage entry; the
+# launcher need not pre-declare the phase set.
+stage_phase() {
+  case "$1" in
+    "Product Plan")     echo pm ;;
+    "Design Plan")      echo designer ;;
+    "Engineering Plan") echo engineer ;;
+    *)                  echo "" ;;
+  esac
+}
+
+phase_idx() {  # the authoring-stage index of each plan phase
+  case "$1" in
+    pm)       echo 0 ;;
+    designer) echo 1 ;;
+    engineer) echo 3 ;;
+    *)        echo -1 ;;
+  esac
+}
+
+phase_label() {
+  case "$1" in
+    pm)       echo "Product" ;;
+    designer) echo "Design" ;;
+    engineer) echo "Engineering" ;;
+    *)        echo "$1" ;;
+  esac
+}
+
+now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+
+# Has PR #$1 landed on origin/$2? Close-out runs AFTER the founder merges, so
+# this is what arms Gate 2 — the merge, not the PR opening.
+#
+# Offline by design: the Stop hook runs on every turn-end, so it must not make a
+# network call. `gh pr view` is therefore out, and so is
+# `git merge-base --is-ancestor` — this repo squash-merges (PRs #111-#115 each
+# landed as ONE commit; the last real merge commit on main is #32), so the
+# branch tip never becomes an ancestor of the base. What DOES survive a squash
+# is GitHub's subject suffix `(#N)`, which is both local and reliable.
+#
+# Fail-open on a stale `origin/$2` (merged on GitHub, not yet fetched): the gate
+# stays silent until the next fetch. That is the safe direction — before the
+# merge is observable there is nothing owed, so nothing can be silently skipped.
+#
+# `grep -c`, never `grep -q`: under this script's `pipefail`, a `-q` grep exits
+# on the first match, `git` takes SIGPIPE, and the pipeline reports 141 — but
+# only when grep wins the race, so the gate would fire or not at random. `-c`
+# drains the stream, so the result is deterministic.
+merged_on_base() {
+  [ -n "${1:-}" ] && [ -n "${2:-}" ] || return 1
+  local hits
+  hits=$(git -C "$ROOT" log "origin/$2" -n 400 --format='%s' 2>/dev/null \
+         | grep -cE "\(#$1\)\$") || true
+  [ "${hits:-0}" -gt 0 ]
+}
+
+write_ledger() {  # stdin = jq program; mutates LEDGER atomically
+  local tmp; tmp=$(mktemp) || return 1
+  if jq "$@" "$LEDGER" > "$tmp" 2>/dev/null; then
+    mv "$tmp" "$LEDGER"
+  else
+    rm -f "$tmp"; return 1
+  fi
+}
+
+cmd="${1:-}"; [ $# -gt 0 ] && shift
+
+case "$cmd" in
+  start)
+    slug="${1:-}"; title="${2:-}"
+    mkdir -p "$LEDGER_DIR"
+    # housekeeping: drop abandoned ledgers from old sessions
+    find "$LEDGER_DIR" -maxdepth 1 -name '*.json' -mtime +"$STALE_DAYS" -delete 2>/dev/null || true
+    jq -n --arg slug "$slug" --arg title "$title" --arg now "$(now)" '
+      { slug: $slug, title: $title, stage: null, stage_idx: -1,
+        pr_opened: false,
+        phases: {
+          pm:       { expected: false, uploaded: false, url: "" },
+          designer: { expected: false, uploaded: false, url: "" },
+          engineer: { expected: false, uploaded: false, url: "" }
+        },
+        updated: $now }' > "$LEDGER"
+    echo "plan-cycle: started ledger for '${slug:-?}'"
+    ;;
+
+  enter)   # archivist advanced the Notion Stage → mirror it
+    [ -f "$LEDGER" ] || exit 0
+    stage="${1:-}"; idx=$(stage_idx "$stage"); ph=$(stage_phase "$stage")
+    write_ledger --arg stage "$stage" --argjson idx "$idx" --arg ph "$ph" --arg now "$(now)" '
+      .stage = $stage | .stage_idx = $idx | .updated = $now
+      | if $ph != "" then .phases[$ph].expected = true else . end'
+    ;;
+
+  uploaded)   # archivist wrote + VERIFIED a plan DB row → mark it landed, with proof
+    # Iron Law 6 is "a plan not in Notion does not exist" — so the mark must cost
+    # something only a real write can produce. A bare flag cost nothing: the same
+    # actor wrote the row and flipped the bit, so a silent write-fail (or a turn
+    # that flipped it without writing at all) satisfied Gate 1 with ZERO rows in
+    # Notion. Requiring the row's URL closes that: the archivist calls this only
+    # after its Iron-Law-2 fetch-back, so it HAS the URL — and if the write
+    # failed there is no URL to pass, no flag, and Gate 1 keeps blocking.
+    #
+    # Enforcement is here, on the write side, not in Gate 1: `uploaded = true`
+    # now implies a URL was supplied, so Gate 1 needs no extra check — and the
+    # ledgers written before this change (flag set, no URL) keep passing instead
+    # of every in-flight cycle blocking at once.
+    [ -f "$LEDGER" ] || exit 0
+    ph="${1:-}"; url="${2:-}"
+    case "$ph" in pm|designer|engineer) ;; *) echo "plan-cycle: unknown phase '$ph'" >&2; exit 0 ;; esac
+    # A Notion page URL, or a bare 32-char page id (dashed or not).
+    ok=""
+    case "$url" in
+      https://*|http://*) ok=1 ;;
+      *[!0-9a-fA-F-]*|"")  ;;
+      *) [ "${#url}" -ge 32 ] && ok=1 ;;
+    esac
+    if [ -z "$ok" ]; then
+      cat >&2 <<EOF
+plan-cycle: uploaded REFUSED — no plan-row URL.
+
+  usage: plan-cycle.sh uploaded <pm|designer|engineer> <plan-row-url>
+
+Iron Law 6 — a plan not in Notion does not exist. The mark is what Gate 1
+trusts, so it has to carry proof the row is really there: pass the URL (or page
+id) the archivist just fetched back to verify it. If you don't have one, the
+write did not land — redo it rather than marking it done.
+EOF
+      exit 1
+    fi
+    write_ledger --arg ph "$ph" --arg url "$url" --arg now "$(now)" '
+      .phases[$ph].expected = true | .phases[$ph].uploaded = true
+      | .phases[$ph].url = $url | .updated = $now'
+    ;;
+
+  pr-opened)   # launcher opened the PR (Step 6.0) → RECORD it; Gate 2 arms on merge
+    [ -f "$LEDGER" ] || exit 0
+    pr="${1:-}"; base="${2:-main}"
+    case "$pr" in
+      ''|*[!0-9]*)
+        # Degrade in the fail-open direction: `clear` still owes a retro, but
+        # Gate 2 has no PR to watch, so a dropped close-out won't be caught.
+        echo "plan-cycle: pr-opened without a PR number — close-out gate disabled for this cycle (use: pr-opened <PR#> [base])" >&2
+        write_ledger --arg now "$(now)" '.pr_opened = true | .updated = $now'
+        exit 0
+        ;;
+    esac
+    # Capture the branch so `clear` can verify the Step 6.6 teardown against git
+    # rather than trust a flag. Step 6.0 runs from INSIDE the worktree, so the
+    # CALLER's cwd names it — read it without `-C "$ROOT"`, which would name the
+    # main tree's branch instead; a 3rd argument overrides for calls made from
+    # elsewhere. A base branch or a detached HEAD records nothing: a base is
+    # never torn down, so recording one would leave a ledger that no teardown can
+    # satisfy, and an unclearable ledger is worse than an unwatched branch.
+    branch="${3:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null)}"
+    case "$branch" in "$base"|HEAD|"") branch="" ;; esac
+    write_ledger --arg pr "$pr" --arg base "$base" --arg br "$branch" --arg now "$(now)" '
+      .pr_opened = true | .pr = $pr | .base = $base | .updated = $now
+      | if $br != "" then .branch = $br else . end'
+    ;;
+
+  clear)   # close-out (Feature Archive verified + task row trashed) or a reset
+    # Two gates guard `clear`, both armed only on a FULL cycle (pr_opened) and
+    # both verified against the ARTIFACT rather than a flag: the teardown
+    # (Step 6.6) and the runner-feedback row (Step 6.7). Resets of never-shipped
+    # ledgers (pr_opened=false: Gate-1 escapes, non-cycles) stay unconditional.
+    if [ -f "$LEDGER" ]; then
+      pr_opened=$(jq -r '.pr_opened // false' "$LEDGER" 2>/dev/null)
+      slug=$(jq -r '.slug // ""' "$LEDGER" 2>/dev/null)
+
+      # --- Teardown gate (Step 6.6) -------------------------------------------
+      # `clear` deletes the ledger, so it is the LAST moment anything asks: a
+      # worktree and branch still standing when it succeeds are never mentioned
+      # again by anyone. The arming edge is the MERGE, same as Gate 2 — before it
+      # keeping the worktree is correct (Step 6.6 never auto-removes an unmerged
+      # one). Fail open on an unrecorded branch (ledgers opened before 0.5.0,
+      # plan-only cycles, a `pr-opened` that took no PR number).
+      pr=$(jq -r '.pr // ""' "$LEDGER" 2>/dev/null)
+      base=$(jq -r '.base // "main"' "$LEDGER" 2>/dev/null)
+      branch=$(jq -r '.branch // ""' "$LEDGER" 2>/dev/null)
+      if [ "$pr_opened" = "true" ] && [ -n "$branch" ] && merged_on_base "$pr" "$base"; then
+        left=""
+        wt=$(git -C "$ROOT" worktree list --porcelain 2>/dev/null \
+             | awk -v b="branch refs/heads/$branch" '/^worktree /{p=substr($0,10)} $0==b{print p; exit}')
+        [ -n "$wt" ] && left="$left
+  • worktree at ${wt}
+      ExitWorktree action:\"remove\" discard_changes:true — a SILENT no-op on a
+      worktree from an earlier session, so verify; then git worktree remove --force"
+        git -C "$ROOT" show-ref --verify --quiet "refs/heads/$branch" && left="$left
+  • local branch ${branch}
+      git branch -D ${branch}  (-d refuses: a squash-merge never makes the tip
+      an ancestor)"
+        git -C "$ROOT" show-ref --verify --quiet "refs/remotes/origin/$branch" && left="$left
+  • remote branch origin/${branch}
+      git push origin --delete ${branch}  (already gone on GitHub? git fetch --prune)"
+        if [ -n "$left" ]; then
+          cat >&2 <<EOF
+plan-cycle: CLEAR REFUSED — PR #${pr} merged, but its worktree/branch are still here.
+
+  Cycle:  ${slug}
+  Branch: ${branch}
+
+Step 6.6 (plan/SKILL.md §Step 6) tears these down, and clearing is the last
+moment anything asks — the ledger goes away with it. Still standing:
+${left}
+
+Then re-run: plan-cycle clear
+EOF
+          exit 1
+        fi
+      fi
+
+      # --- Feedback gate (Step 6.7) -------------------------------------------
+      # Ask the ledger where it keeps entries rather than hardcoding it here.
+      # This path used to be written out in two places that had to agree; the
+      # copy in this file is the one that would have gone stale silently,
+      # because a wrong path here reads as "no entry filed" and blocks
+      # close-out forever instead of erroring. Fail open if the lookup fails
+      # for any reason — a gate that cannot find the ledger must not become an
+      # unclearable ledger.
+      FEEDBACK=$("$(dirname "${BASH_SOURCE[0]}")/plan-feedback" dir 2>/dev/null) || FEEDBACK=""
+      if [ -n "$FEEDBACK" ] && [ "$pr_opened" = "true" ] && [ -n "$slug" ] && [ "$slug" != "?" ] \
+         && ! grep -rFq "$slug" "$FEEDBACK" 2>/dev/null; then
+        cat >&2 <<EOF
+plan-cycle: CLEAR REFUSED — no runner-feedback entry for this cycle.
+
+  Cycle: ${slug}
+
+Step 6.7 (plan/SKILL.md §Process retro): before clearing, file ONE process
+entry carrying this cycle's slug (in the MAIN tree) — per-gate R/H/L, friction,
+and the MANDATORY subtraction candidate:
+
+  plan-feedback add process \\
+    --source runner --cycle ${slug} --title "Cycle retro: ${slug}" <<'BODY'
+  …
+  BODY
+
+Then re-run: plan-cycle clear
+(If this ledger is a misfire, the entry still applies — one line noting the
+misfire is itself retro data.)
+EOF
+        exit 1
+      fi
+    fi
+    rm -f "$LEDGER"
+    ;;
+
+  status)  # human / debug
+    [ -f "$LEDGER" ] || { echo "plan-cycle: no active cycle"; exit 0; }
+    cat "$LEDGER"
+    ;;
+
+  check)   # the Stop hook calls this. exit 1 + reason on a gap; exit 0 otherwise.
+    [ -f "$LEDGER" ] || exit 0
+    if find "$LEDGER" -mtime +"$STALE_DAYS" 2>/dev/null | grep -q .; then exit 0; fi
+    cur=$(jq -r '.stage_idx // -1' "$LEDGER" 2>/dev/null) || exit 0
+    [ -n "$cur" ] || exit 0
+    slug=$(jq -r '.slug // "?"' "$LEDGER" 2>/dev/null)
+    title=$(jq -r '.title // ""' "$LEDGER" 2>/dev/null)
+    stage=$(jq -r '.stage // "—"' "$LEDGER" 2>/dev/null)
+    pending=""
+    for ph in pm designer engineer; do
+      exp=$(jq -r --arg p "$ph" '.phases[$p].expected' "$LEDGER" 2>/dev/null)
+      up=$(jq -r --arg p "$ph" '.phases[$p].uploaded' "$LEDGER" 2>/dev/null)
+      pidx=$(phase_idx "$ph")
+      if [ "$exp" = "true" ] && [ "$up" = "false" ] && [ "$cur" -gt "$pidx" ] 2>/dev/null; then
+        pending="$pending $ph"
+      fi
+    done
+    pending=$(echo "$pending" | xargs 2>/dev/null || true)
+
+    # Gate 1 (Iron Law 6) — a plan phase advanced past but never uploaded.
+    if [ -n "$pending" ]; then
+      names=""; actions=""
+      for ph in $pending; do
+        lbl=$(phase_label "$ph")
+        names="$names, the ${lbl} plan"
+        actions="$actions
+  • ${lbl} plan → invoke \`archivist\` to write its Notion DB row (linked to the
+    task) and fetch it back to confirm; archivist then runs
+    \`plan-cycle uploaded ${ph} <plan-row-url>\`"
+      done
+      names=${names#, }
+
+      cat <<EOF
+PLAN-CYCLE UPLOAD GATE — a plan you advanced past is NOT in Notion.
+
+  Cycle:  ${slug}${title:+ (${title})}
+  Stage:  ${stage}
+  Missing: ${names}.
+
+Iron Law 6 — a plan not in Notion does not exist. The cycle has moved past these
+phase(s) but their plan rows were never uploaded. Do this NOW, before any other
+work:
+${actions}
+
+If a listed phase was intentionally not part of this cycle, reset the ledger:
+  plan-cycle clear
+EOF
+      exit 1
+    fi
+
+    # Gate 2 (Iron Law 7) — the PR MERGED but the cycle was never closed out
+    # (Feature Archive + task-row trash + clear). The ledger surviving past the
+    # merge IS the dropped-close-out signal — a clean close-out clears it.
+    #
+    # The arming edge is the MERGE, not the PR opening: close-out archives only
+    # what actually shipped, and until then the Notion plan rows + the PR
+    # comments hold the record. Arming at PR-open blocked turn-end for the whole
+    # founder-review window while demanding work that could not yet be done —
+    # whose only escapes were a false close-out or a `clear` that disarmed the
+    # gate before the moment it exists to catch. Filed three times (#92, #109,
+    # #111) before the edge was moved.
+    #
+    # Fail-open twice, both safe: no PR number recorded, or the merge not yet
+    # visible on the local `origin/$base`. Neither can hide an owed close-out —
+    # before the merge, none is owed.
+    pr=$(jq -r '.pr // ""' "$LEDGER" 2>/dev/null)
+    base=$(jq -r '.base // "main"' "$LEDGER" 2>/dev/null)
+    if [ -n "$pr" ] && merged_on_base "$pr" "$base"; then
+      cat <<EOF
+PLAN-CYCLE CLOSE-OUT GATE — PR #${pr} merged but the cycle was never closed out.
+
+  Cycle:  ${slug}${title:+ (${title})}
+  Stage:  ${stage}
+
+Iron Law 7 — a cycle is not done until it is closed out, and a dropped close-out
+is the single most common silent skip. The PR shipped; the close-out is not done.
+Do this NOW, before any other work:
+  • create + verify the Feature Archive row (\`archivist\`)
+  • trash the task row (\`ntn pages trash <id> --yes\`) and confirm it is gone
+  • tear down the worktree + its local AND remote branch (Step 6.6) — \`clear\`
+    verifies this against git and refuses while any of the three survives
+  • file the runner-feedback entry (Step 6.7) via
+    \`plan-feedback\` — --cycle '${slug}'
+  • then clear the ledger: \`plan-cycle clear\`
+
+If this was intentionally not a /plan cycle, reset the ledger:
+  plan-cycle clear
+EOF
+      exit 1
+    fi
+
+    exit 0
+    ;;
+
+  *)
+    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|clear|status|check}" >&2
+    exit 0
+    ;;
+esac

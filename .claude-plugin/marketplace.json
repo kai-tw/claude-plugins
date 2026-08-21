@@ -30,6 +30,17 @@
       "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/session-journal"
     },
     {
+      "name": "plan-cycle",
+      "description": "Gated planning cycle with Stop-hook enforcement, shared across the Flutter projects.",
+      "source": "./plugins/plan-cycle",
+      "category": "productivity",
+      "author": {
+        "name": "Kai",
+        "url": "https://github.com/kai-tw"
+      },
+      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/plan-cycle"
+    },
+    {
       "name": "google-reporting",
       "description": "Google Analytics 4 and Search Console readers — usage, indexing status, search performance, and sitemap health, via keyless service-account impersonation",
       "source": "./plugins/google-reporting",

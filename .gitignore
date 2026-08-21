@@ -4,3 +4,8 @@
 # Local Claude Code state written when this directory is registered
 # as a directory marketplace
 .claude/settings.local.json
+
+# Per-session plan-cycle ledgers. Written by bin/plan-cycle into the consuming
+# project's tree; this entry only matters when this repo is itself the working
+# tree during development.
+.claude/.plan-cycle/
