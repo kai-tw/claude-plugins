@@ -4,15 +4,35 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/intercept.sh" }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/intercept.sh"
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/intercept.sh --reset" },
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/tidy.sh" }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/intercept.sh --reset"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/tidy.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/discipline.sh",
+            "statusMessage": "Loading guardrails discipline..."
+          }
         ]
       }
     ]
