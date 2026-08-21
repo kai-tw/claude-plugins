@@ -63,7 +63,7 @@ BODY
 ```
 
 `--source founder` is the half that matters — an agent grading itself is cheap
-and abundant. Categories: `tool` (fires before a Bash command) · `claim` ·
+and abundant. Categories: `tool` (fires before a Bash command) · `claim` · `report` ·
 `scope` (carried at session start).
 
 ## Consuming

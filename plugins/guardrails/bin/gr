@@ -29,7 +29,7 @@ src_root() {
 ROOT=$(src_root)
 ENTRIES="$ROOT/entries"
 RULES_DIR="$ROOT/rules"
-CATS='tool claim scope'
+CATS='tool claim scope report'
 
 die() { printf 'gr: %s\n' "$*" >&2; exit 1; }
 valid_cat() { case " $CATS " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
