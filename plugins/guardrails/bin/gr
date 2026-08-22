@@ -119,7 +119,10 @@ consume)
   [ -f "$entry" ] || die "entry not found: $entry"
   cat=$(sed -n 's/^category: //p' "$entry" | head -1)
   valid_cat "$cat" || die "entry has no valid category"
-  rf=$(rules_file "$cat")
+  # `tool` lands in a pattern table a hook matches against; every other category
+  # lands in the prose injected at session start. Different destinations, same
+  # gate: nothing is deleted until the rule is verifiably in place.
+  if [ "$cat" = tool ]; then dest=$(rules_file "$cat"); else dest="$RULES_DIR/discipline.md"; fi
   mode=''; id=''; pat=''; msg=''; fires=''; quiet=''; why=''
   while [ $# -gt 0 ]; do
     case $1 in
@@ -137,7 +140,7 @@ consume)
 
   if [ -z "$mode" ]; then
     printf 'Existing %s rules — does this entry extend one of them?\n\n' "$cat"
-    "$0" rules "$cat"
+    if [ "$cat" = tool ]; then "$0" rules "$cat"; else sed 's/^/  /' "$dest"; fi
     printf '\nDeclare one:  --extends <id> --message "<merged>"  |  --new ...  |  --drop "<why>"\n'
     die 'a bare append is not an option; fusion is the whole point'
   fi
@@ -145,22 +148,34 @@ consume)
   case $mode in
     extends)
       [ -n "$id" ] && [ -n "$msg" ] || die '--extends needs --message "<the merged wording>"'
-      grep -qE "^$id"$'\t' "$rf" || die "no rule '$id' in $cat"
-      awk -F'\t' -v OFS='\t' -v i="$id" -v m="$msg" '$1==i{$3=m}1' "$rf" > "$rf.tmp" && mv "$rf.tmp" "$rf"
-      printf 'fused into %s/%s\n' "$cat" "$id"
+      if [ "$cat" = tool ]; then
+        grep -qE "^$id"$'\t' "$dest" || die "no rule '$id' in $cat"
+        awk -F'\t' -v OFS='\t' -v i="$id" -v m="$msg" '$1==i{$3=m}1' "$dest" > "$dest.tmp" && mv "$dest.tmp" "$dest"
+      else
+        grep -qF -- "$msg" "$dest" || die "the merged wording is not in $dest yet — make the edit first, then consume"
+      fi
+      printf 'fused into %s\n' "$cat"
       ;;
     new)
-      [ -n "$id" ] && [ -n "$pat" ] && [ -n "$msg" ] || die '--new needs --id, --pattern, --message'
-      grep -qE "^$id"$'\t' "$rf" 2>/dev/null && die "rule '$id' already exists — did you mean --extends?"
+      [ -n "$msg" ] || die '--new needs --message'
       if [ "$cat" = tool ]; then
+        [ -n "$id" ] && [ -n "$pat" ] || die '--new in `tool` needs --id and --pattern'
+        grep -qE "^$id"$'\t' "$dest" 2>/dev/null && die "rule '$id' already exists — did you mean --extends?"
         [ -n "$fires" ] && [ -n "$quiet" ] || die \
           '--new in `tool` needs --fires-on and --quiet-on: a pattern is not admissible until it is shown to match the bad command AND leave a healthy one alone'
         printf '%s' "$fires" | grep -qE "$pat" || die "--fires-on does not match the pattern"
         printf '%s' "$quiet" | grep -qE "$pat" && die "--quiet-on DOES match — this pattern would fire on healthy commands"
+        inc=$(sed -n 's/^title: //p' "$entry" | head -1)
+        printf '%s\t%s\t%s\t%s\n' "$id" "$pat" "$msg" "$inc" >> "$dest"
+      else
+        # Prose rules are written by hand — the script cannot author them. What it
+        # CAN do is refuse to delete the entry until the wording is actually there,
+        # so "consumed" never means "read and agreed with".
+        grep -qF -- "$msg" "$dest" || die "not found in $dest — write the rule there first, then consume with the same wording"
+        lines=$(grep -cvE '^$' "$dest")
+        [ "$lines" -gt 40 ] && printf 'NOTE  %s is %s lines — it is injected at every session start; fuse before adding more.\n' "$(basename "$dest")" "$lines"
       fi
-      inc=$(sed -n 's/^title: //p' "$entry" | head -1)
-      printf '%s\t%s\t%s\t%s\n' "$id" "$pat" "$msg" "$inc" >> "$rf"
-      printf 'added %s/%s\n' "$cat" "$id"
+      printf 'added to %s\n' "$cat"
       ;;
     drop)
       [ -n "$why" ] || die '--drop needs a reason'

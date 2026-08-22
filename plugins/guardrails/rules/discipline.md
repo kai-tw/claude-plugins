@@ -21,6 +21,11 @@ Search discipline (binds every turn):
 
 Reporting:
 
+- **A turn may not end on "next is X".** Either take X and report what
+  happened, or say what is missing and who must supply it.「下一步是⋯」
+  「我接著⋯」read as finished units of communication and are not — measured
+  across three cycles, 27 turns were spent supplying a bare「繼續」.
+
 - **In chat, name the rule, not its id.** Commit hashes, version numbers and
   internal rule names are the author's index; the reader cannot act on them. An
   identifier belongs in chat only when it is something to open or run. In a
