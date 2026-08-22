@@ -77,6 +77,37 @@ dimension (and research + revision don't lift it), that is exactly the
 escalate-to-user case — surface it now rather than spending the review
 cycle discovering it.
 
+### 5. Sweep the facts ledger — verify claims before the reviewer does
+
+The self-score above grades *judgment*; it cannot catch a **false factual
+claim**, because the context that wrote the claim is the context that
+believes it. So before Step 1, dispatch the **claim sweep** over §事實帳:
+read-only-plus-execution `general-purpose` sub-agents (`model: sonnet`; a
+handful of rows per agent, batched in one dispatch), each briefed to
+**refute** its rows, not confirm them. No hook reaches a sub-agent, so the
+prompt is the only channel for the discipline — state it there verbatim:
+
+- return per row: **證實**（the evidence, re-cited）/ **證偽**（the
+  counter-evidence）/ **查不到**;
+- for an `實驗` row, the verbatim command + output (可重跑是實驗與軼事的
+  分界); probes exercise the **real path** — faking the layer under claim
+  is circular — run **side-effect-free, local only**, live in a throwaway
+  location, and are **never committed**;
+- the agent does not edit the plan and does not commit anything.
+
+證偽 → fix the row **and the design decisions its 依賴 column names**,
+before spawning the reviewer. A sweep returning all-證實 with zero 未讀
+rows on the first pass is suspicious — reread the prose for unledgered
+claims instead of celebrating.
+
+Measured motivation: one review round's findings were entirely draft-time
+-checkable facts (a wrong line ref, a formula written differently in two
+places, a missed construction site) — a full opus review round spent on
+what this sweep settles; reviewer-caught「宣稱既有機制已涵蓋，實查沒有」
+hit 7 times in a single cycle; and one unverified dartdoc sentence carried
+a whole design into a cold-start bug that took a TestFlight build to
+falsify.
+
 ## Step 1 — Spawn `blueprint-reviewer`
 
 Invoke the `blueprint-reviewer` sub-agent against the drafted plan. Brief
@@ -134,6 +165,13 @@ Otherwise, for **every sub-8 dimension** (all of them — the gate is
   "add a snackbar on quota exceeded" implies a new UI affordance), do
   **not** improvise — surface it as `## Open questions` and route to
   the PM role or the designer role per the same escalation rules as Phase 11.
+- **When a finding invalidates the plan's *model* — a mechanism premise, an
+  architecture choice — rewrite every section that describes that model,
+  never patch the one section the finding names.** Measured: a rev that
+  patched one section after a model change left the others describing the
+  dead model — seven self-contradictions, the rev was voided by the next
+  review round. After the rewrite, `plan_lint.sh`'s closure checks verify
+  the sections agree again.
 - Mirror every fix into the Notion row body's `## Revision history` (via the `archivist`)
   (`Rev N: blueprint-reviewer pass — lifted <dimension> <old>→<new> via
   <fix summary>`).

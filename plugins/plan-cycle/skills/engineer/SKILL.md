@@ -7,8 +7,11 @@ description: |
   requests ("engineering plan", "how should we implement X") TRIGGER /plan,
   which dispatches engineering-plan work here — do not invoke this skill
   directly. Authors / revises an engineering plan (Notion Engineering Plan DB) as
-  a guided questionnaire: summary, §Classes (class inventory plus a per-class
-  public-method contract table — callee, evidence-or-未讀, complexity, errors),
+  a guided questionnaire: summary, §事實帳 (typed-evidence ledger of every
+  load-bearing existing-behavior claim — file:line / 實驗 / 未讀 / 只能實測 /
+  今天成立; prose cites F-ids, never restates), §Classes (class inventory plus a
+  per-class public-method contract table — callee, evidence-or-未讀, complexity,
+  errors),
   a typed §Data flow graph whose nodes match it, error policy, startup order,
   migration impact, risks, and the §Conformance reverse walk. Tasks live in
   TaskCreate, not the plan body.
@@ -342,6 +345,21 @@ the following maps to a section of the engineering plan row body
 run `notion-payload hints engineering-plan`
 to print the full section questionnaire with descriptions and hints):
 
+- **§事實帳 (Facts)** — before any class is named: every **load-bearing
+  claim about existing behavior** ("already covered", "no callers change",
+  "only N sites", "X drives Y") becomes a ledger row with typed evidence —
+  `file:line` · `實驗：<指令> → <觀察>` · `未讀` · `只能實測：<how>` ·
+  `今天成立：<失效事件>` — and prose thereafter cites `F<n>`, **never
+  restates the fact** (single definition: a formula written in two places
+  diverged and bounced a rev; a patch-rev left six sections describing a
+  dead model). Arguments stay prose, but their factual premises must be
+  F-rows, so a falsified row shows exactly which decisions fall with it.
+  The full discipline — what counts as load-bearing, the three experiment
+  rules, the epistemics (reading proves declarations, sweeps prove counts
+  and absence, experiments prove behavior on the exercised path) — lives in
+  the questionnaire hint (`notion-payload hints engineering-plan`); the
+  claim sweep (`references/review-loop.md`) verifies every row before the
+  reviewer is spawned, and `plan_lint.sh` gates the evidence typing.
 - **§Classes** — lead with a **Mermaid composition graph** (Notion
   renders it) showing block→block wiring (widget → state holder → use case →
   repository → data source). This is the reviewer's 30-second shape + the
@@ -612,6 +630,17 @@ numbering. A phase per atomic concern:
   string the implementation needs has no key (a design intent surfaced
   late), route back to the translator phase to mint it; never hand-edit
   an ARB file here.
+
+**§事實帳 settles two task kinds here.** (1) Every `實驗` row gets its
+explicit two-way decision now, appended to the evidence cell: `· 升格：<test
+id>` — the claim is a design premise nothing else guards, so the probe
+becomes a **contract test** (a task in the owning phase; engineer tree,
+never `test/spec/`) — or `· 銷毀` (one-shot fact; keep the recorded result,
+trash the probe, add `今天成立：<失效事件>` if it can rot). One-time
+evidence is not a permanent gate — decide *whose future behavior each probe
+guards* rather than promoting all or none. (2) Every `只能實測` row becomes
+a named device-verification task (device + method, from the cell); prose
+may not close one.
 
 When a phase requires **verification before implementation**
 (bug-investigation pass, auth deps-graph audit, perf baseline),

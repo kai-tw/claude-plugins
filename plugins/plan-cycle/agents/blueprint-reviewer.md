@@ -558,10 +558,17 @@ plan and the whole body are already in hand.
   that then fires a side effect one of them used to block).
 - **Claims about existing code.** "Same as the current X" is the plan's
   highest-risk sentence: it reads as verified and is usually an assumption.
-  Flag any load-bearing assertion about existing internals — a signature, a
-  predicate's behaviour, "verbatim preserves", a count of call sites — the
-  plan makes without having read the source. `plan_lint.sh` proves the named
-  files exist; whether what the plan says *about* them is true is yours.
+  Two halves, both against §事實帳 (the typed-evidence ledger of
+  existing-behavior claims): **(a) hunt the prose** for any load-bearing
+  assertion about existing internals — a signature, a predicate's
+  behaviour, "verbatim preserves", a count of call sites — that is **not a
+  ledger row**: one finding each (measured: 7 such claims in one cycle,
+  every one false). **(b) Spot-check the ledger** — re-resolve one or two
+  `file:line` cites, and re-run one `實驗` row when its command is cheap
+  (an experiment nobody can re-run is testimony, not evidence; a green
+  race-probe claiming "no race proven" is over-claiming — it proves only
+  the exercised path). `plan_lint.sh` proves the evidence cells are
+  *typed*; whether the typed evidence is *true* is yours.
 - **Plan integrity** (`plan/SKILL.md §Plan integrity`). A body that
   contradicts itself after a rev (`I1`), re-derives an upstream ruling at
   length instead of citing it (`I2`), pads with lines that carry no ruling or

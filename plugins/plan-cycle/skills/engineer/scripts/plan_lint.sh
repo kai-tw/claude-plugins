@@ -13,6 +13,9 @@
 #       or declares `全域：<how it is verified>`
 #     - §Data flow graph nodes exist in §Classes; every ≥2-origin state node has
 #       an §Error policy row
+#     - every §Facts evidence cell is one of the five typed forms (file:line /
+#       實驗：指令 → 觀察 / 未讀 / 只能實測：<how> / 今天成立：<event>); an
+#       實驗 cell without both halves is a claim wearing an experiment's clothes
 #
 #   SKIP (printed, exit code unchanged) — a HARD check whose precondition was
 #   empty. It reports WHICH precondition and HOW MUCH went unchecked, and the
@@ -420,6 +423,85 @@ if [ -n "$perishable" ]; then
   perish_n="$(printf '%s\n' "$perishable" | grep -c .)"
   echo "NOTE  ${perish_n} 處標為「今天成立」——有保鮮期的斷言，每次 rev 都要重新確認:"
   printf '%s\n' "$perishable" | cut -c1-120 | sed 's/^/        /'
+fi
+
+# 6d. HARD — §Facts (事實帳) evidence typing. The ledger exists so that every
+#     load-bearing existing-behavior claim carries evidence a reviewer can spot-
+#     check; an evidence cell that is none of the five typed forms is a claim
+#     that only LOOKS ledgered — the exact false-confidence the section exists
+#     to end. 實驗 additionally needs both halves (指令 → 觀察): a command with
+#     no observation proves nothing, an observation with no command cannot be
+#     re-run, and 可重跑是實驗與軼事的分界.
+facts_body="$(section_body "$(section_pat 'Facts')")"
+fact_ids=""
+if [ -z "$facts_body" ]; then
+  skip_check "事實帳 證據型別（HARD）沒跑" "找不到 §事實帳 section（0.13.0 新增——舊計畫沒有屬正常；新計畫該有，至少一行「不依賴任何既有行為斷言」）"
+else
+  bad_ev=""; exp_broken=""; exp_undecided=""; fact_rows=0
+  n_unread=0; n_device=0; n_exp=0
+  device_rows=""; unread_rows=""
+  while IFS= read -r row; do
+    case "$row" in \|*) ;; *) continue ;; esac
+    grep -qE '^\|[[:space:]|:-]*$' <<< "$row" && continue
+    first="$(sed -E 's/^\|[[:space:]]*//; s/[[:space:]]*\|.*$//' <<< "$row" | tr -d '\`*')"
+    case "$first" in ''|'#') continue ;; esac
+    fact_rows=$((fact_rows + 1))
+    fact_ids="${fact_ids}${first}"$'\n'
+    ev="$(awk -F'|' '{ gsub(/^[ \t]+|[ \t]+$/, "", $4); print $4 }' <<< "$row")"
+    # Classify on the cell with lead backtick/space stripped — authors backtick
+    # keywords inconsistently, and a type check that fails on formatting would
+    # teach the author to distrust the whole check (same lesson as check 4).
+    evs="$(sed -E 's/^[\` []+//' <<< "$ev")"
+    if grep -qE '^未讀' <<< "$evs"; then
+      n_unread=$((n_unread + 1)); unread_rows="${unread_rows}${first} "
+    elif grep -qE '^實驗[：:]' <<< "$evs"; then
+      n_exp=$((n_exp + 1))
+      grep -q '→' <<< "$ev" || exp_broken="${exp_broken}${first} "
+      grep -qE '升格|銷毀' <<< "$ev" || exp_undecided="${exp_undecided}${first} "
+    elif grep -qE '^只能實測' <<< "$evs"; then
+      n_device=$((n_device + 1)); device_rows="${device_rows}${first} "
+      grep -qE '^只能實測[：:].' <<< "$evs" || bad_ev="${bad_ev}${first}（只能實測 未指名裝置／方法） "
+    elif grep -qE '^今天成立' <<< "$evs"; then
+      grep -qE '^今天成立[：:].' <<< "$evs" || bad_ev="${bad_ev}${first}（今天成立 未指名失效事件） "
+    elif grep -qE '[A-Za-z0-9_/.-]+\.[A-Za-z0-9_]+:[0-9]+' <<< "$ev"; then
+      :  # file:line citation — resolution is the reviewer's spot-check, not ours
+    else
+      bad_ev="${bad_ev}${first}（非五種證據型別） "
+    fi
+  done <<< "$facts_body"
+  if [ -n "$bad_ev" ]; then
+    echo "FAIL  §事實帳 evidence cell(s) outside the five typed forms: ${bad_ev}"
+    echo "        每列證據限五型別：\`file:line\`／實驗：<指令> → <觀察>／未讀／只能實測：<裝置或方法>／今天成立：<失效事件>"
+    fail=1
+  fi
+  if [ -n "$exp_broken" ]; then
+    echo "FAIL  §事實帳 實驗 row(s) missing 指令 → 觀察 (both halves): ${exp_broken}"
+    echo "        沒有觀察的指令證明不了什麼；沒有指令的觀察無法重跑——可重跑是實驗與軼事的分界"
+    fail=1
+  fi
+  if [ "$fact_rows" -gt 0 ]; then
+    echo "NOTE  §事實帳: 檢查 ${fact_rows} 列（未讀 ${n_unread}・實驗 ${n_exp}・只能實測 ${n_device}）"
+    [ -n "$unread_rows" ] && echo "        未讀（recon 待辦，approval 前要歸零或明示接受）: ${unread_rows}"
+    [ -n "$device_rows" ] && echo "        只能實測（每列要有對應的驗證任務，散文不得自行銷案）: ${device_rows}"
+    [ -n "$exp_undecided" ] && echo "        實驗列未標 升格／銷毀（任務清單定案時要二選一）: ${exp_undecided}"
+  else
+    echo "NOTE  §事實帳: 0 列——沒有任何載重斷言的計畫罕見；確認那一行「不依賴」的理由成立"
+  fi
+fi
+
+# 6e. ADVISORY — F-refs in prose must resolve to a ledger row. A dangling F-ref
+#     is prose leaning on a fact that was renumbered or deleted — the Rev-3-rot
+#     shape (one section moved on, the pointers did not). ADVISORY because the
+#     `F<digits>` shape can collide with foreign notation; eyeball, don't gate.
+if [ -n "$fact_ids" ]; then
+  dangling_f=""
+  while IFS= read -r ref; do
+    [ -n "$ref" ] || continue
+    grep -qxF "$ref" <<< "$fact_ids" || dangling_f="${dangling_f}${ref} "
+  done <<< "$(grep -oE '(^|[^A-Za-z0-9_])F[0-9]+' "$plan" | grep -oE 'F[0-9]+' | sort -u)"
+  if [ -n "$dangling_f" ]; then
+    echo "ADVISORY  F-ref(s) resolving to no §事實帳 row (renumbered or deleted fact — or foreign F-notation): ${dangling_f}"
+  fi
 fi
 
 # 6c. HARD — a `〔使用者〕` note carries the founder's words VERBATIM (`I4`). A note

@@ -40,6 +40,11 @@ The gate verifies the engineering plan covers, at a minimum:
   what is internally consistent, what is ambiguous, what
   conflicts with existing constraints, what has been silently
   pushed onto engineering.
+- **Facts ledger (§事實帳)** — every load-bearing claim about existing
+  behavior as a typed-evidence row (`file:line` / `實驗：指令 → 觀察` /
+  `未讀` / `只能實測：<how>` / `今天成立：<失效事件>`); prose cites F-ids
+  and never restates. A plan whose existing-behavior claims live only in
+  prose is the measured top cause of review bounces.
 - **Affected layers and modules** — concrete file / package /
   feature paths that change, are added, or are removed.
 - **Class / interface / data-shape sketch** — names and roles of
