@@ -12,9 +12,10 @@ This phase scores the plan across the reviewer's scope-gated
 cover (time/space complexity, scalability, extendability, coupling,
 correctness/race, error handling, package usage, testability,
 abstraction/reuse/ownership, migration). The reviewer names the
-**weaknesses**; the engineer **devises the fixes** and iterates until
-every in-scope dimension is ≥ 8, before the user is asked to approve in
-Phase 10. Iron Law 9 binds: this phase is non-skippable.
+**weaknesses**; the engineer **devises the fixes**, then one verification
+round confirms them — every in-scope dimension ≥ 8, or the remainder goes
+to the user — before the approval gate in Phase 10. Iron Law 9 binds: this
+phase is non-skippable.
 
 ## Author against the dimensions FIRST (converge to one passing review)
 
@@ -126,7 +127,8 @@ shape (see `.claude/agents/blueprint-reviewer.md` for the full contract):
 It is report-only and does not edit source, so it is safe to run as a
 blocking sub-agent call (the engineer's `Agent` tool is foreground; there
 is no background-spawn surface here). Wait for its log, then act on the
-weaknesses.
+weaknesses. **Keep the report's `Scores dir:` path** — Step 4 cannot run
+without it.
 
 ## Step 2 — Read the verdict
 
@@ -152,7 +154,9 @@ on — by devising and applying the fixes.
 If verdict is `approve` (every in-scope dimension ≥ 8): record the review
 verdict in the plan header (Step 5) and proceed to Phase 9.
 
-Otherwise, for **every sub-8 dimension** (all of them — the gate is
+Otherwise, first snapshot the draft for Step 4's diff
+(`cp <plan-path> <scores-dir>/plan.before.md`, `<scores-dir>` = the report's
+`Scores dir:`), then for **every sub-8 dimension** (all of them — the gate is
 ≥ 8 each; start with the < 6 blocking weaknesses):
 
 - **Devise the fix yourself.** You own the design; the reviewer named
@@ -174,39 +178,52 @@ Otherwise, for **every sub-8 dimension** (all of them — the gate is
   the sections agree again.
 - Mirror every fix into the Notion row body's `## Revision history` (via the `archivist`)
   (`Rev N: blueprint-reviewer pass — lifted <dimension> <old>→<new> via
-  <fix summary>`).
+  <fix summary>`), **naming the weakness ids it resolves** (`[5.1]`, `[7.1]`
+  — the ids the round-1 report printed). Every sub-8 weakness must appear in
+  some fix line or in `## Open questions` before Step 4; one that appears in
+  neither is a silent skip.
 
-Then go to Step 4 for the re-review. (A `send back to revise` — any dimension
-< 6 — is the same loop; the blocking weakness just must be resolved
+Then go to Step 4 for the verification. (A `send back to revise` — any
+dimension < 6 — is the same loop; the blocking weakness just must be resolved
 before the re-spawn.)
 
-## Step 4 — Re-spawn the reviewer (cap = 2 cycles)
+## Step 4 — Verification round (the second and last spawn)
 
-After Step 3's fixes land, re-spawn `blueprint-reviewer` against the
-revised plan to confirm every dimension now scores ≥ 8. The cap is
-**2 review cycles total** — initial pass + one re-review. The cap
-exists because:
+After Step 3's fixes land, re-spawn `blueprint-reviewer` **once**, as a
+verification of round 1 — not a fresh review. Re-running a judgment gate
+produces a new judgment (`plan/SKILL.md §Gate loop policy`): a dimension
+re-derived from scratch always finds something new to say about a 6–7, and
+a plan reviewed that way never closes, it just grows new findings every
+fix. The brief therefore carries, in addition to Step 1's elements:
 
-- 1 cycle = scored only, no iteration; useful but not what Iron
-  Law 9 demands.
-- 2 cycles = devise-fix + verify; the productive case.
-- 3+ cycles = the reviewer disagreeing with itself, or a dimension
-  that can't be lifted inline; escalate to the user rather than loop.
+- **`--prev`: round 1's `Scores dir:` path** (from its report header);
+- **the plan diff, rev N-1 → rev N** — before Step 3 touches the draft,
+  snapshot it (`cp <plan-path> <scores-dir>/plan.before.md`); after, pass
+  `diff -u <scores-dir>/plan.before.md <plan-path>`;
+- **the line:** "verification round — carry dimensions the diff does not
+  touch; disposition every prior weakness by id; tag every new one
+  `diff-introduced` or `newly-observed` with `missed_because`".
 
-If, after research **and** manual revision, the re-review still leaves
-any dimension < 8:
+Read the returned `CONVERGENCE:` ledger. Every dimension ≥ 8 → Step 5.
+Otherwise **stop — no third spawn** — and surface to the user, with the
+still-sub-8 weaknesses grouped **by origin**, because they are different
+asks:
 
-- **Stop iterating.** Don't run a third cycle.
-- Surface to the user with: (a) the latest review verdict (the
-  blueprint-reviewer's inline return); (b) the
-  unliftable dimension(s) + their weakness in plain prose, and what you
-  tried (including what the web research found); (c) the candidate
-  routes — rev the product plan via the PM role (when scope is the
-  bottleneck), rev the design spec via the designer role (when a UI gap is the
-  bottleneck), or explicitly accept the sub-8 dimension (user override,
-  recorded in `## Revision history`).
-- The user's decision lands in `## Revision history` before Phase 10's
-  approval gate.
+- **still open (`origin: prior`) / `diff-introduced`** — your fix did not
+  land or broke something. Give: the weakness in plain prose, what you
+  tried (including what the web research found), and the candidate routes —
+  rev the product plan via the PM role (scope is the bottleneck), rev the
+  design spec via the designer role (a UI gap is the bottleneck), or
+  accept the sub-8 dimension (user override).
+- **`newly-observed`** — the reviewer found something round 1 did not,
+  with its `missed_because`. This is a *finding that changed kind*: say
+  whether you read it as a genuine miss (then it is a fix the user is
+  choosing to fund or defer) or as reviewer variance (then it is an
+  observation the user can accept as-is). The user rules; you do not send
+  it back for a tie-break round.
+
+The user's decision lands in `## Revision history` before Phase 10's
+approval gate.
 
 ## Step 5 — Record the review verdict in the plan header
 

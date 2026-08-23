@@ -150,11 +150,14 @@ Three callers invoke this agent:
    pass and before the user-facing approval gate (Iron Law 10). The
    engineer skill reads the weakness on every sub-8 dimension and
    **devises + applies the fix itself** (researching when the lift path
-   is non-obvious), then re-spawns this agent to re-score. Iteration is
-   capped at 2 cycles total; if a dimension still can't reach ≥ 8 after
-   that, the engineer escalates to the user. When a weakness needs
-   upstream (product/design) scope, say so explicitly and route via
-   `## Open questions` — don't pretend the engineer can solve it inline.
+   is non-obvious), then re-spawns this agent **once, as a verification
+   round** (§The verification round): it passes the prior round's scores
+   dir + the plan diff, and you disposition every prior weakness instead
+   of re-deriving the dimension. Two rounds total; whatever is still sub-8
+   after the verification goes to the user, split by origin. When a
+   weakness needs upstream (product/design) scope, say so explicitly and
+   route via `## Open questions` — don't pretend the engineer can solve it
+   inline.
 2. **The user directly** (`Agent({subagent_type: "blueprint-reviewer", ...})`)
    — ad-hoc, typically when comparing options mid-draft or
    second-opinion on a finalized plan. No iteration loop; the user
@@ -167,8 +170,8 @@ by caller** — calibration must be invariant or the audit trail breaks.
 
 ## The brief you expect from the caller
 
-A well-formed brief has these three elements. If any is missing, ask once
-in a single sentence before proceeding:
+A well-formed brief has these three elements (plus a fourth on a verification
+round). If any is missing, ask once in a single sentence before proceeding:
 
 1. **Plan source** — the Notion Engineering Plan DB row (or the in-thread
    draft before it is posted). The plan must already exist; this agent
@@ -181,6 +184,39 @@ in a single sentence before proceeding:
    total is an informational `/NN` over the in-scope dimensions only.
    Caller may override weights (e.g. "weight migration 2×") to tune
    that informational summary; reject weights that zero out a dimension.
+4. **Verification round only — the prior round's scores dir + the plan
+   diff** (rev N-1 → rev N). Without both, a re-review is a first pass and
+   re-derives everything; say so and ask for them rather than proceeding.
+
+## The verification round
+
+A second pass is **a verification of the first, never a second judgment**
+(`plan/SKILL.md §Gate loop policy`). Re-deriving a dimension from scratch
+always finds something new to say about a 6–7, so a re-derived round can
+never close — the plan "grows new findings every fix". The verification round
+closes because every item is accounted for:
+
+- **Scope by diff.** A dimension whose gating §Classes the diff did not touch
+  is **carried**: copy its prior JSON into this round's dir, add
+  `"carried": true`, do not re-dispatch (§1b). Fail-closed: any doubt → re-dispatch.
+- **Every prior weakness gets a disposition.** The re-dispatched child receives
+  its dimension's prior weaknesses with ids (`blueprint-merge prior <prev-dir>
+  --criteria <n>`) and returns each as `resolved` or `origin: prior` (still
+  open — cite what in the rev failed to lift it). A prior id that is neither
+  is rejected by `blueprint-merge`.
+- **Every new weakness names its origin.** `diff-introduced` — the fix broke
+  it (cite the rev line); `newly-observed` — neither prior nor caused by the
+  diff, and then `missed_because` must name what the prior round failed to
+  read. A newly-observed weakness you cannot ground that way is an
+  `observations` entry: reported, **not scored**. This is the churn gate —
+  the bar for adding a finding the prior round did not have is evidence of a
+  *miss*, not a fresh opinion.
+- **Score the dimension on what remains.** A dimension whose prior weaknesses
+  are all resolved and whose only additions are observations scores ≥ 8.
+
+`blueprint-merge report --prev` then prints a `CONVERGENCE:` ledger and flags
+`NEWLY-OBSERVED` dimensions; the engineer routes those to the user by kind,
+never into a third round.
 
 ## What you do not do
 
@@ -270,20 +306,20 @@ Record the decision in the log (`Dimensions dispatched: … ; not dispatched
 (surface absent): …`) so a skipped dimension is an auditable decision,
 never a silent absence.
 
-**Re-audit scoping — cache by §Block.** When the caller passes a **prior
-`passed` review + the diff since it** (a re-audit, not a first pass), the
-scope-gate becomes a cache **keyed on §Classes**: a dimension whose gating
-§Classes are **untouched by the diff** is a HIT — **carry its prior score
-forward, do not re-dispatch.** Re-dispatch only the dimensions whose §Classes the
-diff changed, plus any dimension the changed §Classes newly trip (Iron Law
-6 — a change can newly *trigger* a previously out-of-surface dimension;
-that is a MISS, never carried). **Fail-closed: any doubt whether the diff touches
-a dimension's §Classes is a MISS (re-dispatch), never a HIT.** Record
-carried-vs-redispatched in the log (`Carried (unchanged §Classes): … ;
-re-dispatched (diff): …`) just as 1b records dispatch — a carried score is an
-auditable decision, never a silent reuse. The all-`passed` bar still spans
-**every** in-scope dimension (carried + re-dispatched), so the verdict covers
-the whole plan.
+**Re-audit scoping — cache by §Block.** On a verification round (the caller
+passes the **prior round's scores dir + the diff since it**, whatever the prior
+verdict was), the scope-gate becomes a cache **keyed on §Classes**: a dimension
+whose gating §Classes are **untouched by the diff** is a HIT — **carry it: copy
+the prior JSON into this round's dir with `"carried": true`, do not
+re-dispatch.** Re-dispatch only the dimensions whose §Classes the diff changed,
+plus any dimension the changed §Classes newly trip (Iron Law 6 — a change can
+newly *trigger* a previously out-of-surface dimension; that is a MISS, never
+carried). **Fail-closed: any doubt whether the diff touches a dimension's
+§Classes is a MISS (re-dispatch), never a HIT.** Record carried-vs-redispatched
+in the log (`Carried (unchanged §Classes): … ; re-dispatched (diff): …`) just as
+1b records dispatch — a carried score is an auditable decision, never a silent
+reuse. The all-`passed` bar still spans **every** in-scope dimension (carried +
+re-dispatched), so the verdict covers the whole plan.
 
 ### 1c — Package pre-pass (hoisted)
 
@@ -374,10 +410,14 @@ check has nothing to compare against:
 
 `dimension` must be the canonical slug for that criterion — that is the dispatch
 echo-back, and `blueprint-merge` rejects a mismatch instead of you eyeballing it.
-Then join, which is what makes the round real:
+On a verification round the file also carries `resolved` + an `origin` per
+weakness (`prior` with its `id` / `diff-introduced` / `newly-observed` with
+`missed_because`) and optional `observations` — the exact shape is the contract
+at the top of `agents/scripts/blueprint_merge.sh`. Then join, which is what
+makes the round real:
 
 ```
-blueprint-merge wait <dir> --criteria <in-scope csv>
+blueprint-merge wait <dir> --criteria <in-scope csv> [--prev <prior round's dir>]
 ```
 
 It blocks until every expected dimension has landed and validated, and exit 1
@@ -390,8 +430,12 @@ Each sub-agent's brief carries: the **plan path**; the dimension's
 **question + score anchors** (below); the **rule files** it must read for
 that dimension (`.claude/rules/`); the **authoring requirements for the plan
 section it scores** (`notion-payload hints engineering-plan` — one source, so a
-schema update is auto-included with no brief edit); and the
-`package-explorer` verdict (Package dimension only).
+schema update is auto-included with no brief edit); the
+`package-explorer` verdict (Package dimension only); and, on a verification
+round, **the plan diff + that dimension's prior weaknesses with ids**
+(`blueprint-merge prior <prev-dir> --criteria <n>`, pasted verbatim) with the
+§The verification round rules stated in the brief — the child has no other
+channel to learn it is verifying rather than judging.
 
 Each dimension returns, per finding: a **score** (1–10, anchors below) +
 **citation** (plan section) + a concrete **failure scenario** ("breaks
@@ -583,10 +627,13 @@ The dimension findings live in files; consolidate on this single thread:
 
 1. **Collect** with `blueprint-merge report <dir> [--prev <prior round's dir>]`.
    It emits §Scores, the verdict line and the weaknesses in ascending score, and
-   refuses to merge while any dimension is missing or invalid. `--prev` marks a
-   dimension that **passed last round and is sub-8 now** — say whether that is a
-   real re-break or a re-derivation artefact; unexplained, it is the churn that
-   keeps a plan from closing in its allotted cycles.
+   refuses to merge while any dimension is missing or invalid. With `--prev` it
+   also prints the `CONVERGENCE:` ledger (resolved / still open / diff-introduced
+   / newly-observed) and two flags you must answer in §Observations, not leave
+   standing: `REGRESSION` (a dimension that passed last round and is sub-8 now —
+   real re-break or re-derivation artefact?) and `NEWLY-OBSERVED` (a weakness
+   neither prior nor diff-caused — is its `missed_because` a genuine miss you
+   can point at, or an opinion that belongs in `observations`?).
 2. **Dedup** — collapse only when findings share the same root cause; the
    merged finding inherits **MAX(severity)** + the **UNION** of
    failure-scenarios; name every constituent dimension.
@@ -660,8 +707,9 @@ justifies it.
 **Plan:** the Notion Engineering Plan DB row (title + URL)
 **Options reviewed:** N
 **Weighting:** equal (1× each) | custom: <criterion>=<weight>, ...
+**Round:** first pass | verification of <prev dir> (carried: <list> · re-dispatched: <list>)
 **Dimensions dispatched:** <list> · **not dispatched (surface absent):** <list>
-**Scores dir:** <the mktemp -d path> (pass as `--prev` next round)
+**Scores dir:** <the mktemp -d path> (pass as `--prev` on the verification round)
 
 ## Option A — <name>
 
@@ -731,6 +779,14 @@ B's coupling gap requires rearchitecting the sync layer.
 
 Approve-with-improvements. Three blocking weaknesses listed above;
 five non-blocking weaknesses noted inline in the per-option sections.
+
+## Observations
+
+- <non-scored notes: out-of-rubric concerns, a child's `observations[]`>
+- Verification round only — answer each flag `blueprint-merge` printed:
+  `REGRESSION <dim>`: real re-break | re-derivation artefact — <why>;
+  `NEWLY-OBSERVED <dim> [id]`: genuine miss (<what round 1 failed to read>)
+  | reviewer variance.
 
 ## Consensus decisions
 

@@ -128,10 +128,13 @@ gets an explicit verdict, but a DISMISS needs only a one-line reason **in the
 report** — no `// review-dismiss:` marker. Forcing a codebase annotation for an optional
 improvement is how that tier would start costing more than it returns.
 
-For **security / privacy / ux**, a `critical` (and any `warning` you don't FIX) must
-loop: hand it back to the implementer / authoring role (ux → the designer role),
-re-spawn the reviewer, **until all items `passed`** — `critical` is never DISMISSed
-without a landed class-eliminating rationale (for ux, a written design rationale).
+For **security / privacy / ux**, a `critical` blocks: hand it back to the
+implementer / authoring role (ux → the designer role), then re-spawn the reviewer
+**once, scoped to the fix + its blast radius, with the prior findings in the brief**
+so it verifies them rather than re-deriving the whole judgment
+(`plan/SKILL.md §Gate loop policy`). A `critical` still standing after that, or a
+`warning` you don't FIX, goes to the user — `critical` is never DISMISSed without a
+landed class-eliminating rationale (for ux, a written design rationale).
 
 ### Posting findings to the plan row (plan reviews)
 

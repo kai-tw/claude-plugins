@@ -29,9 +29,34 @@
 #   `weaknesses` is required when score < 8 (a sub-8 with no named weakness is
 #   not a finding), and `severity` must be `blocking` when score < 6.
 #
+# THE VERIFICATION ROUND (--prev <prior round's dir>)
+#   A re-review verifies the prior round; it is not a fresh judgment — a
+#   dimension re-derived from scratch always finds something new to say about
+#   a 6–7, which is how a plan grows new findings every fix instead of
+#   converging. So with --prev every prior weakness has an id (`<criterion>.<n>`,
+#   positional — `prior` prints them) and every file must account for each:
+#     {"criterion": 7, "dimension": "error-handling", "score": 7,
+#      "cites": [...],
+#      "resolved": ["7.1"],
+#      "weaknesses": [
+#        {"id": "7.2", "origin": "prior", "problem": "…", "failure_scenario": "…", "severity": "weakness"},
+#        {"origin": "diff-introduced", "problem": "…", "failure_scenario": "…", "severity": "weakness"},
+#        {"origin": "newly-observed", "missed_because": "round 1 never read §Data flow row 4",
+#         "problem": "…", "failure_scenario": "…", "severity": "weakness"}],
+#      "observations": ["non-scored note — a judgment call the diff did not touch"]}
+#   `origin` is required on every weakness: `prior` (still open; `id` must be a
+#   prior id), `diff-introduced` (the fix broke it), `newly-observed` (neither —
+#   then `missed_because` must name what the prior round failed to read; without
+#   it the item is an `observations` entry, not a weakness, and does not score).
+#   A prior id that is neither in `resolved` nor carried as `origin: prior` is
+#   INVALID — a weakness cannot vanish without a disposition.
+#   A dimension the diff did not touch is carried: copy the prior file and add
+#   `"carried": true` (score must equal the prior score; no origin checks).
+#
 # Usage:
-#   blueprint_merge.sh wait   <dir> --criteria 1,5,6,7 [--timeout 480]
+#   blueprint_merge.sh wait   <dir> --criteria 1,5,6,7 [--timeout 480] [--prev <dir>]
 #   blueprint_merge.sh report <dir> --criteria 1,5,6,7 [--prev <dir>]
+#   blueprint_merge.sh prior  <prev-dir> --criteria 1,5,6,7     # ids for the child briefs
 #
 # Exit: 0 = every expected criterion present and valid, 1 = missing / invalid
 #       (named on stdout), 2 = bad usage or no jq.
@@ -68,7 +93,7 @@ die() { printf '%s\n' "$*" >&2; exit 2; }
 command -v jq >/dev/null 2>&1 || die "blueprint-merge: jq not found — it is the parser, not a nicety."
 
 cmd=${1-}; dir=${2-}
-[ -n "$cmd" ] && [ -n "$dir" ] || die "Usage: blueprint_merge.sh {wait|report} <dir> --criteria <csv> [--timeout <sec>] [--prev <dir>]"
+[ -n "$cmd" ] && [ -n "$dir" ] || die "Usage: blueprint_merge.sh {wait|report|prior} <dir> --criteria <csv> [--timeout <sec>] [--prev <dir>]"
 shift 2
 
 criteria=""; timeout=480; prev=""
@@ -87,6 +112,62 @@ IFS=',' read -r -a want <<< "$criteria"
 for c in "${want[@]}"; do
   canonical_slug "$c" >/dev/null 2>&1 || die "blueprint-merge: '$c' is not a criterion number (1–12)."
 done
+
+# ---------------------------------------------------------------------------
+# prior round: pscore[c]=score, pids[c]="c.1 c.2 …" (positional ids), pfile[c]=file
+# ---------------------------------------------------------------------------
+pscore=(); pids=(); pfile=()
+load_prior() {
+  local f c s n i ids
+  [ -d "$prev" ] || die "blueprint-merge: --prev '$prev' is not a directory."
+  for f in "$prev"/*.json; do
+    [ -e "$f" ] || continue
+    jq -e . "$f" >/dev/null 2>&1 || continue
+    c=$(jq -r '.criterion // empty' "$f"); s=$(jq -r '.score // empty' "$f")
+    case "$c$s" in ''|*[!0-9]*) continue ;; esac
+    pscore[$c]="$s"; pfile[$c]="$f"
+    n=$(jq -r '.weaknesses | length' "$f" 2>/dev/null || echo 0)
+    ids=""; i=1
+    while [ "$i" -le "$n" ]; do ids="$ids $c.$i"; i=$((i + 1)); done
+    pids[$c]="${ids# }"
+  done
+}
+[ -n "$prev" ] && load_prior
+
+has_id() {  # has_id <id> <space-separated list>
+  case " $2 " in *" $1 "*) return 0 ;; *) return 1 ;; esac
+}
+
+is_carried() { [ "$(jq -r '.carried // false' "$1")" = "true" ]; }
+
+# Verification-round checks (only with --prev). Prints the reason; empty = ok.
+verify_against_prior() {
+  local f=$1 crit=$2 score=$3 ids id
+  ids=${pids[$crit]-}
+  if is_carried "$f"; then
+    [ -n "${pscore[$crit]-}" ] || { printf 'carried, but the prior round has no criterion %s' "$crit"; return; }
+    [ "$score" = "${pscore[$crit]}" ] || printf 'carried, but score %s differs from the prior %s — a carried dimension is the prior file verbatim' "$score" "${pscore[$crit]}"
+    return
+  fi
+  if [ "$(jq -r '[.weaknesses[]? | select((.origin // "") | IN("prior","diff-introduced","newly-observed") | not)] | length' "$f")" -gt 0 ]; then
+    printf 'a weakness has no .origin (prior | diff-introduced | newly-observed) — a verification round says where each one came from'; return
+  fi
+  for id in $(jq -r '.weaknesses[]? | select(.origin == "prior") | .id // "(none)"' "$f"); do
+    has_id "$id" "$ids" || { printf 'origin:prior weakness cites id %s, which is not a prior id for criterion %s (%s)' "$id" "$crit" "${ids:-none}"; return; }
+  done
+  for id in $(jq -r '.resolved[]? // empty' "$f"); do
+    has_id "$id" "$ids" || { printf '.resolved cites id %s, which is not a prior id for criterion %s (%s)' "$id" "$crit" "${ids:-none}"; return; }
+    [ "$(jq -r --arg id "$id" '[.weaknesses[]? | select(.origin == "prior" and .id == $id)] | length' "$f")" -eq 0 ] \
+      || { printf 'prior id %s is both resolved and still open' "$id"; return; }
+  done
+  for id in $ids; do
+    [ "$(jq -r --arg id "$id" '([.resolved[]? | select(. == $id)] + [.weaknesses[]? | select(.origin == "prior" and .id == $id)]) | length' "$f")" -gt 0 ] \
+      || { printf 'prior weakness %s is neither in .resolved nor carried as origin:prior — a weakness cannot vanish without a disposition' "$id"; return; }
+  done
+  if [ "$(jq -r '[.weaknesses[]? | select(.origin == "newly-observed" and ((.missed_because // "") == ""))] | length' "$f")" -gt 0 ]; then
+    printf 'a newly-observed weakness has no .missed_because (what the prior round failed to read) — without it the item is an .observations entry, not a weakness'; return
+  fi
+}
 
 # ---------------------------------------------------------------------------
 # scan: fills found[criterion]=file, bad[criterion]=reason for one pass over dir
@@ -133,6 +214,7 @@ scan() {
         reason="score $score is sub-6 but no weakness is marked blocking"
       fi
     fi
+    [ -z "$reason" ] && [ -n "$prev" ] && reason=$(verify_against_prior "$f" "$crit" "$score")
 
     if [ -n "$reason" ]; then bad[$crit]="$reason"; else found[$crit]="$f"; fi
   done
@@ -197,18 +279,8 @@ report)
     exit 1
   fi
 
-  pscore=()
-  if [ -n "$prev" ]; then
-    for f in "$prev"/*.json; do
-      [ -e "$f" ] || continue
-      jq -e . "$f" >/dev/null 2>&1 || continue
-      c=$(jq -r '.criterion // empty' "$f"); s=$(jq -r '.score // empty' "$f")
-      case "$c$s" in ''|*[!0-9]*) continue ;; esac
-      pscore[$c]="$s"
-    done
-  fi
-
   total=0; sub8=0; sub6=0; regressed=""
+  n_res=0; n_open=0; n_diff=0; n_new=0; newdims=""
   dcol=""; dsep=""
   [ -n "$prev" ] && { dcol=' Δ |'; dsep='---|'; }
   printf '## Scores\n\n| # | Criterion | Score | Cites |%s\n' "$dcol"
@@ -223,12 +295,20 @@ report)
     delta=""
     if [ -n "$prev" ]; then
       p=${pscore[$c]-}
-      if [ -z "$p" ]; then delta=' — |'
+      if is_carried "$f"; then delta=" $p carried |"
+      elif [ -z "$p" ]; then delta=' — |'
       elif [ "$p" -ge 8 ] && [ "$s" -lt 8 ]; then
         delta=" **$p → $s REGRESSION** |"; regressed="$regressed $c:$(canonical_slug "$c")"
       elif [ "$s" -lt "$p" ]; then delta=" $p → $s ↓ |"
       elif [ "$s" -gt "$p" ]; then delta=" $p → $s ↑ |"
       else delta=" $p → $s = |"; fi
+      if ! is_carried "$f"; then
+        n_res=$((n_res + $(jq -r '.resolved // [] | length' "$f")))
+        n_open=$((n_open + $(jq -r '[.weaknesses[]? | select(.origin == "prior")] | length' "$f")))
+        n_diff=$((n_diff + $(jq -r '[.weaknesses[]? | select(.origin == "diff-introduced")] | length' "$f")))
+        k=$(jq -r '[.weaknesses[]? | select(.origin == "newly-observed")] | length' "$f")
+        n_new=$((n_new + k)); [ "$k" -gt 0 ] && newdims="$newdims $c:$(canonical_slug "$c")"
+      fi
     fi
     printf '| %s | %s | **%s**/10 | %s |%s\n' "$c" "$(canonical_name "$c")" "$s" "$cites" "$delta"
   done
@@ -240,6 +320,10 @@ report)
   else verdict="approve — every in-scope dimension ≥ 8"; fi
   printf 'VERDICT: %s\n' "$verdict"
   [ -n "$regressed" ] && printf 'REGRESSION: passed last round, sub-8 now —%s. A dimension that was\nfixed and came back is a re-derivation artefact or a real re-break; say which.\n' "$regressed"
+  if [ -n "$prev" ]; then
+    printf 'CONVERGENCE: prior weaknesses resolved %d · still open %d · diff-introduced %d · newly-observed %d\n' "$n_res" "$n_open" "$n_diff" "$n_new"
+    [ -n "$newdims" ] && printf 'NEWLY-OBSERVED in%s — not in the prior round and not caused by the diff. Each carries\nits missed_because; the caller routes these to the user by kind, never into another round.\n' "$newdims"
+  fi
   printf '\n'
 
   if [ "$sub8" -gt 0 ]; then
@@ -248,11 +332,32 @@ report)
       f=${found[$c]}; s=$(jq -r '.score' "$f")
       [ "$s" -lt 8 ] || continue
       printf '**[%s. %s — %s/10]**\n' "$c" "$(canonical_name "$c")" "$s"
-      jq -r '.weaknesses[] | "- \(.problem)\n  - Failure scenario: \(.failure_scenario)\n  - Severity: \(.severity)"' "$f"
+      if [ -n "$prev" ] && ! is_carried "$f"; then
+        jq -r --arg c "$c" '.weaknesses | to_entries[] | .value as $w |
+          "- [\($c).\(.key + 1)] \(if $w.origin == "prior" then "still open (was \($w.id))" else $w.origin end): \($w.problem)\n  - Failure scenario: \($w.failure_scenario)\n  - Severity: \($w.severity)"
+          + (if $w.origin == "newly-observed" then "\n  - Missed because: \($w.missed_because)" else "" end)' "$f"
+      else
+        jq -r --arg c "$c" '.weaknesses | to_entries[] | "- [\($c).\(.key + 1)] \(.value.problem)\n  - Failure scenario: \(.value.failure_scenario)\n  - Severity: \(.value.severity)"' "$f"
+      fi
       printf '\n'
     done
   fi
   exit 0
   ;;
-*) die "blueprint-merge: unknown command '$cmd' (expected wait|report)." ;;
+
+prior)
+  # <dir> is the prior round's dir here: emit each in-scope criterion's weaknesses with their ids.
+  prev=$dir; pscore=(); pids=(); pfile=(); load_prior
+  for c in $(printf '%s\n' "${want[@]}" | sort -n); do
+    f=${pfile[$c]-}
+    if [ -z "$f" ]; then
+      printf '{"criterion": %s, "dimension": "%s", "prior": "none — first pass for this dimension"}\n' "$c" "$(canonical_slug "$c")"
+      continue
+    fi
+    jq -c --arg c "$c" '{criterion: .criterion, dimension: .dimension, score: .score,
+      weaknesses: [.weaknesses | to_entries[] | {id: "\($c).\(.key + 1)", problem: .value.problem, failure_scenario: .value.failure_scenario, severity: .value.severity}]}' "$f"
+  done
+  exit 0
+  ;;
+*) die "blueprint-merge: unknown command '$cmd' (expected wait|report|prior)." ;;
 esac

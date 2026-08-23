@@ -442,7 +442,9 @@ rehomed **by kind**:
   verification of the old one; converging on "it stopped finding things" partly
   measures the gate's own variance rather than the plan's quality. So: run it
   once; resolve every finding; then run **one** verification pass scoped to what
-  changed plus its blast radius.
+  changed plus its blast radius, **briefed with the prior findings** so it
+  dispositions each one rather than re-deriving (for `blueprint-reviewer` this is
+  the `--prev` round — `agents/blueprint-reviewer.md §The verification round`).
   - **`critical` blocks until resolved** — unchanged, and non-negotiable. What is
     dropped is re-deriving the whole judgment each round, not the blocking.
   - **`warning` never triggers a loop** — it goes to the founder to weigh, or is

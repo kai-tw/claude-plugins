@@ -125,8 +125,9 @@ produce the engineering-plan artifact.
 >    `blueprint-reviewer` sub-agent scores the plan across scope-gated
 >    quality dimensions; `approve` requires every in-scope dimension ≥
 >    8. For each sub-8 dimension the engineer devises and applies the
->    fix, then re-spawns to re-score (cap 2 cycles, then escalate to
->    the user). This is the pre-approval gate against the *plan*; Iron
+>    fix, then re-spawns once as a verification round (prior scores dir
+>    + diff); what is still sub-8 goes to the user, never a third spawn.
+>    This is the pre-approval gate against the *plan*; Iron
 >    Law 7's `/review` is the post-implementation gate against *code*.
 >    Full protocol: Phase 8.5.
 > 10. **Commit requires a clean three-leg gate — lint, tests,
@@ -796,14 +797,17 @@ The loop, in brief — full protocol in
    `approve-with-improvements` (some 6–7) / `send back to revise`
    (any < 6).
 3. **Devise + apply the fix yourself** for every sub-8 dimension —
-   you own the design; research the lift path (`WebSearch` / `WebFetch`)
-   when it's non-obvious; route to the PM role / the designer role via `## Open
+   snapshot the draft first (the verification diff); you own the design;
+   research the lift path (`WebSearch` / `WebFetch`) when it's
+   non-obvious; route to the PM role / the designer role via `## Open
    questions` when the lift needs new scope; mirror each fix into
-   `## Revision history`.
-4. **Re-spawn to verify (cap = 2 cycles).** If a dimension still can't
-   reach ≥ 8 after research + manual revision, **stop and escalate to
-   the user** (latest log path + the unliftable weakness + what you
-   tried + candidate routes) — do not run a third cycle.
+   `## Revision history` naming the weakness ids it resolves.
+4. **Verification round — the second and last spawn.** Brief carries
+   round 1's `Scores dir:` as `--prev` + the plan diff; the reviewer
+   dispositions every prior weakness and tags every new one by origin.
+   Anything still sub-8 goes to the user grouped by origin (fix didn't
+   land / fix broke it / newly-observed with its `missed_because`) —
+   never a third spawn.
 5. **Cite the review log** in the plan header so the calibration is
    auditable months later.
 
