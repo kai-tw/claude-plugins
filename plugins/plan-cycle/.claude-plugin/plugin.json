@@ -1,7 +1,7 @@
 {
   "name": "plan-cycle",
   "description": "Gated planning cycle — PM → designer → engineer → code → QA → close-out, with a Stop-hook ledger that blocks turn-end when a plan phase advanced without its plan landing.",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "author": {
     "name": "Kai"
   }
