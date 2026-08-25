@@ -144,7 +144,12 @@ When `blueprint-reviewer` returns, the review log carries:
   plan in the rev unless the user overrides.
 - **Verdict** — `approve` (every in-scope dimension ≥ 8) /
   `approve-with-improvements` (some 6–7, none < 6) / `send back to
-  revise` (any < 6).
+  revise` (any < 6). **Criterion 10 is the exception to the soft
+  band**: a 6–7 there is not yours to quietly lift — surface it to the
+  founder in Resolve terms (which unit is doubted as a second face,
+  what the minimal option would delete) before revving. The reuse
+  dimension is where both measured over-builds passed as "well-formed";
+  the escalation, not the score, is the gate.
 
 Treat the scores as calibration; the **weaknesses** are what you act
 on — by devising and applying the fixes.

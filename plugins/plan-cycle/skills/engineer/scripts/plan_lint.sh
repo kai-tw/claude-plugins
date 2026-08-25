@@ -16,6 +16,14 @@
 #     - every §Facts evidence cell is one of the five typed forms (file:line /
 #       實驗：指令 → 觀察 / 未讀 / 只能實測：<how> / 今天成立：<event>); an
 #       實驗 cell without both halves is a claim wearing an experiment's clothes
+#     - every §Classes summary-table (NEW) row answers `為何要新增` in one of the
+#       schema's sanctioned forms (框架/平台：…→… / canonical home：grep … /
+#       套件 <名>@<版>：… / 歸屬：…) — the "should this exist" column is the
+#       reuse question's only landing spot, and a blank one passed for months
+#     - every contract-table `既有方法夠嗎` cell is typed evidence, same
+#       vocabulary as §事實帳 (file:line / 貼出簽名 / F<n> / 實驗：指令 → 觀察 /
+#       不足 → <調整> / 今天成立：<條件> / 未讀) — 憑印象作答 is the one
+#       illegal answer, and free text is 憑印象 wearing a table cell's clothes
 #
 #   SKIP (printed, exit code unchanged) — a HARD check whose precondition was
 #   empty. It reports WHICH precondition and HOW MUCH went unchecked, and the
@@ -37,8 +45,17 @@
 #   did not exist, each burning an opus round-trip. Judgement items (silent
 #   failure, right owner, SSOT, race) are NOT here.
 #
-# Usage: plan_lint.sh <engineering-plan.md>
+# Usage: plan_lint.sh <engineering-plan.md> [--diff]
 # Exit: 0 = no hard failures, 1 = hard failure printed above, 2 = bad usage.
+#
+# `--diff` is the SAME contract run in the OTHER direction, at commit time
+# (closeout Step 5.5's reconciliation leg). Plan-stage checks verify that what
+# the plan names exists; `--diff` verifies that what the diff grew was named —
+# every added file / class must map to a §Classes NEW row. It is the one
+# mechanical net against "the implementer quietly built its own subsystem",
+# which no reviewer is scoped to catch (conformance walks spec→code and only
+# ever finds what is MISSING; code-reviewer grades the diff's quality, not its
+# inventory). Run it AFTER `git add` — untracked files are invisible before.
 #
 # `PASS*` (a HARD check whose precondition was empty) also exits 0 — deliberate,
 # because a small plan legitimately has no §Data flow. The consequence: healthy,
@@ -55,10 +72,15 @@ set -uo pipefail
 export LC_ALL=en_US.UTF-8
 
 plan="${1:-}"
+mode="${2:-}"
 if [ -z "$plan" ] || [ ! -f "$plan" ]; then
-  echo "usage: plan-lint <engineering-plan.md>" >&2
+  echo "usage: plan-lint <engineering-plan.md> [--diff]" >&2
   exit 2
 fi
+case "$mode" in ''|--diff) ;; *)
+  echo "usage: plan-lint <engineering-plan.md> [--diff]" >&2
+  exit 2 ;;
+esac
 
 fail=0
 
@@ -120,6 +142,83 @@ count_data_rows() {
     END { print n + 0 }
   '
 }
+
+# ── `--diff` — implementation reconciliation (commit stage) ──────────────────
+# The reverse direction of check 3: does every class the diff GREW map back to
+# a §Classes NEW row? Runs as closeout Step 5.5's reconciliation leg, after
+# `git add`. Two legal exits from a FAIL, and only two: Phase 11 divergence
+# (add the row — 為何要新增 included — re-run plan-lint + the stage's matrix
+# gate, then re-run this), or delete the addition and reuse what exists.
+# "A sub-decision inside an approved layer" does not exempt a class here: a
+# name the plan never wrote is exactly what this leg exists to surface.
+if [ "$mode" = "--diff" ]; then
+  if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
+    echo "FAIL  --diff 需要在 git repo（worktree）內執行"
+    exit 1
+  fi
+  if [ -z "$SECTION_DEFS" ]; then
+    # A commit-stage leg fails CLOSED — an unreadable schema here would other-
+    # wise wave every unplanned class through on the day node went missing.
+    echo "FAIL  --diff：schema unreadable（node 不在？不在 plugin tree？）——§Classes 的 heading 無從解析，對帳沒得跑"
+    exit 1
+  fi
+  classes_body="$(section_body "$(section_pat 'Classes')")"
+  if [ -z "$classes_body" ]; then
+    echo "FAIL  --diff：計畫沒有 §Classes section，diff 無從對帳"
+    exit 1
+  fi
+  diff_base="--cached"
+  if [ -z "$(git diff --cached --name-only 2>/dev/null)" ]; then
+    diff_base="HEAD"
+    echo "NOTE  staged diff 是空的——退回與 HEAD 比對；untracked 新檔在這個基準下看不到，git add 之後重跑才算數"
+  fi
+  # Generated / test files are not plan inventory; private classes (_X) are
+  # implementation detail. Both excluded by design, not oversight.
+  added_files="$(git diff $diff_base --name-only --diff-filter=A 2>/dev/null \
+    | grep -E '\.(dart|swift|kt|kts|java|ts|mjs|js)$' \
+    | grep -vE '\.g\.dart$|\.freezed\.dart$|(^|/)generated/|(^|/)test/|_test\.[a-z]+$' || true)"
+  unplanned_files=""; n_files=0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    n_files=$((n_files + 1))
+    grep -F "$f" <<< "$classes_body" | grep -qE '\((\*\*)?NEW' \
+      || unplanned_files="${unplanned_files}${f}"$'\n'
+  done <<< "$added_files"
+  decls="$(git diff $diff_base -U0 2>/dev/null | grep -E '^\+' \
+    | grep -oE '\b(class|mixin) +[A-Z][A-Za-z0-9_]*' \
+    | awk '{ print $NF }' | sort -u || true)"
+  unplanned_cls=""; n_cls=0
+  while IFS= read -r c; do
+    [ -n "$c" ] || continue
+    n_cls=$((n_cls + 1))
+    grep -qE "(^|[^A-Za-z0-9_])${c}([^A-Za-z0-9_]|$)" <<< "$classes_body" \
+      || unplanned_cls="${unplanned_cls}${c} "
+  done <<< "$decls"
+  unplanned_adv=""
+  while IFS= read -r c; do
+    [ -n "$c" ] || continue
+    grep -qE "(^|[^A-Za-z0-9_])${c}([^A-Za-z0-9_]|$)" <<< "$classes_body" \
+      || unplanned_adv="${unplanned_adv}${c} "
+  done <<< "$(git diff $diff_base -U0 2>/dev/null | grep -E '^\+' \
+    | grep -oE '\b(enum|extension) +[A-Z][A-Za-z0-9_]*' | awk '{ print $NF }' | sort -u || true)"
+  if [ -n "$unplanned_files" ]; then
+    echo "FAIL  diff 新增了 §Classes 沒有任何 NEW 列認領的檔案："
+    printf '%s' "$unplanned_files" | sed 's/^/        /'
+    fail=1
+  fi
+  if [ -n "$unplanned_cls" ]; then
+    echo "FAIL  diff 新增了 §Classes 沒寫過的 class/mixin：${unplanned_cls}"
+    fail=1
+  fi
+  if [ "$fail" -eq 1 ]; then
+    echo "        兩條路，擇一：走 Phase 11 divergence（補進 §Classes——含 為何要新增——重跑"
+    echo "        plan-lint 與該 stage 的 matrix gate，再回來重跑本對帳），或刪掉它、reuse 既有機制。"
+  fi
+  [ -n "$unplanned_adv" ] && echo "ADVISORY  diff 新增了 §Classes 沒寫過的 enum/extension（常是合法實作細節，過目即可）：${unplanned_adv}"
+  echo "NOTE  --diff 對帳：${n_files} 個新增檔案、${n_cls} 個新增 class/mixin 已比對（基準：git diff ${diff_base}）"
+  [ "$fail" -eq 0 ] && echo "PASS  diff ↔ §Classes 對帳無差異"
+  exit "$fail"
+fi
 
 # 1. HARD — empty / skeleton
 nonblank="$(grep -cve '^[[:space:]]*$' "$plan" || true)"
@@ -195,6 +294,148 @@ if [ -n "$repo_files" ]; then
   if [ -n "$ambiguous" ]; then
     echo "ADVISORY  §Classes row(s) carrying both NEW and MOD/DEL — not checked; split the row if the markers apply to different files:"
     printf '%s' "$ambiguous" | sort -u | sed 's/^/        /'
+  fi
+else
+  # No repo → the highest-value reality check never ran. Say so (silence is
+  # not a verdict); an unannounced skip here printed a clean PASS for months.
+  skip_check "§Classes (MOD)/(DEL) 檔案存在性（HARD）沒跑" \
+    "不在 git repo 內（git ls-files 無輸出）" \
+    "所有帶標記的檔案列這次一個都沒驗"
+fi
+
+# 3b. HARD — §Classes 總表 `為何要新增`. The schema calls this column the ONLY
+#     landing spot for "should this exist at all" — and the drafter's duty, not
+#     the gate's, precisely because blueprint-reviewer scores inside the design
+#     space the author drew. A duty that is nobody's to check decays like any
+#     other prose obligation, so the CELL SHAPE is checked here, the same way
+#     §事實帳 evidence is: the three sanctioned forms all start with their
+#     evidence discipline visible (框架/平台：<查過什麼> → <結論> /
+#     canonical home：grep <什麼> → … / 套件 <名>@<版>：…), plus 歸屬：… for a
+#     MOD that adds a public member to someone else's owner. Whether the answer
+#     is TRUE stays blueprint-reviewer's judgment; that a NEW row ANSWERED, in
+#     an evidence-bearing form, is a comparison — and comparisons live here.
+classes_body="$(section_body "$(section_pat 'Classes')")"
+if [ -z "$classes_body" ]; then
+  skip_check "§Classes 為何要新增（HARD）沒跑" "找不到 §Classes section"
+elif ! grep -q '為何要新增' <<< "$classes_body"; then
+  if grep -qE '\((\*\*)?NEW' <<< "$classes_body"; then
+    echo "FAIL  §Classes 總表缺 \`為何要新增\` 欄，但表裡有 NEW 列——「該不該存在」這一題整份計畫沒有落點"
+    echo "        總表欄位：| Class | Layer | Kind | File (NEW/MOD/DEL) | 職責 | 持有狀態 | 為何要新增 |"
+    fail=1
+  else
+    skip_check "§Classes 為何要新增（HARD）沒跑" "總表沒有該欄也沒有 NEW 列（純 MOD/DEL 計畫屬正常）"
+  fi
+else
+  reuse_out="$(awk -F'|' '
+    function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+    /^\|/ {
+      if (!inTab && $0 ~ /為何要新增/ && $0 !~ /^[|: -]+$/) {
+        for (i = 2; i <= NF; i++) if (trim($i) ~ /為何要新增/) col = i
+        ncols = NF; inTab = 1; next
+      }
+      if (!inTab) next
+      if ($0 ~ /^[|: -]+$/) next
+      first = trim($2); gsub(/[`*]/, "", first)
+      if (first == "" || first == "Class") next
+      if ($0 !~ /\((\*\*)?NEW/) next
+      nnew++
+      if (NF != ncols) { print "MISMATCH\t" first; next }
+      cell = trim($col); gsub(/`/, "", cell)
+      if (cell == "" || cell == "—" || cell == "-" || cell ~ /^未讀/) { print "MISSING\t" first; next }
+      ok = 0
+      if (cell ~ /^框架\/平台[：:]/ && cell ~ /→/) ok = 1
+      if (cell ~ /^canonical home[：:]/ && cell ~ /grep/) ok = 1
+      if (cell ~ /^套件/) ok = 1
+      if (cell ~ /^歸屬[：:]./) ok = 1
+      if (!ok) print "BADFORM\t" first "\t" cell
+      next
+    }
+    !/^\|/ { if (inTab) exit }
+    END { print "COUNT\t" nnew + 0 }
+  ' <<< "$classes_body")"
+  reuse_missing="$(grep '^MISSING	' <<< "$reuse_out" | cut -f2 | tr '\n' ' ')"
+  reuse_badform="$(grep '^BADFORM	' <<< "$reuse_out" | cut -f2,3 | sed 's/\t/ → /')"
+  reuse_mismatch="$(grep '^MISMATCH	' <<< "$reuse_out" | cut -f2 | tr '\n' ' ')"
+  reuse_n="$(grep '^COUNT	' <<< "$reuse_out" | cut -f2)"
+  if [ -n "$reuse_missing" ]; then
+    echo "FAIL  §Classes NEW 列的 \`為何要新增\` 空白／—／未讀: ${reuse_missing}"
+    echo "        NEW 列必答，擇一或並列：框架/平台：<查過什麼 → 結論>／canonical home：grep <什麼> → <為何 reuse 不了>／"
+    echo "        套件 <名>@<版>：<contract clause> → <source>。這一欄沒答，「該不該存在」就沒人問過。"
+    fail=1
+  fi
+  if [ -n "$reuse_badform" ]; then
+    echo "FAIL  §Classes NEW 列的 \`為何要新增\` 不是三種帶證據的形式（自由散文＝憑印象）:"
+    printf '%s\n' "$reuse_badform" | sed 's/^/        /'
+    fail=1
+  fi
+  [ -n "$reuse_mismatch" ] && echo "ADVISORY  §Classes 總表列的欄數與表頭不符——這幾列沒進比對: ${reuse_mismatch}"
+  echo "NOTE  §Classes 為何要新增: 檢查 ${reuse_n:-0} 個 NEW 列"
+fi
+
+# 3c. HARD — contract-table `既有方法夠嗎` typing. Same vocabulary as §事實帳,
+#     same reason (the schema says so; until now only the schema said so). A
+#     cell that is none of the typed forms is 憑印象作答 — the one illegal
+#     answer. `未讀` stays legal and non-gating: it converts to a recon TODO
+#     and is surfaced below exactly like §事實帳's 未讀 rows.
+if [ -n "$classes_body" ] && grep -q '既有方法夠嗎' <<< "$classes_body"; then
+  enough_out="$(awk -F'|' '
+    function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+    /^### / {
+      cls = $0; sub(/^### +/, "", cls); gsub(/[`*]/, "", cls)
+      sub(/[^A-Za-z0-9_].*$/, "", cls); intable = 0; next
+    }
+    cls != "" && /^\|/ {
+      hdr = $0; gsub(/[`* |]/, "", hdr)
+      if (hdr ~ /^method/) {
+        ecol = 0; ncols = NF
+        for (i = 2; i <= NF; i++) { c = trim($i); gsub(/[`*]/, "", c); if (c ~ /既有方法夠嗎/) ecol = i }
+        intable = 1
+        if (!ecol) print "NOCOL\t" cls
+        next
+      }
+      if (!intable || !ecol) next
+      if ($0 ~ /^[|: -]+$/) next
+      m = trim($2); gsub(/[`*]/, "", m); sub(/\(.*$/, "", m)
+      if (m == "" || m ~ /^</) next
+      if (NF != ncols) { print "MISMATCH\t" cls "." m; next }
+      cell = trim($ecol); gsub(/^`+|`+$/, "", cell)
+      if (cell ~ /^未讀/)                    { print "UNREAD\t" cls "." m; next }
+      if (cell == "—" || cell == "-")        next
+      if (cell ~ /^F[0-9]+$/)                next
+      if (cell ~ /^實驗[：:]/)               { if (cell ~ /→/) next
+                                               print "BAD\t" cls "." m "\t" cell "（實驗缺 指令 → 觀察）"; next }
+      if (cell ~ /今天成立[：:]./)           next
+      if (cell ~ /不足/ && cell ~ /→/)       next
+      if (cell ~ /[A-Za-z0-9_.\/-]+\.[A-Za-z0-9_]+:[0-9]+/) next
+      if (cell ~ /\(/)                       next
+      print "BAD\t" cls "." m "\t" cell
+      next
+    }
+    cls != "" && intable && !/^\|/ { intable = 0 }
+  ' <<< "$classes_body")"
+  enough_bad="$(grep '^BAD	' <<< "$enough_out" | cut -f2,3 | sed 's/\t/ → /')"
+  enough_nocol="$(grep '^NOCOL	' <<< "$enough_out" | cut -f2 | tr '\n' ' ')"
+  enough_unread="$(grep '^UNREAD	' <<< "$enough_out" | cut -f2 | tr '\n' ' ')"
+  enough_mm="$(grep '^MISMATCH	' <<< "$enough_out" | cut -f2 | tr '\n' ' ')"
+  if [ -n "$enough_bad" ]; then
+    echo "FAIL  \`既有方法夠嗎\` cell(s) 不是型別化證據（憑印象作答）:"
+    printf '%s\n' "$enough_bad" | sed 's/^/        /'
+    echo "        合法答案：\`file:line\`／貼出簽名／\`F<n>\`／實驗：<指令> → <觀察>／不足 → <調整>／今天成立：<條件>／未讀"
+    fail=1
+  fi
+  if [ -n "$enough_nocol" ]; then
+    echo "FAIL  契約表缺 \`既有方法夠嗎\` 欄: ${enough_nocol}"
+    fail=1
+  fi
+  [ -n "$enough_mm" ] && echo "ADVISORY  契約表列欄數與表頭不符——這幾列沒進比對: ${enough_mm}"
+  [ -n "$enough_unread" ] && echo "NOTE  既有方法夠嗎 未讀（recon 待辦，approval 前要歸零或明示接受）: ${enough_unread}"
+elif [ -n "$classes_body" ]; then
+  # A §Classes with contract tables but no 既有方法夠嗎 column anywhere is the
+  # same failure as 3b's missing column — the reuse question has no cell to
+  # live in. Only fire when a contract table actually exists.
+  if grep -qiE '^\|[`* ]*method' <<< "$classes_body"; then
+    echo "FAIL  契約表存在但整個 §Classes 沒有 \`既有方法夠嗎\` 欄——每個 method 的 reuse 質問沒有落點"
+    fail=1
   fi
 fi
 
@@ -284,7 +525,7 @@ elif [ -z "$contract_methods" ]; then
     "§Classes 沒有可比對的 method（section 名稱不符？或沒有 \`### <Class>\` + \`| method |\` 表）" \
     "§Conformance 有 $(count_data_rows "$conf_body") 列在等，這次一列都沒驗"
 else
-  dangling=""; conf_rows=0; conf_global=0
+  dangling=""; conf_rows=0; conf_global=0; conf_sibling=0
   while IFS= read -r row; do
     case "$row" in \|*) ;; *) continue ;; esac
     # Separator (`|---|---|`) and header (first cell `#` / `Requirement`).
@@ -296,6 +537,17 @@ else
     # verified — an unexplained blank is the failure this check exists for.
     if grep -qE '全域[：:][^|[:space:]]' <<< "$row"; then
       conf_global=$((conf_global + 1)); continue
+    fi
+    # A cross-cutting flow may answer 同儕：<feature> <file:line> instead of a
+    # Class.method — naming the sibling mechanism it mirrors. The file:line is
+    # what consistency-reviewer walks checkpoint-by-checkpoint, so a 同儕 with
+    # no anchor is a claim with nothing to compare against.
+    if grep -qE '同儕[：:]' <<< "$row"; then
+      if grep -qE '同儕[：:][^|]*[A-Za-z0-9_./-]+\.[A-Za-z0-9_]+:[0-9]+' <<< "$row"; then
+        conf_sibling=$((conf_sibling + 1)); continue
+      fi
+      dangling="${dangling}${first}(同儕 未附 file:line 錨點) "
+      continue
     fi
     # `privacy.md` / `pubspec.yaml` in a Source cell look exactly like
     # `Class.method`; excluding known file extensions costs one grep and a false
@@ -315,10 +567,11 @@ else
   if [ -n "$dangling" ]; then
     echo "FAIL  §Conformance row(s) pointing at no defined method: ${dangling}"
     echo "        每列的「實作於」要指向 §Classes 某個 class 區塊裡實際存在的 Class.method，"
-    echo "        或標 \`全域：<怎麼驗>\`（沒有 owning method 的全域斷言，例如某目錄不得存在）"
+    echo "        或標 \`全域：<怎麼驗>\`（沒有 owning method 的全域斷言，例如某目錄不得存在），"
+    echo "        或標 \`同儕：<feature> <file:line>\`（cross-cutting 流程鏡射的既有機制——必附錨點）"
     fail=1
   fi
-  echo "NOTE  §Conformance: 檢查 ${conf_rows} 列（其中 ${conf_global} 列標為 全域）"
+  echo "NOTE  §Conformance: 檢查 ${conf_rows} 列（全域 ${conf_global}・同儕 ${conf_sibling}）"
 fi
 
 # 5. HARD — §Data flow graph nodes must exist in §Classes. A node naming a class

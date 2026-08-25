@@ -15,15 +15,22 @@ finding that surfaces a UX question.
 3. Produce the artifact — usually a short revision-history entry
    appended to the existing **Design Plan row body**, plus a one-line
    ruling for the parent flow to consume verbatim.
-4. Pass the rules audit gate (Phase 8 of `SKILL.md`) — spawn `blueprint-reviewer`
-   in checklist mode against the amendment (player ≠ referee; no self-audit).
-   Escalations are exactly when anti-patterns surface; loop to all-passed, cap 3.
+4. Pass the same gates the main flow has (Phase 8 of `SKILL.md` — this
+   role has no checklist gate, and `blueprint-reviewer` refuses design
+   specs by charter): re-run `design-lint` on every widget the amendment
+   touches and fix to all-green; when the amendment changes visible
+   surface, re-render and spawn `ux-reviewer` against the renders
+   (player ≠ referee; no self-audit — escalations are exactly when
+   anti-patterns surface; loop to all-passed, cap 3). A copy-only or
+   decision-memo ruling with no widget delta records
+   `design-lint: n/a (no widget change)` in the hand-back.
 5. **Re-upload to Notion (the launcher's Iron Law 6).** You have no Notion MCP —
    invoke the `archivist` skill to write the amended **Design Plan row body**.
    An amendment that lives only in chat or a local note has not landed.
 6. Hand back to the parent flow with: `(a)` the Notion **Design Plan
    row** URL (re-uploaded via the `archivist`), `(b)` the verbatim
-   ruling, `(c)` the rules audit result. Do not paraphrase.
+   ruling, `(c)` the gate results (`design-lint` · `ux-reviewer`, or
+   their `n/a` lines). Do not paraphrase.
 
 The parent flow expects the ruling forwarded **verbatim**, not
 paraphrased — paraphrase has shipped bugs before. Forwarding a

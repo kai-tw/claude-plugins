@@ -680,7 +680,15 @@ the aggregate total** — a strong total must not mask one weak dimension
   "Strong" per the anchors). (All ≥ 8 ⟹ total ≥ 80% automatically, so this
   subsumes the old aggregate gate.)
 - **approve-with-improvements** — any dimension at 6–7, none < 6 (each must
-  be lifted to ≥ 8 before `approve`).
+  be lifted to ≥ 8 before `approve`). **Exception — criterion 10 has no soft
+  band.** A 6–7 on Abstraction / reuse & ownership is not self-fixed and
+  passed: it goes to the **founder** with the specific doubt named (which
+  unit might be a second face, which reuse was passed over). Measured reason:
+  a second face is always well-formed, so on this one dimension "a bit thin,
+  engineer will polish" is exactly how the over-built option ships — both
+  recorded incidents (the `syncMetadata` rebuild, `Book.language`) scored in
+  the passing band. The founder's minimal-mechanism ruling outranks the
+  score (`house-rules §Distrust the review gates`).
 - **send back to revise** — any dimension < 6 (its weakness is blocking).
 
 For **multi-option** plans, rank by total (informational), but the

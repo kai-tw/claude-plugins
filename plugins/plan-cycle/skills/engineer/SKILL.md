@@ -130,12 +130,15 @@ produce the engineering-plan artifact.
 >    This is the pre-approval gate against the *plan*; Iron
 >    Law 7's `/review` is the post-implementation gate against *code*.
 >    Full protocol: Phase 8.5.
-> 10. **Commit requires a clean three-leg gate — lint, tests,
->    `/review`.** `git commit` doesn't fire until all three pass:
->    lint + format clean, tests green (affected scope), and `/review`
+> 10. **Commit requires a clean four-leg gate — lint, tests, plan
+>    reconciliation, `/review`.** `git commit` doesn't fire until all
+>    four pass: lint + format clean, tests green (affected scope),
+>    `plan-lint <plan> --diff` clean (every file / class the staged diff
+>    adds maps to a §Classes NEW row — an unplanned class routes through
+>    Phase 11 or gets deleted, never committed as-is), and `/review`
 >    clean with every finding verdicted. The close-out report ships
 >    **with** the commit, not before it as a gate — Iron Law 5's
->    approval covers *what to build*, these three cover *what landed*.
+>    approval covers *what to build*, these four cover *what landed*.
 >    The `Shipped` status is filled in only after the real commit
 >    lands. Full protocol, including the pre-leg codegen-regeneration
 >    check: Phase 12 Step 5.5.
@@ -321,7 +324,12 @@ first**, alongside the SOPs below. The questionnaire's cells *are* the drafting
 constraints — answering `為何要新增` honestly is the check that nothing else can
 make, because `blueprint-reviewer` scores inside the design space you drew and
 will endorse a well-built thing that should not exist. A constraint honoured
-here costs a sentence; missed here, it ships.
+here costs a sentence; missed here, it ships. **Before sketching, consult the
+`house-rules` skill (§Engineering taste)** — "how much to build" is exactly the
+decision its measured incidents teach (minimal mechanism over the gate-preferred
+abstraction, parallel-marker tells, nullable canonical types); the questionnaire
+asks the questions, house-rules carries the corrections that show how founders
+have answered them.
 
 **Phase 3 is assembly (串連), not per-block design.** Every code artifact
 the plan introduces — state holder, use case, repository, DTO, widget, exception,
@@ -447,7 +455,15 @@ to print the full section questionnaire with descriptions and hints):
   spec, every commitment and every observable item must appear as a row mapped to
   a `Class.method` that §Classes actually defines — a spec item with no row, or a
   row pointing at nothing, is an
-  incomplete plan. Fill `Requirement / Source / 實作於` at plan time; `Code evidence`
+  incomplete plan. A **cross-cutting flow** (validation, recording, data-passing —
+  anything a sibling feature already does) additionally carries a
+  `同儕：<feature> <file:line>` row naming the existing mechanism it mirrors:
+  `plan-lint` checks the anchor's format, and `consistency-reviewer` walks it
+  checkpoint-by-checkpoint after QA — every check the sibling performs that this
+  flow lacks needs a reason written here, at plan time, not discovered at PR
+  review. First implementation of a mechanism, with no sibling to name → note
+  「首例」 and owe the project's `.claude/rules/consistency.md` mechanism table
+  a row. Fill `Requirement / Source / 實作於` at plan time; `Code evidence`
   is filled during implementation (self-cite the file:line that realises the row,
   like a §Error-handling handling decision); `Test` points at the QA acceptance
   test. This is the **inverse** of §Classes' "source-from-spec, never invent":
@@ -678,7 +694,7 @@ implementation task(s) land: (1) the contract-derived tests for that phase's
 new/changed surface are authored here, and the `/qa` task authors the
 spec-derived ones (`testing.md` Rule 1) so "tests green" means something for
 *this* phase, not just pre-existing coverage; (2) run Phase 12's Steps
-0–5.5 — exception-log check, `/review`, verdict loop, the three-leg
+0–5.5 — exception-log check, `/review`, verdict loop, the four-leg
 commit gate — **scoped to that phase's diff**, before starting the next
 phase. Phase 12's Step 6 (close-out: Status flip, Notion revision
 entry) fires **once**, after the final phase's own Step 5.5 passes —
@@ -1037,8 +1053,8 @@ reach implementation, not while drafting.
   (close-out) fires once, after the final phase's Step 5.5. In brief:
   confirm the exception log is clean → invoke `/review` → verdict
   every finding (FIX / DISMISS / ESCALATE / DEFER) → re-review if any
-  CRITICAL existed → the three-leg commit gate (Iron Law 10 — lint,
-  tests, `/review`) → close out (flip `Status` to `Shipped (date,
+  CRITICAL existed → the four-leg commit gate (Iron Law 10 — lint,
+  tests, plan reconciliation, `/review`) → close out (flip `Status` to `Shipped (date,
   commit)` with the real hash, advance Stage to "Review").
 - **Phase 13 — Close flow.** Phase 12 closes the implementation; Phase
   13 closes the artefacts. **Stage 1** (mandatory, after every Phase

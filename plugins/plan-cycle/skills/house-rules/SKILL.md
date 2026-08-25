@@ -208,7 +208,9 @@ device-reported fix, re-read the plan (`ntn pages get <eng-plan-id>` + design /
 product) and grep the exact mechanism (門檻 / prev / elapsed / 自動), grounding
 both the action predicate and the button-disable predicate in the plan, not
 intuition. The plan's spec is itself a load-bearing claim — the same source-first
-bar as above applies to it.
+bar as above applies to it. (A mid-iteration "simpler stand-in" is now also a
+**named divergence trigger** — `plan/divergence.md §Engineering plan divergence`
+— so drifting toward one routes through Phase 11 instead of shipping quietly.)
 
 **Gate every reviewer finding through severity + minimalism before implementing
 it — reviewers propose, the engineer decides.** A report-only reviewer's severity
@@ -222,7 +224,10 @@ CRITICAL, when the real impact was a self-healing ~2s deferral (not CRITICAL) an
 `LoadingStateCode.backgroundLoading` already modeled it (an import IS a background
 load); founder caught both the over-grade and the parallel marker. Down-grade or
 push back on an over-graded finding instead of building infrastructure for it.
-(This is the diff-finding sibling of the plan-stage gate distrust below.)
+(This is the diff-finding sibling of the plan-stage gate distrust below. The
+two checks are now written into the verdict protocol itself —
+`review/SKILL.md §Verdict per finding` opens with them — so they fire in-flow;
+this entry keeps the incident that justifies them.)
 
 **Distrust the review gates on "should this exist at all".** The engineer-stage
 gate (`blueprint-reviewer`) optimizes *within* the chosen design and
@@ -243,9 +248,16 @@ optimization instinct. (The **code-time half** — extend the new-abstraction au
 to a new entity field / marker, and read "projected from / derived from /
 mirrors" as the parallel-marker tell — **has moved** to
 `.claude/rules/architecture.md §Adding New Abstractions`, so it now fires while
-the field is being written rather than only when a gate is consulted. What stays
-here is the **judgment** half: distrust a gate's endorsement on "should this
-exist at all".)
+the field is being written rather than only when a gate is consulted. The
+**mechanical** half is no longer only prose either: `plan-lint` hard-checks
+that every §Classes NEW row answers `為何要新增` in an evidence-bearing form
+and that every `既有方法夠嗎` cell is typed, the commit gate's reconciliation
+leg (`plan-lint --diff`, closeout Step 5.5 leg 3) blocks any class the plan
+never named, and `consistency-reviewer` independently re-greps the canonical-
+home claims on the diff. What stays here is the **judgment** half: distrust a
+gate's endorsement on "should this exist at all" — a check can verify that the
+question was answered with evidence; whether the answer holds is still yours
+to doubt.)
 
 ---
 

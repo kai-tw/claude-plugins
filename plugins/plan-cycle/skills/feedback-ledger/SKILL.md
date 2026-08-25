@@ -2,13 +2,15 @@
 name: feedback-ledger
 description: |
   The bounded ledger of unconsumed feedback about how this project's own process
-  and review gates are performing, in four categories: process · code-review ·
-  security-review · privacy-review. One item = one markdown file; all writes go
-  through `scripts/feedback.sh`. Review feedback is recorded whether it came from
-  the reviewer AGENT or from the FOUNDER — the founder's correction of a review
-  is the higher-signal half and the one most often lost. Consuming an entry means
-  folding it into a rule, a skill or a deletion and then DELETING the file; a
-  Stop hook nudges once per session when a category passes 5.
+  and review gates are performing, in five categories: process · code-review ·
+  security-review · privacy-review · recurring-bug. One item = one markdown file;
+  all writes go through `scripts/feedback.sh`. Review feedback is recorded whether
+  it came from the reviewer AGENT or from the FOUNDER — the founder's correction
+  of a review is the higher-signal half and the one most often lost; recurring-bug
+  is the intake queue that turns "this bug came back" into a durable check.
+  Consuming an entry means folding it into a rule, a skill, a failure-class
+  bucket or a deletion and then DELETING the file; `plan-cycle clear` nudges at
+  every close-out when a category passes 5 or any recurring-bug entry is open.
   TRIGGER: log feedback · record this feedback · file a retro entry · runner
   feedback · process retro · cycle retro · subtraction candidate · the reviewer
   was wrong · the reviewer missed this · this finding was over-reach · that gate
@@ -31,15 +33,16 @@ allowed-tools:
 
 # Feedback ledger
 
-Four categories, fixed. Each is a directory under `entries/`; each feedback item
+Five categories, fixed. Each is a directory under `entries/`; each feedback item
 is one markdown file in it.
 
 | Category | What lands here |
 |---|---|
-| `process` | Friction in the `/plan` cycle — a gate that misfired, a step that duplicated another, the per-cycle retro (gate `R/H/L` + the mandatory subtraction candidate) |
+| `process` | Friction in the `/plan` cycle — a gate that misfired, a step that duplicated another, the per-cycle retro (gate `R/H/L` + the measurement row + the mandatory subtraction candidate) |
 | `code-review` | How `code-reviewer` performed — a finding that was over-reach, a real defect it missed, a pattern worth teaching it |
 | `security-review` | Same, for `security-reviewer` |
 | `privacy-review` | Same, for `privacy-reviewer` |
+| `recurring-bug` | **A defect class this codebase fixed before, back again** — caught by the founder at PR review, hit by `/qa` while authoring, or counted in the retro's measurement row. The entry must anchor **both ends**: the prior fix (commit / incident / test id) and the new sighting (file:line or minimal repro). 「又來了」 without anchors cannot be consumed into a check — the anchors are what become the mutation pin or the mechanism-table checkpoint. |
 
 **Every entry names its `source`.** For the three review categories that is
 `agent` (the reviewer raised it about itself, e.g. a finding it later withdrew)
@@ -83,11 +86,23 @@ nothing prunes. So:
 - Never add a tombstone, a `— consumed —` divider, or a "done" marker. Git holds
   the history; the directory holds only what is still open.
 
-`.claude/hooks/feedback-tidy.sh` (Stop) reminds **once per session** when any
-category exceeds 5 — it prints nothing at all below the threshold, and the
-one-shot marker is what keeps a reminder from becoming a per-turn nag. It never
-tidies anything itself: what gets folded in and what gets dropped is the
-founder's call.
+**Consume routing — each category has a named destination**, so a consume batch
+is a sort, not a debate about where things go:
+
+| Category | Lands in |
+|---|---|
+| `process` | the owning skill file / a deleted step (the subtraction channel) |
+| `code-review` | `code-reviewer.md`'s checks, or a `.claude/rules/` line |
+| `security-review` / `privacy-review` | the matching rule pack, via its `CONVENTIONS.md` learning 更新法 |
+| `recurring-bug` | **one of two, both checks**: the qa failure-class index (a new bucket, or a mutation pin / case template on an existing one — `qa/failure-classes.md`) or the project's `.claude/rules/consistency.md` mechanism table (a checkpoint the mechanism's canonical helper must now enforce). A recurring bug consumed into prose has not been consumed. |
+
+**The nudge ships with the plugin**: `plan-cycle clear` prints it at every
+close-out — once per cycle, never per turn — when any category exceeds 5, and
+whenever **any** `recurring-bug` entry is open (threshold 0: a recurrence
+lesson has no safe backlog depth). A project may still add its own Stop-hook
+reminder (`.claude/hooks/feedback-tidy.sh`), but consumption no longer depends
+on a hook this plugin does not ship. The nudge never tidies anything itself:
+what gets folded in and what gets dropped is the founder's call.
 
 ## Who files what
 
@@ -98,6 +113,13 @@ founder's call.
 - **`/review`** files a `code-review` / `security-review` / `privacy-review`
   entry whenever a finding was wrong, missed, or over-reaching — from either
   side. A normal clean review files nothing.
+- **Any non-zero count in Step 6.7's measurement row owes entries.** The counts
+  are the trend; the entries are the content a consume batch acts on. A founder
+  finding at PR review → its review category (`--source founder`); each
+  recurring bug → `recurring-bug`; the retro `process` entry lists those entry
+  filenames so the batch finds them together.
+- **`/qa`** files a `recurring-bug` entry (`--source agent`) when a test it
+  authors catches a bug class the failure-class index says shipped before.
 - **The founder**, any time, in any category.
 
 ## What this is not

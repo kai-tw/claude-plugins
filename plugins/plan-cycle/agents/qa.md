@@ -79,7 +79,13 @@ Return ONLY:
 1. **Test files created / modified** — paths, not full bodies.
 2. **Bugs found while authoring** — the skill's one-line `BUG:` format
    (area · what breaks · severity · repro · caught-by).
-3. **Coverage gaps / failure-class index growth** the skill should adopt.
+3. **Coverage gaps / failure-class index growth** the skill should adopt —
+   and when the growth candidate is a *recurrence* (a bug class the index says
+   shipped before), file it yourself first via
+   `plan-feedback add recurring-bug --source agent` (anchor the prior fix +
+   the new sighting), then name the entry file here. A proposal that lives
+   only in this hand-back evaporates with the session; the ledger entry is
+   what the consume batch actually reads.
 4. **Any push-back question** the caller must resolve (per the protocol above).
 5. **Scoped-run verdict** — the tally (N passed / M failed) from the paths you
    ran, **naming those paths**, plus the failing test names if any. The caller

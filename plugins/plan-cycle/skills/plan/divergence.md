@@ -95,6 +95,13 @@ through the designer role and land in the spec before the diff ships.
 - A test seam doesn't exist where the plan assumed it.
 - An exception class taxonomy needs a different shape than
   sketched.
+- The implementation is drifting toward a **simpler stand-in** of the
+  plan's specified mechanism (a view-side approximation of a
+  repository-side judgment, a one-shot timer for a continuous
+  threshold). Re-inventing the mechanism mid-iteration is a
+  divergence, not an optimization — route it, or build to the plan
+  verbatim (`house-rules §Implement the APPROVED plan's mechanism
+  verbatim`; PR #76 is the measured incident).
 
 ## What does NOT count as divergence
 
@@ -103,7 +110,13 @@ through the designer role and land in the spec before the diff ships.
   role is unchanged is just typing.
 - **Sub-decisions inside an approved layer.** The plan said
   "add a `CloudSyncController`" — the exact private methods inside
-  that controller are implementation, not divergence.
+  that controller are implementation, not divergence. **The exemption
+  stops at named classes**: a new *class* (or top-level helper) is
+  never a sub-decision, however deep inside an approved layer it
+  lives — the commit gate's reconciliation leg (`plan-lint --diff`)
+  blocks any class no §Classes NEW row names, so an internal
+  subsystem that "grew" mid-implementation routes through here
+  first or does not land.
 - **Bug-fix exemptions discovered along the way.** Finding a real
   bug while implementing a feature, fixing it inline (no flow
   change), and noting it in the commit is fine — the bug fix is

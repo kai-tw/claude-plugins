@@ -371,6 +371,11 @@ Also verify:
 
 - `design-lint` passes on every delivered widget, and each one appears as a
   line in §Widgets.
+- Every **new** widget's §Widgets line carries its Iron-Law-4 evidence:
+  「查過 <既有共用元件> → <為何不重用>」— the designer-side twin of the
+  engineer's `為何要新增`. The Phase 2 inventory is where the answer comes
+  from; a new widget whose line names nothing it was checked against is a
+  snowflake that never proved no existing component fits.
 - Every screen covers all four states (Iron Law 5) — rendered by the widget and
   entered per §States. In delta mode, any new state added by the delta is
   covered; pre-existing states defer to the parent spec.
@@ -530,7 +535,7 @@ Mode: <full / delta (parent: <Design Plan row url>) / single-breakpoint>
 Design diff: <when revving an existing spec — how the new layout differs from the current one; omit only for a brand-new spec>
 Open questions: <all resolved with the user, or the deferrals they explicitly confirmed — none left dangling (Iron Law 9)>
 Renders: <build/design-mockups/<slug>/ — N PNGs surfaced; or "none (copy-only / pattern-following delta)">
-Rules audit: <all passed | N 違規已修, 全 passed> (blueprint-reviewer checklist, Phase 8)
+Design gates: <design-lint 全綠 · ux-reviewer <verdict / pending Adversarial>> (Phase 8 — 本 role 沒有 checklist gate)
 Stage → Engineering Plan (TaskList task advanced via the archivist skill)
 Next step: <hand-off to engineering, open questions, or follow-up>
 ```

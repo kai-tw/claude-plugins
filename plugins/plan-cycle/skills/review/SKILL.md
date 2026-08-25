@@ -10,7 +10,9 @@ description: |
   of "code embodies the approved plan" that /qa's spec tests can't pin) ·
   test-reviewer (test DESIGN, both halves of the test/** partition) ·
   ux-reviewer (design-spec usability) · feasibility-reviewer (downstream
-  deliverability of an upstream plan). All are report-only — the caller acts on the findings.
+  deliverability of an upstream plan) · consistency-reviewer (cross-feature
+  mechanism parity — second sources of truth, sibling check-set divergence,
+  duplicate capability). All are report-only — the caller acts on the findings.
   TRIGGER: code review · review the code · review my changes · review this ·
   review the tests · test review · are these tests any good · 審一下測試 ·
   check my code · review before commit · security review · threat model X ·
@@ -18,6 +20,7 @@ description: |
   rules audit X · review the plan · blueprint review · design-quality review ·
   conformance review · feasibility review · ux review · usability review ·
   heuristic review · will this confuse a first-time user · run review ·
+  consistency review · 一致性檢查 · 跟既有的做法一致嗎 · duplicate implementation ·
   幫我 review · 檢查這段 code · review 一下改動 · 安全性檢查 · 威脅模型 ·
   隱私檢查 · 可用性檢查 · 這樣使用者會不會困惑 · 審一下計畫
   NOT for: bug investigation → /bug-investigate · format runs (the Stop hook) ·
@@ -56,6 +59,7 @@ pass, it does not replace it.
 | **Test design** (change-detectors, untagged cases, illegal fakes, partition breaches) | `test-reviewer` | every test the diff adds / changes — engineer-owned and `/qa`-owned alike | **return to caller** (no file) |
 | **UX** (usability, first-time-user confusion) | `ux-reviewer` | a design spec (at design time; it right-sizes itself — say "go deep" / "light pass" to override) | **return to caller** (no file) |
 | **Feasibility** (downstream deliverability, early-bounce) | `feasibility-reviewer` | a PM plan (designer + engineer lens) or a design spec (engineer lens) — never the engineering plan | **return to caller** (no file) |
+| **Consistency** (cross-feature mechanism parity — second truth sources, sibling check-set divergence, duplicate capability) | `consistency-reviewer` | the diff + the plan's §Conformance 同儕 rows, vs the sibling implementations + `.claude/rules/consistency.md` mechanism table | **return to caller** (no file) |
 
 Pick by trigger phrase. If the user asks for "review my changes" without
 specifying, ask once which dimension(s) they mean — don't guess. If they ask for
@@ -66,11 +70,12 @@ mockup-fidelity is a manual founder check. The `conformance-reviewer` checks
 **shipped code vs the approved spec** (is a required state / motion / interaction
 actually implemented), not mockup-vs-design-rules.
 
-**All seven reviewers are 不落檔** — they grade and **return their
-findings to this dispatcher** (security/privacy/ux/feasibility: each item `passed` /
-`warning` / `critical`, looped until all `passed`;
+**Every reviewer above is 不落檔** — they grade and **return their
+findings to this dispatcher** (security/privacy/ux/feasibility/consistency:
+each item `passed` / `warning` / `critical`, looped until all `passed`;
 code-reviewer / blueprint-reviewer: the consolidated report
-inline). No file output.
+inline). No file output. (No count here on purpose — the roster grows, and a
+hardcoded number is a staleness bug waiting to print.)
 
 ## Spawn protocol
 
@@ -93,6 +98,16 @@ graded findings for security / privacy / ux / feasibility) + a one-line overall 
 **Every finding gets an explicit verdict — silent skipping is forbidden.**
 
 ### Verdict per finding
+
+**Before verdicting, pass each finding through two checks** (the measured
+failure both ran the other way — see `house-rules §Gate every reviewer finding
+through severity + minimalism`): a **severity check** — is it truly CRITICAL
+(data-loss / crash / security), or a minor / self-healing trade-off wearing the
+label? — and a **minimalism check** — does existing domain state (a code, an
+enum, a nullable) already model the fact, so the "fix" would build a parallel
+marker? Reviewers propose; the engineer decides. Down-grading an over-graded
+finding, with the reason stated, is a legitimate verdict — building
+infrastructure for one is not.
 
 For each finding the reviewer filed, report a verdict from this set:
 

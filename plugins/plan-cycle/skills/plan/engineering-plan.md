@@ -47,11 +47,19 @@ The gate verifies the engineering plan covers, at a minimum:
   prose is the measured top cause of review bounces.
 - **Affected layers and modules** — concrete file / package /
   feature paths that change, are added, or are removed.
-- **Class / interface / data-shape sketch** — names and roles of
-  new classes, new fields on existing entities, new use cases,
-  new exception classes. Conformance with `architecture.md` and
-  `naming.md` + `error-handling.md` noted per
-  affected module.
+- **Class / interface / data-shape sketch (§Classes)** — a summary
+  table where every touched class carries a real file path marked
+  `NEW` / `MOD` / `DEL`, and **every NEW row answers `為何要新增`** in
+  one of the schema's evidence-bearing forms (框架/平台：<查過什麼 →
+  結論> / canonical home：grep <什麼> → <為何 reuse 不了> /
+  套件 <名>@<版>：<contract clause> → <source>) — this column is the
+  cycle's only landing spot for "should this exist at all", and the
+  gate treats a blank one as an unasked question, not a formality.
+  Per-class contract tables carry `既有方法夠嗎` as typed evidence
+  (same vocabulary as §事實帳). `plan-lint` hard-checks all three:
+  the file markers against the repo, the NEW-row justifications, and
+  the evidence typing. Conformance with `architecture.md` and
+  `naming.md` + `error-handling.md` noted per affected module.
 - **Data flow** — sequence of who-calls-whom across layers for
   each user-facing scenario named in the product plan.
 - **Migration / backward compat** — impact on existing state,
@@ -97,7 +105,12 @@ plan's revision history, and re-requests user approval for
 the delta.
 
 Do not silently choose a different architecture mid-diff. See
-`divergence.md` for the full procedure.
+`divergence.md` for the full procedure. This is not left to
+self-report alone: the commit gate's reconciliation leg
+(`plan-lint <plan> --diff`, `closeout.md §Step 5.5` leg 3) blocks any
+diff that adds a file or class no §Classes NEW row names, so a
+subsystem invented mid-implementation must pass back through this
+divergence route — or be deleted — before it can land.
 
 ## Language
 

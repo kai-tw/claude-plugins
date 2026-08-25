@@ -2,7 +2,7 @@
 
 `Read` this file when one or more buckets in the SKILL.md
 **Failure-class catalog** are activated by the feature under test
-(usually 2–3 of the 7, not all seven). Each entry below provides
+(usually 2–3 buckets, never the whole index). Each entry below provides
 canonical case templates — apply the technique catalog to derive
 the cases that fit *this* feature, don't copy the examples
 verbatim.

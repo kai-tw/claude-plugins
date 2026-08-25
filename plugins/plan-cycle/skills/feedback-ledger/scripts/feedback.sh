@@ -2,8 +2,11 @@
 # feedback.sh — the one mechanical interface to the feedback ledger.
 #
 # One feedback item = one markdown file under
-# `docs/feedback-ledger/entries/<category>/`. Four categories, fixed:
-# process · code-review · security-review · privacy-review.
+# `docs/feedback-ledger/entries/<category>/`. Five categories, fixed:
+# process · code-review · security-review · privacy-review · recurring-bug.
+# `recurring-bug` is the intake queue for "a defect class we fixed before came
+# back" — the entry must name the prior fix AND the new sighting, because a
+# lesson without anchors cannot be consumed into a check.
 #
 # WHY per-file instead of the old single-table ledger: the table was appended by
 # every cycle and pruned by nobody, so it grew one-way and every edit was a
@@ -16,7 +19,7 @@
 
 set -uo pipefail
 
-CATEGORIES='process code-review security-review privacy-review'
+CATEGORIES='process code-review security-review privacy-review recurring-bug'
 SOURCES='founder agent runner'
 
 root() {
@@ -60,15 +63,19 @@ plan-feedback — feedback ledger operations
   add <category> --source <who> --title "<one line>" [--cycle <slug>]
         Body is read from STDIN. Creates one file; prints its path.
   list [category]        Table every entry (category, date, source, title).
-  count [category]       Per-category counts; bare `count` covers all four.
+  count [category]       Per-category counts; bare `count` covers every category.
   over [n]               Print categories with more than n entries (default 5).
                          Exit 1 if any is over, 0 if none. Silent when none.
   dir                    Print the entries directory. This script owns that
                          path; anything else needing it asks here rather than
                          keeping a second copy that can drift.
 
-  category: process | code-review | security-review | privacy-review
+  category: process | code-review | security-review | privacy-review | recurring-bug
   source:   founder | agent | runner
+
+recurring-bug entries must anchor BOTH ends: the prior fix (commit / incident /
+test id) and the new sighting (file:line or repro) — consumption lands them in
+the qa failure-class index or the project's consistency mechanism table.
 
 Record review feedback whether it came from the reviewer agent (--source agent)
 or from the founder (--source founder) — a founder correction of a review is

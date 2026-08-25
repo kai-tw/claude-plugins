@@ -326,8 +326,9 @@ plan-cycle: CLEAR REFUSED — no runner-feedback entry for this cycle.
   Cycle: ${slug}
 
 Step 6.7 (plan/SKILL.md §Process retro): before clearing, file ONE process
-entry carrying this cycle's slug (in the MAIN tree) — per-gate R/H/L, friction,
-and the MANDATORY subtraction candidate:
+entry carrying this cycle's slug (in the MAIN tree) — fields per §Process
+retro (per-gate R/H/L · the measurement row · friction · the MANDATORY
+subtraction candidate):
 
   plan-feedback add process \\
     --source runner --cycle ${slug} --title "Cycle retro: ${slug}" <<'BODY'
@@ -342,6 +343,25 @@ EOF
       fi
     fi
     rm -f "$LEDGER"
+    # --- Consume nudge (feedback-ledger) --------------------------------------
+    # Close-out is the one natural moment to remind: once per cycle, never per
+    # turn, and shipped WITH the plugin — the ledger's old note pointed at a
+    # project-side Stop hook this plugin never shipped, so in a repo without
+    # one the only consume trigger was the founder remembering. Fail open on
+    # every path: a missing launcher must never make `clear` noisy or fail.
+    # `bash "$FB"`, `-f` not `-x`: an exec bit can be lost in transit (a copy,
+    # an unzip) and a nudge that silently vanished with it would be this
+    # mechanism's own silent-skip.
+    FB="$(dirname "${BASH_SOURCE[0]}")/plan-feedback"
+    if [ -f "$FB" ]; then
+      over=$(bash "$FB" over 5 2>/dev/null) || true
+      [ -n "$over" ] && printf 'plan-cycle: NOTE — feedback ledger over threshold; run a consume batch (feedback-ledger §Consume routing):\n%s\n' "$over" | sed '2,$s/^/  /'
+      rb=$(bash "$FB" count recurring-bug 2>/dev/null | awk 'NR==1 { print $2 }') || true
+      case "$rb" in ''|*[!0-9]*) rb=0 ;; esac
+      [ "$rb" -gt 0 ] && printf 'plan-cycle: NOTE — %s open recurring-bug entr%s — a recurrence lesson has no safe backlog depth; consume into the qa failure-class index or the consistency mechanism table.\n' "$rb" "$([ "$rb" -eq 1 ] && echo y || echo ies)"
+    fi
+    :   # a quiet ledger must not turn clear's exit code into 1 — the NOTE
+        # lines are informational, and clear succeeded the moment rm ran
     ;;
 
   status)  # human / debug

@@ -33,8 +33,11 @@ hit 'pubspec|dependencies:|\^[0-9]+\.[0-9]|新增套件|package_' \
 # Ownership is deliberately broad: a second source of truth reads as a clean
 # addition, so a missed flag costs more than a spurious one. Any new field,
 # entity, method or wrapper — and every projected/derived/mirrors phrasing —
-# earns the dimension.
-hit 'projected from|derived from|mirrors|新增 field|new field|wrapper|helper|manager|_service|canonical' \
+# earns the dimension. The role-noun list exists because the measured escape
+# was a plan that used none of the original keywords: a `FooCoordinator` with
+# no "wrapper/helper/manager" in sight never got dimension 10 suggested. A
+# ScrollController mention triggering this spuriously is the accepted cost.
+hit 'projected from|derived from|mirrors|新增 field|new field|new class|新增 class|wrapper|helper|manager|coordinator|controller|registry|orchestrator|handler|engine|_service|service\b|store\b|canonical' \
   && echo "  - Abstraction / ownership (canonical home: does this datum already have an owner?)"
 hit 'schemaVersion|persisted.?schema|migration|VersionedJson|metadata\.json|changed.*signature|wrapper.*delet|caller' \
   && echo "  - Migration & back-compat (schema / caller / wrapper-gate; run tool/version_diff.sh)"

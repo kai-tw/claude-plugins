@@ -376,7 +376,7 @@ Diff against that tag to see what a change adds over the release; something on
 ## What this is not
 
 - **Not the commit gate.** Which legs must pass before a commit (codegen → lint →
-  test → `/review` → user auth, plus the staged-safety check) is
+  test → plan reconciliation → `/review` → user auth, plus the staged-safety check) is
   `engineer/references/closeout.md §Step 5.5 (Iron Law 10)`. This skill only
   covers the mechanical traps around those operations.
 - **Not worktree creation / the /plan cycle.** Precondition, base capture,

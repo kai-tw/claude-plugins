@@ -393,7 +393,7 @@ it never grades a draft that is about to change.
 | **designer plan** | `design-lint` (script, not an agent — the shipped widgets) | `ux-reviewer`(usability, against the renders + widget source) ∥ `feasibility-reviewer`(engineer lens) |
 | **engineer plan** | `plan_lint.sh` (script, not an agent) | `blueprint-reviewer` ∥ `security-reviewer`(threat model) — *boundary-gated* ∥ `privacy-reviewer`(data flow) — *boundary-gated* |
 | **code (after implementation)** | `code-reviewer` | `security-reviewer`(code) — *boundary-gated on the diff* ∥ `privacy-reviewer`(code sinks) — *boundary-gated on the diff* |
-| **after QA** | — | `conformance-reviewer` — the residue QA's spec tests can't pin ∥ `test-reviewer` — test design, both halves |
+| **after QA** | — | `conformance-reviewer` — the residue QA's spec tests can't pin ∥ `test-reviewer` — test design, both halves ∥ `consistency-reviewer` — cross-feature mechanism parity, *boundary-gated*: runs when the plan carries §Conformance `同儕：` rows, or the diff touches a mechanism the project's `.claude/rules/consistency.md` table names, or spans ≥ 2 features |
 
 Because PM and designer share one round (§Step 4), their two Sanity cells run as
 one batch and their two Adversarial cells as one battery — one Resolve between
@@ -538,9 +538,14 @@ The main thread runs each authoring phase in-thread, so it can ask the user
 directly. A round has five steps, and **the founder appears exactly once**:
 
 1. **Draft.** Run the authoring role (`pm` / `designer` / `engineer`) in-context
-   by invoking its skill **via the Skill tool**. Do everything that does **not**
-   need the user, and collect the open questions (each: the question, options,
-   your recommendation, what it blocks) — don't surface them yet.
+   by invoking its skill **via the Skill tool**. **Consult the `house-rules`
+   skill before proposing a solution or sizing what to build** — its
+   §Engineering-taste rules carry the measured incidents (minimal mechanism,
+   parallel markers, gate distrust) that the questionnaires ask about but
+   cannot teach; this is one of the three consult points its own description
+   names, now wired in rather than left to memory. Do everything that does
+   **not** need the user, and collect the open questions (each: the question,
+   options, your recommendation, what it blocks) — don't surface them yet.
    *In the merged PM + designer round, draft both artifacts here, back-to-back.*
 2. **① Sanity gate (旁觀, player ≠ referee).** For a **pm** artifact,
    spawn `blueprint-reviewer` in **checklist mode** as an **isolated sub-agent**
@@ -1051,7 +1056,7 @@ report (§After code) is already on it; pressing the button stays theirs.
    ```bash
    plan-feedback add process \
      --source runner --cycle <slug> --title "Cycle retro: <slug>" <<'BODY'
-   …gate R/H/L · friction · the mandatory subtraction candidate…
+   …gate R/H/L · 量測列（founder findings 分 reuse／一致性／其他 · --diff 對帳差異 · 復發 bug）· friction · the mandatory subtraction candidate…
    BODY
    ```
 
@@ -1083,14 +1088,28 @@ it while hot; the founder consumes it in batches and rules on subtractions.
 
 - **Collect (every cycle — Step 6.7):** file one `process` entry via the
   `feedback-ledger` skill — per-gate `R/H/L` (confirmed-real findings /
-  hallucinated-or-dismissed / loops to clean), friction events (spurious
-  ledger blocks, steps that duplicated another), and a **mandatory
+  hallucinated-or-dismissed / loops to clean), the **measurement row** (three
+  integers that say whether the gates are actually moving the failure earlier:
+  founder findings at PR review **by kind** — reuse / process-consistency /
+  other; `plan-lint --diff` reconciliation deltas this cycle; recurring bugs —
+  a defect class this codebase has fixed before, back again), friction events
+  (spurious ledger blocks, steps that duplicated another), and a **mandatory
   subtraction candidate** ("if I could delete one step this cycle: X, because
   Y"). Never blank — "nothing to delete" requires naming the runner-up step
-  and why it survives.
-- **Consume (when the Stop hook nudges, or on founder demand):** read the
-  entries, aggregate per-gate hit rates + the most-nominated subtraction
-  candidates, and put demote / delete / keep proposals to the founder via
+  and why it survives. The measurement row is what the batch consume reads as
+  a trend: a gate whose kind-count refuses to fall is not doing its job, and a
+  HARD check whose `H` beats its `R` for consecutive cycles is a subtraction
+  candidate by number, not by feel. **Any non-zero count owes entries of its
+  own**: each founder finding lands in its review category, each recurring bug
+  lands in `recurring-bug` (anchoring the prior fix it undoes AND the new
+  sighting), and this retro entry lists those filenames — the counts are the
+  trend, the entries are what a consume batch can act on.
+- **Consume (when `plan-cycle clear` nudges at close-out, or on founder
+  demand):** read the entries, aggregate per-gate hit rates + the most-nominated
+  subtraction candidates, route each category to its named destination
+  (`feedback-ledger §Consume routing` — recurring-bug goes to the qa
+  failure-class index or the consistency mechanism table, never to prose), and
+  put demote / delete / keep proposals to the founder via
   `AskUserQuestion`. Apply approved edits to the skill files, then **delete each
   consumed entry file** — an entry that survives its own consumption is the
   one-way growth this channel exists to prevent. A still-unresolved item stays
@@ -1148,6 +1167,7 @@ Two execution mechanisms:
 | `privacy-reviewer` | `review/rules/privacy/` | Agent / opus |
 | `code-reviewer` | the diff | Agent / opus |
 | `conformance-reviewer` | the plan's residue after QA's spec tests | Agent / opus |
+| `consistency-reviewer` | `review/rules/consistency/` + the plan's 同儕 rows | Agent / opus |
 | `test-reviewer` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` vs every test in the diff | Agent / opus |
 | `feasibility-reviewer` | the upstream plan vs downstream deliverability | Agent / opus |
 | `ux-reviewer` | `review/rules/ux/` (the design spec's usability) | Agent / opus |
@@ -1194,7 +1214,7 @@ over a description of it.
 
 **Launcher detail files:**
 
-- `artifacts.md` — location conventions, naming, folder reuse, citation format.
+- `artifacts.md` — Notion row locations per plan type, naming, citation format, scope rules.
 - `engineering-plan.md` — gate-side required-contents summary for the engineer plan.
 - `divergence.md` — mid-flow re-authoring procedure.
 - `todo-backlog.md` — deferred items go to the feature's TaskList task.

@@ -191,8 +191,8 @@ aren't on this macOS PATH — use the Bash tool's own `timeout` parameter.
 2. **Risk analysis.** Walk the **Failure-class catalog** and scan the
    **Test categories** jog below; list what could fail and how badly,
    and **pick only what the change's surface touches** — usually 2–3
-   failure-class buckets (not all seven) and a handful of categories
-   (not all sixteen).
+   failure-class buckets (never the whole index — it grows, so no count
+   here) and a handful of categories (not all sixteen).
 3. **Design test cases.** Apply the **Test design techniques** table
    — derive cases from both the input space (techniques 1–8) and the
    failure space (FMEA-lite, mutation sensitivity). Tag each case
@@ -365,8 +365,9 @@ first) for the canonical shape.
 
 The buckets below are bug **classes** that have shipped in this
 codebase before. Treat the index as inspiration for risk analysis,
-not an exhaustive ledger — a feature usually activates 2–3 of the
-seven, not all seven. **When a bucket fires, `Read
+not an exhaustive ledger — a feature usually activates 2–3 buckets,
+never the whole index (the index grows; a hardcoded count here has
+already gone stale once). **When a bucket fires, `Read
 ${CLAUDE_PLUGIN_ROOT}/skills/qa/failure-classes.md` §N** for the
 canonical case templates, then re-derive the actual cases with the
 technique catalog above.
@@ -449,9 +450,14 @@ the Bug-note format, Iron Law 1, and Iron Law 4; refuse per those.)
   test plans + QA logs are trashed, never archived. There is no live
   `docs/test-plans/` directory.
 - **Doesn't maintain a cross-cycle memory library.** The Failure-class
-  index above is compact and lives inline. If a genuinely new failure
-  class appears, propose growing the index by editing this `SKILL.md`
-  directly.
+  index above is compact and lives inline — but it no longer grows by
+  someone remembering to edit it. **Its intake queue is the feedback
+  ledger's `recurring-bug` category**: when a test you author catches a
+  bug class this index says shipped before, file
+  `plan-feedback add recurring-bug --source agent` (anchor the prior
+  fix and the new sighting) before handing back. Index growth happens
+  at consume time, founder-gated, per `feedback-ledger §Consume
+  routing` — a new bucket or a mutation pin on an existing one.
 - **Doesn't run lints, format, or rebuild.** The Stop hook
   (`.claude/hooks/stop-validate.sh`) covers `dart format` and the
   any sub-project lint + build for files this turn changed; the Dart lint
