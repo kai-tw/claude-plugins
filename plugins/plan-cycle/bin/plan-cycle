@@ -40,7 +40,9 @@
 #   mismatch degrades to "no file → no block" (never a false block on unrelated
 #   work). Note: resuming a cycle in a BRAND-NEW session won't inherit the old
 #   session's ledger (it keys to the new id) — enforcement simply restarts;
-#   Notion Stage still reflects reality.
+#   Notion Stage still reflects reality. The one obligation that must NOT wait
+#   for the owning session to return is a merged PR's close-out, so `sweep`
+#   reads every ledger in the tree regardless of key (SessionStart hook).
 #
 # Mutators no-op when no cycle is active; `check` is silent (exit 0) then too —
 # so the hook is invisible for non-/plan work.
@@ -463,8 +465,48 @@ EOF
     exit 0
     ;;
 
+  # A close-out is owed the moment the PR merges, but the ledger that records it
+  # is keyed to the session that opened the PR — and the merge usually lands
+  # several sessions later. `check` (Gate 2) therefore cannot see it: it reads
+  # only the CURRENT session's ledger, so the owed close-out surfaces only if an
+  # unrelated later turn in that same session happens to trip the Stop hook.
+  # `sweep` closes that window by reading EVERY ledger in the tree and reporting
+  # the merged-but-open ones. It is informational and never blocks — SessionStart
+  # has no block channel, and a cross-session report is a reminder, not a verdict
+  # about the turn that is starting.
+  sweep)
+    [ -d "$LEDGER_DIR" ] || exit 0
+    owed=""
+    for f in "$LEDGER_DIR"/*.json; do
+      [ -e "$f" ] || continue
+      pr=$(jq -r '.pr // ""' "$f" 2>/dev/null)
+      [ -n "$pr" ] || continue
+      base=$(jq -r '.base // "main"' "$f" 2>/dev/null)
+      merged_on_base "$pr" "$base" || continue
+      slug=$(jq -r '.slug // ""' "$f" 2>/dev/null)
+      title=$(jq -r '.title // ""' "$f" 2>/dev/null)
+      stage=$(jq -r '.stage // "?"' "$f" 2>/dev/null)
+      whose=""
+      [ "$(basename "$f" .json)" = "$SID" ] || whose="  ← opened in an earlier session"
+      owed="${owed}  • PR #${pr} merged — ${slug}${title:+ (${title})} · Stage ${stage}${whose}
+"
+    done
+    [ -n "$owed" ] || exit 0
+    cat <<EOF
+PLAN-CYCLE — merged PR with an unclosed cycle ledger:
+
+${owed}
+Iron Law 7 — a cycle is not done until it is closed out. Reconcile before taking
+new work: verify against Notion whether the close-out actually ran, then either
+finish it (Feature Archive row, trash the task row, tear down the worktree +
+branch, \`plan-feedback\` entry) or, if it did run and only the ledger survived,
+\`plan-cycle clear\`.
+EOF
+    exit 0
+    ;;
+
   *)
-    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|clear|status|check}" >&2
+    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|clear|status|check|sweep}" >&2
     exit 0
     ;;
 esac

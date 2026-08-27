@@ -92,6 +92,21 @@ plainly + cite where it's recorded, THEN act. If the resolution was "we removed
 X", grep the code + mockup for the lingering arm (it reopens the question every
 time it's seen) and make the surface self-answer.
 
+**A second correction on the same root cause means stop patching and re-derive
+the boundary.** When two proposals in a row are rejected for the same underlying
+reason, the first fix answered the *surface* of the correction — a renamed
+parameter, a swapped type — not the ownership question it was pointing at. WHY:
+a `bool stopIfSignedIn` parameter was rejected for putting the caller's
+condition inside the use case; the next proposal made it a `bool Function()?
+shouldStop` predicate — different type, identical defect — and drew the heaviest
+correction of that cycle:「禁止使用 function parameter 做控制，你應該做的是把邏輯
+搬到 use case 裡面處理……權責邊界也搞不清楚胡亂加 param，這是在敷衍我」。HOW: on
+the second correction, do not propose a third shape. Restate in one sentence
+**which layer owns this capability and who decides**, get that confirmed, then
+design. The shape that was finally accepted — the use case exposes `cancel()`,
+the caller decides when to call it — is what re-deriving produces; adjusting the
+parameter never arrives there.
+
 **Outward-facing changes: unambiguous flips are covered; judgment calls get
 per-change confirmation BEFORE dispatch.** A general "wrap up the statuses"
 mandate (「Notion 狀態記得收尾」) authorizes the mechanical flips (engineering

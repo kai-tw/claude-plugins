@@ -458,12 +458,30 @@ rehomed **by kind**:
     conclusion already legible in the second round's finding. Judge by the
     finding's kind, never by the round number.
 
-**Green is not proof.** One measured cycle had two checklist findings whose
-conclusions were right but whose supporting reasoning was factually wrong; the
-author fixed against the wrong reasoning and the re-run passed it — the error
-surfaced only because the author independently grepped the source. A gate's
-verdict is evidence, not a certificate: when a finding's reasoning is
-load-bearing, verify it against the code before acting on it.
+**Green is not proof — and neither is red.** A gate's verdict is evidence, not a
+certificate, in both directions: a re-run can pass against wrong reasoning, and a
+finding can be wrong on its face. *Measured:* one author fixed against a finding
+whose conclusion was right but whose supporting reasoning was false, and the
+re-run passed it; another adopted a race finding that the method's own doc
+comment and a pinned test both contradicted, and only the suite going red
+revealed it. So before a finding becomes a code change, **name what makes it
+true** — the existing test it turns red, or the source line that proves it.
+Neither can be named? Write the failing test first; if that test cannot be
+written, the finding is what is wrong.
+
+**A direction claim is settled by executing it, never by reviewing it again.**
+Paper review is structurally weak at truth-table errors — an inverted
+comparison, a reversed guard — because each round's attention follows what
+changed most recently, so a line that stopped changing reads as already
+verified, and the rounds accumulate confidence instead of evidence. *Measured:*
+an inverted `!=` survived three consecutive review rounds plus the author's own
+truth-table checks, across revisions in which the new feature never once
+executed. When a plan adds a condition to an existing loop or method, the first
+verification is a runnable test of that truth table — a throwaway worktree is
+enough — not another review round. The converse is what review is *for*:
+ownership and shared-state defects (a capability sitting in the wrong layer, a
+private field shared across callers) are found by judgment, not by execution, and
+stay worth sending.
 
 **`blueprint-reviewer` runs on every engineer plan** — never skipped, not even on
 a single-slice increment, which would otherwise have no judgment gate at all, only

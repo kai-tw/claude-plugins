@@ -1,22 +1,32 @@
 #!/usr/bin/env bash
-# plan-cycle-gate.sh — Stop-hook adapter for the plan-cycle ledger.
+# plan-cycle-gate.sh — hook adapter for the plan-cycle ledger.
 #
 # WHY THIS EXISTS
-#   `bin/plan-cycle check` decides whether an active /plan cycle has advanced
-#   past a plan phase whose row never landed. It reports that as exit 1 + a
-#   human-readable reason on stdout. Claude Code's Stop hook speaks a different
-#   language: a JSON object on stdout with {"decision":"block","reason":...}.
-#   This adapter is the translation layer, nothing more.
+#   `bin/plan-cycle` reports in one language — a human-readable reason on stdout
+#   plus an exit code. Claude Code's hooks each speak a different one. This
+#   adapter is the translation layer, nothing more.
+#
+#   Stop:         `check`, whose exit 1 becomes {"decision":"block", ...}.
+#   SessionStart: `sweep`, whose output becomes additionalContext.
 #
 #   It deliberately does NOT run project validation (formatters, builds, tests).
 #   Those belong to each project's own Stop hook — they differ per repo, and
 #   folding them in here would make the plugin un-shareable.
 #
+# WHY BOTH EVENTS
+#   `check` is session-scoped: the ledger is keyed by session id, so it can only
+#   ever gate the session that opened the cycle. A PR normally merges SEVERAL
+#   sessions after that one ends, and the close-out owed by the merge then has
+#   no hook that can see it — it surfaces only if some unrelated later turn in
+#   the original session trips Stop. `sweep` is the cross-session half: it reads
+#   every ledger in the tree at session start and reports the merged-but-open
+#   ones. Reporting, never blocking — SessionStart has no block channel, and the
+#   finding is about an earlier cycle, not about the turn now beginning.
+#
 # SESSION ISOLATION
-#   The ledger is keyed by session id so concurrent sessions never see each
-#   other's cycle. The id arrives on this hook's stdin; we pass it as an
-#   ARGUMENT rather than exporting an environment variable, matching the
-#   contract `bin/plan-cycle` expects.
+#   The session id arrives on this hook's stdin; we pass it as an ARGUMENT
+#   rather than exporting an environment variable, matching the contract
+#   `bin/plan-cycle` expects.
 #
 # FAILING OPEN
 #   Every failure path here exits 0 with no output — no ledger, no jq, an
@@ -31,9 +41,20 @@ input=$(cat)
 command -v jq >/dev/null 2>&1 || exit 0
 
 sid=$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)
+event=$(printf '%s' "$input" | jq -r '.hook_event_name // empty' 2>/dev/null)
 
 gate="$(dirname "${BASH_SOURCE[0]}")/../bin/plan-cycle"
 [ -x "$gate" ] || exit 0
+
+if [ "$event" = "SessionStart" ]; then
+  out=$(bash "$gate" --session "$sid" sweep 2>/dev/null)
+  # Silent when nothing is owed, so a session with no merged-but-open cycle
+  # starts with no injected context at all.
+  [ -n "$out" ] || exit 0
+  ctx=$(printf '%s\n' "$out" | jq -Rs .)
+  printf '{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": %s}}\n' "$ctx"
+  exit 0
+fi
 
 out=$(bash "$gate" --session "$sid" check 2>/dev/null)
 ec=$?
