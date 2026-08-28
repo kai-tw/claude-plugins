@@ -14,23 +14,36 @@
 #   cubit and arrive as parameters; constructing one here would put a disposable
 #   resource in a layer that has no business releasing it.
 #
-# Usage: design-lint <widget.dart | dir> ...
+# Usage: design-lint [widget.dart | dir] ...   (no argument = sweep *.design.dart)
 # Exit: 0 = no hard failures, 1 = hard failure printed above, 2 = bad usage.
 set -uo pipefail
 export LC_ALL=en_US.UTF-8
 
-[ "$#" -gt 0 ] || { echo "usage: design-lint <widget.dart | dir> ..." >&2; exit 2; }
-
+# WITH NO ARGUMENTS, sweep every `*.design.dart` under the tree — the ownership
+# marker (../ownership.md). Pointing this at a `presentation/` directory also
+# lints the engineer-owned widgets living there, and relies on whoever runs it
+# remembering which paths were the designer's. The marker removes both problems,
+# and lets any later phase (implementation, review, CI) re-run the gate without
+# carrying a list of filenames forward.
 files=""
-for target in "$@"; do
-  if [ -d "$target" ]; then
-    files="${files}$(find "$target" -name '*.dart' -type f 2>/dev/null)"$'\n'
-  elif [ -f "$target" ]; then
-    files="${files}${target}"$'\n'
-  else
-    echo "usage: no such file or directory: $target" >&2; exit 2
-  fi
-done
+if [ "$#" -eq 0 ]; then
+  files="$(find . -name '*.design.dart' -type f 2>/dev/null)"
+  [ -n "$files" ] || {
+    echo "usage: no *.design.dart under $(pwd) — name designer-shipped widgets" >&2
+    echo "       <widget>.design.dart, or pass explicit paths." >&2
+    exit 2
+  }
+else
+  for target in "$@"; do
+    if [ -d "$target" ]; then
+      files="${files}$(find "$target" -name '*.dart' -type f 2>/dev/null)"$'\n'
+    elif [ -f "$target" ]; then
+      files="${files}${target}"$'\n'
+    else
+      echo "usage: no such file or directory: $target" >&2; exit 2
+    fi
+  done
+fi
 files="$(printf '%s' "$files" | grep -v '^$' || true)"
 [ -n "$files" ] || { echo "usage: no .dart files under the given paths" >&2; exit 2; }
 
@@ -39,8 +52,16 @@ count=0
 
 # 1. HARD — no data wiring. The designer builds presentation; data arrives as
 #    constructor parameters and actions leave as callbacks.
-BANNED_IMPORT='^\s*import .*(repositor|/service|_service|cubit|bloc|provider|get_it|injectable)'
-BANNED_CALL='(context\.(read|watch|select)\b|BlocBuilder|BlocListener|BlocConsumer|Consumer<|StreamBuilder|FutureBuilder)'
+#    Riverpod is named alongside Bloc because every pattern here was Bloc-shaped
+#    and NONE of them matched it: `riverpod` does not contain the substring
+#    `provider` (r-i-v-e-r-p-o-d), and its widget bases are `ConsumerWidget` /
+#    `ConsumerStatefulWidget`, which carry no `<`. Seven isolated fixtures — a
+#    bare riverpod import, each Consumer base, and each of `ref.read` / `watch` /
+#    `listen` / `invalidate` — every one printed PASS. A Riverpod project could
+#    import the state layer and read from it inline while this lint called the
+#    file presentation-only. Pure addition for Bloc projects.
+BANNED_IMPORT='^\s*import .*(repositor|/service|_service|cubit|bloc|provider|riverpod|get_it|injectable)'
+BANNED_CALL='(context\.(read|watch|select)\b|\bref\.(read|watch|listen|invalidate)\b|BlocBuilder|BlocListener|BlocConsumer|Consumer<|\b(Hook)?Consumer(Widget|StatefulWidget|State)\b|StreamBuilder|FutureBuilder)'
 
 # 2. HARD — lifecycle resources belong to the state layer, not here. Receiving
 #    one as a parameter is correct; CONSTRUCTING one is the violation, so match

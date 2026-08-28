@@ -333,12 +333,21 @@ the code cannot say (§States' *when*, §Seam's *meaning*, the a11y and motion
 intent) — which is why the old token table is gone. It measured 172 lines and 48
 empty cells on one spec, restating what a widget file says better.
 
-**Three constraints, and `design-lint` checks the code rather than your claim
+**Four constraints, and `design-lint` checks the code rather than your claim
 about it:**
 
+- **Name the file `<widget>.design.dart`.** The suffix says who owns it: the
+  widget is a design artefact *and* the shipped UI, and nothing in a class name
+  distinguishes the two — so an engineer editing it at implementation time forks
+  what ships from what was reviewed, silently, because no render re-runs then.
+  The full rationale and the reviewer carve-outs are in
+  `${CLAUDE_PLUGIN_ROOT}/skills/designer/ownership.md`. It is also what lets
+  `design-lint` find its own inputs.
 - **Presentation only.** No import of repository / service / cubit / bloc /
-  provider / getIt; no `context.read` / `context.watch` / `BlocBuilder` /
-  `Consumer` / `StreamBuilder`. Data arrives as constructor parameters, actions
+  provider / riverpod / getIt; no `context.read` / `context.watch` /
+  `BlocBuilder` / `Consumer<` / `StreamBuilder` / `FutureBuilder`, and no
+  Riverpod `ref.read` / `watch` / `listen` / `invalidate` or `ConsumerWidget` /
+  `ConsumerStatefulWidget` base. Data arrives as constructor parameters, actions
   leave as callbacks.
 - **`StatelessWidget` by default.** The one legitimate reason to hold `State` is
   **vsync** (`TickerProvider` / `AnimationController`) — animation is
@@ -353,7 +362,7 @@ about it:**
 Run it before moving on — it is cheap and it gates Phase 7:
 
 ```bash
-design-lint lib/<feature>/presentation/
+design-lint                      # sweeps every *.design.dart under the tree
 ```
 
 Names follow `.claude/rules/naming.md`. Reuse a shared widget wherever one fits
@@ -473,7 +482,7 @@ that already exists.
 `ux-reviewer`——它對著**渲染出來的畫面與 widget 原始碼**評分，而不是對著一份描述畫面的文件。
 
 ```bash
-design-lint lib/<feature>/presentation/
+design-lint                      # sweeps every *.design.dart under the tree
 ```
 
 **每一條 FAIL 當場修，禁 deferred & dismiss**，全綠才往下。ADVISORY 逐條過目：
