@@ -60,7 +60,9 @@ out=$(bash "$gate" --session "$sid" check 2>/dev/null)
 ec=$?
 
 # The script is silent and exits 0 when no cycle is active, so this hook is
-# invisible for every non-/plan turn.
+# invisible for every non-/plan turn — with one deliberate exception: `check`'s
+# Gate 0 (commits held unpushed on a worktree branch) needs no ledger, because
+# the rule it enforces is about standing in a worktree, not about being mid-cycle.
 if [ "$ec" -eq 1 ] && [ -n "$out" ]; then
   reason=$(printf '=== Plan-cycle gate ===\n%s\n' "$out" | jq -Rs .)
   printf '{"decision": "block", "reason": %s}\n' "$reason"

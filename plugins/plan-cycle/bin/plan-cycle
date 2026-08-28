@@ -22,6 +22,7 @@
 #   - archivist flips the TaskList Stage     → enter  "<Stage>"
 #   - archivist writes a plan DB row (verified) → uploaded <pm|designer|engineer>
 #   - launcher opens the PR (Step 6.0)            → pr-opened
+#   - /review posts its findings to the PR        → reviewed <sha>
 #   - launcher closes out (archive + trash row)   → clear
 #     (on a pr_opened cycle whose PR has merged, clear REFUSES until the worktree
 #      + branch are gone (Step 6.6) and a feedback-ledger entry carries the cycle
@@ -45,7 +46,9 @@
 #   reads every ledger in the tree regardless of key (SessionStart hook).
 #
 # Mutators no-op when no cycle is active; `check` is silent (exit 0) then too —
-# so the hook is invisible for non-/plan work.
+# so the hook is invisible for non-/plan work. The one exception is `check`'s
+# Gate 0 (unpushed worktree commits), which needs no ledger: the rule it enforces
+# is about being in a worktree at all, not about being mid-cycle.
 
 set -uo pipefail
 
@@ -71,6 +74,15 @@ fi
 ROOT=$(main_root) || { echo "plan-cycle: not in a git repo" >&2; exit 0; }
 LEDGER_DIR="$ROOT/.claude/.plan-cycle"
 STALE_DAYS=14   # an abandoned ledger past this age stops gating (hygiene)
+# Gate 3 arms above this many unreviewed commits on an open PR's branch. Ten is
+# a count a rework stretch reaches only by skipping review, not by working — the
+# measured failure ran past forty.
+REVIEW_DRIFT_MAX=10
+# Gate 0 arms at this many commits sitting on a worktree branch but on no remote.
+# TWO, not one: a single fresh commit is the one a sub-agent-recovery amend
+# targets (git-ops §3), and pushing it early turns that amend into a force-push,
+# which is deny-listed. Two commits is already a phase held back.
+UNPUSHED_MAX=2
 
 # Per-session key → concurrent sessions never collide. Sanitize to a safe
 # filename; fall back to "active" only for manual CLI runs with no session.
@@ -255,9 +267,33 @@ EOF
     # satisfy, and an unclearable ledger is worse than an unwatched branch.
     branch="${3:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null)}"
     case "$branch" in "$base"|HEAD|"") branch="" ;; esac
-    write_ledger --arg pr "$pr" --arg base "$base" --arg br "$branch" --arg now "$(now)" '
+    # Gate 3's baseline. Phase 12's /review graded the tree that became this tip,
+    # so HEAD here is the last commit a reviewer actually saw. A drift count with
+    # no origin can never arm, so record one at the only moment it is free.
+    head=$(git rev-parse HEAD 2>/dev/null) || head=""
+    write_ledger --arg pr "$pr" --arg base "$base" --arg br "$branch" \
+                 --arg head "$head" --arg now "$(now)" '
       .pr_opened = true | .pr = $pr | .base = $base | .updated = $now
-      | if $br != "" then .branch = $br else . end'
+      | if $br != "" then .branch = $br else . end
+      | if $head != "" and (.reviewed_sha // "") == "" then .reviewed_sha = $head else . end'
+    ;;
+
+  reviewed)   # /review posted its findings → re-baseline the drift gate
+    # Gate 3 needs an origin, and the only honest one is the commit a reviewer
+    # actually read. /review is the sole writer: it already holds that sha (the
+    # same one it puts in the PR comment) and it runs once per pass, so the mark
+    # adds no step anyone has to remember. A sha git cannot resolve is REFUSED
+    # rather than stored — a baseline that resolves to nothing disarms the gate
+    # permanently and silently, which is the failure this gate exists to catch.
+    [ -f "$LEDGER" ] || exit 0
+    sha="${1:-}"
+    full=$(git -C "$ROOT" rev-parse --verify --quiet "${sha}^{commit}" 2>/dev/null) || full=""
+    if [ -z "$full" ]; then
+      echo "plan-cycle: reviewed REFUSED — '${sha:-}' is not a commit here (usage: plan-cycle reviewed <sha>)" >&2
+      exit 1
+    fi
+    write_ledger --arg sha "$full" --arg now "$(now)" '
+      .reviewed_sha = $sha | .reviewed_at = $now | .updated = $now'
     ;;
 
   clear)   # close-out (Feature Archive verified + task row trashed) or a reset
@@ -372,6 +408,54 @@ EOF
     ;;
 
   check)   # the Stop hook calls this. exit 1 + reason on a gap; exit 0 otherwise.
+    # Gate 0 — commits sitting on a worktree branch that no remote has.
+    #
+    # The one gate that needs NO ledger: the rule it enforces (git-ops/SKILL.md §1
+    # — "a worktree branch is pushed FREELY, per-phase") binds on any worktree
+    # turn. It was already written down, already pre-authorized, and still held
+    # only while the founder was watching — four reminders in one round, ending
+    # 「push... worktree 內可以不要我提醒了嗎？」. A written permission is not a
+    # trigger; this is the trigger.
+    #
+    # Linked worktrees ONLY (git-dir ≠ git-common-dir), and never on a base
+    # branch: `git push origin main` while an open PR is the review surface shifts
+    # that PR's merge-base (git-ops §1), so telling anyone to push main would
+    # invert the rule this gate serves.
+    gd=$(git rev-parse --path-format=absolute --git-dir 2>/dev/null) || gd=""
+    gcd=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || gcd=""
+    if [ -n "$gd" ] && [ -n "$gcd" ] && [ "$gd" != "$gcd" ]; then
+      wb=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || wb=""
+      case "$wb" in main|master|HEAD|"") wb="" ;; esac
+      # A repo with no remote has nothing to push to, and `--not --remotes` would
+      # then count every commit in history — a gate that can never be satisfied.
+      [ -n "$(git remote 2>/dev/null)" ] || wb=""
+      if [ -n "$wb" ]; then
+        # `--not --remotes` = reachable from HEAD, from no remote-tracking ref —
+        # true whether or not the branch has an upstream, so a never-pushed branch
+        # counts the same as one that fell behind.
+        unpushed=$(git rev-list --count HEAD --not --remotes 2>/dev/null) || unpushed=""
+        case "$unpushed" in ''|*[!0-9]*) unpushed=0 ;; esac
+        if [ "$unpushed" -ge "$UNPUSHED_MAX" ]; then
+          cat <<EOF
+PLAN-CYCLE PUSH GATE — ${unpushed} commits on ${wb} are on no remote.
+
+  Worktree: $(pwd)
+
+git-ops §1 — a worktree branch is pushed FREELY, per-phase. Pushing is already
+pre-authorized; holding commits back until close-out is the thing the rule
+forbids, and origin being current is what makes the branch reviewable as it
+grows. Push now, in this turn:
+
+  git push -u origin ${wb}
+
+origin, never the gitlab mirror (git-ops §1). If the top commit is mid-recovery
+and about to be amended, amend it FIRST, then push — never push and force-push.
+EOF
+          exit 1
+        fi
+      fi
+    fi
+
     [ -f "$LEDGER" ] || exit 0
     if find "$LEDGER" -mtime +"$STALE_DAYS" 2>/dev/null | grep -q .; then exit 0; fi
     cur=$(jq -r '.stage_idx // -1' "$LEDGER" 2>/dev/null) || exit 0
@@ -462,6 +546,57 @@ EOF
       exit 1
     fi
 
+    # Gate 3 (Iron Law 7's other half) — the PR is open and commits have piled up
+    # since the last /review.
+    #
+    # The measured failure (PR #204): after the final review round the branch grew
+    # 40+ commits — a whole transfer layer deleted, a service base class swapped, a
+    # cubit generalized, soft/hard delete moved across features — with ZERO
+    # reviewer spawns, and the founder then read all 24 defects by hand. `/qa` ran
+    # eleven times over the same stretch, because a refactor turns tests red on its
+    # own. Review has no equivalent red light, so it silently did not happen: the
+    # gate was bound to "a round of engineering finished", never to "the PR grew
+    # this much unreviewed". This is the missing red light.
+    #
+    # Armed only AFTER the PR opens (earlier work is gated at Phase 12's commit)
+    # and only while it is unmerged (Gate 2 owns the merged case and exits above).
+    # Fails open on no branch, no baseline, or an unresolvable ref.
+    pr_opened=$(jq -r '.pr_opened // false' "$LEDGER" 2>/dev/null)
+    branch=$(jq -r '.branch // ""' "$LEDGER" 2>/dev/null)
+    rsha=$(jq -r '.reviewed_sha // ""' "$LEDGER" 2>/dev/null)
+    if [ "$pr_opened" = "true" ] && [ -n "$branch" ] && [ -n "$rsha" ]; then
+      # Resolve the branch by REF from the main tree, never HEAD: the Stop hook
+      # fires wherever the turn ended, and a turn that ended in the main tree
+      # would otherwise count main's commits instead of the cycle's.
+      drift=$(git -C "$ROOT" rev-list --count "$rsha..refs/heads/$branch" 2>/dev/null) || drift=""
+      case "$drift" in ''|*[!0-9]*) drift=0 ;; esac
+      if [ "$drift" -gt "$REVIEW_DRIFT_MAX" ]; then
+        rat=$(jq -r '.reviewed_at // "PR open"' "$LEDGER" 2>/dev/null)
+        short=$(git -C "$ROOT" rev-parse --short "$rsha" 2>/dev/null)
+        cat <<EOF
+PLAN-CYCLE REVIEW-DRIFT GATE — ${drift} unreviewed commits on ${branch}.
+
+  Cycle:  ${slug}${title:+ (${title})}
+  PR:     #${pr}
+  Since:  ${short} (${rat})
+
+Rework rewrites structure an earlier review already approved, and it is usually
+absent from the plan's §Classes — so it is the stretch that most needs a review
+pass and the one that most often skips it. Do this NOW, before other work:
+
+  • \`/review\` the diff \`${short}..refs/heads/${branch}\` — code-reviewer, plus
+    consistency-reviewer if a layer moved, merged, or was deleted
+  • post the findings to PR #${pr} **carrying the reviewed sha**
+    (review/SKILL.md §Posting findings to the PR)
+  • re-baseline: \`plan-cycle reviewed <the sha you reviewed>\`
+
+If these commits genuinely carry no review surface (a revert, a rebase, a
+mechanical rename), say so in the PR thread and re-baseline the same way.
+EOF
+        exit 1
+      fi
+    fi
+
     exit 0
     ;;
 
@@ -506,7 +641,7 @@ EOF
     ;;
 
   *)
-    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|clear|status|check|sweep}" >&2
+    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|reviewed <sha>|clear|status|check|sweep}" >&2
     exit 0
     ;;
 esac

@@ -45,6 +45,26 @@ ROOT=$(root)
 # writing data there would leave an orphan directory with no SKILL.md beside it.
 BASE="$ROOT/docs/feedback-ledger/entries"
 
+# The path entries lived at BEFORE the move above. A project that adopted this
+# plugin earlier still has one, and nothing in this script can see it — so `count`
+# printing 0 reads as "nothing owed" while real entries sit in the old directory.
+# That is not hypothetical: a 2026-08-07 incident report stayed unconsumed there
+# precisely because every command reported an empty ledger. Report it wherever a
+# count is read; moving the files is the reader's call, not this script's.
+LEGACY="$ROOT/.claude/skills/feedback-ledger/entries"
+
+legacy_note() {
+  [ -d "$LEGACY" ] || return 0
+  local n
+  n=$(find "$LEGACY" -name '*.md' -type f 2>/dev/null | grep -c .) || true
+  case "$n" in ''|*[!0-9]*) n=0 ;; esac
+  [ "$n" -gt 0 ] || return 0
+  printf 'feedback: NOTE — %s entr%s stranded in the pre-move path, counted by nothing:\n' \
+    "$n" "$([ "$n" -eq 1 ] && echo y || echo ies)" >&2
+  printf '  %s\n' "${LEGACY#"$ROOT/"}" >&2
+  printf '  Move each category dir into %s/, or consume them and delete.\n' "${BASE#"$ROOT/"}" >&2
+}
+
 die() { printf 'feedback: %s\n' "$1" >&2; exit 1; }
 
 valid() { # valid <needle> <haystack-words>
@@ -69,6 +89,10 @@ plan-feedback — feedback ledger operations
   dir                    Print the entries directory. This script owns that
                          path; anything else needing it asks here rather than
                          keeping a second copy that can drift.
+
+`list`, `count` and `over` also warn (on stderr) when entries are still sitting in
+the pre-move path `.claude/skills/feedback-ledger/entries/` — a count of 0 there
+means "not looked at", not "nothing owed".
 
   category: process | code-review | security-review | privacy-review | recurring-bug
   source:   founder | agent | runner
@@ -152,6 +176,7 @@ cmd_list() {
     done
   done
   [ "$any" -eq 0 ] && printf 'feedback: no entries\n'
+  legacy_note
   return 0
 }
 
@@ -166,6 +191,7 @@ cmd_count() {
     printf '%-17s %s\n' "$c" "$n"
   done
   [ "$cats" = "$CATEGORIES" ] && printf '%-17s %s\n' 'TOTAL' "$total"
+  legacy_note
   return 0
 }
 
@@ -175,6 +201,7 @@ cmd_over() {
     local n; n=$(entries "$c" | grep -c . || true)
     if [ "$n" -gt "$limit" ]; then printf '%s %s\n' "$c" "$n"; hit=1; fi
   done
+  legacy_note
   [ "$hit" -eq 1 ] && return 1
   return 0
 }

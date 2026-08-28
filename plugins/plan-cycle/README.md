@@ -148,10 +148,17 @@ knowledge of where the plugin is installed:
 | Created the TaskList task | `plan-cycle start "<slug>" "<Task Name>"` |
 | Flipped the task's `Stage` | `plan-cycle enter "<Stage>"` |
 | Wrote a plan row (after verify) | `plan-cycle uploaded <pm\|designer\|engineer> <url>` |
+| Posted a `/review` report to the PR | `plan-cycle reviewed <the sha reviewed>` |
 | Closed out | `plan-cycle clear` |
 
 It no-ops silently when no cycle is active, so the calls are safe to run
 unconditionally.
+
+`check` runs four gates, each blocking turn-end on its own evidence rather than
+on a flag: **0** — commits held unpushed on a worktree branch; **1** — a plan
+phase advanced past without its Notion row; **2** — a merged PR with no
+close-out; **3** — an open PR whose branch has run too far past the last
+reviewed sha. Gate 0 is the one that needs no ledger.
 
 `hooks/plan-cycle-gate.sh` is the Stop-hook adapter: it translates the ledger's
 exit-1-plus-reason into the `{"decision":"block"}` JSON the hook expects. It

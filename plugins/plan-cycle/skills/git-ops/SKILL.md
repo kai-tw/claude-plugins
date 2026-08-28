@@ -60,10 +60,16 @@ leaves the canonical remote stale and the team blind to your work.
 
 **Two more push-target rules, both PR/worktree-shaped:**
 
-- **A worktree branch is pushed FREELY, per-phase.** The founder confirmed push
-  is free mid-cycle — don't hold commits until close-out; `git push` the worktree
-  branch as each phase lands, so origin stays current and reviewable as it grows.
-  This covers the worktree branch **only** — not merging the PR, not pushing `main`.
+- **A worktree branch is pushed FREELY, per-phase — and unprompted.** The founder
+  confirmed push is free mid-cycle; don't hold commits until close-out. The
+  trigger is the commit: **a turn that lands a commit in a worktree pushes it
+  before the turn ends**, without asking, so origin stays current and reviewable
+  as it grows. WHY the trigger and not just the permission: written permission is
+  not a red light, and this rule held only while the founder watched — four
+  reminders in one round, ending 「push... worktree 內可以不要我提醒了嗎？」.
+  `plan-cycle`'s Gate 0 now blocks turn-end once commits pile up unpushed on a
+  worktree branch; treat the block as late. This covers the worktree branch
+  **only** — not merging the PR, not pushing `main`.
 - **Never push `main` while an open PR is the review surface for related work.**
   `git push origin main` advances origin/main past any local-only commits, which
   **shifts an open PR's merge-base** and silently drops those commits from its

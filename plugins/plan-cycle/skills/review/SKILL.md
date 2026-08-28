@@ -46,6 +46,15 @@ boundary), review the diff so far; the founder catching a smell by hand
 mid-bundle is the signal the gate ran too late. This complements the PR-time
 pass, it does not replace it.
 
+**Rework counts, and counts most.** Commits landing *after* the PR opens — a layer
+deleted, a base class swapped, a cubit generalized, a capability moved across
+features — rewrite structure an earlier review approved and are usually absent
+from the plan's §Classes, yet they are the least-reviewed stretch of a cycle:
+`/qa` fires there on its own because a refactor turns tests red, and review has no
+equivalent trigger. `plan-cycle`'s Gate 3 is that trigger — turn-end blocks once
+an open PR's branch runs too far past the last reviewed sha (it prints the count
+and the threshold). Treat the block as late, not as the schedule.
+
 ## Mode dispatch
 
 | User intent | Sub-agent | Reviews | Output |
@@ -166,7 +175,9 @@ When the branch under review **has an open PR**, the report is posted to that PR
 as a comment — **twice**, and the order is the rule:
 
 1. **Before any fix lands** — post the reviewer's findings as returned. Covers
-   `code-reviewer`, `security-reviewer` and `privacy-reviewer` alike.
+   `code-reviewer`, `security-reviewer` and `privacy-reviewer` alike. Open the
+   comment with the sha that was reviewed — `Reviewed at <git rev-parse HEAD>` —
+   then record it: `plan-cycle reviewed <that sha>`.
 2. **After the fixes land** — post the disposition: every finding from comment 1
    with its verdict (FIX / DISMISS-with-rationale / ESCALATE / DEFER) and what
    actually changed, one line each.
@@ -177,6 +188,13 @@ silently narrows to whatever happened to get fixed — the findings quietly
 dropped leave no trace, which is the exact failure the verdict protocol exists to
 prevent. The pre-fix comment is the evidence a finding existed; the post-fix
 comment is answerable to it.
+
+**Why the sha.** A review comment without one records that a review happened but
+not *against what*, so "how far has the branch drifted since" has no answer — and
+on PR #204 the answer went unasked for 40+ commits and 24 hand-found defects. The
+`plan-cycle reviewed` mark is the machine half of the same fact and arms Gate 3.
+Post the sha even when there is no ledger to mark: the comment is what a human
+reads.
 
 Post with a heredoc, never `--body` (embedded newlines and CJK mangle):
 

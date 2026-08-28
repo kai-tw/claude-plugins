@@ -201,8 +201,10 @@ multi-select as `[{name}]`, relations as `[{id}]`, url props under the property'
 literal name) and a silent mis-encode costs a failed write + a slow retry.
 Synthesize clean rows, then run `notion-payload
 <create|update> <manifest> --commit` — it validates, encodes, drives `ntn` per row
-(create = POST properties + `ntn pages edit` body + verify the marker; update =
-PATCH properties), and prints the resulting URLs. Run it without `--commit` first
+(create = POST properties + `ntn pages edit` body + verify every `## ` section
+landed; update = PATCH properties), and prints the resulting URLs. **A non-zero
+exit means a body did not land whole — re-write it; never mark `plan-cycle
+uploaded` or trash a source off a failed verify.** Run it without `--commit` first
 to review the per-row plan.
 
 ## Iron Laws
@@ -212,8 +214,11 @@ to review the per-row plan.
    holds each feature's Product / Design / Engineering Plan rows + its `Stage`)
    and ask which are shipped / abandoned / superseded / in-flight. Never archive
    a feature whose cycle is not terminal.
-2. **Push + verify before delete.** Create/update the Notion entry (the builder's
-   `--commit` verifies the marker on write); re-read it via `ntn pages get` /
+2. **Push + verify before delete.** Create/update the Notion entry — the builder's
+   `--commit` re-reads the page, confirms **every `## ` section arrived**, and
+   exits non-zero if any did not (the marker alone proves nothing: it is
+   *prepended*, so a write that drops the tail keeps it and reports ✓). Then
+   re-read it via `ntn pages get` /
    `ntn datasources query`, confirm the synthesized content is present — only then
    `trash` the canonical repo docs. Never delete first. **For CJK-heavy content the
    verify is a character-level proofread against the source** — synthesis /

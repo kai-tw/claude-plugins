@@ -187,6 +187,7 @@ transcript dump. Fill each line; leave blank if genuinely empty. -->
 
 - **Key decisions:**
 - **Open questions:**
+- **Standing directives:** <verbatim, one line each — language, don't-ask list, scope bounds>
 - **User corrections / direction:**
 - **Current focus:**
 - **Next action:**

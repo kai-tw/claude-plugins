@@ -501,8 +501,36 @@ function ntn(args, input) {
   return r.stdout;
 }
 
+// ── Iron Law 2 verify: did the body we just wrote land IN FULL? ──────────────
+// The marker alone cannot answer that. It is PREPENDED, so a write that lands the
+// head and drops the tail keeps it and reports ✓ — which is exactly the shape of
+// the 2026-08-07 incident (~94 blocks sent, 36 landed, cut after "## Error
+// handling"). The body goes through ONE `ntn pages edit`, so there is no chunk
+// loop to bound the damage either. So check that every `## ` section arrived,
+// which catches a head, middle, or tail loss alike. A body with no headings falls
+// back to the marker-only check — no regression, and comparing prose Notion is
+// free to reformat would only produce false alarms.
+//
+// Notion returns the body escaped: markdown specials come back backslashed, and
+// non-ASCII may come back as \uXXXX. Normalize both sides before comparing.
+function unescapeNotion(s) {
+  return s.replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+          .replace(/\\/g, '');
+}
+
+function verifyBody(markdown, got) {
+  const flat = unescapeNotion(got);
+  if (!flat.includes(MARKER)) return 'NO-MARKER';
+  const heads = [...markdown.matchAll(/^##\s+(.+?)\s*$/gm)].map((m) => unescapeNotion(m[1].trim()));
+  const missing = heads.filter((h) => !flat.includes(`## ${h}`));
+  if (!missing.length) return 'ok';
+  return `TRUNCATED ${heads.length - missing.length}/${heads.length} sections`
+    + ` (missing: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ', …' : ''})`;
+}
+
 function commitCreate(dbKey, built) {
   const results = [];
+  let bad = 0;
   for (const { title, apiBody, markdown, images } of built) {
     const created = JSON.parse(ntn(['api', 'v1/pages', '-X', 'POST'], JSON.stringify(apiBody)));
     const id = created.id;
@@ -510,34 +538,52 @@ function commitCreate(dbKey, built) {
     if (!id) fail(`create "${title}": response had no page id`);
     if (markdown) ntn(['pages', 'edit', id], markdown);
     if (images && images.length) embedImages(id, images);
-    // Verify (Iron Law 2): confirm the row exists and (if a body was written) carries the marker.
+    // Verify (Iron Law 2): confirm the row exists and (if a body was written) landed whole.
     const got = ntn(['pages', 'get', id]);
-    const marked = !markdown || got.replace(/\\/g, '').includes(MARKER);
-    results.push({ title, id, url, body: markdown ? (marked ? 'ok' : 'NO-MARKER') : '(none)', images: images?.length || 0 });
-    console.error(`✓ ${dbKey}: ${title} → ${url}${marked ? '' : '  ⚠ marker missing'}`);
+    const state = markdown ? verifyBody(markdown, got) : '(none)';
+    if (state !== 'ok' && state !== '(none)') bad++;
+    results.push({ title, id, url, body: state, images: images?.length || 0 });
+    console.error(`✓ ${dbKey}: ${title} → ${url}${state === 'ok' || state === '(none)' ? '' : `  ⚠ ${state}`}`);
   }
   console.log(JSON.stringify(results, null, 2));
+  reportVerifyFailures(bad, built.length);
+}
+
+// A failed verify must not read as success. Exit non-zero AFTER the batch (never
+// mid-loop: aborting leaves the remaining rows half-written and unreported), so
+// the caller cannot mark `plan-cycle uploaded` off a write that did not land.
+function reportVerifyFailures(bad, total) {
+  if (!bad) return;
+  console.error(`✗ ${bad}/${total} row(s) failed the Iron-Law-2 body verify — re-write the body`
+    + ` and re-verify BEFORE marking anything uploaded or trashing any source.`);
+  process.exitCode = 1;
 }
 
 function commitUpdate(dbKey, built) {
   const results = [];
+  let bad = 0;
   for (const { page_id, properties, markdown } of built) {
     // Properties (skip an empty PATCH — a bodyFile-only update touches no props).
     if (Object.keys(properties).length)
       JSON.parse(ntn(['api', `v1/pages/${page_id}`, '-X', 'PATCH'], JSON.stringify({ properties })));
     // Body: full-replace from the bodyFile (the file is the single source of truth),
-    // then verify the marker survived (Iron Law 2).
+    // then verify it landed whole (Iron Law 2).
     let bodyState = '(unchanged)';
+    let ok = true;
     if (markdown) {
       ntn(['pages', 'edit', page_id], markdown);
       const got = ntn(['pages', 'get', page_id]);
-      bodyState = got.replace(/\\/g, '').includes(MARKER) ? 'replaced' : 'NO-MARKER';
+      const state = verifyBody(markdown, got);
+      ok = state === 'ok';
+      bodyState = ok ? 'replaced' : state;
+      if (!ok) bad++;
     }
     results.push({ page_id, props: Object.keys(properties), body: bodyState });
     console.error(`✓ ${dbKey}: updated ${page_id} (${Object.keys(properties).join(', ') || 'no props'})`
-      + `${markdown ? `  + body ${bodyState}${bodyState === 'NO-MARKER' ? ' ⚠' : ''}` : ''}`);
+      + `${markdown ? `  + body ${bodyState}${ok ? '' : ' ⚠'}` : ''}`);
   }
   console.log(JSON.stringify(results, null, 2));
+  reportVerifyFailures(bad, built.length);
 }
 
 // ── trash a page (close-out) ─────────────────────────────────────────────────

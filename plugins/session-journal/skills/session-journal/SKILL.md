@@ -155,13 +155,22 @@ Discipline that keeps it useful:
 
 The harness auto-summary captures the gist of the dialogue but loses exactly the
 load-bearing scaffolding: which task/plan, where it lives, how threads relate,
-and *why* a decision was made. That scaffolding is this block's job. Fill these
-five lines and keep them tight:
+*why* a decision was made, and which of the user's instructions are still in
+force. That scaffolding is this block's job. Fill these six lines and keep them
+tight:
 
 - **Key decisions** — what was decided **and why** (the why is what you can't
   reconstruct later).
 - **Open questions** — unresolved forks awaiting an answer.
-- **User corrections / direction** — steers the user gave, near-verbatim.
+- **Standing directives** — one-line instructions that bind for the REST of the
+  session (the language to answer in, what to stop asking before doing, a scope
+  boundary), verbatim. WHY: said once and in passing, they read to the summarizer
+  as chat rather than as contract, so this is the class it reliably drops — one
+  three-compaction session had 「請用中文解釋」 re-issued twice and a scope
+  boundary told three times, the last as 「完全沒照我說的改嘛」. Hearing a
+  directive a second time is proof the last compaction dropped it — write it in
+  then, not later.
+- **User corrections / direction** — steers on the work itself, near-verbatim.
 - **Current focus** — the one thing in hand right now.
 - **Next action** — the immediate next step.
 
