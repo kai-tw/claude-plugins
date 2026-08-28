@@ -154,11 +154,12 @@ knowledge of where the plugin is installed:
 It no-ops silently when no cycle is active, so the calls are safe to run
 unconditionally.
 
-`check` runs four gates, each blocking turn-end on its own evidence rather than
+`check` runs five gates, each blocking turn-end on its own evidence rather than
 on a flag: **0** — commits held unpushed on a worktree branch; **1** — a plan
 phase advanced past without its Notion row; **2** — a merged PR with no
 close-out; **3** — an open PR whose branch has run too far past the last
-reviewed sha. Gate 0 is the one that needs no ledger.
+reviewed sha; **4** — a `// review-dismiss:` marker that breaks its own one-line /
+specific-reason rule. Gates 0 and 4 need no ledger.
 
 `hooks/plan-cycle-gate.sh` is the Stop-hook adapter: it translates the ledger's
 exit-1-plus-reason into the `{"decision":"block"}` JSON the hook expects. It

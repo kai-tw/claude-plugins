@@ -204,7 +204,10 @@ Synthesize clean rows, then run `notion-payload
 (create = POST properties + `ntn pages edit` body + verify every `## ` section
 landed; update = PATCH properties), and prints the resulting URLs. **A non-zero
 exit means a body did not land whole — re-write it; never mark `plan-cycle
-uploaded` or trash a source off a failed verify.** Run it without `--commit` first
+uploaded` or trash a source off a failed verify.** A `⚠ … half-width punctuation`
+line is a **warning, not a failure** — 繁體中文 prose wants `，。：；！？（）`
+(house-rules §Communication & scope); fix what it names in the bodyFile, but the
+upload is not blocked and the exit code is unaffected. Run it without `--commit` first
 to review the per-row plan.
 
 ## Iron Laws

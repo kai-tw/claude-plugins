@@ -168,6 +168,52 @@ merged_on_base() {
   [ "${hits:-0}" -gt 0 ]
 }
 
+# Gate 4's scanner. `// review-dismiss:` is the marker a DISMISS verdict must
+# land at the site (review/SKILL.md §Verdict per finding), and the rule on it is
+# already written down and already checkable — nothing was checking it.
+#
+# Two of the rule's three conditions are pure string comparison and are enforced:
+# a reason that is empty or a generic non-reason ("intentional" / "by design" —
+# the rule names these), and a rationale that spills onto a second comment line
+# (one line is the whole budget: a reason needing a paragraph is a FIX, or a
+# principle that belongs in `.claude/rules/`). The third — "precedent alone is
+# 推託" — is NOT enforced: telling a bare sibling appeal from a structural
+# argument that happens to mention a sibling needs judgment, and a gate that
+# guesses at it would fire on correct dismissals. That one stays the reviewer's.
+#
+# Reads the uncommitted diff only (`-U0`, added lines): the marker is written in
+# the same turn as the fix, so this is the moment of the mistake, and untouched
+# pre-existing markers are never re-litigated.
+review_dismiss_violations() {
+  git diff -U0 HEAD -- . 2>/dev/null | awk '
+    /^\+\+\+ b\// { file = substr($0, 7); next }
+    /^@@/         { pending = 0; next }
+    /^\+/ {
+      line = substr($0, 2)
+      if (pending) {
+        # A following comment that is its own directive is not a continuation.
+        if (line ~ /^[[:space:]]*\/\/[[:space:]]*(TODO|FIXME|HACK|NOTE|ignore|ignore_for_file|coverage|review-dismiss)/) { pending = 0 }
+        else if (line ~ /^[[:space:]]*\/\/\//) { pending = 0 }
+        else if (line ~ /^[[:space:]]*\/\//)   { print file "\t" pendreason "\tspills onto a second comment line"; pending = 0; next }
+        else pending = 0
+      }
+      if (line ~ /\/\/[[:space:]]*review-dismiss:/) {
+        reason = line
+        sub(/.*review-dismiss:[[:space:]]*/, "", reason)
+        gsub(/[[:space:]]+$/, "", reason)
+        lc = tolower(reason)
+        if (reason == "")
+          print file "\t(empty)\tno reason at all"
+        else if (lc ~ /^(intentional|intended|by design|by-design|as designed|deliberate|on purpose|works as intended)[.。]?$/)
+          print file "\t" reason "\ta generic non-reason the rule names explicitly"
+        else { pending = 1; pendreason = reason }
+      }
+      next
+    }
+    { pending = 0 }
+  '
+}
+
 write_ledger() {  # stdin = jq program; mutates LEDGER atomically
   local tmp; tmp=$(mktemp) || return 1
   if jq "$@" "$LEDGER" > "$tmp" 2>/dev/null; then
@@ -454,6 +500,29 @@ EOF
           exit 1
         fi
       fi
+    fi
+
+    # Gate 4 — a `// review-dismiss:` marker that does not meet its own rule.
+    # Ledger-independent, like Gate 0: a DISMISS verdict is written whenever a
+    # review runs, cycle or no cycle.
+    rd=$(review_dismiss_violations)
+    if [ -n "$rd" ]; then
+      cat <<EOF
+PLAN-CYCLE REVIEW-DISMISS GATE — a dismissal in the working tree does not meet its own rule.
+
+$(printf '%s\n' "$rd" | awk -F'\t' '{ printf "  • %s\n      reason: %s\n      problem: %s\n", $1, $2, $3 }')
+
+review/SKILL.md §Verdict per finding: a DISMISS lands a **one-line**
+\`// review-dismiss: <reason>\` at the site, and the reason must say why the code
+is correct — specific, not generic, and one line is the whole budget. A rationale
+that needs a paragraph is not a dismissal: it is a FIX, or a principle that
+belongs in \`.claude/rules/\`.
+
+Fix each one, or re-classify the finding as FIX. Remember the condition this gate
+does NOT check: precedent alone ("the sibling does it") is 推託, not a reason —
+if that is your only defence, the verdict is FIX.
+EOF
+      exit 1
     fi
 
     [ -f "$LEDGER" ] || exit 0

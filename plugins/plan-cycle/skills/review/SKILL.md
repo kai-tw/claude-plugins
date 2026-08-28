@@ -133,6 +133,13 @@ For each finding the reviewer filed, report a verdict from this set:
   dismissal: it is either a FIX, or a principle that belongs in `.claude/rules/`
   and should be written there instead.
 
+  `plan-cycle`'s Gate 4 enforces the two halves of this that are string-checkable
+  — an empty or generic reason ("intentional", "by design"), and a rationale
+  spilling onto a second comment line — against the uncommitted diff at turn-end.
+  It deliberately does **not** judge the precedent rule: telling a bare sibling
+  appeal from a structural argument that mentions a sibling needs judgment, and a
+  gate guessing at it would fire on correct dismissals. That half stays yours.
+
   The marker is a **message to the next review, not a shield**. It tells the
   reviewer the point was already raised and settled, so it is not re-filed from
   scratch every cycle — and, deliberately, it hands the reviewer the exact

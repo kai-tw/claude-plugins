@@ -382,9 +382,71 @@ function bodyFromFile(dbKey, resolvedBody, filePath, rowLabel, freeform = false)
       if (s.required && s.kind !== 'images' && !seen.has(s.key))
         fail(`${dbKey}: bodyFile missing required section "## ${s.key}" (row ${rowLabel})`);
   }
+  warnHalfWidth(raw, `${dbKey} row ${rowLabel}`);
   let md = raw.replace(/\s+$/, '') + '\n';
   if (!md.startsWith('<!--')) md = `${MARKER}\n\n${md}`;
   return md;
+}
+
+// ── half-width punctuation in CJK prose (house-rules §Communication & scope) ──
+// 「逗號請用全形」. Plan bodies are the one surface where this is mechanically
+// checkable — chat and commit messages have no equivalent gate — so the check
+// lives here, at the moment the body is about to become a Notion page.
+//
+// WARNS, never fails. Measured against every real plan body in both projects:
+// after masking, the survivors split into unambiguous violations
+// (`(NEW，搬移＋分群)`) and calls a reasonable author would defend — `O(檔案數 ×
+// 規則數)` is maths, and a bilingual user story (`As a 專員, I want to …`) is an
+// English sentence with CJK filled in. Blocking an upload on those would cost
+// more than the rule returns; printing them at the moment of authoring does not.
+const CJK_CLASS = '\\u3400-\\u4dbf\\u4e00-\\u9fff';
+const CJK_CHAR = new RegExp(`[${CJK_CLASS}]`);
+const HW_PAIRED = { '(': '（', ')': '）' };
+const HW_TRAILING = { ',': '，', ';': '；', ':': '：', '!': '！', '?': '？', '.': '。' };
+
+// Blank out spans where ASCII punctuation is correct by rule — fenced and inline
+// code, HTML comments, link targets, bare URLs. Replaced space-for-character so
+// the reported line:col still points at the real source position.
+function maskAsciiExempt(s) {
+  const blank = (m) => m.replace(/[^\n]/g, ' ');
+  return s
+    .replace(/```[\s\S]*?```/g, blank)
+    .replace(/`[^`\n]*`/g, blank)
+    .replace(/<!--[\s\S]*?-->/g, blank)
+    .replace(/\]\([^)\n]*\)/g, blank)
+    .replace(/\bhttps?:\/\/\S+/g, blank)
+    // The user-story line is an ENGLISH sentence with CJK slotted in, and this
+    // same plugin mandates it verbatim — `schemas/product-plan.mjs` §User
+    // stories: 「格式（verbatim）：As a <persona>, I want to <action> so that
+    // <outcome>」. Warning about the commas the schema requires would be the
+    // plugin contradicting itself, and it was every hit on one real PM plan.
+    .replace(/^.*\bAs an? .*\bI want\b.*$/gm, blank);
+}
+
+function warnHalfWidth(raw, label) {
+  const masked = maskAsciiExempt(raw);
+  const rawLines = raw.split('\n');
+  const hits = [];
+  masked.split('\n').forEach((line, li) => {
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      const prev = line[i - 1] ?? '';
+      const next = line[i + 1] ?? '';
+      let bad = false;
+      // Brackets and the period are judged on their LEFT only: `O(檔案數)` is
+      // maths and `0.18.0` is a version, and neither is a CJK separator — but a
+      // genuinely mis-set pair still trips on its closing bracket.
+      if (ch in HW_PAIRED || ch === '.') bad = CJK_CHAR.test(prev);
+      else if (ch in HW_TRAILING) bad = CJK_CHAR.test(prev) || CJK_CHAR.test(next);
+      if (bad) hits.push({ line: li + 1, col: i + 1, ch, want: HW_PAIRED[ch] ?? HW_TRAILING[ch], text: rawLines[li].trim().slice(0, 80) });
+    }
+  });
+  if (!hits.length) return;
+  console.error(`⚠ ${label}: ${hits.length} half-width punctuation mark(s) touching CJK`
+    + ` — 繁體中文 prose uses ，。：；！？（）(house-rules §Communication & scope):`);
+  for (const h of hits.slice(0, 12))
+    console.error(`    ${h.line}:${h.col}  ${h.ch} → ${h.want}   ${h.text}`);
+  if (hits.length > 12) console.error(`    … ${hits.length - 12} more`);
 }
 
 // ── per-row build ────────────────────────────────────────────────────────────
