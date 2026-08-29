@@ -161,6 +161,14 @@ close-out; **3** — an open PR whose branch has run too far past the last
 reviewed sha; **4** — a `// review-dismiss:` marker that breaks its own one-line /
 specific-reason rule. Gates 0 and 4 need no ledger.
 
+`sweep` runs at SessionStart and only reports. It covers the two things no gate
+can: a merged PR whose cycle ledger was opened in some other session, and —
+reading git rather than the ledger — branches and worktrees still standing after
+their PR merged. That second half exists because `clear`'s teardown check is the
+last thing that ever looks, and `clear` deletes the ledger that would have asked
+again. Merge state comes from `gh` (only when git finds candidates, so the steady
+state makes no network call) and every failure path reports nothing.
+
 `hooks/plan-cycle-gate.sh` is the Stop-hook adapter: it translates the ledger's
 exit-1-plus-reason into the `{"decision":"block"}` JSON the hook expects. It
 runs **only** the gate — formatters, builds, and tests stay in each project's

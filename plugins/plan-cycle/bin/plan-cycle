@@ -214,6 +214,69 @@ review_dismiss_violations() {
   '
 }
 
+# Branches and worktrees that outlived their merged PR.
+#
+# `clear`'s teardown gate already checks all three (worktree, local branch,
+# remote branch) — but only at close-out, and only while a ledger is alive. The
+# ledger is per-session, deleted BY `clear`, and reaped after STALE_DAYS. Once it
+# is gone nothing looks at git again, so whichever half survived teardown is
+# never mentioned by anyone. Measured on NovelGlide: zero stale worktrees, four
+# merged branches still standing (PRs #222, #224, #233, #243) — the worktree is
+# the half people remember.
+#
+# Merge state comes from `gh`, NEVER from a content diff. git-ops §5: read the
+# PR's state first and treat the diff as the follow-up. Built the other way round
+# it called an OPEN PR's branch landed — the diff scoped to the branch's own
+# paths came back empty while the unscoped diff showed 268 files — which is a
+# "safe to delete" on live work, the one error this must not make.
+#
+# Reports ONLY branches whose PR actually merged. A branch with no PR is somebody's
+# work in progress, and a cleanup reminder that guesses is one people learn to skip.
+#
+# `gh` runs only when git found candidates, so the steady state costs no network
+# call at all. Every failure path reports nothing: no `gh`, not logged in, offline,
+# no remote — a session-start reminder must never become a session-start error.
+merged_leftovers() {
+  local base cands merged out b wt left
+  base=$(git -C "$ROOT" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)
+  base=${base#origin/}
+  [ -n "$base" ] || base=main
+
+  # origin only — a mirror remote (gitlab) is not the canonical branch list.
+  cands=$( { git -C "$ROOT" branch --format='%(refname:short)' 2>/dev/null
+             git -C "$ROOT" branch -r --format='%(refname:short)' 2>/dev/null \
+               | sed -n 's|^origin/||p'
+           } | grep -vx "$base" | grep -vx HEAD | sort -u )
+  [ -n "$cands" ] || return 0
+  command -v gh >/dev/null 2>&1 || return 0
+
+  merged=$(cd "$ROOT" 2>/dev/null && gh pr list --state merged --limit 300 \
+             --json headRefName -q '.[].headRefName' 2>/dev/null) || return 0
+  [ -n "$merged" ] || return 0
+
+  out=""
+  while IFS= read -r b; do
+    [ -n "$b" ] || continue
+    printf '%s\n' "$merged" | grep -qxF "$b" || continue
+    left=""
+    wt=$(git -C "$ROOT" worktree list --porcelain 2>/dev/null \
+         | awk -v m="branch refs/heads/$b" '/^worktree /{p=substr($0,10)} $0==m{print p; exit}')
+    [ -n "$wt" ] && left="${left}      worktree  ${wt}
+        git worktree remove --force ${wt}
+"
+    git -C "$ROOT" show-ref --verify --quiet "refs/heads/$b" && left="${left}      local     git branch -D ${b}   (-d refuses: a squash-merge never makes the tip an ancestor)
+"
+    git -C "$ROOT" show-ref --verify --quiet "refs/remotes/origin/$b" && left="${left}      remote    git push origin --delete ${b}
+"
+    [ -n "$left" ] && out="${out}  • ${b} — PR merged
+${left}
+"
+  done <<EOF
+$cands
+EOF
+  printf '%s' "$out"
+}
+
 write_ledger() {  # stdin = jq program; mutates LEDGER atomically
   local tmp; tmp=$(mktemp) || return 1
   if jq "$@" "$LEDGER" > "$tmp" 2>/dev/null; then
@@ -679,7 +742,6 @@ EOF
   # has no block channel, and a cross-session report is a reminder, not a verdict
   # about the turn that is starting.
   sweep)
-    [ -d "$LEDGER_DIR" ] || exit 0
     owed=""
     for f in "$LEDGER_DIR"/*.json; do
       [ -e "$f" ] || continue
@@ -695,8 +757,8 @@ EOF
       owed="${owed}  • PR #${pr} merged — ${slug}${title:+ (${title})} · Stage ${stage}${whose}
 "
     done
-    [ -n "$owed" ] || exit 0
-    cat <<EOF
+    if [ -n "$owed" ]; then
+      cat <<EOF
 PLAN-CYCLE — merged PR with an unclosed cycle ledger:
 
 ${owed}
@@ -706,6 +768,25 @@ finish it (Feature Archive row, trash the task row, tear down the worktree +
 branch, \`plan-feedback\` entry) or, if it did run and only the ledger survived,
 \`plan-cycle clear\`.
 EOF
+    fi
+
+    # The ledger-independent half. Everything above needs a ledger to notice
+    # anything, and the leftovers that actually accumulate are the ones whose
+    # ledger is long gone.
+    stale=$(merged_leftovers)
+    if [ -n "$stale" ]; then
+      cat <<EOF
+
+PLAN-CYCLE — branches whose PR merged, still standing:
+
+${stale}
+
+Step 6.6 tears these down at close-out, and nothing asks again afterwards — the
+ledger that would have is deleted by \`clear\` itself. Delete them now, or say
+why one is being kept. Only merged PRs are listed; a branch with no PR is left
+alone.
+EOF
+    fi
     exit 0
     ;;
 
