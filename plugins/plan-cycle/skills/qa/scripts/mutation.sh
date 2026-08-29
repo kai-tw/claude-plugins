@@ -152,9 +152,16 @@ echo "plan-mutation: running…"
 mutation_test --exclude-strings -f md -o "$out" "$cfg"
 rc=$?
 
+# Land the report under build/ when that is gitignored — writing it to the repo
+# root leaves an untracked file behind, which is the exact thing this plugin's
+# own dirty-tree and unpushed-work gates exist to stop.
 report=$(find "$out" -name '*.md' 2>/dev/null | head -1)
 if [ -n "$report" ]; then
-  keep="mutation-report.md"
+  if git check-ignore -q build 2>/dev/null; then
+    mkdir -p build && keep="build/mutation-report.md"
+  else
+    keep="mutation-report.md"
+  fi
   cp "$report" "$keep" 2>/dev/null && echo "plan-mutation: surviving mutations written to ./${keep}"
 fi
 
