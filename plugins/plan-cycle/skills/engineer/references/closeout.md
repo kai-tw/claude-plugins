@@ -264,6 +264,17 @@ on the hook running after the commit):
 2. **Tests green.** Run `flutter test` over the affected scope and
    confirm it passes — no red, no unexplained skip. A failing test
    blocks the commit.
+
+   **Test-first stage: run `plan-test-first flutter test` instead.** The
+   test-authoring stage ends red *by construction* — the contract exists as
+   stubs, nothing is implemented — so this leg would make that stage
+   uncommittable. The answer is a narrower leg, never an exemption: the gate's
+   purpose is "no **unexplained** red", and here exactly one red is explained.
+   `plan-test-first` passes only when every failure is a stub throwing
+   `UnimplementedError`; a real assertion failure, a different throw, a broken
+   existing test, or a suite that would not load all still block. Once
+   implementation lands it reports the suite green and this leg is back to its
+   normal meaning, so there is nothing to switch off afterwards.
 3. **Plan reconciliation clean.** After staging (`git add`), run
    `plan-lint <engineering-plan> --diff` — every file and class the
    staged diff **adds** must map to a §Classes NEW row. This is the
