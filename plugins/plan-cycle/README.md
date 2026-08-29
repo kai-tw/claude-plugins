@@ -154,12 +154,15 @@ knowledge of where the plugin is installed:
 It no-ops silently when no cycle is active, so the calls are safe to run
 unconditionally.
 
-`check` runs five gates, each blocking turn-end on its own evidence rather than
+`check` runs six gates, each blocking turn-end on its own evidence rather than
 on a flag: **0** — commits held unpushed on a worktree branch; **1** — a plan
 phase advanced past without its Notion row; **2** — a merged PR with no
 close-out; **3** — an open PR whose branch has run too far past the last
 reviewed sha; **4** — a `// review-dismiss:` marker that breaks its own one-line /
-specific-reason rule. Gates 0 and 4 need no ledger.
+specific-reason rule; **5** — an existing test edited while the stage is
+`Implementation`, with no `// test-change:` reason at the site. Gates 0 and 4
+need no ledger; Gate 5 needs one, because "the implementation loop is running"
+is a cycle fact with no signal in git.
 
 `sweep` runs at SessionStart and only reports. It covers the two things no gate
 can: a merged PR whose cycle ledger was opened in some other session, and —

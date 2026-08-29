@@ -214,6 +214,39 @@ review_dismiss_violations() {
   '
 }
 
+# Gate 5's scanner — existing tests edited during the implementation stage.
+#
+# Under TDD the tests are the specification, and the implementation stage is a
+# loop whose objective is a green suite. Green is reachable from BOTH sides, and
+# the test side is cheaper: the quickest way past a failing assertion is to
+# weaken it. A loop optimises whichever side is editable, so an unfrozen suite
+# stops being a specification and becomes a negotiable target — and nothing in
+# the artefact records that it moved.
+#
+# What is actually protected is the tests' PROVENANCE. A test written before the
+# implementation existed encodes the requirement; one edited to match what was
+# convenient to build encodes the implementation. Those read identically
+# afterwards, which is why the mark has to be left at the moment of the edit.
+#
+# So this is not immutability. A spec that turns out ambiguous, a test with a
+# genuine bug, a mechanical rename — all legitimate. They just are not free:
+# state the reason at the site, the way a DISMISS verdict does. The next reader
+# gets the sentence to attack, exactly as with `// review-dismiss:`.
+#
+# NEW test files are never blocked — a regression test for something found while
+# implementing is the system working. Only edits to files that already existed.
+frozen_test_edits() {
+  local f hunk out=""
+  for f in $(git diff --diff-filter=M --name-only HEAD -- test integration_test 2>/dev/null); do
+    hunk=$(git diff -U0 HEAD -- "$f" 2>/dev/null | grep '^+' | grep -c 'test-change:') || true
+    case "$hunk" in ''|*[!0-9]*) hunk=0 ;; esac
+    [ "$hunk" -gt 0 ] && continue
+    out="${out}  • ${f}
+"
+  done
+  printf '%s' "$out"
+}
+
 # Branches and worktrees that outlived their merged PR.
 #
 # `clear`'s teardown gate already checks all three (worktree, local branch,
@@ -724,6 +757,36 @@ pass and the one that most often skips it. Do this NOW, before other work:
 
 If these commits genuinely carry no review surface (a revert, a rebase, a
 mechanical rename), say so in the PR thread and re-baseline the same way.
+EOF
+        exit 1
+      fi
+    fi
+
+    # Gate 5 — an existing test edited while implementing, with no reason at the
+    # site. Armed by the ledger's stage, because "the implementation loop is
+    # running" is a cycle fact with no signal in git: the same edit is correct
+    # during test authoring and suspect during implementation.
+    if [ "$stage" = "Implementation" ]; then
+      froz=$(frozen_test_edits)
+      if [ -n "$froz" ]; then
+        cat <<EOF
+PLAN-CYCLE TEST-FREEZE GATE — tests edited during implementation, with no reason at the site.
+
+${froz}
+
+The tests are the specification, and this stage is a loop aiming at a green
+suite. Green is reachable from both sides and the test side is cheaper, so an
+unfrozen suite stops being a specification and becomes a negotiable target.
+
+Editing one is allowed; doing it silently is not. Add, in the same diff, at the
+site of the change:
+
+  // test-change: <why the TEST was wrong, not why the code is hard>
+
+If the honest reason is "the code does not do this", that is not a test change —
+it is the finding, and the code is what moves. If the reason is "the spec was
+ambiguous", that is a Phase 11 divergence: fix it upstream and let the test
+follow. Adding a NEW test file is never blocked.
 EOF
         exit 1
       fi

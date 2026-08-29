@@ -196,9 +196,19 @@ time so the diff stays reviewable. After a FIX edit:
   Phase 11 (Mid-flow divergence) first — update the affected tasks via
   `TaskUpdate`, rev the row body's §Classes / §Conformance (via the
   `archivist`), and re-request approval before landing the edit.
-- If a FIX changes a test seam or coverage target, hand the
-  test-authoring work to `/qa` per Iron Law 1 of
-  `testing.md` — do not write `test/**` from the engineer role.
+- If a FIX changes a test seam or coverage target, write the contract test
+  yourself and route only the `test/spec/` half to `/qa` — `testing.md` **Rule
+  1** partitions `test/**` by path, not by author-per-tree: `test/spec/**` is
+  `/qa`'s, everything else is this role's, and neither writes into the other's.
+- **Editing a test that already exists is gated while the cycle's stage is
+  `Implementation`** (`plan-cycle` Gate 5). The tests are the specification and
+  this stage is a loop aiming at a green suite; green is reachable from both
+  sides, and the test side is cheaper. Editing one is allowed, doing it silently
+  is not — put `// test-change: <why the TEST was wrong>` at the site, in the
+  same diff. If the honest reason is "the code does not do this", that is the
+  finding and the code is what moves; if it is "the spec was ambiguous", that is
+  a Phase 11 divergence, fixed upstream first. Adding a **new** test file is
+  never gated.
 
 ## Step 4 — Land DISMISS / DEFER rationale
 
