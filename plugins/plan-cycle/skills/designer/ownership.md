@@ -35,6 +35,20 @@ project may already use for test ownership. It is weaker here for one reason:
 the marker's job is to be visible at the moment of temptation, and the file the
 engineer has open is the import line, not the directory listing.
 
+## The one cost it does carry — check before adopting
+
+Any lint that derives an expected class name **from the filename** misfires on the
+suffix. `kai-packages`' `public_class_names_its_file` strips only a trailing
+`.dart`, so it compares the class against `foo.design` and reports every marked
+file.
+
+⚠️ Exempting them (`exemptFiles: [.design.dart]`) silences it but turns the
+**whole rule** off for those files — the second-public-class check short-circuits
+with the filename half — so nothing then catches an unrelated class added to one.
+That is a stopgap; the fix is teaching the rule to strip a marker segment. Grep
+for filename-derived rules before adopting the suffix, and if you take the
+exemption, record that it is temporary.
+
 ## The contract a `.design.dart` file is under
 
 Exactly what `design_lint.sh` checks — no more, so the marker never promises
