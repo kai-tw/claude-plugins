@@ -6,14 +6,21 @@
   的回饋是「已是最新」。修 bug 用 patch（0.4.0 → 0.4.1），加或改行為用 minor。
 - **push 完不等於生效，而且「更新完」也不等於生效.** marketplace 是 directory source，
   讀的是本機工作目錄，所以要消費端跑 `/plugin`（或下一條的 `claude plugin update`）把
-  內容複製進 cache。但 **PATH 在 session 啟動時就固定**，指向當時那個版本的 `bin/`；
-  而 `bin/` 的 wrapper 是
-  `exec "$here/../skills/…"`，`$here` 是**它自己的安裝目錄**，不是任何工作目錄。所以
-  舊 session 會一直跑舊版實作 —— **腳本、schema、skill 內文、frontmatter 全部都要新
-  session 才生效**，沒有哪一半是即時的。
+  內容複製進 cache。但 **PATH 指向哪個版本無法從外部預測**：它在 session 存續期間會變，
+  而且不追蹤安裝——同一個 session 的 transcript 裡依序出現 `0.15.1` → `0.17.0` →
+  `0.19.0`（沒重開、沒跑 `update`，而且跳過了 `0.18.0`），且 `0.19.1` 已進 cache 後它
+  仍解析到 `0.19.0`。刷新的觸發條件不明，從 session 內部看不到。
+  這件事會發生是因為 `bin/` 的 wrapper 是 `exec "$here/../skills/…"`，`$here` 是**它
+  自己的安裝目錄**，不是任何工作目錄——所以解析到哪個版本目錄，就跑哪一版的實作，
+  **腳本、schema、skill 內文、frontmatter 都跟著那一版**，沒有哪一半是即時的。
+  推論的兩條路都不通：安裝紀錄不代表某個 session 吃得到，而 `ListAgents` 的「N 分鐘前
+  啟動」是**重新連線**時間、不是 session 起始（實測：`ListAgents` 說 25 分鐘，transcript
+  的 `birth` 是 17 小時前）。cache 目錄的 mtime 也不是安裝紀錄——裝新版時會連帶動到既有
+  版本目錄的 mtime。
   最陰的是 wrapper 幾乎不會改：兩版 `bin/plan-lint` 的 md5 相同、底下的
-  `plan_lint.sh` 不同，所以 `cmp` wrapper 看起來永遠沒事。**要驗就驗實作**
-  （`type -a <name>` 看解析到哪個版本目錄，或看輸出裡的自報版本）。
+  `plan_lint.sh` 不同，所以 `cmp` wrapper 看起來永遠沒事。**所以一律實查、且要驗實作**
+  （`type -a <name>` 看解析到哪個版本目錄，或看輸出裡的自報版本）。要確定性就重開
+  session。
 - **`release.mjs` 只更新一個消費端，而它的 `✔ … installed and verified` 只講那一個.**
   第 6、7 步都以 cwd 解析到的專案為對象；其他啟用了這個 plugin 的專案原地不動，收尾那行
   也不會提到它們——一次 plan-cycle 發版印了全綠，NovelGlide 卻還停在兩版前的 0.15.1。
