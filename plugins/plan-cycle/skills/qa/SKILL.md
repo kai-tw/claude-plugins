@@ -180,6 +180,30 @@ whole directory run looks dead. Wrap the await in `tester.runAsync(() => …)`, 
 bisect by running files individually to find the hanger. `timeout` / `gtimeout`
 aren't on this macOS PATH — use the Bash tool's own `timeout` parameter.
 
+## Mutation testing — the check that line coverage cannot make
+
+Coverage is not strength. A suite that calls every line and asserts nothing
+scores 100%, which is exactly the change-detector shape `test-reviewer` grades by
+judgment. `plan-mutation <scoped-test-command>` makes the same question
+mechanical: flip an operator in the source, re-run the tests, and **a mutation
+nothing turns red on is a hole**.
+
+Measured on an 8-line function with six tests written to be complete, it
+surfaced four survivors — two planted weak assertions, and two real gaps the
+author had not noticed (`<= 0` → `== 0` with no negative case; `&&` → `||` with
+the one distinguishing combination untested). Adding exactly those three cases
+took it from rating F to A, so survivors are actionable, not advisory.
+
+- **Scope is the changed files, never the repo.** Runtime is mutations × one test
+  run and nothing avoids that — each mutant needs its own. Pass a **scoped** test
+  command (`flutter test test/features/<one>`, not a bare `flutter test`); the
+  tool estimates before it runs and stops over budget rather than starting a
+  six-hour job.
+- **The suite must be green first** — it aborts otherwise, because every mutant
+  reads as "detected" when the command was already failing.
+- **A survivor you keep needs a written reason at the site.** Genuinely
+  equivalent mutants exist; one with no note is indistinguishable from a hole.
+
 ## Default workflow
 
 1. **Read the brief and source artefacts.** The feature's Notion

@@ -109,8 +109,8 @@ exist. Two mechanisms, by what is being referred to:
 - **Scripts → a bare command.** `bin/` is on the Bash tool's `PATH` whenever the
   plugin is enabled, so every script has a launcher there and is invoked by name
   from anywhere: `plan-cycle`, `notion-payload`, `plan-lint`, `plan-scope-gate`,
-  `pm-abstraction-check`, `render-mockups`, `plan-feedback`, `plan-test-first`.
-  The implementations
+  `pm-abstraction-check`, `render-mockups`, `plan-feedback`, `plan-test-first`,
+  `plan-mutation`. The implementations
   stay with the skills that own them; `bin/` holds three-line `exec` launchers.
   Names carry a `plan-`/`pm-` prefix where the bare word would be too generic
   for a global `PATH`, or would collide with a skill of the same name
