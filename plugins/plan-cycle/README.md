@@ -160,10 +160,12 @@ on a flag: **0** — commits held unpushed on a worktree branch; **1** — a pla
 phase advanced past without its Notion row; **2** — a merged PR with no
 close-out; **3** — an open PR whose branch has run too far past the last
 reviewed sha; **4** — a `// review-dismiss:` marker that breaks its own one-line /
-specific-reason rule; **5** — an existing test edited while the stage is
-`Implementation`, with no `// test-change:` reason at the site. Gates 0 and 4
-need no ledger; Gate 5 needs one, because "the implementation loop is running"
-is a cycle fact with no signal in git.
+specific-reason rule; **5** — an existing test edited after `plan-cycle
+tests-frozen`, with no `// test-change:` reason at the site. Gates 0 and 4 need
+no ledger; Gate 5 needs one, and arms on that explicit mark rather than on the
+Notion Stage — under the tests-first order the tests are authored *inside* the
+Implementation stage, before any code, so a stage-armed gate would block its own
+prerequisite.
 
 `sweep` runs at SessionStart and only reports. It covers the two things no gate
 can: a merged PR whose cycle ledger was opened in some other session, and —

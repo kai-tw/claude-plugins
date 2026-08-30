@@ -22,6 +22,7 @@
 #   - archivist flips the TaskList Stage     → enter  "<Stage>"
 #   - archivist writes a plan DB row (verified) → uploaded <pm|designer|engineer>
 #   - launcher opens the PR (Step 6.0)            → pr-opened
+#   - launcher closes the test-authoring stage    → tests-frozen
 #   - /review posts its findings to the PR        → reviewed <sha>
 #   - launcher closes out (archive + trash row)   → clear
 #     (on a pr_opened cycle whose PR has merged, clear REFUSES until the worktree
@@ -420,6 +421,20 @@ EOF
       | if $head != "" and (.reviewed_sha // "") == "" then .reviewed_sha = $head else . end'
     ;;
 
+  tests-frozen)   # the test-authoring stage closed → arm Gate 5
+    # Gate 5 used to arm on the Notion Stage being "Implementation". Under the
+    # tests-first order that is wrong in the one place it matters: the tests are
+    # AUTHORED inside that same stage, before any implementation, so the gate
+    # would block the very work it is meant to protect.
+    #
+    # The honest edge is not a stage but an event — "the suite is finished and
+    # red, implementation starts now" — and nothing in git or Notion marks it.
+    # So the launcher marks it, once, when the test stage closes.
+    [ -f "$LEDGER" ] || exit 0
+    write_ledger --arg now "$(now)" '.tests_frozen = true | .frozen_at = $now | .updated = $now'
+    echo "plan-cycle: tests frozen — Gate 5 is armed; a test edit now needs a written reason at the site."
+    ;;
+
   reviewed)   # /review posted its findings → re-baseline the drift gate
     # Gate 3 needs an origin, and the only honest one is the commit a reviewer
     # actually read. /review is the sole writer: it already holds that sha (the
@@ -762,11 +777,14 @@ EOF
       fi
     fi
 
-    # Gate 5 — an existing test edited while implementing, with no reason at the
-    # site. Armed by the ledger's stage, because "the implementation loop is
-    # running" is a cycle fact with no signal in git: the same edit is correct
-    # during test authoring and suspect during implementation.
-    if [ "$stage" = "Implementation" ]; then
+    # Gate 5 — an existing test edited after the suite was frozen, with no reason
+    # at the site. Armed by the `tests-frozen` mark, not by the Notion Stage:
+    # under the tests-first order the tests are authored INSIDE the Implementation
+    # stage, before any code, so a stage-armed gate would block its own
+    # prerequisite. The same edit is correct while authoring and suspect once the
+    # implementation loop is chasing green, and only the launcher knows which
+    # side of that line the cycle is on.
+    if [ "$(jq -r '.tests_frozen // false' "$LEDGER" 2>/dev/null)" = "true" ]; then
       froz=$(frozen_test_edits)
       if [ -n "$froz" ]; then
         cat <<EOF
@@ -854,7 +872,7 @@ EOF
     ;;
 
   *)
-    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|reviewed <sha>|clear|status|check|sweep}" >&2
+    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|tests-frozen|reviewed <sha>|clear|status|check|sweep}" >&2
     exit 0
     ;;
 esac

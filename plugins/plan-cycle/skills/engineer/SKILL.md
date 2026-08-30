@@ -601,9 +601,12 @@ At plan time name only what a test cannot say:
   skip device / emulator verification is the founder's to make, even when the
   engineer is confident it is unnecessary.
 - **`/qa` task(s)** in the task list — one per phase that adds new
-  observable behavior, for a Phased plan, fired as each such phase
-  lands (§Per-phase gate, Phase 7 — a pure-groundwork phase carves out
-  and defers to a later phase); one task for a Single-slice plan.
+  observable behavior, for a Phased plan, fired **after that phase's stubs and
+  before its implementation** (§Per-phase gate, Phase 7 — a pure-groundwork
+  phase carves out and defers to a later phase); one task for a Single-slice
+  plan. `/qa` derives from the approved product / design plan, not from the
+  code, so it needs the stubs only for something to call — which is why it runs
+  once the surface exists and before anything satisfies it.
 
 A plan that says "tests TBD" or "covered by existing tests implicitly" is
 incomplete. Name the coverage target and the runtime pass, or surface the gap.
@@ -690,18 +693,41 @@ commit / slice), not per micro-edit.
 
 A Phased plan's whole point is atomic, independently-shippable phases —
 so the safety net (tests) and the gate that catches bugs (`/review`)
-belong at **phase** granularity, not saved for the end. When a phase's
-implementation task(s) land: (1) the contract-derived tests for that phase's
-new/changed surface are authored here, and the `/qa` task authors the
-spec-derived ones (`testing.md` Rule 1) so "tests green" means something for
-*this* phase, not just pre-existing coverage; (2) run Phase 12's Steps
-0–5.5 — exception-log check, `/review`, verdict loop, the four-leg
-commit gate — **scoped to that phase's diff**, before starting the next
-phase. Phase 12's Step 6 (close-out: Status flip, Notion revision
-entry) fires **once**, after the final phase's own Step 5.5 passes —
-it's administrative wrap-up, not a second review pass. A Single-slice
-plan has one phase, so this collapses to the current single
-end-of-cycle gate (Phase 12 as written) — no benefit to splitting it.
+belong at **phase** granularity, not saved for the end. Each phase runs
+**stubs → tests → implementation → gates**, in that order:
+
+1. **Stubs.** Emit that phase's public surface from the approved §Classes as
+   compilable stubs — `throw UnimplementedError()`. This is mechanical, and
+   `plan-lint <plan> --diff` already checks the reverse direction (every added
+   file/class maps to a §Classes NEW row). A stub is not a guess: the interface
+   was approved at Phase 10.
+2. **Tests, before any implementation.** The contract-derived tests for that
+   phase's surface are authored here, and the `/qa` task authors the
+   spec-derived ones (`testing.md` Rule 1). The suite is now RED by
+   construction, and that is the point — the tests state the requirement while
+   nothing yet satisfies it, so they cannot be shaped by an implementation that
+   does not exist. Commit-gate leg 2 accepts this stage through
+   `plan-test-first` (closeout.md §Step 5.5), which passes only when every
+   failure is an `UnimplementedError`.
+3. **Freeze, then implement.** Run `plan-cycle tests-frozen` — from here a test
+   edit needs `// test-change: <why the TEST was wrong>` at the site (Gate 5).
+   Then implement until green. **Green is reachable from both sides and the test
+   side is cheaper**; the freeze is what keeps the loop honest.
+4. **Gates.** Run Phase 12's Steps 0–5.5 — exception-log check, `/review`,
+   verdict loop, the four-leg commit gate — **scoped to that phase's diff**,
+   before starting the next phase.
+
+**Why stubs rather than tests against nothing.** Dart is statically typed, so a
+test naming an API that does not exist is a *compile* error, and a compile error
+takes the whole file down — including unrelated tests — and is indistinguishable
+from a real break. A stub turns "not built yet" into a clean, attributable red.
+
+Phase 12's Step 6 (close-out: Status flip, Notion revision entry) fires
+**once**, after the final phase's own Step 5.5 passes — it's administrative
+wrap-up, not a second review pass. A **Single-slice plan has one phase**, so the
+four steps above run once over the whole slice rather than per phase; the
+ordering is identical, and only the gates collapse to the single end-of-cycle
+Phase 12.
 
 **`/qa` carve-out — skip only when a phase adds no new observable
 behavior.** `/review` still runs every phase unconditionally — a
