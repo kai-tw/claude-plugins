@@ -194,11 +194,21 @@ author had not noticed (`<= 0` → `== 0` with no negative case; `&&` → `||` w
 the one distinguishing combination untested). Adding exactly those three cases
 took it from rating F to A, so survivors are actionable, not advisory.
 
+- **Every changed file must kill ≥80% of its own mutants.** Per-file, not
+  aggregate — an aggregate lets a well-tested file carry a badly-tested one
+  (measured: 100% and 67% averaged to 68%, naming neither). A file under the
+  threshold blocks the stage.
 - **Scope is the changed files, never the repo.** Runtime is mutations × one test
   run and nothing avoids that — each mutant needs its own. Pass a **scoped** test
   command (`flutter test test/features/<one>`, not a bare `flutter test`); the
   tool estimates before it runs and stops over budget rather than starting a
   six-hour job.
+- **A high score on few mutants is not evidence.** The builtin rules negate only
+  a *braced* `if (…) {`, and a bare `<` / `>` is not a mutation source at all
+  (mutating it would corrupt Dart generics). Identical clamp logic measured 0
+  mutants brace-less with `<`/`>`, 2 braced, 6 braced with `<=`/`>=` — so a file
+  in that style scores 100% with no tests. Rows marked `LOW-SIGNAL` /
+  `NO-MUTANTS` mean **not measured**, never "verified".
 - **The suite must be green first** — it aborts otherwise, because every mutant
   reads as "detected" when the command was already failing.
 - **A survivor you keep needs a written reason at the site.** Genuinely
