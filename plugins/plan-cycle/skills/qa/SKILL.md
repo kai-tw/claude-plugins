@@ -9,7 +9,8 @@ description: |
   analysis, decision tables, state transition, pairwise, error
   guessing, FMEA-lite, mutation sensitivity) so coverage is
   systematic, not anecdotal. Scans a category blind-spot list and a
-  compact failure-class catalog (risk-based, not exhaustive) before writing a line of test
+  compact failure-class catalog (pick what the change touches, not
+  all of it) before writing a line of test
   code. NOT a debugger — the deliverable is the test that catches
   the bug next time, not the fix.
   TRIGGER when: "/qa", "write a test for X",
@@ -33,9 +34,18 @@ allowed-tools:
 
 > **Iron Laws.** Break any one and the test is rejected.
 >
-> 1. **Risk-based, not coverage-based.** Spend test budget where
->    failure hurts users most. 100 % coverage is not a quality
->    signal.
+> 1. **Full reach, risk-proportional depth.** Two different axes, and
+>    collapsing them is what makes coverage arguments circular.
+>    **Reach**: every line a test *can* execute is executed — the target
+>    is 100 %, and anything unreachable is named with the reason
+>    (platform channel, a branch only a real device enters), never left
+>    as a silent gap. **Depth**: how many cases a line gets, and which
+>    techniques produce them, is spent where failure hurts users most.
+>    Coverage measures only the first. A line touched by one happy-path
+>    case and a line pinned by boundary + decision-table analysis both
+>    read 100 %, which is exactly why reaching 100 % is the floor here
+>    and never the argument that testing is done — `plan-mutation` is
+>    what grades the second axis.
 > 2. **Behavior, not implementation.** Tests must survive a
 >    refactor that preserves behavior. Change-detector tests that
 >    mirror the code block future work — rewrite or delete.
@@ -266,6 +276,15 @@ took it from rating F to A, so survivors are actionable, not advisory.
    (§Mutation testing), so say so in the hand-back rather than reporting them
    as clean.
 
+   **Reach comes first, because a mutation score cannot see an unexecuted line.**
+   A line no test runs produces no mutant to survive, so it is invisible to the
+   80% gate — the two checks stack, they do not substitute. Run the suite with
+   coverage over the same scope and, for each changed file, either every line is
+   executed or the exception is **named with its reason** in the hand-back
+   (platform channel, a branch only a real device enters). "Not covered" with no
+   reason is the gap this law exists to stop; a percentage on its own is not an
+   answer to it.
+
    **A survivor outside your tree is a hand-back, never a reach-across.** Rule 1
    holds here exactly as everywhere else: if killing a mutant needs a *contract*
    test, that is the engineer role's file, and it goes in (b) below as a named
@@ -275,8 +294,9 @@ took it from rating F to A, so survivors are actionable, not advisory.
    modified, (b) any bugs found while authoring (one-line + minimal
    repro + severity per the **Bug-note format** below), (c) any
    failure-class gaps the catalog should grow to cover, (d) the
-   **per-file mutation table** — score, mutant count, and any survivor kept with
-   its written reason, plus any file that came back unmeasured.
+   **per-file table** — reach (uncovered lines, each with its reason) and
+   strength (mutation score, mutant count, any survivor kept with its written
+   reason), plus any file that came back unmeasured.
 
 ## Test design techniques (name the technique)
 
@@ -317,10 +337,11 @@ resurfacing.
 
 ## Test categories — blind-spot jog (scan, don't enumerate)
 
-**Risk-based, not exhaustive** (Iron Law 1). Cover the categories your
-change's *surface actually touches* — a small internal change usually
-activates 2–3; a user-facing feature, many. Same discipline as the
-failure-class catalog below: pick the relevant ones, don't run all.
+**Risk-proportional depth** (Iron Law 1 — this is the *depth* axis, not reach).
+Cover the categories your change's *surface actually touches* — a small internal
+change usually activates 2–3; a user-facing feature, many. Same discipline as the
+failure-class catalog below: pick the relevant ones, don't run all. Reach is not
+negotiable the same way: the lines still all get executed.
 
 The list below is a **blind-spot jog** — scan it so you don't forget a
 *relevant* category, especially the non-obvious sub-points (RTL,
@@ -493,9 +514,11 @@ write "doesn't work" — minimal deterministic repro or nothing.
 Say so directly when **behavior under test is genuinely untestable** ("feels
 fast", "delightful") → push back with concrete testable candidates the caller
 can pick from. (The other refusals — a "quick test" that bypasses technique, a
-"doesn't work" bug with no repro, a "100% coverage" target, a `Mock implements`
-on a listenable/stream seam — are already governed by §Exclusive responsibility,
-the Bug-note format, Iron Law 1, and Iron Law 4; refuse per those.)
+"doesn't work" bug with no repro, "the coverage number is green so we're done", a
+`Mock implements` on a listenable/stream seam — are already governed by
+§Exclusive responsibility, the Bug-note format, Iron Law 1, and Iron Law 4;
+refuse per those. Note what changed: a 100 % *reach* target is now the floor, so
+what gets refused is treating that number as proof the testing is finished.)
 
 ## What this skill does NOT do
 

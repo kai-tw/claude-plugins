@@ -45,7 +45,10 @@ meaning anything.
 `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` is the standard — read it in full before judging.
 Its Iron Laws are the spine:
 
-1. **Risk-based, not coverage-based** — budget spent where failure hurts users.
+1. **Full reach, risk-proportional depth** — every line a test can execute is
+   executed (100 %, with anything unreachable named and reasoned), while how many
+   cases a line gets is spent where failure hurts users most. Grade the second
+   axis; the first is a number the run reports.
 2. **Behavior, not implementation** — the test survives a behavior-preserving
    refactor. A change-detector mirroring the code is a violation, not a nit.
 3. **Every case names the technique that produced it** (equivalence partitioning,
