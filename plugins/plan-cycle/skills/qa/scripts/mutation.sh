@@ -239,12 +239,23 @@ echo
 if printf '%s' "$rows" | awk -F'\t' '$4 ~ /NO-MUTANTS|LOW-SIGNAL/' | grep -q .; then
   cat >&2 <<EOF
 plan-mutation: NOTE — a score needs mutants to be a measurement, and some files
-here have almost none. That is usually code STYLE, not test quality: the builtin
-rules negate only a braced \`if (…) {\`, and a bare \`<\` / \`>\` is not a mutation
-source at all (mutating it would corrupt Dart generics). Measured on identical
-clamp logic: brace-less with \`<\`/\`>\` → 0 mutants; braced → 2; braced with
-\`<=\`/\`>=\` → 6. So a file written that way can score 100% with no tests at all.
-Read those rows as "not measured", never as "verified".
+here have almost none. That is code SHAPE, not test quality. Measured, one
+construct per file, with \`mutation_test -d\`:
+
+  if (c) { }        1     c ? a : b              0   ← blind
+  [if (c) x]        1     switch (s) { … }       0   ← blind  (expression form)
+  a && b            1     a ?? b                 0   ← blind
+  a <= b            2     a < b                  0   (bare < / > would corrupt generics)
+
+**The three blind spots are what Flutter \`build()\` is mostly made of** — a
+ternary for a nullable callback, a switch expression mapping state to copy, \`??\`
+for a default. A widget file's entire conditional logic can therefore produce no
+mutant at all, while the handful that do come out are almost always \`&&\` / \`||\`.
+So on such a file a HIGH score is not coverage of its real logic, and a LOW one
+is not proof the tests are weak — the sample is unrepresentative either way.
+
+Read NO-MUTANTS / LOW-SIGNAL rows as "not measured", never as "verified", and
+treat any widget-file score as provisional until the blind spots are closed.
 EOF
 fi
 

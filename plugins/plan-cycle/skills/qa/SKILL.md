@@ -213,11 +213,16 @@ took it from rating F to A, so survivors are actionable, not advisory.
   command (`flutter test test/features/<one>`, not a bare `flutter test`); the
   tool estimates before it runs and stops over budget rather than starting a
   six-hour job.
-- **A high score on few mutants is not evidence.** The builtin rules negate only
-  a *braced* `if (…) {`, and a bare `<` / `>` is not a mutation source at all
-  (mutating it would corrupt Dart generics). Identical clamp logic measured 0
-  mutants brace-less with `<`/`>`, 2 braced, 6 braced with `<=`/`>=` — so a file
-  in that style scores 100% with no tests. Rows marked `LOW-SIGNAL` /
+- **A score is only as good as what the tool can mutate, and on widgets that is
+  very little.** Measured one construct per file: `if (c) {}`, collection-`if`,
+  `&&` and `<=` all produce mutants; **a ternary, a `switch` expression and `??`
+  produce none** (nor does a bare `<` / `>`, which would corrupt generics).
+  Those three are what a Flutter `build()` is mostly made of — a ternary for a
+  nullable callback, a switch expression mapping state to copy, `??` for a
+  default — so a widget file's whole conditional logic can yield no mutant while
+  the few that appear are almost all `&&` / `||`. On such a file a **high score
+  is not coverage of the real logic, and a low one is not proof of weak tests**;
+  the sample is unrepresentative either way. Rows marked `LOW-SIGNAL` /
   `NO-MUTANTS` mean **not measured**, never "verified".
 - **The suite must be green first** — it aborts otherwise, because every mutant
   reads as "detected" when the command was already failing.
