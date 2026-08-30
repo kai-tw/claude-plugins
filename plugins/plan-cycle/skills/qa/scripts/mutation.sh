@@ -55,6 +55,22 @@ while [ $# -gt 0 ]; do
                 [ "${1:-}" = "--" ] && shift ;;
     --)         shift; break ;;
     -h|--help)  sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    # An unrecognised FLAG is refused, never treated as the start of the test
+    # command. Measured: `--yes --budget 60 --files x -- flutter test …` (two
+    # flags this script had dropped) fell through the old catch-all, so the
+    # WHOLE line — removed flags, `--files`, its argument and all — became the
+    # test command, `--files` never parsed, and the run silently widened to the
+    # entire 48-file diff. A stale flag has to stop the run, not redefine it.
+    -*)         cat >&2 <<EOF
+plan-mutation: unknown option "$1".
+
+  --budget / --yes were REMOVED with the regex engine: there is no dry-count
+  mode to estimate against, so there is nothing to approve. Each mutant is
+  bounded by --timeout instead (default ${MUTANT_TIMEOUT}s).
+
+  usage: plan-mutation [--min <pct>] [--timeout <s>] [--files a.dart …] -- <test-command…>
+EOF
+                exit 2 ;;
     *)          break ;;
   esac
 done
@@ -65,6 +81,33 @@ command -v jq >/dev/null 2>&1 || { echo "plan-mutation: jq is required" >&2; exi
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "plan-mutation: not in a git repo" >&2; exit 2; }
 cd "$root" || exit 2
+
+# --- the engine has to be here before anything else happens -----------------
+# Switching from the regex engine to the AST one changed an UNDECLARED
+# prerequisite: `mutation_test` was `dart pub global activate`d, `dart_mutants`
+# is a dev_dependency of the project. Without this check the first sign is
+# `Could not find package dart_mutants` buried under a run that has already
+# printed a file count and a threshold, which reads like the tool worked and
+# found nothing.
+if ! grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
+  cat >&2 <<'EOF'
+plan-mutation: this project does not depend on `dart_mutants`, so there is no
+engine to run. Nothing was measured.
+
+Add it to pubspec.yaml under dev_dependencies:
+
+  dev_dependencies:
+    dart_mutants:
+      git:
+        url: https://github.com/kai-tw/kai-packages.git
+        path: packages/dart_mutants
+        ref: dart_mutants-v0.1.0
+
+then `flutter pub get`. (It replaced `mutation_test`, which was installed
+globally — the prerequisite moved from the machine to the project.)
+EOF
+  exit 2
+fi
 
 # --- what to mutate --------------------------------------------------------
 # Generated files are excluded: nobody hand-writes them, so a surviving mutant
@@ -128,8 +171,19 @@ dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEO
 elapsed=$(( $(date +%s) - started ))
 
 jq -e . "$out/report.json" >/dev/null 2>&1 || {
-  echo "plan-mutation: the engine produced no parseable JSON — not scoring anything off that." >&2
-  head -20 "$out/err" >&2
+  # Say what happened, not what was declined. "Not scoring anything off that"
+  # reads like a cautious judgement about a result; there IS no result — the
+  # engine did not produce one, so nothing was measured at all. A message that
+  # sounds careful over a run that never happened is the failure shape this
+  # whole gate exists to remove.
+  cat >&2 <<EOF
+plan-mutation: THE ENGINE DID NOT RUN. Nothing was measured — this is not a low
+score, not a pass, and not a result of any kind. Its output was:
+
+$(head -20 "$out/err" 2>/dev/null | sed 's/^/  /')
+
+Until that is fixed, no file in this diff has a mutation score.
+EOF
   exit 2
 }
 
