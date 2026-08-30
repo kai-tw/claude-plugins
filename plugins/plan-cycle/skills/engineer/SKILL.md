@@ -514,33 +514,37 @@ existed at that baseline (an ABSENT path has no migration *from* it),
 and prints the scoped diff. Ground the reasoning below on that real
 git delta, never on a comparison against the last commit.
 
-Name every impact on existing state, persisted data, in-flight
-users, and pre-existing callers of any API being changed:
+**What the diff surfaces becomes a migration TEST, not a paragraph.** For every
+persisted-shape change it finds — a new SharedPreferences key, a new cache file
+format, a new file-system layout — the deliverable is a test: old-format input →
+new-typed output, plus the missing-value fallback. A prose "migration path"
+describes an intention that nothing verifies; the test is the same statement,
+executable. (Where it lands is unchanged: a one-time migration under
+`lib/features/migration/processes/`, or default-on-read-fallback.)
 
-- **Persisted schema changes** — new SharedPreferences keys, new
-  cache file formats, new file-system layouts. Document the
-  migration path (one-time migration under
-  `lib/features/migration/processes/`, or
-  default-on-read-fallback).
-- **In-flight users** — if the change alters state shape,
-  existing in-memory state at hot-reload / hot-restart /
-  cold-launch. For widget tree changes, what happens to existing
-  navigation stack (modal sheets survive `context.push()`).
-- **API callers** — when a use case parameter / return shape
-  changes, grep every caller and either update or document the
-  call-site delta in this section.
-- **Lint surface** — when adding to a feature that has
-  pre-existing `.claude/rules/` violations (e.g., `sl<T>()`
-  outside the allowlist, `Mock implements` on a listenable),
-  per `${CLAUDE_PLUGIN_ROOT}/skills/plan/migration.md` policy those violations stop being exempt
-  once the file is being re-touched. Either fix in this plan or
-  surface as a follow-up TODO with rationale.
-- **Release artifacts** — fastlane store metadata, release notes,
-  AAB / IPA shape (size, permissions). Most engineering plans
-  have none of this; the absence is the answer.
-- **Platform plugin upgrades** — pinned package versions in
-  `pubspec.yaml`. Name the upgrade explicitly; don't piggyback
-  it on a feature plan.
+The discovery step above is what stays prose, because it is the half a test
+cannot do: **you cannot write a migration test for a schema change you have not
+noticed.** Tests verify; they do not find.
+
+Three impacts are neither testable nor caught elsewhere, so name them here:
+
+- **In-flight users, beyond persisted state** — existing in-memory state at
+  hot-reload / hot-restart, and for widget-tree changes what happens to an
+  existing navigation stack (modal sheets survive `context.push()`). The
+  cold-launch half is just the migration test above.
+- **Release artifacts** — fastlane store metadata, release notes, AAB / IPA shape
+  (size, permissions). Most engineering plans have none of this; the absence is
+  the answer.
+- **Platform plugin upgrades** — pinned package versions in `pubspec.yaml`. Name
+  the upgrade explicitly; don't piggyback it on a feature plan.
+
+**Two more are already mechanized — do not re-document them.** A changed use-case
+parameter or return shape breaks every stale caller at the analyzer, so the
+compiler is the call-site census; and pre-existing `.claude/rules/` violations in
+a re-touched file stop being exempt under
+`${CLAUDE_PLUGIN_ROOT}/skills/plan/migration.md`, which the Step 5.5 commit gate
+enforces on leg 1 — a lint-dirty diff does not commit, so "surface as a follow-up
+TODO" is not an available escape.
 
 ## Phase 5 — Test surface (coverage targets, runtime gate, `/qa` tasks)
 

@@ -114,8 +114,8 @@ export const body = [
     required: true,
     criteria: ['c11'],
     description: '持久化格式 / schema / API 的變更與回退路徑',
-    hint: '持久化格式、schema、既有 API 的變更各一條：**舊資料怎麼被讀**、**舊版本 app 遇到新資料會怎樣**、**回退路徑是什麼**。\n沒有任何遷移影響時寫一行「無持久化 / schema / API 變更」+ 一句理由。\n禁：「加個欄位而已，向後相容」而沒說明舊版讀到它會怎樣。',
-    template: '無持久化 / schema / API 變更 —— <一句理由>\n\n<有的話一條一行：<變更> — 舊資料如何讀 / 舊版 app 行為 / 回退路徑>',
+    hint: '**舊資料怎麼被讀**與**回退路徑**改由 migration 測試承載（舊格式 input → 新型別 output ＋ 缺值 fallback），這裡只引用測試檔路徑，不再重述一次——散文寫的是意圖，測試寫的是同一句話而且會執行。\n這一節留下的是測試做不到的那半：**舊版本 app 遇到新資料會怎樣**（forward compatibility——本地測試套件跑不到舊版 binary），每個持久化 / schema / 既有 API 變更各一條。\n沒有任何遷移影響時寫一行「無持久化 / schema / API 變更」+ 一句理由。\n禁：「加個欄位而已，向後相容」而沒說明舊版讀到它會怎樣。',
+    template: '無持久化 / schema / API 變更 —— <一句理由>\n\n<有的話一條一行：<變更> — 舊版 app 讀到新資料會怎樣 · migration 測試：<test 路徑>>',
   },
   {
     key: 'Risks',
