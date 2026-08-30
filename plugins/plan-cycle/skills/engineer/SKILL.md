@@ -542,25 +542,23 @@ users, and pre-existing callers of any API being changed:
   `pubspec.yaml`. Name the upgrade explicitly; don't piggyback
   it on a feature plan.
 
-## Phase 5 — Test seams (named inside §Classes, not a section of their own)
+## Phase 5 — Test surface (coverage targets, runtime gate, `/qa` tasks)
 
 This role authors the **contract-derived** tests — that a unit / state holder / widget
 behaves as its own interface promises. They live under `test/**` *outside*
 `test/spec/`, which is `/qa`'s tree; never write into it. `testing.md` Rule 1
 has the partition.
 
-**The seams go in §Classes' Interface column**, whose ctor collaborator list *is*
-the seam — a separate §Testing seams section restated it, and it existed to
-pre-declare seams for `/qa` back when `/qa` wrote every test. You now write the
-contract tests yourself, so there is nobody to pre-declare to. At plan time name:
+**Do not describe the seams in prose — the tests are the seam.** §Classes'
+Interface column already names the ctor collaborators, and the test that mounts
+them is the executable statement of the same thing; a plan paragraph saying what
+a test will pin is a claim, and the test is the fact. (The collaborator-seam rule
+in the project's state-management rule still binds: it bans listenable /
+stream-exposing mock surfaces, so a narrow two-callback interface is a **design**
+constraint on §Classes, decided there rather than pre-announced here.)
 
-- **Test seams** that production code must expose (state-holder
-  collaborator shapes, repository abstractions, hand-written
-  fake targets). The collaborator-seam rule in
-  the project's state-management rule bans listenable / stream-exposing mock
-  surfaces — name the two-callback or narrow-interface seam in
-  the sketch so `/qa` can write the test without
-  refactoring production code first.
+At plan time name only what a test cannot say:
+
 - **Coverage targets** as a table of test surface × unit /
   widget / manual. When the change is cross-platform or
   connectivity-sensitive, the smoke pass is **shipping a beta to
@@ -603,9 +601,8 @@ contract tests yourself, so there is nobody to pre-declare to. At plan time name
   lands (§Per-phase gate, Phase 7 — a pure-groundwork phase carves out
   and defers to a later phase); one task for a Single-slice plan.
 
-A plan that says "tests TBD" or "covered by existing tests
-implicitly" is incomplete. Either name the seams or surface the
-gap.
+A plan that says "tests TBD" or "covered by existing tests implicitly" is
+incomplete. Name the coverage target and the runtime pass, or surface the gap.
 
 ## Phase 6 — Risks
 
