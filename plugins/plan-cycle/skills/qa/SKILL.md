@@ -203,6 +203,10 @@ took it from rating F to A, so survivors are actionable, not advisory.
   reads as "detected" when the command was already failing.
 - **A survivor you keep needs a written reason at the site.** Genuinely
   equivalent mutants exist; one with no note is indistinguishable from a hole.
+- **It does not retire `test-reviewer`, and a clean score is not a clean bill of
+  health.** A change-detector kills every mutant, so the worst test in the
+  codebase scores perfectly here — the two catch opposite errors
+  (`agents/test-reviewer.md` §What is NOT yours).
 
 ## Default workflow
 

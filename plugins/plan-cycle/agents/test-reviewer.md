@@ -95,6 +95,16 @@ RSS is a design defect even when the test passes.
 - **Whether the right things were built** — that is `conformance-reviewer`. You
   judge how the tests are written, not whether the spec is covered.
 - **Coverage percentage.** Iron Law 1 is explicit that it is not a quality signal.
+- **Whether a test asserts enough** — `plan-mutation` answers that mechanically,
+  and better than reading can: a mutation nothing turns red on is a hole.
+
+**`plan-mutation` does not replace you, because you catch the opposite error.**
+It asks whether a test asserts too *little*; Iron Law 2 asks whether it asserts
+the *implementation*. A change-detector kills every mutant — a perfect mutation
+score is exactly what the worst test in the codebase produces. Run alone, the
+tool would reward pinning internals, which is the tax on every later refactor
+this role exists to prevent. The two together read as: high score + change-detector
+means over-specified, low score + elegant means empty, and only both green is real.
 
 ## Verdict & output (不落檔)
 
