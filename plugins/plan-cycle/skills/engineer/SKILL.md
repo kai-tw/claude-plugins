@@ -31,8 +31,10 @@ description: |
 >   with the option you'd pick **first** and labeled `(Recommended)` — never bank
 >   a unilateral pick. **Trivial low-stakes decisions** you may resolve yourself,
 >   but annotate each with a `〔自行裁定〕` note where it was decided (§Plan
->   integrity `I4`) so the user can override it in co-review (decide without
->   asking is fine; not recording is not). On any blocker
+>   integrity `I4`) so the user can find and override it **when they read the
+>   row in Notion** — that annotation is the whole record of the call, since
+>   nobody walks them through it (decide without asking is fine; not recording
+>   is not). On any blocker
 >   / unknown, find the answer yourself first (Notion KB → codebase recon → docs
 >   → web) and escalate to the user only when the search comes up empty.
 > - **Recon sweep:** dispatch the parallel read-only `general-purpose` recon
@@ -142,15 +144,15 @@ produce the engineering-plan artifact.
 >    The `Shipped` status is filled in only after the real commit
 >    lands. Full protocol, including the pre-leg codegen-regeneration
 >    check: Phase 12 Step 5.5.
-> 11. **Co-create the plan; review it with the user start to finish.**
->    Two parts, both binding: **(a)** as you sketch (Phase 3), surface
->    every load-bearing decision/fork/deferral via `AskUserQuestion`
->    and write the ruling into the living draft as it lands — don't
->    bank a unilateral pick. **(b)** once the draft is Phase-8.5-green,
->    walk the user through it section by section, start to finish
->    (Phase 10), before the Iron Law 5 task-list approval. Presenting a
->    plan for approval the user never walked through end to end is a
->    silent skip of this law.
+> 11. **Co-create the plan as you sketch it.** As you sketch (Phase 3),
+>    surface every load-bearing decision / fork / deferral via
+>    `AskUserQuestion` and write the ruling into the living draft as it
+>    lands — don't bank a unilateral pick. The co-creation happens
+>    *while the decisions are open*, which is the only point at which
+>    the user's answer can still change the design. Reading a finished
+>    plan back to them is not a substitute and is not required: the plan
+>    goes to Notion and the founder reviews it there, on their own time
+>    (Phase 10).
 
 **Refuse, with the reason:** "just write the code" requests that
 skip the plan (Iron Law 5); UI / token / breakpoint questions that
@@ -885,14 +887,17 @@ revision——都要**先重跑 Phase 8 的 `plan_lint.sh`、再把 `blueprint-r
 plan _draft_ BEFORE it is posted as the Engineering Plan DB row.** The
 review step needs no Notion access — it scores the in-thread draft. Once
 Phase 8.5 passes (every in-scope dimension ≥ 8), you author the row **and
-upload it to Notion BEFORE the task-list approval gate** — the user
-approves the plan in its canonical, founder-readable Notion form, not a
-chat-only draft (a plan approved only in chat is a plan the founder never
-truly saw). So: draft → Phase 8.5 green → user co-review → **author +
-upload the Notion row** → task-list approval → (on approval) seed
-TaskCreate + advance Stage. A revision folded in during co-review is
-re-uploaded (Iron Law 6) before approval, so what the user approves is
-what is in Notion.
+upload it to Notion BEFORE the task-list approval gate** — the founder
+reviews and approves the plan in its canonical, founder-readable Notion form,
+not a chat-only draft (a plan approved only in chat is a plan the founder never
+truly saw). So: draft → Phase 8.5 green → **author + upload the Notion row** →
+**the founder reviews it in Notion, on their own time** → task-list approval →
+(on approval) seed TaskCreate + advance Stage.
+
+**Do not walk the founder through the plan section by section.** Upload it and
+stop; the review is theirs to run, at their pace, in the tool they read in. Any
+revision they ask for is folded in and **re-uploaded** (Iron Law 6) before
+approval, so what is approved is what is in Notion.
 
 Author the engineering plan as a **row in the Notion Engineering Plan
 DB** — exactly like the Product Plan / Design Plan rows. Invoke the
@@ -931,23 +936,21 @@ The slug still matches the feature across all three planning legs.
   `## Revision history` entry, **by invoking the `archivist` skill**
   (launcher's Iron Law 6).
 
-### Interactive review with the user (Iron Law 11b)
+### Hand it over
 
-Before seeding tasks and before the approval gate, walk the user
-through the saved plan **section by section, start to finish** — a
-detailed human co-review, not a one-line "looks good?". Go in plan
-order (Summary → Composition → Decisions → Risks →
-Migration impact → Blocks → Data flow → Error handling → Testing
-seams → Tasks). For each section: present a tight summary of what
-it commits to, name the load-bearing decision(s) in it, and invite the
-user's review; where a genuine fork or open choice remains, put it via
-`AskUserQuestion`. **Amend the living draft as they direct** and mirror
-any change into `## Revision history`, then move on. Don't dump every
-section at once — go in reviewable chunks, iterate, and re-walk
-anything a change ripples into. Proceed to the approval gate only once
-the user has reviewed the plan end to end. (Iron Law 9's
-`blueprint-reviewer` is the automated score; this is the human review the
-user is owed — see Iron Law 11.)
+Once the row is uploaded, **hand back the URL and stop.** Say what the plan
+commits to in a few lines — the shape chosen, the load-bearing decisions, and
+anything you had to rule on yourself — and let the founder read the row.
+
+Then wait. Do not re-narrate the plan, do not walk its sections, and do not ask
+for approval section by section. The open questions were already put to them at
+Phase 3 (Iron Law 11), which is the point where an answer could still change the
+design; by here the draft is Phase-8.5-green and the remaining decision is a
+single one — approve or send back.
+
+Whatever comes back is folded into the living draft, mirrored into
+`## Revision history`, and **re-uploaded** before the approval gate, so what is
+approved is what is in Notion.
 
 ### Seed TaskCreate
 
@@ -975,7 +978,7 @@ mitigate was escalated to the user and ruled. A plan with an open /
 engineer-"accepted" / "TBD" risk does not reach this gate.
 
 **Precondition — the plan is in Notion.** The Engineering Plan row is
-authored + uploaded (and re-uploaded if a co-review revision landed)
+authored + uploaded (and re-uploaded if their review asked for a change)
 **before** this gate — the user approves the plan in its canonical Notion
 form, not a chat-only draft. Present the approval request with the Notion
 row URL; do not request approval against an unuploaded draft.
@@ -1025,8 +1028,8 @@ Plan review: blueprint-reviewer (不落檔; verdict recorded in the plan header)
               verdict: <approve | approve-with-improvements>; every in-scope
               dimension ≥ 8 after <N> cycle(s) | escalated: <dimension>
               accepted at <score> by user
-Interactive review (Iron Law 11): <walked §Summary→§Conformance with the user
-              start to finish; their changes folded into Rev <n> | no changes requested>
+Handed to the founder: <Notion row URL> — awaiting their review
+              <their changes folded into Rev <n> and re-uploaded | no changes requested>
 Plan lint: <PASS | N hard failures 已修> (plan_lint.sh, Phase 8)
 Tasks seeded: <count> (Task 1 = engineering review, awaiting approval;
   Task N = post-implementation /review — Phase 12 close-out gate)

@@ -619,7 +619,7 @@ runtime block points back to.
      without asking — but every such autonomous call is **annotated `〔自行裁定〕`
      where it was decided** in the plan being authored this phase (§Plan
      integrity `I4`), so the user can scan and
-     override it in the section-by-section co-review. Deciding without asking is
+     override it when they review that plan. Deciding without asking is
      allowed; **not** recording it is not. (User-made / co-created decisions use
      the same note marked `〔使用者〕`; cross-feature or likely-to-resurface ones
      promote to the Decision Log DB at close-out, as today — the list is the
