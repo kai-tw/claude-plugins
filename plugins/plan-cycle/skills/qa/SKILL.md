@@ -254,10 +254,29 @@ took it from rating F to A, so survivors are actionable, not advisory.
    trusting `ps`, which double-counts shared memory — read
    `${CLAUDE_PLUGIN_ROOT}/skills/qa/testing-forensics.md` (the pgid sampler + the
    known cold-start non-issues not worth chasing).
-5. **Hand back to caller.** Return: (a) test files created or
+5. **Gate on the mutation score — this is the pass criterion, not green.**
+   Green only says the tests ran. Run, scoped the same way step 4 was:
+   ```bash
+   plan-mutation -- flutter test test/features/<feature>/
+   ```
+   **Every changed file must reach 80%**, per file. Under it, you are not done:
+   each survivor names a case that does not exist or an assertion that does not
+   assert, so add the case that kills it and re-run. `NO-MUTANTS` /
+   `LOW-SIGNAL` rows are **not** passes — they mean the file was not measured
+   (§Mutation testing), so say so in the hand-back rather than reporting them
+   as clean.
+
+   **A survivor outside your tree is a hand-back, never a reach-across.** Rule 1
+   holds here exactly as everywhere else: if killing a mutant needs a *contract*
+   test, that is the engineer role's file, and it goes in (b) below as a named
+   finding — mutation pressure is not the exemption testing.md warns every
+   previous exemption became.
+6. **Hand back to caller.** Return: (a) test files created or
    modified, (b) any bugs found while authoring (one-line + minimal
    repro + severity per the **Bug-note format** below), (c) any
-   failure-class gaps the catalog should grow to cover.
+   failure-class gaps the catalog should grow to cover, (d) the
+   **per-file mutation table** — score, mutant count, and any survivor kept with
+   its written reason, plus any file that came back unmeasured.
 
 ## Test design techniques (name the technique)
 
