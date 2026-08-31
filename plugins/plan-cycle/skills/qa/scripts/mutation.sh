@@ -355,10 +355,22 @@ rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MI
   # so the SCORE is honest; what was not honest is the row, which read as a
   # finished measurement. Measured in CherishCRM: 6 scored against 16 timed out
   # printed as a plain `FAIL 0%`, with 16 of 22 candidates silently unasked.
-  # `timedOut >= total` is the flag rather than a percentage, because it needs no
-  # invented constant: it says more of this file went unmeasured than measured.
-  | ($v.timedOut >= $v.total and $v.timedOut > 0) as $mostly_unmeasured
-  | ($v.total < $floor or $mostly_unmeasured) as $thin
+  # The flag is not a ratio but the only question that matters: COULD the
+  # unmeasured candidates change this verdict? Score them both ways — every
+  # timeout a survivor, then every timeout a kill. If the threshold sits between
+  # those two, the verdict is undetermined and the row must not read as an
+  # answer. If it sits outside them, the verdict holds no matter what those
+  # mutants would have done, and the row is honest.
+  #
+  # This invents no constant, and it catches what a ratio misses. Measured on
+  # CherishCRM: 14 scored against 8 timed out is only 36% unmeasured, so a
+  # ratio test passes it — but 11/22 and 19/22 straddle 80%, so that `FAIL 78%`
+  # was a coin toss printed as a measurement.
+  | ($v.total + $v.timedOut) as $cand
+  | (if $cand > 0 then (($v.detected * 100) / $cand | floor) else 0 end) as $worst
+  | (if $cand > 0 then ((($v.detected + $v.timedOut) * 100) / $cand | floor) else 0 end) as $best
+  | ($v.timedOut > 0 and $worst < $min and $best >= $min) as $undetermined
+  | ($v.total < $floor or $undetermined) as $thin
   | [ $rel,
       (if $score < 0 then "-" else ($score|tostring) end),
       ($v.total|tostring), ($v.invalid|tostring), ($v.timedOut|tostring),
