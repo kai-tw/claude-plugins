@@ -169,6 +169,56 @@ done
 # `Could not find package dart_mutants` buried under a run that has already
 # printed a file count and a threshold, which reads like the tool worked and
 # found nothing.
+# THE ENGINE'S RESOLVED VERSION, NOT ITS DECLARATION.
+#
+# `pubspec.yaml` says what was asked for; `pubspec.lock` says what pub actually
+# resolved. Reading the lock separates three states a yaml grep collapses into
+# one, and the third is the one that bites silently:
+#   - no yaml entry          → never declared
+#   - yaml but no lock entry → declared, `pub get` never run
+#   - lock entry below 0.2.0 → the FOUR-operator engine, which runs, scores and
+#                              reports normally over half the mutation space
+#
+# Not `dart run dart_mutants --version`, which is what this comment used to
+# propose: that flag does not exist (measured — the engine answers "Could not
+# find an option named --version" and exits 64). The lockfile is also free,
+# where spawning dart costs a few hundred ms on every run.
+MIN_ENGINE=0.2.0
+lock_ver=""
+[ -f pubspec.lock ] && lock_ver=$(awk '
+  /^  dart_mutants:/ { inpkg=1; next }
+  inpkg && /^  [a-zA-Z]/ { inpkg=0 }
+  inpkg && /^    version:/ { gsub(/[" ]/,""); sub(/^version:/,""); print; exit }
+' pubspec.lock)
+
+if [ -n "$lock_ver" ] && [ "$(printf '%s\n%s\n' "$MIN_ENGINE" "$lock_ver" | sort -V | head -1)" != "$MIN_ENGINE" ]; then
+  cat >&2 <<EOF
+plan-mutation: this project resolves dart_mutants $lock_ver, and this gate needs
+$MIN_ENGINE or newer. Nothing was measured.
+
+$lock_ver ships FOUR operators — ternary, switch-arm, ?? and relational. It runs,
+scores and prints a normal-looking table over half the mutation space: statement
+deletion, condition negation, &&/|| and arithmetic produce nothing, and no row
+says which engine produced the number.
+
+Update the ref in pubspec.yaml to dart_mutants-v$MIN_ENGINE or newer, then
+\`flutter pub get\`.
+EOF
+  exit 2
+fi
+
+if [ -z "$lock_ver" ] && grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
+  cat >&2 <<'EOF'
+plan-mutation: pubspec.yaml declares `dart_mutants` but pubspec.lock does not
+resolve it, so the engine is not installed. Nothing was measured.
+
+  flutter pub get
+
+(Declared is not installed — this is the state a yaml-only check called ready.)
+EOF
+  exit 2
+fi
+
 if ! grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
   cat >&2 <<'EOF'
 plan-mutation: this project does not depend on `dart_mutants`, so there is no
