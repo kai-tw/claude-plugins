@@ -350,12 +350,21 @@ rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MI
   .files | to_entries[] | .value as $v
   | ($v.filePath | sub("^" + $root; "")) as $rel
   | (if $v.total > 0 then (($v.detected * 100) / $v.total | floor) else -1 end) as $score
+  # A timeout is not a slow kill and not a survivor — it is a candidate that was
+  # never answered, exactly like an `invalid` one. `total` already excludes it,
+  # so the SCORE is honest; what was not honest is the row, which read as a
+  # finished measurement. Measured in CherishCRM: 6 scored against 16 timed out
+  # printed as a plain `FAIL 0%`, with 16 of 22 candidates silently unasked.
+  # `timedOut >= total` is the flag rather than a percentage, because it needs no
+  # invented constant: it says more of this file went unmeasured than measured.
+  | ($v.timedOut >= $v.total and $v.timedOut > 0) as $mostly_unmeasured
+  | ($v.total < $floor or $mostly_unmeasured) as $thin
   | [ $rel,
       (if $score < 0 then "-" else ($score|tostring) end),
       ($v.total|tostring), ($v.invalid|tostring), ($v.timedOut|tostring),
       (if $score < 0 then "NO-MUTANTS"
-       elif $score < $min then (if $v.total < $floor then "FAIL LOW-SIGNAL" else "FAIL" end)
-       elif $v.total < $floor then "PASS LOW-SIGNAL"
+       elif $score < $min then (if $thin then "FAIL LOW-SIGNAL" else "FAIL" end)
+       elif $thin then "PASS LOW-SIGNAL"
        else "PASS" end) ]
   | @tsv' "$out/report.json")
 
@@ -398,6 +407,26 @@ byop=$(jq -r '[.files[].undetectedMutants[]?.operatorName] | group_by(.)
     }
     { printf "  %3s  %-34s %s\n", $1, $2, ($2 in q) ? q[$2] : "(unrecognised operator)" }'
 }
+
+# Timeouts get their own note, because the remedy is different from a thin
+# mutant pool and the two causes behind them are indistinguishable from here.
+if printf '%s\n' "$rows" | awk -F'\t' '$5 > 0' | grep -q .; then
+  to_total=$(printf '%s\n' "$rows" | awk -F'\t' '{ n += $5 } END { print n+0 }')
+  cat >&2 <<EOF
+
+plan-mutation: ${to_total} mutant(s) TIMED OUT — those candidates were never
+answered. They are not kills and not survivors, so they are excluded from the
+score, and the rows above under-report how much of each file was actually asked.
+
+A timeout has two causes and this tool cannot tell them apart:
+  · the budget is too tight — ${MUTANT_TIMEOUT}s must cover a FULL run of your test
+    command, so a command that already takes most of that leaves no headroom;
+  · the mutant genuinely hangs the code, which is a real finding.
+
+Re-run those files with a larger --timeout. If the timeouts disappear it was the
+budget; if one persists, that mutant is hanging and worth reading.
+EOF
+fi
 
 if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /NO-MUTANTS|LOW-SIGNAL/' | grep -q .; then
   cat >&2 <<EOF
