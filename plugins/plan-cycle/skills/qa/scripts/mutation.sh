@@ -123,6 +123,29 @@ EOF
   exit 2
 fi
 
+# --- a retired engine's report must not sit at the path people read ---------
+# Until 0.28.x this script wrote its findings to `mutation-report.md`. The AST
+# switch dropped the writer and printed to stdout instead — and left every
+# already-written file in place, at the canonical path, with a plausible mtime
+# and a clean `git status`. Measured: three survived across the two consumer
+# projects, and a reviewer read one and nearly filed three verbatim-identical
+# survivor lists from the regex engine's answers. Nothing overwrites these,
+# because nothing writes them any more; they are only ever removed by hand.
+for stale in build/mutation-report.md mutation-report.md; do
+  [ -f "$stale" ] || continue
+  cat >&2 <<EOF
+plan-mutation: REFUSING TO START — $stale is output from the RETIRED regex
+engine (nothing has written that path since 0.29.0, so it cannot be current).
+Its mutant set and its scores are not comparable to this engine's, and it reads
+as a normal report.
+
+  rm $stale
+
+This script prints its findings to stdout and writes no report file.
+EOF
+  exit 2
+done
+
 # --- the engine has to be here before anything else happens -----------------
 # Switching from the regex engine to the AST one changed an UNDECLARED
 # prerequisite: `mutation_test` was `dart pub global activate`d, `dart_mutants`
