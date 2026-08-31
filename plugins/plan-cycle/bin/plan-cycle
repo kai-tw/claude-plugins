@@ -85,12 +85,34 @@ REVIEW_DRIFT_MAX=10
 # which is deny-listed. Two commits is already a phase held back.
 UNPUSHED_MAX=2
 
-# Per-session key → concurrent sessions never collide. Sanitize to a safe
-# filename; fall back to "active" only for manual CLI runs with no session.
+# KEYED BY CYCLE, NOT BY SESSION.
+#
+# The ledger used to be `<session-id>.json`, so concurrent sessions could never
+# see each other's cycle. That made one session's gap unable to block another,
+# which was the point — and it also made collaboration impossible: two sessions
+# on one feature were two cycles that happened to share a branch.
+#
+# Now a cycle is a file, and sessions JOIN it. `session/<sid>` is a pointer from
+# this session to the cycle it joined, so `check` still needs no arguments. The
+# original protection survives in a better form: a session that never joined has
+# no pointer, resolves no ledger, and is never gated — deliberate participation
+# rather than accidental isolation.
 SID="${SESSION_OVERRIDE:-${CLAUDE_CODE_SESSION_ID:-}}"
 SID=$(printf '%s' "$SID" | tr -cd 'A-Za-z0-9._-')
 [ -n "$SID" ] || SID="active"
-LEDGER="$LEDGER_DIR/${SID}.json"
+CYCLES="$LEDGER_DIR/cycles"
+MEMBERS="$LEDGER_DIR/session"
+POINTER="$MEMBERS/$SID"
+SLUG=""
+[ -f "$POINTER" ] && SLUG=$(tr -cd 'A-Za-z0-9._-' < "$POINTER")
+LEDGER="$CYCLES/${SLUG:-__none__}.json"
+
+# A codename is BOTH the session's title and its address: a session renames
+# itself on join, ListAgents then shows the codename, and SendMessage delivers
+# to it. Verified live — a peer renamed itself mid-conversation and the new name
+# was addressable on the next listing. So the ledger stores one identity, not a
+# name plus a mapping that can drift out of date.
+codename_for() { printf '%s · %s' "$1" "$2"; }
 
 # --- stage / phase ordering --------------------------------------------------
 # A plan phase's row must be in Notion once the cycle's Stage has advanced
@@ -335,19 +357,61 @@ cmd="${1:-}"; [ $# -gt 0 ] && shift
 case "$cmd" in
   start)
     slug="${1:-}"; title="${2:-}"
-    mkdir -p "$LEDGER_DIR"
-    # housekeeping: drop abandoned ledgers from old sessions
-    find "$LEDGER_DIR" -maxdepth 1 -name '*.json' -mtime +"$STALE_DAYS" -delete 2>/dev/null || true
+    [ -n "$slug" ] || { echo "usage: plan-cycle start <slug> <title>" >&2; exit 2; }
+    slug=$(printf '%s' "$slug" | tr -cd 'A-Za-z0-9._-')
+    mkdir -p "$CYCLES" "$MEMBERS"
+    # housekeeping: drop abandoned cycles and the pointers into them
+    find "$CYCLES" -maxdepth 1 -name '*.json' -mtime +"$STALE_DAYS" -delete 2>/dev/null || true
+    find "$MEMBERS" -maxdepth 1 -type f -mtime +"$STALE_DAYS" -delete 2>/dev/null || true
+    LEDGER="$CYCLES/${slug}.json"
+    [ -f "$LEDGER" ] && { echo "plan-cycle: cycle '$slug' already exists — join it instead:" >&2
+                          echo "  plan-cycle join $slug <role>" >&2; exit 2; }
     jq -n --arg slug "$slug" --arg title "$title" --arg now "$(now)" '
       { slug: $slug, title: $title, stage: null, stage_idx: -1,
         pr_opened: false,
+        members: {},
         phases: {
           pm:       { expected: false, uploaded: false, url: "" },
           designer: { expected: false, uploaded: false, url: "" },
           engineer: { expected: false, uploaded: false, url: "" }
         },
         updated: $now }' > "$LEDGER"
-    echo "plan-cycle: started ledger for '${slug:-?}'"
+    printf '%s' "$slug" > "$POINTER"
+    exec "$0" join "$slug" lead
+    ;;
+
+  join)   # attach THIS session to a cycle, under a role and a codename
+    slug="${1:-}"; role="${2:-}"; want="${3:-}"
+    [ -n "$slug" ] && [ -n "$role" ] || {
+      echo "usage: plan-cycle join <slug> <lead|pm|designer|engineer|qa> [codename]" >&2; exit 2; }
+    case "$role" in lead|pm|designer|engineer|qa) ;;
+      *) echo "plan-cycle: role must be lead, pm, designer, engineer or qa (got \"$role\")" >&2; exit 2 ;; esac
+    slug=$(printf '%s' "$slug" | tr -cd 'A-Za-z0-9._-')
+    LEDGER="$CYCLES/${slug}.json"
+    [ -f "$LEDGER" ] || { echo "plan-cycle: no cycle '$slug' — start it with: plan-cycle start $slug <title>" >&2; exit 2; }
+    code="${want:-$(codename_for "$slug" "$role")}"
+    # A codename must be unique within the cycle, because it is an ADDRESS. Two
+    # sessions answering to one name is a message delivered to whichever the
+    # lister happened to return.
+    if jq -e --arg c "$code" --arg s "$SID" \
+         'any((.members // {}) | to_entries[]; .value.codename == $c and .key != $s)' \
+         "$LEDGER" >/dev/null 2>&1; then
+      echo "plan-cycle: codename \"$code\" is already taken in cycle '$slug' — pass a different one" >&2; exit 2
+    fi
+    mkdir -p "$MEMBERS"
+    printf '%s' "$slug" > "$POINTER"
+    write_ledger --arg s "$SID" --arg r "$role" --arg c "$code" --arg now "$(now)" '
+      .members[$s] = { role: $r, codename: $c, joined: $now } | .updated = $now'
+    cat <<EOF
+plan-cycle: joined '$slug' as $role.
+
+  codename: $code
+
+Set this session's title to that codename now — it is the address other sessions
+use to reach you, and the lead reads it from this ledger:
+
+  set_session_title(session_id: "self", title: "$code")
+EOF
     ;;
 
   enter)   # archivist advanced the Notion Stage → mirror it
@@ -547,6 +611,15 @@ EOF
         exit 1
       fi
     fi
+    # Drop the cycle AND every pointer into it. A pointer left behind sends its
+    # session to a ledger that no longer exists, which reads as "joined no
+    # cycle" — silently ungated rather than loudly finished.
+    if [ -n "$SLUG" ]; then
+      for p in "$MEMBERS"/*; do
+        [ -e "$p" ] || continue
+        [ "$(cat "$p" 2>/dev/null)" = "$SLUG" ] && rm -f "$p"
+      done
+    fi
     rm -f "$LEDGER"
     # --- Consume nudge (feedback-ledger) --------------------------------------
     # Close-out is the one natural moment to remind: once per cycle, never per
@@ -570,8 +643,24 @@ EOF
     ;;
 
   status)  # human / debug
-    [ -f "$LEDGER" ] || { echo "plan-cycle: no active cycle"; exit 0; }
+    [ -f "$LEDGER" ] || { echo "plan-cycle: this session has joined no cycle"; exit 0; }
     cat "$LEDGER"
+    ;;
+
+  roster)  # who is in this cycle, and which of them are still alive
+    # The ledger says who JOINED. It cannot say who is still running — a session
+    # that died leaves its row behind. So this prints the codenames and leaves
+    # the liveness check to the caller, who has ListAgents: a codename in the
+    # roster but absent from that listing is work nobody is holding any more.
+    [ -f "$LEDGER" ] || { echo "plan-cycle: this session has joined no cycle"; exit 0; }
+    jq -r '"cycle: \(.slug)  —  \(.title // "")\nstage: \(.stage // "—")\n",
+           ((.members // {}) | to_entries
+            | if length == 0 then ["  (no members)"]
+              else map("  \(.value.role|. + "        "|.[0:8])  \(.value.codename)")
+              end | .[])' "$LEDGER"
+    echo
+    echo "Cross-check against ListAgents: a codename here but not there is a"
+    echo "member whose session is gone, and its work needs reassigning."
     ;;
 
   check)   # the Stop hook calls this. exit 1 + reason on a gap; exit 0 otherwise.
@@ -836,7 +925,7 @@ EOF
   # about the turn that is starting.
   sweep)
     owed=""
-    for f in "$LEDGER_DIR"/*.json; do
+    for f in "$CYCLES"/*.json; do
       [ -e "$f" ] || continue
       pr=$(jq -r '.pr // ""' "$f" 2>/dev/null)
       [ -n "$pr" ] || continue
@@ -846,7 +935,7 @@ EOF
       title=$(jq -r '.title // ""' "$f" 2>/dev/null)
       stage=$(jq -r '.stage // "?"' "$f" 2>/dev/null)
       whose=""
-      [ "$(basename "$f" .json)" = "$SID" ] || whose="  ← opened in an earlier session"
+      [ "$(basename "$f" .json)" = "$SLUG" ] || whose="  ← a cycle this session has not joined"
       owed="${owed}  • PR #${pr} merged — ${slug}${title:+ (${title})} · Stage ${stage}${whose}
 "
     done
@@ -884,7 +973,21 @@ EOF
     ;;
 
   *)
-    echo "usage: plan-cycle.sh {start <slug> <title>|enter <Stage>|uploaded <pm|designer|engineer> <plan-row-url>|pr-opened <PR#> [base] [branch]|tests-frozen|reviewed <sha>|clear|status|check|sweep}" >&2
+    cat >&2 <<'USAGE'
+usage: plan-cycle <command>
+
+  start <slug> <title>                 create a cycle and join it as lead
+  join <slug> <role> [codename]        attach this session (lead|pm|designer|engineer|qa)
+  roster                               members of the joined cycle, with codenames
+
+  enter <Stage>                        mirror the Stage the plan reached
+  uploaded <pm|designer|engineer> <address>   record a landed plan
+  pr-opened <PR#> [base] [branch]      record the PR
+  tests-frozen | reviewed <sha> | clear
+  status | check | sweep
+
+A session that has joined no cycle is never gated.
+USAGE
     exit 0
     ;;
 esac
