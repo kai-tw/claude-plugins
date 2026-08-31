@@ -334,6 +334,38 @@ if [ -n "$abort" ]; then
   exit 1
 fi
 
+# EVERY FILE WE ASKED ABOUT HAS TO APPEAR IN THE REPORT.
+#
+# `jq -e` above proves the report is parseable JSON, not that it contains
+# anything. A report of `{"files":{}}` passes that check, produces no rows, and
+# every read below treats no-rows as nothing-to-block — an empty table and
+# exit 0 over a run that measured nothing. Same shape as the leg-2 gate that was
+# printing "suite green" off an unparsed report: emptiness only means "clean"
+# once the thing that fills it is known to have run.
+#
+# The assertion is per file rather than a count, so a partial report — the engine
+# skipping one path it could not handle — names which file lost its score instead
+# of silently shrinking the scope of the gate.
+missing=$(printf '%s\n' "$files" | while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  jq -e --arg root "$root/" --arg f "$f" \
+    'any(.files[]?; (.filePath | sub("^" + $root; "")) == $f)' "$out/report.json" >/dev/null 2>&1 \
+    || printf '%s\n' "$f"
+done)
+if [ -n "$missing" ]; then
+  cat >&2 <<EOF
+
+plan-mutation: THE REPORT IS MISSING FILES IT WAS ASKED TO MEASURE. These have
+no score — not a low one, none at all:
+
+$(printf '%s\n' "$missing" | sed 's/^/  /')
+
+The engine returned a parseable report that does not cover them, so no verdict
+below applies to these files. This is not a pass.
+EOF
+  exit 2
+fi
+
 # --- score, per file --------------------------------------------------------
 # Per-file, not aggregate: an aggregate lets a well-tested file carry a badly
 # tested one. Measured on NovelGlide's http_client — 100% and 67% averaged to
@@ -344,8 +376,10 @@ fi
 # candidates were mostly rejected has a tiny effective sample and its score is
 # arithmetic rather than evidence — the same emptiness as a low mutant count.
 #
-# Paths come back absolute; the table is relative, so normalise or every row
-# fails to match the file it is about.
+# The engine echoes back the paths it was given, which are relative here, but it
+# has returned absolute ones — so strip a leading repo root rather than assuming
+# either. Without the strip, an absolute path makes every row fail to match the
+# file it is about.
 rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MIN_MUTANTS" '
   .files | to_entries[] | .value as $v
   | ($v.filePath | sub("^" + $root; "")) as $rel
