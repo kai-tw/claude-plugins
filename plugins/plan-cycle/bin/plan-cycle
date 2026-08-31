@@ -666,15 +666,28 @@ plan-cycle: this session has joined no cycle.
 NONE
       fi; exit 0; }
 
-    plans=$(plan-store list 2>/dev/null | awk '{print $1"."$2}' | paste -sd, - 2>/dev/null)
+    # "no plans" and "could not look" are different answers and must not share a
+    # representation. An earlier draft piped `plan-store list` through
+    # `2>/dev/null`, so a plan-store that could not run at all reported an empty
+    # list — the roster then said "on disk: (none)" over a plan that existed.
+    # Same fault as a timed-out mutant counted as absent. `[]` means none;
+    # `null` means unknown, and the caller is told which.
+    if plans_raw=$("$(dirname "${BASH_SOURCE[0]}")/plan-store" list 2>&1); then
+      plans=$(printf '%s\n' "$plans_raw" | awk 'NF>=4 {print $1"."$2}' | paste -sd, -)
+      plans_json=$( [ -n "$plans" ] && printf '%s' "$plans" | jq -R 'split(",")' || echo '[]' )
+    else
+      plans_json=null
+      plans_err=$(printf '%s' "$plans_raw" | head -1)
+    fi
     if [ "${1:-}" = "--json" ]; then
-      jq --arg plans "$plans" '{
+      jq --argjson plans "$plans_json" --arg err "${plans_err:-}" '{
         joined: true, slug: .slug, title: .title, stage: (.stage // null),
         pr: (.pr // null), pr_opened: (.pr_opened // false),
         members: [ (.members // {}) | to_entries[]
                    | { role: .value.role, codename: .value.codename, joined: .value.joined } ],
         phases: .phases,
-        plans_on_disk: ($plans | if . == "" then [] else split(",") end)
+        plans_on_disk: $plans,
+        plans_unreadable: (if $plans == null then $err else null end)
       }' "$LEDGER"
       exit 0
     fi
