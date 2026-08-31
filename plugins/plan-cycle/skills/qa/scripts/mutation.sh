@@ -493,6 +493,14 @@ if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /^FAIL/' | grep -q .; then
 plan-mutation: BLOCKED — a changed file scored under ${MIN_SCORE}%. Each survivor
 above is either a missing case or an assertion that does not actually assert;
 line coverage cannot see either. Add the case that kills it.
+$( [ "$(jq -r '[.files[]?.detected] | add // 0' "$out/report.json" 2>/dev/null)" = "0" ] && cat <<'ZERO'
+
+NOTE — not one mutant was detected, anywhere. Two things look identical here: a
+suite that asserts nothing, and a test command that ran no tests at all. Confirm
+the command actually executes tests over these files before treating the list
+above as a list of missing cases.
+ZERO
+)
 
 If a survivor is genuinely equivalent (the mutant cannot change behaviour), say
 so at the site — equivalent mutants are unkillable by definition, which is why
