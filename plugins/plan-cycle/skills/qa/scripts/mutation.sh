@@ -68,14 +68,30 @@ while [ $# -gt 0 ]; do
     # WHOLE line — removed flags, `--files`, its argument and all — became the
     # test command, `--files` never parsed, and the run silently widened to the
     # entire 48-file diff. A stale flag has to stop the run, not redefine it.
-    -*)         cat >&2 <<EOF
-plan-mutation: unknown option "$1".
-
+    # The removal note is shown ONLY for the flags actually removed. Printed
+    # unconditionally it explains the wrong thing: a caller who typed
+    # `--test-command` (the ENGINE's flag, never this script's) read the removal
+    # text, concluded plan-mutation had dropped a flag it never had, and was
+    # about to file a migration note for a change that never happened. Right
+    # refusal, wrong reason attached to it.
+    -*)         case "$1" in
+                  --budget|--yes)
+                    why='
   --budget / --yes were REMOVED with the regex engine: there is no dry-count
   mode to estimate against, so there is nothing to approve. Each mutant is
-  bounded by --timeout instead (default ${MUTANT_TIMEOUT}s).
+  bounded by --timeout instead.' ;;
+                  --test-command)
+                    why='
+  --test-command belongs to the ENGINE, not to this script, and never was a
+  plan-mutation flag. Put the test command after `--` and it is forwarded.' ;;
+                  *) why='' ;;
+                esac
+                cat >&2 <<EOF
+plan-mutation: unknown option "$1".
+${why}
 
   usage: plan-mutation [--min <pct>] [--timeout <s>] [--files a.dart …] -- <test-command…>
+         --timeout defaults to ${MUTANT_TIMEOUT}s per mutant.
 EOF
                 exit 2 ;;
     *)          break ;;
