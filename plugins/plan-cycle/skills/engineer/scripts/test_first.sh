@@ -31,9 +31,12 @@
 #   longer STARTS with `UnimplementedError` — classifies BLOCK, not STUB. That is
 #   the safe direction (a gate that fails closed), but it has a consequence worth
 #   knowing before you write the plan: a conformance item that can only be
-#   asserted by mounting a widget may not be expressible as a red-by-stub, which
-#   biases the plan toward extracting pure units. Reported for Flutter's
-#   `pumpWidget` and NOT verified here.
+#   asserted by mounting a widget CANNOT be expressed as a red-by-stub, which
+#   biases the plan toward extracting pure units. Measured, not inferred: a
+#   StatelessWidget whose `build` throws `UnimplementedError` reports its error
+#   as "Test failed. See exception logs above." — flutter_test rewrites the
+#   throw — while the same throw outside a widget reports "UnimplementedError".
+#   Both come back result "error"; only the second classifies STUB.
 #
 # USAGE
 #   plan-test-first flutter test [<path>…]
