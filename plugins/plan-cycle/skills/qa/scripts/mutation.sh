@@ -503,12 +503,38 @@ what remains is a small and possibly unrepresentative sample of that file.
 EOF
 fi
 
-if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /^FAIL/' | grep -q .; then
+# LOW-SIGNAL BLOCKS. It always meant "not measured", and qa/SKILL.md always said
+# such a row is not a pass — but the script exited 0 on it, so the discipline
+# lived only in prose. Measured twice on CherishCRM: `google_sign_in_button.dart`
+# printed PASS LOW-SIGNAL 100% off ONE mutant with two timed out, and was 33%
+# once all three ran; `google_session.dart` printed PASS 80% and was 66%. Both
+# rows were labelled correctly and shipped anyway. No improvement to the label
+# reaches that — only the exit code does.
+#
+# NO-MUTANTS is deliberately NOT here: nothing to mutate is the expected result
+# for a declarative file, and blocking it would push logic INTO widgets to make
+# something measurable.
+if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /^FAIL|LOW-SIGNAL/' | grep -q .; then
   cat >&2 <<EOF
 
-plan-mutation: BLOCKED — a changed file scored under ${MIN_SCORE}%. Each survivor
-above is either a missing case or an assertion that does not actually assert;
-line coverage cannot see either. Add the case that kills it.
+plan-mutation: BLOCKED.
+$( printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /^FAIL/' | grep -q . && cat <<'UNDER'
+
+  Scored under the threshold. Each survivor above is either a missing case or an
+  assertion that does not actually assert; line coverage cannot see either. Add
+  the case that kills it.
+UNDER
+)$( printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /LOW-SIGNAL/' | grep -q . && cat <<'THIN'
+
+  A LOW-SIGNAL row was NOT measured, whatever percentage it shows — a 100% over
+  two mutants is arithmetic, not evidence, and it blocks for that reason rather
+  than for its score. Two ways in, with different remedies:
+    · timeouts left the verdict undetermined → re-run those files with a larger
+      --timeout; if it resolves, the score was never the problem
+    · the mutant pool is genuinely thin → the file cannot be graded this way.
+      Say so in the hand-back, with what you checked instead.
+THIN
+)
 $( [ "$(jq -r '[.files[]?.detected] | add // 0' "$out/report.json" 2>/dev/null)" = "0" ] && cat <<'ZERO'
 
 NOTE — not one mutant was detected, anywhere. Two things look identical here: a

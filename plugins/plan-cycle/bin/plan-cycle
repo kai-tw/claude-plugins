@@ -175,9 +175,10 @@ merged_on_base() {
 #
 # Two of the rule's three conditions are pure string comparison and are enforced:
 # a reason that is empty or a generic non-reason ("intentional" / "by design" —
-# the rule names these), and a rationale that spills onto a second comment line
-# (one line is the whole budget: a reason needing a paragraph is a FIX, or a
-# principle that belongs in `.claude/rules/`). The third — "precedent alone is
+# the rule names these), and a rationale running past two lines. One line is the
+# target; the gate fires at three, because wrapping costs a line and a claim that
+# still needs a third is not one claim. A reason needing a paragraph is a FIX, or
+# a principle that belongs in `.claude/rules/`. The third — "precedent alone is
 # 推託" — is NOT enforced: telling a bare sibling appeal from a structural
 # argument that happens to mention a sibling needs judgment, and a gate that
 # guesses at it would fire on correct dismissals. That one stays the reviewer's.
@@ -192,10 +193,19 @@ review_dismiss_violations() {
     /^\+/ {
       line = substr($0, 2)
       if (pending) {
-        # A following comment that is its own directive is not a continuation.
-        if (line ~ /^[[:space:]]*\/\/[[:space:]]*(TODO|FIXME|HACK|NOTE|ignore|ignore_for_file|coverage|review-dismiss)/) { pending = 0 }
-        else if (line ~ /^[[:space:]]*\/\/\//) { pending = 0 }
-        else if (line ~ /^[[:space:]]*\/\//)   { print file "\t" pendreason "\tspills onto a second comment line"; pending = 0; next }
+        # A new `review-dismiss:` ends the previous one rather than continuing
+        # it — two stacked dismissals are two claims, not one long one.
+        if (line ~ /\/\/[[:space:]]*review-dismiss:/) { pending = 0 }
+        # Any other comment line is a CONTINUATION, `///` included. The rule is
+        # about how long the argument is; which comment marker it uses does not
+        # change that, and treating `///` as a terminator was a bypass — measured
+        # on a six-line rationale that scored as compliant by using it.
+        # One continuation is the budget: three lines or more is the signal that
+        # the thing being dismissed should have been split.
+        else if (line ~ /^[[:space:]]*\/\//) {
+          if (++cont >= 2) { print file "\t" pendreason "\truns past two lines — split what is being dismissed"; pending = 0; next }
+          next
+        }
         else pending = 0
       }
       if (line ~ /\/\/[[:space:]]*review-dismiss:/) {
@@ -207,7 +217,7 @@ review_dismiss_violations() {
           print file "\t(empty)\tno reason at all"
         else if (lc ~ /^(intentional|intended|by design|by-design|as designed|deliberate|on purpose|works as intended)[.。]?$/)
           print file "\t" reason "\ta generic non-reason the rule names explicitly"
-        else { pending = 1; pendreason = reason }
+        else { pending = 1; cont = 0; pendreason = reason }
       }
       next
     }
@@ -625,9 +635,11 @@ $(printf '%s\n' "$rd" | awk -F'\t' '{ printf "  • %s\n      reason: %s\n      
 
 review/SKILL.md §Verdict per finding: a DISMISS lands a **one-line**
 \`// review-dismiss: <reason>\` at the site, and the reason must say why the code
-is correct — specific, not generic, and one line is the whole budget. A rationale
-that needs a paragraph is not a dismissal: it is a FIX, or a principle that
-belongs in \`.claude/rules/\`.
+is correct — specific, not generic. One line is the target and two is the cap:
+wrapping costs a line, but a claim still needing a third is not one claim, and
+what is being dismissed should be split until each part fits. A rationale that
+needs a paragraph is not a dismissal: it is a FIX, or a principle that belongs
+in \`.claude/rules/\`.
 
 Fix each one, or re-classify the finding as FIX. Remember the condition this gate
 does NOT check: precedent alone ("the sibling does it") is 推託, not a reason —
