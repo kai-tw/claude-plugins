@@ -181,10 +181,16 @@ Add it to pubspec.yaml under dev_dependencies:
       git:
         url: https://github.com/kai-tw/kai-packages.git
         path: packages/dart_mutants
-        ref: dart_mutants-v0.1.0
+        ref: dart_mutants-v0.2.0
 
 then `flutter pub get`. (It replaced `mutation_test`, which was installed
 globally — the prerequisite moved from the machine to the project.)
+
+Take the ref above verbatim. v0.1.0 ships four operators and v0.2.0 eight, and
+the four it adds — statement deletion, condition negation, `&&`/`||`, arithmetic
+— are the half that asks whether a line's effect is asserted at all. Pinned to
+v0.1.0 the tool runs, scores, and reports normally over a pool that cannot see
+any of that. Nothing about the output says which engine produced it.
 EOF
   exit 2
 fi
