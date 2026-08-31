@@ -363,9 +363,12 @@ rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MI
   # mutants would have done, and the row is honest.
   #
   # This invents no constant, and it catches what a ratio misses. Measured on
-  # CherishCRM: 14 scored against 8 timed out is only 36% unmeasured, so a
-  # ratio test passes it — but 11/22 and 19/22 straddle 80%, so that `FAIL 78%`
-  # was a coin toss printed as a measurement.
+  # the CherishCRM file `google_session.dart`: 4 detected of 5, one timed out.
+  # Only
+  # 17% unmeasured and the pool clears the floor, so both a ratio test and the
+  # mutant floor wave it through as a plain `PASS 80%` — but 4/6 and 5/6 are
+  # 66% and 83%, straddling the threshold. That pass rested entirely on a
+  # mutant nobody ran.
   | ($v.total + $v.timedOut) as $cand
   | (if $cand > 0 then (($v.detected * 100) / $cand | floor) else 0 end) as $worst
   | (if $cand > 0 then ((($v.detected + $v.timedOut) * 100) / $cand | floor) else 0 end) as $best
