@@ -369,6 +369,36 @@ surv=$(jq -r '.files | to_entries[] | .value.undetectedMutants[]?
   | "  • \(.filePath | split("/") | last):\(.line):\(.column)  \(.operatorName) — \(.description)"' "$out/report.json")
 [ -n "$surv" ] && { echo; echo "Surviving mutants:"; printf '%s\n' "$surv"; }
 
+# Survivors grouped by operator, because the pool asks TWO different questions
+# and each takes a different fix. A `statement_deletion` survivor means nothing
+# asserts the line ran at all — the test never looks at its effect. Every other
+# operator survives because a choice is unpinned: the branch, the boundary, the
+# fallback. Adding an assertion fixes the first; adding a case fixes the second,
+# and doing the wrong one leaves the mutant alive.
+#
+# Counts, never a per-operator score: the report gives `detected` as a file
+# total with no operator attached, so the denominator per operator does not
+# exist. A percentage here would be invented. An unknown operator name still
+# prints — a new one added upstream must not silently vanish from this summary.
+byop=$(jq -r '[.files[].undetectedMutants[]?.operatorName] | group_by(.)
+  | map({n: length, op: .[0]}) | sort_by(-.n)[] | "\(.n)\t\(.op)"' "$out/report.json" 2>/dev/null)
+[ -n "$byop" ] && {
+  echo
+  echo "Survivors by operator:"
+  printf '%s\n' "$byop" | awk -F'\t' '
+    BEGIN {
+      q["statement_deletion"]              = "nothing asserts these lines ran"
+      q["condition_negation"]              = "the guard true/false choice is unpinned"
+      q["relational_operator_replacement"] = "the boundary is unpinned"
+      q["logical_operator_replacement"]    = "which operand decides is unpinned"
+      q["arithmetic_operator_replacement"] = "the arithmetic result is unasserted"
+      q["ternary_swap"]                    = "the branch is unpinned"
+      q["switch_expression_arm_swap"]      = "the arm mapping is unpinned"
+      q["null_coalescing_deletion"]        = "the fallback is unpinned"
+    }
+    { printf "  %3s  %-34s %s\n", $1, $2, ($2 in q) ? q[$2] : "(unrecognised operator)" }'
+}
+
 if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /NO-MUTANTS|LOW-SIGNAL/' | grep -q .; then
   cat >&2 <<EOF
 
