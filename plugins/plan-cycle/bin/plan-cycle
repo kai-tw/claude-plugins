@@ -647,20 +647,56 @@ EOF
     cat "$LEDGER"
     ;;
 
-  roster)  # who is in this cycle, and which of them are still alive
-    # The ledger says who JOINED. It cannot say who is still running — a session
-    # that died leaves its row behind. So this prints the codenames and leaves
-    # the liveness check to the caller, who has ListAgents: a codename in the
-    # roster but absent from that listing is work nobody is holding any more.
-    [ -f "$LEDGER" ] || { echo "plan-cycle: this session has joined no cycle"; exit 0; }
-    jq -r '"cycle: \(.slug)  —  \(.title // "")\nstage: \(.stage // "—")\n",
+  roster)  # the lead's one call: who is here, what has landed, what is next
+    # THE CALLER IS AN AGENT, so `--json` is a first-class form rather than a
+    # debug affordance: a lead that has to regex a table will eventually regex it
+    # wrong, and the failure looks like a confident summary.
+    #
+    # The ledger says who JOINED. It cannot say who is still RUNNING — a session
+    # that died leaves its row behind — so liveness is stated as the caller's job
+    # rather than guessed here. A codename in this roster but absent from
+    # ListAgents is work nobody is holding.
+    [ -f "$LEDGER" ] || {
+      if [ "${1:-}" = "--json" ]; then echo '{"joined":false}'
+      else cat <<'NONE'
+plan-cycle: this session has joined no cycle.
+
+  plan-cycle start <slug> <title>   to open one (you become lead)
+  plan-cycle join <slug> <role>     to attach to one that exists
+NONE
+      fi; exit 0; }
+
+    plans=$(plan-store list 2>/dev/null | awk '{print $1"."$2}' | paste -sd, - 2>/dev/null)
+    if [ "${1:-}" = "--json" ]; then
+      jq --arg plans "$plans" '{
+        joined: true, slug: .slug, title: .title, stage: (.stage // null),
+        pr: (.pr // null), pr_opened: (.pr_opened // false),
+        members: [ (.members // {}) | to_entries[]
+                   | { role: .value.role, codename: .value.codename, joined: .value.joined } ],
+        phases: .phases,
+        plans_on_disk: ($plans | if . == "" then [] else split(",") end)
+      }' "$LEDGER"
+      exit 0
+    fi
+
+    jq -r '"cycle: \(.slug)  —  \(.title // "")",
+           "stage: \(.stage // "—")\(if .pr then "   PR #\(.pr)" else "" end)\n",
            ((.members // {}) | to_entries
-            | if length == 0 then ["  (no members)"]
-              else map("  \(.value.role|. + "        "|.[0:8])  \(.value.codename)")
+            | if length == 0 then ["  (no members yet)"]
+              else map("  \(.value.role + "         " | .[0:9])\(.value.codename)")
+              end | .[]),
+           "",
+           ((.phases // {}) | to_entries
+            | map(select(.value.expected))
+            | if length == 0 then ["  (no plan phase expected yet)"]
+              else map("  \(.key + "         " | .[0:9])\(if .value.uploaded then "landed  " + .value.url else "OUTSTANDING" end)")
               end | .[])' "$LEDGER"
-    echo
-    echo "Cross-check against ListAgents: a codename here but not there is a"
-    echo "member whose session is gone, and its work needs reassigning."
+    cat <<'TAIL'
+
+Liveness is not in this file. Cross-check the codenames against ListAgents — one
+here but not there is a member whose session is gone, and its work is unheld.
+Add --json for the machine-readable form.
+TAIL
     ;;
 
   check)   # the Stop hook calls this. exit 1 + reason on a gap; exit 0 otherwise.
