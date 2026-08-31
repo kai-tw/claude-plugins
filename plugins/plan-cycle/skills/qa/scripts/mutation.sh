@@ -36,6 +36,13 @@
 #   ⚠️ The test command runs in the CALLER's working directory. Run this from the
 #   repo root. Measured the hard way: invoked from elsewhere it completes, prints
 #   a full score, and has tested nothing — the least visible failure there is.
+#
+# WHILE IT RUNS, THE SOURCE ON DISK IS MUTATED
+#   A live mutant compiles and reads as authored code, so anyone else on this
+#   worktree — a reviewer, another session, an editor — can read it as the
+#   author's. `.mutation-in-progress` at the repo root is the probe: it names the
+#   pid, the sha, and the files. Read those paths with `git show <sha>:<path>`
+#   while it exists. Exit 3 means the tree was NOT restored.
 
 set -uo pipefail
 
@@ -81,6 +88,40 @@ command -v jq >/dev/null 2>&1 || { echo "plan-mutation: jq is required" >&2; exi
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "plan-mutation: not in a git repo" >&2; exit 2; }
 cd "$root" || exit 2
+
+# --- IS SOMEONE ALREADY MUTATING THIS TREE? ---------------------------------
+# For the length of a run the working tree holds a live mutant: it compiles, it
+# carries no marker, and it reads as authored code. Measured as a near-miss — a
+# reviewer on this same worktree read one line twice minutes apart, got two
+# different relational operators, and almost filed "your rationale contradicts
+# your own code" off a mutant. Nothing in that chain lied. The marker written
+# below is what makes the state probe-able by everyone who is NOT the process
+# doing the measuring, which is where the whole hazard lives.
+MARKER="$root/.mutation-in-progress"
+if [ -f "$MARKER" ]; then
+  mpid=$(sed -n 's/^pid:[[:space:]]*//p' "$MARKER" | head -1)
+  if [ -n "$mpid" ] && kill -0 "$mpid" 2>/dev/null; then
+    cat >&2 <<EOF
+plan-mutation: another run (pid $mpid) is mutating this tree right now. Two runs
+sharing one working tree overwrite each other's mutants, so BOTH scores measure
+the other run rather than the tests. Wait for it, or use a separate worktree.
+EOF
+    exit 2
+  fi
+  cat >&2 <<EOF
+plan-mutation: REFUSING TO START. A previous run left $MARKER behind and the
+process it names is gone, so it was killed before it could restore. The files it
+lists may still hold a live mutant — and starting now would snapshot that mutant
+AS IF IT WERE YOUR SOURCE, then faithfully restore it at the end and make it
+permanent.
+
+$(cat "$MARKER")
+
+Diff those paths, put back anything that is not yours, then remove the marker:
+  rm $MARKER
+EOF
+  exit 2
+fi
 
 # --- the engine has to be here before anything else happens -----------------
 # Switching from the regex engine to the AST one changed an UNDECLARED
@@ -151,12 +192,87 @@ restore_sources() {
           && echo "plan-mutation: restored mutated source $rel" >&2
       done
 }
-trap 'restore_sources; rm -rf "$out" "$snap"' EXIT INT TERM
+
+# Restoring is not the same as having restored. A restore that silently failed
+# prints a score, exits 0, and leaves an edit that compiles and looks authored —
+# the same failure-shaped-like-success this gate exists to remove. Prove it
+# against the SNAPSHOT: that is the only correct baseline, because the pre-run
+# tree legitimately differs from HEAD (you are mutating files you just changed),
+# so comparing against a commit would flag your own work as a residue.
+verify_restored() {
+  [ -d "$snap" ] || return 0
+  bad=$( ( cd "$snap" 2>/dev/null && find . -type f -print ) 2>/dev/null | sed 's|^\./||' \
+         | while IFS= read -r rel; do
+             [ -n "$rel" ] || continue
+             cmp -s "$snap/$rel" "$rel" 2>/dev/null || printf '%s\n' "$rel"
+           done )
+  [ -n "$bad" ] || return 0
+  cat >&2 <<EOF
+
+plan-mutation: RESTORE FAILED — the working tree still differs from the snapshot
+taken before this run. These files may hold a live mutant:
+
+$(printf '%s\n' "$bad" | sed 's/^/  /')
+
+Your pre-run copies are KEPT at:
+  $snap
+
+Compare each against that copy before you commit anything. Delete the directory
+yourself once the tree is right.
+EOF
+  return 1
+}
+
+# The exit status has to carry this. A run that scored PASS but left a mutant
+# behind is not a pass: the tree is contaminated, and a caller reading the exit
+# code would take exit 0 plus a score as a clean result — the failure shape this
+# whole script exists to remove. On that path the snapshot is deliberately NOT
+# deleted, because it is the only remaining copy of the pre-run source.
+cleanup() {
+  rc=$?
+  trap - EXIT INT TERM
+  restore_sources
+  if verify_restored; then
+    rm -rf "$snap"
+  else
+    rc=3
+  fi
+  rm -f "$MARKER" "$MARKER.tmp"
+  rm -rf "$out"
+  exit "$rc"
+}
+trap cleanup EXIT INT TERM
 
 printf '%s\n' "$files" | while IFS= read -r f; do
   [ -n "$f" ] || continue
   mkdir -p "$snap/$(dirname "$f")" && cp "$f" "$snap/$f"
 done
+
+head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
+# Written to a sibling and moved into place, because `cat > "$MARKER"` creates
+# the file before it writes it: a poller that samples in that window sees a
+# zero-byte marker with no pid line. `mv` within one directory is atomic, so the
+# marker is never observable half-written. (Reading it empty fails safe — the
+# guard above refuses on a missing pid — but "refuses for the wrong reason" is
+# not the same as correct.)
+cat > "$MARKER.tmp" <<EOF
+plan-mutation IN PROGRESS — the files below are being mutated RIGHT NOW.
+
+pid:      $$
+head:     $head_sha
+snapshot: $snap
+
+$(printf '%s\n' "$files" | sed 's/^/  /')
+
+Source read from the working tree may be a MUTANT: it compiles, carries no
+marker, and looks like the author wrote it. While this file exists, read those
+paths with \`git show $head_sha:<path>\` rather than from disk. Uncommitted work
+in them was copied to the snapshot directory above before the run started.
+
+This marker is removed when the run ends. If it is still here and no process
+holds the pid above, the run was killed and the tree may still hold a mutant.
+EOF
+mv -f "$MARKER.tmp" "$MARKER"
 
 # --- run --------------------------------------------------------------------
 # No pre-run estimate: the engine has no dry-count mode, so an "N mutants × M
@@ -165,6 +281,7 @@ done
 # is reported at the end so the next caller can size the scope from real data.
 echo "plan-mutation: ${count_files} changed file(s), threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s per mutant."
 echo "plan-mutation: no up-front estimate is possible (the engine has no dry-count mode) — watch the elapsed line below."
+echo "plan-mutation: WHILE THIS RUNS the source on disk may be a live mutant. Read those files with \`git show ${head_sha}:<path>\`, not from the working tree — anyone sharing this worktree included. Marker: .mutation-in-progress"
 started=$(date +%s)
 # shellcheck disable=SC2086
 dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" --json $files > "$out/report.json" 2>"$out/err"

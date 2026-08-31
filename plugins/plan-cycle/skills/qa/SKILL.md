@@ -228,6 +228,13 @@ took it from rating F to A, so survivors are actionable, not advisory.
   reads as "detected" when the command was already failing.
 - **A survivor you keep needs a written reason at the site.** Genuinely
   equivalent mutants exist; one with no note is indistinguishable from a hole.
+- **While a run is in flight, the source on disk is mutated** — it compiles,
+  carries no marker, and reads as authored code. Anyone sharing the worktree can
+  read it, so a `.mutation-in-progress` file at the repo root names the pid and
+  the files being mutated. If it is there, read those paths with
+  `git show <sha>:<path>`, never from the tree. If it is there and its pid is
+  dead, the tree may still hold a mutant: the run refuses to start until you
+  clear it.
 - **It does not retire `test-reviewer`, and a clean score is not a clean bill of
   health.** A change-detector kills every mutant, so the worst test in the
   codebase scores perfectly here — the two catch opposite errors
