@@ -36,6 +36,14 @@ for role in pm designer engineer qa; do
   rm -f "$f.stripped" "$SRC.$role"
 
   after_runtime=$(grep -c 'Runtime — you run in' "$f")
+  # Exactly one copy of the section, always. 0.37.0 shipped a block written
+  # before these markers existed, so the strip could not see it and this script
+  # inserted a second, marked copy ABOVE it for two releases — two versions of
+  # one rule, and the stale copy was the one that deadlocked the approval gates.
+  # A generator that cannot detect its own earlier output is how that happens
+  # twice; this is the assertion that would have caught it the first time.
+  heads=$(grep -c '^## Working in a team$' "$f")
+  [ "$heads" = 1 ] || { echo "  $role: ABORT — $heads copies of the section (an unmarked older block?)"; exit 1; }
   # The role's own contract must survive verbatim. qa has no Runtime blockquote,
   # so the assertion is "unchanged", not "present".
   [ "$before_runtime" = "$after_runtime" ] || { echo "  $role: ABORT — runtime block count $before_runtime -> $after_runtime"; exit 1; }
