@@ -57,30 +57,41 @@
 # ever finds what is MISSING; code-reviewer grades the diff's quality, not its
 # inventory). Run it AFTER `git add` — untracked files are invisible before.
 #
-# `PASS*` (a HARD check whose precondition was empty) also exits 0 — deliberate,
-# because a small plan legitimately has no §Data flow. The consequence: healthy,
-# broken, and "you fed me a design plan" are the SAME exit code, and only the
-# printed SKIP lines tell them apart. That is fine for a human reading output.
-# **Before wiring this into any automated gate, give `PASS*` a machine-readable
-# form first** (a `--strict` flag, or exit 2) — a gate that reads only the exit
-# code would treat "3 HARD checks never ran" as a pass, which is the exact
-# failure this script spent eight versions learning to say out loud.
+# `PASS*` (a HARD check whose precondition was empty) exits 0 by default —
+# deliberate, because a small plan legitimately has no §Data flow, and for a
+# human reading the output the printed SKIP lines are the answer.
+#
+# That was written with a condition attached: give `PASS*` a machine-readable
+# form BEFORE wiring this into an automated gate, because a gate reading only the
+# exit code would take "3 HARD checks never ran" for a pass. The condition has
+# arrived — the caller is an agent now — so `--strict` exists and is what an
+# automated caller passes. It exits **3** on PASS*: not 1, which means something
+# failed, and not 2, which means the invocation was wrong. Nothing failed here
+# and the invocation was fine; the run was simply incomplete, and that is its own
+# answer.
+#
+# Anything automated should pass `--strict`. Without it the old behaviour is
+# unchanged, which is the right default for a person at a terminal.
 set -uo pipefail
 
 # CJK-safe bracket expressions — this machine ships no UTF-8 locale, so an
 # unset LC_CTYPE makes `[^，。]` match bytes and truncate multi-byte tokens.
 export LC_ALL=en_US.UTF-8
 
-plan="${1:-}"
-mode="${2:-}"
+plan=""; mode=""; strict=""
+for a in "$@"; do
+  case "$a" in
+    --strict) strict=1 ;;
+    --diff)   mode=--diff ;;
+    -*)       echo "plan-lint: unknown option \"$a\"" >&2
+              echo "usage: plan-lint <engineering-plan.md> [--diff] [--strict]" >&2; exit 2 ;;
+    *)        [ -z "$plan" ] && plan="$a" || { echo "plan-lint: one plan at a time" >&2; exit 2; } ;;
+  esac
+done
 if [ -z "$plan" ] || [ ! -f "$plan" ]; then
-  echo "usage: plan-lint <engineering-plan.md> [--diff]" >&2
+  echo "usage: plan-lint <engineering-plan.md> [--diff] [--strict]" >&2
   exit 2
 fi
-case "$mode" in ''|--diff) ;; *)
-  echo "usage: plan-lint <engineering-plan.md> [--diff]" >&2
-  exit 2 ;;
-esac
 
 fail=0
 
@@ -827,6 +838,14 @@ if [ "$fail" -eq 0 ]; then
     # An unqualified PASS after a check never ran is the failure this whole
     # script keeps re-learning: the reader takes silence for a verdict.
     echo "PASS*  no hard failures — 但有 ${skipped} 項 HARD 檢查沒跑（見上方 SKIP）。這不是「通過」，是「沒查」。"
+    # The exit code has to carry it too. This file has said for eight versions
+    # that PASS* and PASS share exit 0 and only the printed SKIP lines separate
+    # them, and that this is "fine for a human reading output" — with the
+    # instruction to give PASS* a machine-readable form BEFORE wiring the script
+    # into an automated gate. The caller is now an agent, so that condition has
+    # arrived. `--strict` is that form: exit 3, distinct from 1 (a real failure)
+    # and from 2 (bad usage), because "some checks never ran" is neither.
+    [ -n "$strict" ] && { echo "plan-lint: --strict — exiting 3, because ${skipped} HARD check(s) did not run."; exit 3; }
   else
     echo "PASS  no hard failures (advisory lines above still need an eyeball)"
   fi
