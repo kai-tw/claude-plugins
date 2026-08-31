@@ -221,8 +221,17 @@ took it from rating F to A, so survivors are actionable, not advisory.
   body produce NONE.** So a guard like `if (mounted)` is invisible here, and so
   is any line whose only question is "does a test assert this happened at all".
   On a file made of those, a **high score is not coverage of the real logic, and
-  a low one is not proof of weak tests**. Rows marked `LOW-SIGNAL` /
-  `NO-MUTANTS` mean **not measured**, never "verified".
+  a low one is not proof of weak tests**. A `LOW-SIGNAL` row means **not
+  measured**, never "verified".
+- **`NO-MUTANTS` passes, and on a leaf widget it is the right answer.** The
+  engine mutates logic; a presentational widget is a tree of constructor calls
+  with literal arguments, so there is nothing to break. Measured: a declarative
+  file produces 0 mutants and 1 invalid — statement-deletion tries the lone
+  `return` and the mutant does not compile. That row says the file holds no
+  logic, which is what a well-factored widget looks like, so chasing a score
+  there would only pressure you to move logic INTO widgets to have something to
+  measure. Glance at it only when the file is NOT declarative: then the logic is
+  in a form this engine cannot see.
 - **Scores from before 0.29.0 are not comparable to these.** The regex engine it
   replaced had a statement-deletion operator and no ternary / `switch` / `??`
   coverage — the opposite half. Its percentages answered "is this line's effect
@@ -288,10 +297,10 @@ took it from rating F to A, so survivors are actionable, not advisory.
    ```
    **Every changed file must reach 80%**, per file. Under it, you are not done:
    each survivor names a case that does not exist or an assertion that does not
-   assert, so add the case that kills it and re-run. `NO-MUTANTS` /
-   `LOW-SIGNAL` rows are **not** passes — they mean the file was not measured
-   (§Mutation testing), so say so in the hand-back rather than reporting them
-   as clean.
+   assert, so add the case that kills it and re-run. A `LOW-SIGNAL` row is
+   **not** a pass — it means the file was not measured (§Mutation testing), so
+   say so in the hand-back rather than reporting it as clean. `NO-MUTANTS` is a
+   pass: nothing to mutate is the expected result for a declarative file.
 
    **Reach comes first, because a mutation score cannot see an unexecuted line.**
    A line no test runs produces no mutant to survive, so it is invisible to the
