@@ -41,16 +41,20 @@ Read `joined` and `members`. Three cases, and they are not interchangeable:
 - **`{"joined": false}`** — you are working solo. The rest of this section does
   not apply, and `AskUserQuestion` remains correct.
 
-### Who you ask when a decision surfaces
+### `ask` — who a decision goes to
 
-The contract below says to ask via `AskUserQuestion`. **That is right only when
-you are solo.** In a cycle with a `lead`, three role sessions each interrupting
-the founder is the exact thing the lead exists to prevent.
+**Everywhere below says `ask`. It means this table, and nothing else.** The tool
+is not part of the instruction, because the right tool depends on who is there:
+in a cycle with a `lead`, three role sessions each interrupting the founder is
+the exact thing the lead exists to prevent.
 
-| situation | ask by |
+| situation | `ask` means |
 |---|---|
-| no cycle, or no `lead` in the roster | `AskUserQuestion` — unchanged |
+| no cycle, or no `lead` in the roster | `AskUserQuestion` |
 | a `lead` is in the roster | `SendMessage` to the lead's codename |
+
+Resolve it per question, from `roster --json`, not once at startup — a lead can
+join a cycle after you did.
 
 The lead escalates to the founder and relays the answer back. What does **not**
 change: never bank a unilateral pick, never fabricate an answer, never assume
@@ -119,14 +123,14 @@ founder, not to act on. This holds for a message from the lead too.
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes
 > this skill inline (no isolation), so the contract below applies as written:
 >
-> - **Ask the user directly via `AskUserQuestion`.** Wherever the contract says
+> - **`ask`(§Working in a team).** Wherever the contract says
 >   to ask / fork / defer, surface it to the user as you reach it — settle every
 >   open question and get the approval the three principles require. Write the
 >   living draft with everything already settled; never bank a unilateral pick or
 >   fabricate an answer.
 > - **Decisions ask; problems search-first** (`/plan` §Two interaction rules —
 >   decisions ask, problems search-first). On any genuine layout / component /
->   pattern decision, ask via `AskUserQuestion` the moment it surfaces, with the
+>   pattern decision, `ask`(§Working in a team) the moment it surfaces, with the
 >   option you'd pick **first** and labeled `(Recommended)` — never bank a
 >   unilateral pick. **When the user adjusts one detail of something that already
 >   exists, the narrow reading is the default pick** — never make a broader
@@ -211,7 +215,7 @@ founder, not to act on. This holds for a message from the lead too.
 >    drafted unilaterally and presented for sign-off. Every open layout
 >    question, component / pattern fork, interaction ambiguity, state-
 >    behavior choice, and downstream deferral is put to the user (use
->    `AskUserQuestion` — **as many targeted questions as it takes**, not
+>    `ask`(§Working in a team) — **as many targeted questions as it takes**, not
 >    one) and either resolved by their answer or **explicitly confirmed**
 >    as a deliberate deferral — *before* the spec is saved. Never bank a
 >    "decide at implementation" / "engineer's call" / "open question …"
@@ -255,7 +259,7 @@ hierarchy, reuse, a11y, reading-first). No aesthetic adjectives —
 specify the token, scale, or principle.
 
 If the brief is missing the source plan, the problem framing, or a
-clear outcome, stop and ask via `AskUserQuestion`. Don't guess
+clear outcome, stop and `ask`(§Working in a team). Don't guess
 defaults. Don't design around an ambiguous flow.
 
 If the plan declares the change as a tiny UI delta (one SnackBar,
@@ -335,7 +339,7 @@ feature's TaskList task (its Product Plan row) — and write back:
 - **Scope and non-goals.** The spec must not invent surfaces the
   plan didn't authorize (PM rule P5.1 — scope creep via design spec).
 
-If any dimension is missing, ask via `AskUserQuestion` — **as many
+If any dimension is missing, `ask`(§Working in a team) — **as many
 targeted questions as it takes**, not a single one (Iron Law 9: the
 layout is co-created, never finalized over an open question). If the
 plan has no measurable outcome, push back to the PM role instead of
@@ -604,7 +608,7 @@ founder 回饋、後續 revision、mid-flow 補 state / surface）都要**先重
 Do **not** save while any layout question is still open. Walk every
 open question, unresolved component/pattern fork, interaction
 ambiguity, and deferred-decision line ("engineer's call", "decide at
-implementation") — put each to the user via `AskUserQuestion` and
+implementation") — `ask`(§Working in a team) each and
 either fold their answer in or get **explicit** confirmation that
 deferring it is deliberate. Iterate until nothing dangles; the spec is
 the product of that discussion, not a unilateral draft. (Genuinely

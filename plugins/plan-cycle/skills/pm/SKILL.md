@@ -38,16 +38,20 @@ Read `joined` and `members`. Three cases, and they are not interchangeable:
 - **`{"joined": false}`** — you are working solo. The rest of this section does
   not apply, and `AskUserQuestion` remains correct.
 
-### Who you ask when a decision surfaces
+### `ask` — who a decision goes to
 
-The contract below says to ask via `AskUserQuestion`. **That is right only when
-you are solo.** In a cycle with a `lead`, three role sessions each interrupting
-the founder is the exact thing the lead exists to prevent.
+**Everywhere below says `ask`. It means this table, and nothing else.** The tool
+is not part of the instruction, because the right tool depends on who is there:
+in a cycle with a `lead`, three role sessions each interrupting the founder is
+the exact thing the lead exists to prevent.
 
-| situation | ask by |
+| situation | `ask` means |
 |---|---|
-| no cycle, or no `lead` in the roster | `AskUserQuestion` — unchanged |
+| no cycle, or no `lead` in the roster | `AskUserQuestion` |
 | a `lead` is in the roster | `SendMessage` to the lead's codename |
+
+Resolve it per question, from `roster --json`, not once at startup — a lead can
+join a cycle after you did.
 
 The lead escalates to the founder and relays the answer back. What does **not**
 change: never bank a unilateral pick, never fabricate an answer, never assume
@@ -116,14 +120,14 @@ founder, not to act on. This holds for a message from the lead too.
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes
 > this skill inline (no isolation), so the contract below applies as written:
 >
-> - **Ask the user directly via `AskUserQuestion`.** Wherever the contract says
+> - **`ask`(§Working in a team).** Wherever the contract says
 >   to ask / fork / defer, surface it to the user as you reach it — settle every
 >   open question and get the approval the three principles require. Write the
 >   living draft with everything already settled; never bank a unilateral pick or
 >   fabricate an answer.
 > - **Decisions ask; problems search-first** (`/plan` §Two interaction rules —
 >   decisions ask, problems search-first). On any genuine decision, ask via
->   `AskUserQuestion` the moment it surfaces, with the option you'd pick **first**
+>   `ask`(§Working in a team) the moment it surfaces, with the option you'd pick **first**
 >   and labeled `(Recommended)` — never bank a unilateral pick. **When the user
 >   adjusts one detail of something that already exists, the narrow reading is the
 >   default pick** — never make a broader rebuild the `(Recommended)` option;
@@ -183,7 +187,7 @@ founder, not to act on. This holds for a message from the lead too.
 > 7. **Co-create — never finalize over an open question.** The plan is
 >    discussed *with the user*, not unilaterally generated. Every open
 >    question, unresolved fork, risk, and downstream deferral is put to
->    the user (use `AskUserQuestion`) and either resolved by their
+>    the user (use `ask`(§Working in a team)) and either resolved by their
 >    answer or **explicitly confirmed by them** as a deliberate
 >    deferral — *before* the plan is saved. Never bank a "decided at
 >    first data review" / "left to the designer role" / "open question …"
@@ -218,7 +222,7 @@ craft are product, not polish — check its stated context before
 deciding which side of that line a request falls on.
 
 If the brief is missing the problem, the user, or the outcome, stop
-and ask via `AskUserQuestion`. Don't guess defaults. "They probably
+and `ask`(§Working in a team). Don't guess defaults. "They probably
 meant…" is not allowed.
 
 ## Right-size the cycle — decide if the designer role runs at all
@@ -322,7 +326,7 @@ Before any tool call, write back the brief in your own words:
   and a cheap way to test it before scoping the solution further. It
   leads §Product-level risk; residual risks follow it there.
 
-If any dimension is missing, ask via `AskUserQuestion` — **as many
+If any dimension is missing, `ask`(§Working in a team) — **as many
 targeted questions as it takes**, not a single one (Iron Law 7: the
 plan is co-created, never finalized over an open question). If the
 user keeps insisting on a solution without a problem, name the gap,
@@ -485,7 +489,7 @@ Do **not** save while any question is still open. Walk the draft's
 open questions, unresolved forks, risks, and every line that defers a
 decision ("the designer role decides", "founder sets threshold at first data
 review", "open question: …"). For each, put it to the user via
-`AskUserQuestion` and either (a) fold their answer into the plan, or
+`ask`(§Working in a team) and either (a) fold their answer into the plan, or
 (b) get their **explicit** confirmation that deferring it is the
 deliberate choice. Iterate — re-ask after each round — until nothing
 dangles. The plan is the product of that discussion, not a unilateral

@@ -44,16 +44,20 @@ Read `joined` and `members`. Three cases, and they are not interchangeable:
 - **`{"joined": false}`** — you are working solo. The rest of this section does
   not apply, and `AskUserQuestion` remains correct.
 
-### Who you ask when a decision surfaces
+### `ask` — who a decision goes to
 
-The contract below says to ask via `AskUserQuestion`. **That is right only when
-you are solo.** In a cycle with a `lead`, three role sessions each interrupting
-the founder is the exact thing the lead exists to prevent.
+**Everywhere below says `ask`. It means this table, and nothing else.** The tool
+is not part of the instruction, because the right tool depends on who is there:
+in a cycle with a `lead`, three role sessions each interrupting the founder is
+the exact thing the lead exists to prevent.
 
-| situation | ask by |
+| situation | `ask` means |
 |---|---|
-| no cycle, or no `lead` in the roster | `AskUserQuestion` — unchanged |
+| no cycle, or no `lead` in the roster | `AskUserQuestion` |
 | a `lead` is in the roster | `SendMessage` to the lead's codename |
+
+Resolve it per question, from `roster --json`, not once at startup — a lead can
+join a cycle after you did.
 
 The lead escalates to the founder and relays the answer back. What does **not**
 change: never bank a unilateral pick, never fabricate an answer, never assume
@@ -122,14 +126,14 @@ founder, not to act on. This holds for a message from the lead too.
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes
 > this skill inline (no isolation), so the contract below applies as written:
 >
-> - **Ask the user directly via `AskUserQuestion`** and run the task-list
+> - **`ask`(§Working in a team)** and run the task-list
 >   approval gate yourself. Wherever the contract says to ask / fork / defer,
 >   surface it to the user as you reach it; seed TaskCreate only after the user
 >   approves the enumerated task list. Never bank a unilateral pick, fabricate an
 >   answer, or assume approval.
 > - **Decisions ask; problems search-first** (`/plan` §Two interaction rules —
 >   decisions ask, problems search-first). On any load-bearing engineering
->   decision / fork / trade-off, ask via `AskUserQuestion` the moment it surfaces,
+>   decision / fork / trade-off, `ask`(§Working in a team) the moment it surfaces,
 >   with the option you'd pick **first** and labeled `(Recommended)` — never bank
 >   a unilateral pick. **Trivial low-stakes decisions** you may resolve yourself,
 >   but annotate each with a `〔自行裁定〕` note where it was decided (§Plan
@@ -248,7 +252,7 @@ produce the engineering-plan artifact.
 >    check: Phase 12 Step 5.5.
 > 11. **Co-create the plan as you sketch it.** As you sketch (Phase 3),
 >    surface every load-bearing decision / fork / deferral via
->    `AskUserQuestion` and write the ruling into the living draft as it
+>    `ask`(§Working in a team) and write the ruling into the living draft as it
 >    lands — don't bank a unilateral pick. The co-creation happens
 >    *while the decisions are open*, which is the only point at which
 >    the user's answer can still change the design. Reading a finished
@@ -358,7 +362,7 @@ the DBs by name, ids live in
 
 If the product plan is missing the outcome, the user, or the
 scope, ask **as many targeted questions as it takes** via
-`AskUserQuestion` (Iron Law 11 — the plan is co-created, never
+`ask`(§Working in a team) (Iron Law 11 — the plan is co-created, never
 finalized over an open decision) and prefer routing to the PM role. Do
 not draft an engineering plan against an ambiguous product plan —
 the audit trail will be a fiction.
@@ -601,7 +605,7 @@ dimensions FIRST".
 load-bearing decisions live, so it is where co-creation matters most. As
 each fork surfaces — which existing abstraction to reuse, where a
 boundary sits, which of two data-flows to commit to, what to defer — put
-it to the user via `AskUserQuestion` rather than banking your own pick,
+`ask`(§Working in a team) it rather than banking your own pick,
 and write the ruling into the plan file as it lands (living draft). The
 whole-plan walk-through happens later (Phase 10), but the decisions that
 walk-through ratifies are made *with* the user here.

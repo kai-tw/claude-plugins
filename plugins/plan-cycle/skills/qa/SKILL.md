@@ -57,16 +57,20 @@ Read `joined` and `members`. Three cases, and they are not interchangeable:
 - **`{"joined": false}`** — you are working solo. The rest of this section does
   not apply, and `AskUserQuestion` remains correct.
 
-### Who you ask when a decision surfaces
+### `ask` — who a decision goes to
 
-The contract below says to ask via `AskUserQuestion`. **That is right only when
-you are solo.** In a cycle with a `lead`, three role sessions each interrupting
-the founder is the exact thing the lead exists to prevent.
+**Everywhere below says `ask`. It means this table, and nothing else.** The tool
+is not part of the instruction, because the right tool depends on who is there:
+in a cycle with a `lead`, three role sessions each interrupting the founder is
+the exact thing the lead exists to prevent.
 
-| situation | ask by |
+| situation | `ask` means |
 |---|---|
-| no cycle, or no `lead` in the roster | `AskUserQuestion` — unchanged |
+| no cycle, or no `lead` in the roster | `AskUserQuestion` |
 | a `lead` is in the roster | `SendMessage` to the lead's codename |
+
+Resolve it per question, from `roster --json`, not once at startup — a lead can
+join a cycle after you did.
 
 The lead escalates to the founder and relays the answer back. What does **not**
 change: never bank a unilateral pick, never fabricate an answer, never assume
