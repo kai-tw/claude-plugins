@@ -210,20 +210,25 @@ took it from rating F to A, so survivors are actionable, not advisory.
   threshold blocks the stage.
 - **Scope is the changed files, never the repo.** Runtime is mutations × one test
   run and nothing avoids that — each mutant needs its own. Pass a **scoped** test
-  command (`flutter test test/features/<one>`, not a bare `flutter test`); the
-  tool estimates before it runs and stops over budget rather than starting a
-  six-hour job.
-- **A score is only as good as what the tool can mutate, and on widgets that is
-  very little.** Measured one construct per file: `if (c) {}`, collection-`if`,
-  `&&` and `<=` all produce mutants; **a ternary, a `switch` expression and `??`
-  produce none** (nor does a bare `<` / `>`, which would corrupt generics).
-  Those three are what a Flutter `build()` is mostly made of — a ternary for a
-  nullable callback, a switch expression mapping state to copy, `??` for a
-  default — so a widget file's whole conditional logic can yield no mutant while
-  the few that appear are almost all `&&` / `||`. On such a file a **high score
-  is not coverage of the real logic, and a low one is not proof of weak tests**;
-  the sample is unrepresentative either way. Rows marked `LOW-SIGNAL` /
+  command (`flutter test test/features/<one>`, not a bare `flutter test`). There
+  is **no** pre-run estimate and no budget flag — the engine has no dry-count
+  mode, so any figure would be invented. The scope plus the per-mutant timeout
+  is the whole bound; elapsed time is printed afterwards to size the next run.
+- **A score is only as good as what the tool can mutate, and the engine ships
+  four operators.** Measured, one construct per file: a ternary, a `switch`
+  expression, `??` and a relational comparison produce mutants; **a bare
+  `if (flag)`, `&&` / `||`, arithmetic, and deleting a statement or a method
+  body produce NONE.** So a guard like `if (mounted)` is invisible here, and so
+  is any line whose only question is "does a test assert this happened at all".
+  On a file made of those, a **high score is not coverage of the real logic, and
+  a low one is not proof of weak tests**. Rows marked `LOW-SIGNAL` /
   `NO-MUTANTS` mean **not measured**, never "verified".
+- **Scores from before 0.29.0 are not comparable to these.** The regex engine it
+  replaced had a statement-deletion operator and no ternary / `switch` / `??`
+  coverage — the opposite half. Its percentages answered "is this line's effect
+  asserted"; these answer "is this expression's branch or boundary pinned". A
+  number that moved across that switch measures the change of question, not the
+  tests.
 - **The suite must be green first** — it aborts otherwise, because every mutant
   reads as "detected" when the command was already failing.
 - **A survivor you keep needs a written reason at the site.** Genuinely
