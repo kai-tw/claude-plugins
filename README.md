@@ -32,6 +32,15 @@ claude plugin install dart-lsp@kai-tw
 | [plan-cycle](plugins/plan-cycle) | The gated planning cycle: PM → designer → engineer → code → QA → close-out, with a Stop-hook ledger |
 | [guardrails](plugins/guardrails) | Turns corrections into rules that fire — a bounded inbox, a fusion gate, and hooks that speak at the moment of the mistake |
 
+## Scripts
+
+Not plugins — standalone snippets pasted into a surface that has no plugin
+mechanism at all.
+
+| Script | Where it goes |
+| --- | --- |
+| [scripts/cloud-setup.sh](scripts/cloud-setup.sh) | The **Setup script** field of a [Claude Code cloud environment](https://code.claude.com/docs/en/cloud-environments#setup-scripts). Installs the pinned Flutter SDK, resolves dependencies for every Flutter repo the environment cloned, and installs the `@kai-tw` plugins those repos declare in `enabledPlugins` — a fresh container has **no marketplace registered**, so without this the plan cycle silently isn't there. One copy serves NovelGlide, CherishCRM and any environment added later, because it discovers projects and plugins instead of naming them. Its filesystem result is snapshotted, so the ~1.5 GB SDK download is paid once per cache generation, not once per session. |
+
 ## License
 
 [MIT](LICENSE)
