@@ -1,8 +1,35 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "plan-cycle",
-  "description": "Gated planning cycle — PM → designer → engineer → code → QA → close-out, with a Stop-hook ledger that blocks turn-end when a plan phase advanced without its plan landing.",
   "version": "0.41.0",
+  "description": "Gated planning cycle — PM → designer → engineer → code → QA → close-out, with a Stop-hook ledger that blocks turn-end when a plan phase advanced without its plan landing.",
   "author": {
-    "name": "Kai"
-  }
+    "name": "Kai",
+    "url": "https://github.com/kai-tw"
+  },
+  "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/plan-cycle",
+  "license": "MIT",
+  "keywords": [
+    "planning",
+    "product-plan",
+    "engineering-plan",
+    "code-review",
+    "notion",
+    "qa"
+  ],
+  "skills": [
+    "./skills/archivist",
+    "./skills/designer",
+    "./skills/engineer",
+    "./skills/feedback-ledger",
+    "./skills/git-ops",
+    "./skills/house-rules",
+    "./skills/lead",
+    "./skills/plan",
+    "./skills/pm",
+    "./skills/qa",
+    "./skills/reclaim-space",
+    "./skills/review",
+    "./skills/worktree-setup"
+  ]
 }

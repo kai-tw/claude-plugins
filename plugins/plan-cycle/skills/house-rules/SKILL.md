@@ -1,6 +1,6 @@
 ---
 name: house-rules
-description: |
+description: >-
   The founder collaboration contract — the behavioral rules a new operator
   (human or model) must follow to work the way this founder (Kai) expects,
   distilled from ~30 real corrections across communication & scope, engineering

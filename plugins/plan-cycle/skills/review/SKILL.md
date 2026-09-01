@@ -1,6 +1,6 @@
 ---
 name: review
-description: |
+description: >-
   The single entry for every review concern — spawns the matching report-only
   sub-agent against the relevant artifact (an uncommitted diff, or a plan):
   code-reviewer · blueprint-reviewer (engineering-plan design quality, AND the

@@ -1,6 +1,6 @@
 ---
 name: pm
-description: |
+description: >-
   PM role of /plan — the product-plan authoring contract. Run by the /plan
   launcher in-thread (invoked via the Skill tool, in the launcher's own
   context); it is NOT a standalone user entry point. Planning

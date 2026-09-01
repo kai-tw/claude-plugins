@@ -1,6 +1,6 @@
 ---
 name: reclaim-space
-description: |
+description: >-
   Developer-disk space reclamation for the Flutter projects on this machine —
   the close-out step that stops a shipped cycle's build output and machine-wide
   tool caches from accumulating until they block the next build. Two tiers:

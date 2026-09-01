@@ -1,6 +1,6 @@
 ---
 name: feedback-ledger
-description: |
+description: >-
   The bounded ledger of unconsumed feedback about how this project's own process
   and review gates are performing, in five categories: process · code-review ·
   security-review · privacy-review · recurring-bug. One item = one markdown file;

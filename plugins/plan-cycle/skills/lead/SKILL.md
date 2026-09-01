@@ -1,6 +1,6 @@
 ---
 name: lead
-description: |
+description: >-
   Team leader for a plan cycle worked by SEVERAL sessions at once. Opens the
   cycle, assigns roles, keeps one picture of who holds what, and is the founder's
   single point of contact for it. The pm, designer, engineer and qa sessions

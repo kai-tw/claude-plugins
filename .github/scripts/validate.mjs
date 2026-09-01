@@ -39,6 +39,18 @@ const frontmatter = (text) => {
   return out;
 };
 
+// GAP 5 — a `description` written as a YAML literal block scalar (`|`) parses
+// fine with a real YAML parser, but the skill loader that decides whether a
+// skill can trigger reads the literal `|` through instead of the block
+// content — the description is silently dropped. `frontmatter()` above hits
+// the same thing (it captures the bare `|` as the "value"), which is why this
+// needs its own raw-text check rather than trusting `fm.description`.
+const literalBlockDescription = (text) => {
+  const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!m) return false;
+  return /^description:\s*\|[-+]?\s*$/m.test(m[1]);
+};
+
 // ---------------------------------------------------------------- marketplace
 
 const marketplacePath = join(root, '.claude-plugin/marketplace.json');
@@ -134,6 +146,12 @@ function checkSkills(plugin, dir, source) {
     // triggers, so it costs context tokens every session and does nothing.
     if (!fm.description) {
       fail(where, 'SKILL.md has no `description` — it can never trigger, yet still costs tokens');
+    }
+
+    // GAP 5 — see literalBlockDescription() above.
+    const raw = readFileSync(skillFile, 'utf8');
+    if (literalBlockDescription(raw)) {
+      fail(where, 'SKILL.md `description` uses a literal block scalar (`|`) — the skill loader reads the literal `|` instead of the content, so it can never trigger; use `>-` (folded) instead');
     }
   }
 }

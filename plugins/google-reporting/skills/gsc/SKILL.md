@@ -1,6 +1,6 @@
 ---
 name: gsc
-description: |
+description: >-
   Google Search Console reader for a verified site — indexing status
   (is a URL actually indexed, coverage state, last crawl), search
   performance (clicks/impressions/ctr/position by page or query), and

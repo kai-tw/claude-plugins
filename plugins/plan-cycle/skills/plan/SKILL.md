@@ -1,6 +1,6 @@
 ---
 name: plan
-description: |
+description: >-
   Codebase GUARDIAN and SINGLE entry for any task or code change: gates
   non-trivial work behind an approved product → design → engineering plan
   trail, and is the ONLY creator of a feature's TaskList task. Approvals:

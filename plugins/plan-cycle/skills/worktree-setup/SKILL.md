@@ -1,6 +1,6 @@
 ---
 name: worktree-setup
-description: |
+description: >-
   Build a project's worktree bootstrap — the `.worktreeinclude` file plus the
   init step that makes a fresh worktree compile, lint and test without a full
   regeneration. Derives both from what the project actually generates rather

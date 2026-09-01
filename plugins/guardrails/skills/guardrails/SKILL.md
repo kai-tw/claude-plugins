@@ -1,6 +1,6 @@
 ---
 name: guardrails
-description: |
+description: >-
   File and consume this project's guardrails ledger — the loop that turns a
   correction into a rule that fires on its own. Use when a founder correction
   lands, when something returned a confidently wrong answer, or when the Stop
