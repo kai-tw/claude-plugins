@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "google-reporting",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Google Analytics 4 and Search Console readers — usage, indexing status, search performance, and sitemap health, via keyless service-account impersonation",
   "author": {
     "name": "Kai",
