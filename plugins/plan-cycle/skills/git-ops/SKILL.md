@@ -60,16 +60,19 @@ leaves the canonical remote stale and the team blind to your work.
 
 **Two more push-target rules, both PR/worktree-shaped:**
 
-- **A worktree branch is pushed FREELY, per-phase — and unprompted.** The founder
+- **A cycle branch is pushed FREELY, per-phase — and unprompted.** The founder
   confirmed push is free mid-cycle; don't hold commits until close-out. The
-  trigger is the commit: **a turn that lands a commit in a worktree pushes it
-  before the turn ends**, without asking, so origin stays current and reviewable
-  as it grows. WHY the trigger and not just the permission: written permission is
-  not a red light, and this rule held only while the founder watched — four
-  reminders in one round, ending 「push... worktree 內可以不要我提醒了嗎？」.
-  `plan-cycle`'s Gate 0 now blocks turn-end once commits pile up unpushed on a
-  worktree branch; treat the block as late. This covers the worktree branch
-  **only** — not merging the PR, not pushing `main`.
+  trigger is the commit: **a turn that lands a commit on the cycle's branch
+  pushes it before the turn ends**, without asking, so origin stays current and
+  reviewable as it grows. WHY the trigger and not just the permission: written
+  permission is not a red light, and this rule held only while the founder
+  watched — four reminders in one round, ending
+  「push... worktree 內可以不要我提醒了嗎？」. In a **cloud** session it is
+  stricter than a habit: the container's disk goes with the session, so an
+  unpushed commit is simply gone. `plan-cycle`'s Gate 0 blocks turn-end once
+  commits pile up unpushed on a local worktree branch or a cloud branch; treat
+  the block as late. This covers the cycle branch **only** — not merging the PR,
+  not pushing `main`.
 - **Never push `main` while an open PR is the review surface for related work.**
   `git push origin main` advances origin/main past any local-only commits, which
   **shifts an open PR's merge-base** and silently drops those commits from its

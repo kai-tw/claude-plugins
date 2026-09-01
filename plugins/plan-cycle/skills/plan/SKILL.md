@@ -826,8 +826,26 @@ Delete this section once no such cycle is in flight.
 #### Worktree isolation (the file-writing boundary)
 
 Concurrent `/plan` sessions share one repo. To keep their edits from colliding,
-every code-bearing cycle runs its **file-writing phases in an isolated worktree**.
+every code-bearing cycle runs its **file-writing phases in an isolated checkout**.
 Only the PM phase is Notion-only and stays in the main tree.
+
+**Which shape of isolation depends on where the session runs**, because that
+premise is what changes:
+
+| | isolation | how |
+| --- | --- | --- |
+| local (`CLAUDE_CODE_REMOTE` unset) | a **worktree** | `EnterWorktree`, steps 1–4 below |
+| cloud (`CLAUDE_CODE_REMOTE` set) | a **branch** | step 1 + 1a, then `git checkout -b <the same name>` |
+
+A cloud session's container cloned the repo for itself — no other session can
+write into it, so the collision this exists to prevent cannot happen and a
+worktree buys nothing. **Everything else is unchanged**: the same base preflight,
+the same captured `$BASE`, the same branch name, the same push-per-phase, the
+same PR, the same teardown. Only step 2 differs, and step 3's init still runs
+(a fresh container needs the project's codegen exactly as a fresh worktree does).
+
+The push gate reads the same marker, so an unpushed cloud branch is caught too —
+and it matters more there, since the container's disk goes away with the session.
 
 Create the worktree **immediately before the first phase that writes repo files**
 — **the designer phase** when UI is in scope, since it ships the presentation
@@ -851,10 +869,16 @@ worktree — harmless, it only writes Notion.
     - `fresh` → `BASE=$(basename "$(git symbolic-ref refs/remotes/origin/HEAD)")`
     Abort if `BASE` is empty or `HEAD` (detached) — never open a PR against a
     detached base. Carry `$BASE` to close-out alongside the branch name.
-2. **Create via `EnterWorktree`** (NOT `git worktree add` — only `EnterWorktree`
-   applies `.worktreeinclude`). `name = wt/$BASE/<area>/<slug>` — the `wt/`
+2. **Create the isolated checkout.** `name = wt/$BASE/<area>/<slug>` — the `wt/`
    namespace, the captured `$BASE`, the `lib/features/` Area, the kebab task
-   slug. Truncate `<slug>` if the whole name would exceed 64 chars.
+   slug. Truncate `<slug>` if the whole name would exceed 64 chars. The name is
+   the same either way, because the PR, the ledger's `branch`, and the teardown
+   all key on it.
+   - **Local:** `EnterWorktree` (NOT `git worktree add` — only `EnterWorktree`
+     applies `.worktreeinclude`).
+   - **Cloud:** `git checkout -b <name>` in the container's own clone. No
+     `EnterWorktree`, and therefore no `.worktreeinclude` copy — step 3's init
+     is the only thing that makes the tree build, so it is not optional here.
 3. **Init:** run the project's worktree-init step if it defines one — a project
    needing codegen, a dependency install, or an asset build in a fresh worktree
    documents that in `.claude/rules/`. `.worktreeinclude` has already copied the
@@ -864,12 +888,15 @@ worktree — harmless, it only writes Notion.
    the close-out push/PR; never assume it equals the worktree name.
 
 All repo-writing phases (translator ARB, code, QA) + their gates + the engineer
-commit gate run **inside** the worktree. Do not `ExitWorktree` until close-out.
+commit gate run **on the isolated checkout**. Locally that means staying in the
+worktree — do not `ExitWorktree` until close-out; in the cloud it means staying
+on the branch, so do not `git checkout` the base until close-out either.
 
 **Sub-agents dispatched from inside a worktree** do NOT inherit its cwd — they
 grep the MAIN tree, so worktree-only edits (uncommitted code, just-written ARB
 keys) look absent unless you pass each spawned agent the worktree's absolute path
-and tell it to `cd` there first; and a code-writing sub-agent commits on its own
+and tell it to `cd` there first. (A cloud session has one checkout and no second
+tree to grep, so this trap is local-only.) A code-writing sub-agent commits on its own
 unless the prompt forbids it ("do NOT run git commit / git add; leave changes in
 the working tree and report the diff"). Full protocol: `git-ops` skill
 §Sub-agent dispatch hygiene.
@@ -1070,8 +1097,12 @@ report (§After code) is already on it; pressing the button stays theirs.
    per Iron Law 7).
 5. Report back to the user which local artifacts (if any) are now safe to delete
    manually.
-6. **Tear down the worktree — merge-aware.** Check the PR's merge state first
-   (`gh pr view <PR#> --json state,mergeCommit`), then branch:
+6. **Tear down the isolated checkout — merge-aware.** Check the PR's merge state
+   first (`gh pr view <PR#> --json state,mergeCommit`), then branch. **In a cloud
+   session there is no worktree**: every `ExitWorktree` below is instead
+   `git checkout $BASE` + `git branch -D <branch>` (only once merged), and the
+   remote-branch deletion is identical. The `clear` gate checks worktree and
+   branches separately, so it already accepts either shape.
    - **Not yet merged** (close-out reached early — you got here without the
      gate, or the merge isn't visible on the local `origin/$BASE` yet):
      `ExitWorktree action: "keep"`. Commits are pushed; keep the branch +

@@ -83,11 +83,26 @@ STALE_DAYS=14   # an abandoned ledger past this age stops gating (hygiene)
 # a count a rework stretch reaches only by skipping review, not by working — the
 # measured failure ran past forty.
 REVIEW_DRIFT_MAX=10
-# Gate 0 arms at this many commits sitting on a worktree branch but on no remote.
+# Gate 0 arms at this many commits sitting on an isolated branch but on no remote.
 # TWO, not one: a single fresh commit is the one a sub-agent-recovery amend
 # targets (git-ops §3), and pushing it early turns that amend into a force-push,
 # which is deny-listed. Two commits is already a phase held back.
 UNPUSHED_MAX=2
+
+# IS THIS SESSION'S CHECKOUT ITS OWN?
+#
+# A CLOUD session runs in a container that cloned the repo for itself, so the
+# collision the worktree rule exists to prevent (plan/SKILL.md §Worktree
+# isolation: "Concurrent /plan sessions share one repo") cannot happen there —
+# the isolation is the container. A plain branch is the whole requirement.
+#
+# `CLAUDE_CODE_REMOTE` is the marker, and it is the CLI's own: the binary reads
+# it as a plain boolean in every branch that asks whether the session is remote.
+# Verified absent in a local `claude-desktop` session. Parsed here the way the
+# CLI parses it rather than by `-n`, so an explicit `0`/`false` means false.
+is_cloud() {
+  case "${CLAUDE_CODE_REMOTE:-}" in ''|0|false|FALSE|False|no|off) return 1 ;; *) return 0 ;; esac
+}
 
 # KEYED BY CYCLE, NOT BY SESSION.
 #
@@ -815,13 +830,23 @@ TAIL
     # 「push... worktree 內可以不要我提醒了嗎？」. A written permission is not a
     # trigger; this is the trigger.
     #
-    # Linked worktrees ONLY (git-dir ≠ git-common-dir), and never on a base
-    # branch: `git push origin main` while an open PR is the review surface shifts
-    # that PR's merge-base (git-ops §1), so telling anyone to push main would
-    # invert the rule this gate serves.
+    # Armed on an ISOLATED CHECKOUT, and never on a base branch: `git push origin
+    # main` while an open PR is the review surface shifts that PR's merge-base
+    # (git-ops §1), so telling anyone to push main would invert the rule this
+    # gate serves.
+    #
+    # Two shapes of isolation, because a cloud session has no worktree to detect.
+    # A linked worktree (git-dir ≠ git-common-dir) is the local shape. A cloud
+    # session's is the container's own clone, where those two paths are EQUAL —
+    # so the worktree test alone left the gate silently unarmed in the one place
+    # unpushed commits are unrecoverable: the container's disk goes away with the
+    # session, taking anything no remote has with it. Local behaviour is
+    # unchanged; this only adds the environment that had no coverage at all.
     gd=$(git rev-parse --path-format=absolute --git-dir 2>/dev/null) || gd=""
     gcd=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || gcd=""
-    if [ -n "$gd" ] && [ -n "$gcd" ] && [ "$gd" != "$gcd" ]; then
+    linked=0
+    [ -n "$gd" ] && [ -n "$gcd" ] && [ "$gd" != "$gcd" ] && linked=1
+    if [ "$linked" = 1 ] || is_cloud; then
       wb=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || wb=""
       case "$wb" in main|master|HEAD|"") wb="" ;; esac
       # A repo with no remote has nothing to push to, and `--not --remotes` would
@@ -837,9 +862,10 @@ TAIL
           cat <<EOF
 PLAN-CYCLE PUSH GATE — ${unpushed} commits on ${wb} are on no remote.
 
-  Worktree: $(pwd)
+  $( [ "$linked" = 1 ] && printf 'Worktree: %s' "$(pwd)" || printf 'Cloud session, at: %s — this container'"'"'s disk is
+  disposable, so a commit no remote has does not survive the session' "$(pwd)" )
 
-git-ops §1 — a worktree branch is pushed FREELY, per-phase. Pushing is already
+git-ops §1 — an isolated branch is pushed FREELY, per-phase. Pushing is already
 pre-authorized; holding commits back until close-out is the thing the rule
 forbids, and origin being current is what makes the branch reviewable as it
 grows. Push now, in this turn:
