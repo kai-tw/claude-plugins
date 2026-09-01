@@ -76,7 +76,12 @@ as_gb()    { awk -v m="$1" 'BEGIN {printf "%.1f", m/1024}'; }
 busy_reason=""
 pgrep -f 'GradleDaemon'    >/dev/null 2>&1 && busy_reason="a Gradle daemon is running"
 pgrep -f 'xcodebuild'      >/dev/null 2>&1 && busy_reason="xcodebuild is running"
-pgrep -f 'flutter_tools.snapshot (build|run)' >/dev/null 2>&1 && busy_reason="a flutter build is running"
+pgrep -f 'flutter_tools.snapshot (build|run|test)' >/dev/null 2>&1 && busy_reason="a flutter build or test run is in progress"
+# `flutter clean` deletes .dart_tool/ and build/ — the tree a running suite is
+# reading from. `test` belongs in the pattern above for the same reason `build`
+# does; it was missing while several sessions ran suites concurrently, so a
+# sweep could pull the ground out from under another session's run.
+pgrep -x 'flutter_tester'  >/dev/null 2>&1 && busy_reason="a flutter test run is in progress"
 
 if [ -n "$busy_reason" ] && [ $DRY -eq 0 ]; then
   echo "REFUSED: $busy_reason." >&2
@@ -96,8 +101,21 @@ BEFORE_MB=$(avail_mb)
 
 flutter_projects() {
   if [ $ALL_PROJECTS -eq 1 ]; then
-    find "$SCAN_ROOT" -maxdepth 2 -name pubspec.yaml 2>/dev/null \
-      | while read -r p; do d=$(dirname "$p"); [ -d "$d/lib" ] && echo "$d"; done
+    # TWO scans, because a worktree's pubspec is nowhere near depth 2.
+    #
+    #   $SCAN_ROOT/<repo>/pubspec.yaml                                depth 2
+    #   $SCAN_ROOT/<repo>/.claude/worktrees/<name>/pubspec.yaml       depth 5
+    #
+    # For eight versions this function was the depth-2 scan alone, so
+    # `--all-projects` silently skipped every worktree — measured 2026-09-01:
+    # it found 3 projects and missed 6 worktrees holding 12.7G of build/, the
+    # largest single consumer on the machine. It reported a clean sweep the
+    # whole time. The worktree scan is a separate literal path pattern rather
+    # than a deeper -maxdepth so it cannot start matching example apps,
+    # ios/macos runner projects, or a monorepo's sub-packages.
+    { find "$SCAN_ROOT" -maxdepth 2 -name pubspec.yaml 2>/dev/null
+      find "$SCAN_ROOT" -maxdepth 5 -path '*/.claude/worktrees/*/pubspec.yaml' 2>/dev/null
+    } | while read -r p; do d=$(dirname "$p"); [ -d "$d/lib" ] && echo "$d"; done
   elif [ -f "$PWD/pubspec.yaml" ]; then
     echo "$PWD"
   fi

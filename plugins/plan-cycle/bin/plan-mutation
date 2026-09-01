@@ -10,4 +10,15 @@
 # from a project-relative reference and changes on every version bump.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec bash "$here/../skills/qa/scripts/mutation.sh" "$@"
+impl="$here/../skills/qa/scripts/mutation.sh"
+
+# Mutation is the heaviest thing this machine runs — one test suite per mutant,
+# in a loop — and it never types `flutter test` at the top level, so the
+# resource-gate hook cannot see it. Route it through the slot budget so it
+# cannot spend memory off the books. ONE slot for the whole run, not one per
+# mutant: `plan-test --exec` exports PLAN_TEST_SLOT_HELD, so the inner runs pass
+# straight through instead of thrashing the semaphore.
+case "${1:-}" in
+  --help|-h) exec bash "$impl" "$@" ;;   # printing help must not need a slot
+esac
+exec bash "$here/../skills/qa/scripts/plan_test.sh" --exec bash "$impl" "$@"

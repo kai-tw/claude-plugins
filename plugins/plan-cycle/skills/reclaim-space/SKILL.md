@@ -52,11 +52,27 @@ that is the number the live run prints and the only one worth reporting to
 anyone. A target whose estimate dwarfs the delta is a clone, not a leak — do not
 go hunting for the "missing" space.
 
+## Worktrees are in the project tier
+
+`--all-projects` sweeps each repo **and each of its `.claude/worktrees/*`**. A
+worktree is a full checkout: measured 2026-09-01, six of them held **12.7G**, of
+which `build/` was about three quarters — more than the machine had free. None
+of it needs deleting to reclaim: `build/` regenerates, so every branch, every
+unmerged commit and every uncommitted file survives the sweep.
+
+This matters beyond tidiness. `/System/Volumes/VM`, where macOS writes swap,
+shares an APFS container with these checkouts (same `/dev/disk3s6`, same free
+pool). **Free disk is swap headroom**, and on a 16G machine swap is what stands
+between several concurrent test suites and a watchdog reboot. The
+`resource-gate` hook refuses a new worktree below a free-space floor for that
+reason, and points here.
+
 ## What it refuses, and why it fails closed
 
-Deleting a Gradle cache under a live daemon, or derived data under a running
-`xcodebuild`, corrupts the build in progress. Both are cheap to detect, so a
-live run refuses outright rather than racing.
+Deleting a Gradle cache under a live daemon, derived data under a running
+`xcodebuild`, or a project's `.dart_tool/` and `build/` under a **running test
+suite**, corrupts the work in progress. All are cheap to detect, so a live run
+refuses outright rather than racing.
 
 The Gradle tier derives the live version set by scanning every project's
 `gradle-wrapper.properties`; a hardcoded version goes stale silently and then

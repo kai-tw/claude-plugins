@@ -9,4 +9,12 @@
 # from a project-relative reference and changes on every version bump.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec bash "$here/../skills/engineer/scripts/test_first.sh" "$@"
+impl="$here/../skills/engineer/scripts/test_first.sh"
+
+# This runs a suite (its argument IS a test command), but the hook only sees the
+# top-level `plan-test-first …`, so it would spend memory off the books. Route
+# it through the slot budget for the same reason plan-mutation does.
+case "${1:-}" in
+  --help|-h|'') exec bash "$impl" "$@" ;;
+esac
+exec bash "$here/../skills/qa/scripts/plan_test.sh" --exec bash "$impl" "$@"

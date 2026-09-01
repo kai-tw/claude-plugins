@@ -216,9 +216,19 @@ stalls on. The full suite happens exactly twice per PR, on the **main thread**,
 before the founder merges (`plan/SKILL.md §After code`); this loop is scoped.
 
 ```bash
-flutter test test/features/<feature>/                # the normal scope
-flutter test test/features/<...>/<name>_test.dart    # single file while debugging
+plan-test test/features/<feature>/                # the normal scope
+plan-test test/features/<...>/<name>_test.dart    # single file while debugging
+plan-test --status                                # who else is running a suite
 ```
+
+**`plan-test`, not the bare `flutter test`/`dart test`** — a PreToolUse hook
+denies the bare form, so this is not a preference you can skip. It holds one of
+the machine's test slots for the run and releases it after. Several sessions
+work here at once and cannot see each other; three concurrent suites exhaust
+memory and macOS answers that with a watchdog reboot. Every argument is passed
+through untouched, so flags work exactly as before. When no slot frees inside
+its wait it exits **75** and names who is holding one and for how long — that is
+"busy", not "broken": narrow the scope, or go do something else and come back.
 
 **Blast radius is not "the files you edited"** — see the signature /
 required-field rule below, which widens it. Report the tally **and the paths you
@@ -228,7 +238,7 @@ ran**, so the caller knows what was not covered.
 
 - **`--concurrency=1`**: only to diagnose a flaky test caused by
   parallel interference. Slower; no memory benefit on this repo.
-- **A full run** (`flutter test`, no flags, no path) is the exception, not the
+- **A full run** (`plan-test --full`) is the exception, not the
   habit — the signature-change case below, the main thread's two pre-merge runs
   (`plan/SKILL.md` §After code), or a deliberate whole-suite audit. Baseline when
   you do: **~5 min / 5307 tests** (measured 2026-07-27; re-measure and update
