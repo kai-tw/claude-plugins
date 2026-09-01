@@ -1,6 +1,6 @@
 ---
 name: git-ops
-description: |
+description: >-
   Git lifecycle guardrails for THIS repo — the push / merge / worktree / codegen
   traps where the obvious idiom silently does the wrong thing. Body covers:
   which remote (origin canonical, a gitlab mirror lurks), verifying a

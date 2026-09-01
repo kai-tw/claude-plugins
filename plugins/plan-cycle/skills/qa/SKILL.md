@@ -1,6 +1,6 @@
 ---
 name: qa
-description: |
+description: >-
   Project-specific test-authoring craft.
   Owns `test/spec/**` — the spec-derived tests pinning the shipped flow to the
   approved product / design plan; the engineer role owns the rest of `test/**`

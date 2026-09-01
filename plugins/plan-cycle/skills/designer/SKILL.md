@@ -1,6 +1,6 @@
 ---
 name: designer
-description: |
+description: >-
   Designer role of /plan — the design-spec authoring contract. Run by the
   /plan launcher in-thread (invoked via the Skill tool, in the launcher's
   own context); it is NOT a standalone user entry point.

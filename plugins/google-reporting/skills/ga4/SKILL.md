@@ -1,6 +1,6 @@
 ---
 name: ga4
-description: |
+description: >-
   Google Analytics 4 reader for a GA4 property — activeUsers, sessions,
   engagement, and per-event counts, via keyless service-account
   impersonation. No key file, no OAuth consent screen, no env vars.

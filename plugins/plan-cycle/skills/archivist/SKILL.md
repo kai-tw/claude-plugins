@@ -1,6 +1,6 @@
 ---
 name: archivist
-description: |
+description: >-
   THE single gateway for EVERY operation against this project's Notion KB —
   reads AND writes. If a request touches that workspace in any way,
   it belongs here, so reads share one query path and writes stay consistent and
