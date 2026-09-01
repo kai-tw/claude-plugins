@@ -388,26 +388,29 @@ took it from rating F to A, so survivors are actionable, not advisory.
    trusting `ps`, which double-counts shared memory — read
    `${CLAUDE_PLUGIN_ROOT}/skills/qa/testing-forensics.md` (the pgid sampler + the
    known cold-start non-issues not worth chasing).
-5. **Gate on the mutation score — this is the pass criterion, not green.**
+5. **Gate on test STRENGTH — this is the pass criterion, not green.**
    Green only says the tests ran. Run, scoped the same way step 4 was:
    ```bash
-   plan-mutation -- flutter test test/features/<feature>/
+   plan-qa-report -- flutter test test/features/<feature>/
    ```
-   **Every changed file must reach 80%**, per file. Under it, you are not done:
-   each survivor names a case that does not exist or an assertion that does not
-   assert, so add the case that kills it and re-run. A `LOW-SIGNAL` row is
-   **not** a pass — it means the file was not measured (§Mutation testing), so
-   say so in the hand-back rather than reporting it as clean. `NO-MUTANTS` is a
-   pass: nothing to mutate is the expected result for a declarative file.
+   It runs both gates, posts one report to the PR, and records `qa-green` so the
+   ledger's Gate 6 stops blocking. The thresholds and verdicts live in the
+   scripts, which print them — do not restate a number here that can drift from
+   the one being enforced.
 
-   **Reach comes first, because a mutation score cannot see an unexecuted line.**
-   A line no test runs produces no mutant to survive, so it is invisible to the
-   80% gate — the two checks stack, they do not substitute. Run the suite with
-   coverage over the same scope and, for each changed file, either every line is
-   executed or the exception is **named with its reason** in the hand-back
-   (platform channel, a branch only a real device enters). "Not covered" with no
-   reason is the gap this law exists to stop; a percentage on its own is not an
-   answer to it.
+   **The two stack, they do not substitute.** Coverage asks whether the changed
+   lines RAN; mutation asks whether anything would notice if they were wrong. A
+   line no test executes produces no mutant to survive, so it is invisible to
+   mutation entirely — reach has to come first. A suite that calls every line
+   and asserts nothing passes coverage, fails mutation, and passes lint and
+   review too; that gap is what these two exist to close.
+
+   Under either gate you are not done. A mutation survivor names a case that
+   does not exist or an assertion that does not assert — add the case that kills
+   it. An unexecuted line is either a missing test or a genuine impossibility,
+   and the impossibility is written **at the site** (`// coverage-ignore: only a
+   real device enters this branch`), never left as a bare gap. Both tools refuse
+   a run they could not measure rather than reporting it as clean.
 
    **A survivor outside your tree is a hand-back, never a reach-across.** Rule 1
    holds here exactly as everywhere else: if killing a mutant needs a *contract*

@@ -632,6 +632,37 @@ what remains is a small and possibly unrepresentative sample of that file.
 EOF
 fi
 
+# --- the markdown half, for the PR comment ----------------------------------
+# Written every run, pass or fail, because a report that only appears on success
+# is one nobody can use to see what is still open. `plan-qa-report` reads this
+# and its coverage sibling; the sha in the marker is what stops a section from
+# an earlier tree being posted against this one.
+REPORT="${TMPDIR:-/tmp}/plan-qa-mutation.md"
+head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
+{
+  printf '<!-- plan-qa:mutation sha=%s -->\n' "$head_short"
+  printf '### Mutation — is the effect asserted?\n\n'
+  printf 'Threshold %s%%%s per file, %ss per mutant, %s changed file(s). A LOW-SIGNAL row was **not measured**, whatever percentage it shows.\n\n' \
+    "$MIN_SCORE" '' "$MUTANT_TIMEOUT" "$count_files"
+  printf '| Verdict | Score | Mutants | Invalid | Timed out | File |\n|---|---:|---:|---:|---:|---|\n'
+  printf '%s\n' "$rows" | awk -F'\t' 'NF>=6 {
+    s = ($2 == "-") ? "–" : $2 "%"
+    v = ($6 ~ /^FAIL|LOW-SIGNAL/) ? "**" $6 "**" : $6
+    printf "| %s | %s | %s | %s | %s | `%s` |\n", v, s, $3, $4, $5, $1 }'
+  if [ -n "$surv" ]; then
+    printf '\n<details><summary>Surviving mutants</summary>\n\n'
+    printf '%s\n' "$surv" | sed 's|^  • |- `|; s|  \([a-z_]*\) — |` — `\1` — |'
+    printf '\n</details>\n'
+  fi
+  if [ -n "${timed:-}" ]; then
+    printf '\n<details><summary>Timed-out mutants — never answered, excluded from the score</summary>\n\n'
+    printf '%s\n' "$timed" | sed 's|^  • |- `|; s|  \([a-z_]*\) — |` — `\1` — |'
+    printf '\n</details>\n'
+  fi
+  printf '\nRaw engine report: `%s`\n' "$REPORT_KEEP"
+} > "$REPORT"
+echo "plan-mutation: report section — $REPORT"
+
 # LOW-SIGNAL BLOCKS. It always meant "not measured", and qa/SKILL.md always said
 # such a row is not a pass — but the script exited 0 on it, so the discipline
 # lived only in prose. Measured twice on CherishCRM: `google_sign_in_button.dart`

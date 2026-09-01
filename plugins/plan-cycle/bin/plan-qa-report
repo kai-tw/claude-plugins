@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Run both test-strength gates once and post one report to the PR — the moment
+# that turns `qa/SKILL.md`'s coverage + mutation prose into something with an
+# exit code. Records `plan-cycle qa-green` on success; Gate 6 reads that.
+#
+# A launcher, not an implementation — the script lives with the skill that owns
+# it (see the exec line). It exists so skill files, agent files and this
+# plugin's own prose can invoke it by BARE NAME: the plugin's bin/ is on the
+# Bash tool's PATH whenever the plugin is enabled, while the install path
+# (~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/) is not knowable
+# from a project-relative reference and changes on every version bump.
+set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+impl="$here/../skills/qa/scripts/qa_report.sh"
+
+# ONE slot for both gates. Each of them would take its own if invoked through
+# its own launcher, so this holds a single one and the inner runs pass straight
+# through on PLAN_TEST_SLOT_HELD — a coverage pass plus a mutation pass is the
+# heaviest thing this plugin asks of the machine, and it must not double-book.
+case "${1:-}" in
+  --help|-h) exec bash "$impl" "$@" ;;   # printing help must not need a slot
+esac
+exec bash "$here/../skills/qa/scripts/plan_test.sh" --exec bash "$impl" "$@"

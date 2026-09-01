@@ -24,6 +24,7 @@
 #   - launcher opens the PR (Step 6.0)            → pr-opened
 #   - launcher closes the test-authoring stage    → tests-frozen
 #   - /review posts its findings to the PR        → reviewed <sha>
+#   - plan-qa-report posts the test-strength report → qa-green <sha>
 #   - launcher closes out (archive + trash row)   → clear
 #     (on a pr_opened cycle whose PR has merged, clear REFUSES until the worktree
 #      + branch are gone (Step 6.6) and a feedback-ledger entry carries the cycle
@@ -560,6 +561,33 @@ EOF
       .reviewed_sha = $sha | .reviewed_at = $now | .updated = $now'
     ;;
 
+  qa-green)   # both test-strength gates passed and the report is on the PR → Gate 6
+    # `plan-qa-report` is the only writer, and only after BOTH plan-coverage and
+    # plan-mutation exited 0 AND the report comment landed. So the fact recorded
+    # here is "the tests were graded and a human can see the grade", not "the
+    # command was typed" — which is the distinction the whole gate turns on.
+    #
+    # WHY THIS FACT NEEDED TO EXIST
+    #   Everything this plugin actually enforces is enforced by an exit code:
+    #   the commit gate's four legs, and this ledger's gates. Coverage and
+    #   mutation were in neither list — they lived in `qa/SKILL.md` prose, so
+    #   agents ran /review and lint (gated) and skipped these two (not gated),
+    #   every time. Same lesson mutation.sh already records one level down.
+    #
+    # A sha git cannot resolve is REFUSED rather than stored, exactly as for
+    # `reviewed`: a fact pointing at nothing satisfies the gate forever and
+    # silently, which is worse than never having recorded it.
+    [ -f "$LEDGER" ] || exit 0
+    sha="${1:-}"
+    full=$(git -C "$ROOT" rev-parse --verify --quiet "${sha}^{commit}" 2>/dev/null) || full=""
+    if [ -z "$full" ]; then
+      echo "plan-cycle: qa-green REFUSED — '${sha:-}' is not a commit here (usage: plan-cycle qa-green <sha>)" >&2
+      exit 1
+    fi
+    write_ledger --arg sha "$full" --arg now "$(now)" '
+      .qa_green_sha = $sha | .qa_green_at = $now | .updated = $now'
+    ;;
+
   clear)   # close-out (Feature Archive verified + task row trashed) or a reset
     # Two gates guard `clear`, both armed only on a FULL cycle (pr_opened) and
     # both verified against the ARTIFACT rather than a flag: the teardown
@@ -992,6 +1020,51 @@ EOF
       fi
     fi
 
+    # Gate 6 — the PR is open and the tests were never graded for strength.
+    #
+    # THE MEASURED FAILURE
+    #   Agents opened PRs having reliably run `/review` and lint, and reliably
+    #   NOT run mutation or coverage. Not a discipline problem: review and lint
+    #   are legs of the Step 5.5 commit gate and gates 3/4 here, so an exit code
+    #   stops the turn without them. Coverage and mutation were required only by
+    #   `qa/SKILL.md` prose, and nothing read that prose back. This is the exit
+    #   code they were missing — the same fix mutation.sh applied to LOW-SIGNAL
+    #   one level down, where a correctly-labelled row shipped anyway because
+    #   only the label, never the status, said no.
+    #
+    # BINARY, NOT DRIFT-BASED. "Graded at some point on this cycle" is the whole
+    # question; commits piling up after the report are Gate 3's subject, and a
+    # second drift gate would fire on the same commits with a second threshold
+    # to keep in sync. The report comment carries its own sha, so a reader can
+    # already see when it was taken.
+    pr_opened=$(jq -r '.pr_opened // false' "$LEDGER" 2>/dev/null)
+    qsha=$(jq -r '.qa_green_sha // ""' "$LEDGER" 2>/dev/null)
+    if [ "$pr_opened" = "true" ] && [ -z "$qsha" ]; then
+      pr=$(jq -r '.pr // ""' "$LEDGER" 2>/dev/null)
+      cat <<EOF
+PLAN-CYCLE TEST-STRENGTH GATE — the PR is open and the tests were never graded.
+
+  Cycle:  ${slug}${title:+ (${title})}
+  PR:     #${pr}
+
+\`/review\` and lint ran because a gate stops the turn without them. Coverage and
+mutation did not, because until now nothing did — and they are the two that ask
+whether the TESTS are worth anything. Line coverage asks whether the changed
+lines ran at all; mutation asks whether anything would notice if they were
+wrong. A suite that calls every line and asserts nothing passes the first and
+fails the second, and passes lint and review too.
+
+Run both and post the report, scoped the way the change is scoped:
+
+  plan-qa-report -- flutter test test/features/<feature>/
+
+It runs coverage then mutation, posts one comment to PR #${pr}, and records the
+result here. If a gap is genuinely unreachable, write the reason at the site
+(\`// coverage-ignore: <why>\`) rather than working around the gate.
+EOF
+      exit 1
+    fi
+
     # Gate 5 — an existing test edited after the suite was frozen, with no reason
     # at the site. Armed by the `tests-frozen` mark, not by the Notion Stage:
     # under the tests-first order the tests are authored INSIDE the Implementation
@@ -1098,7 +1171,7 @@ usage: plan-cycle <command>
   enter <Stage>                        mirror the Stage the plan reached
   uploaded <pm|designer|engineer> <address>   record a landed plan
   pr-opened <PR#> [base] [branch]      record the PR
-  tests-frozen | reviewed <sha> | clear
+  tests-frozen | reviewed <sha> | qa-green <sha> | clear
   status | check | sweep
 
 A session that has joined no cycle is never gated.

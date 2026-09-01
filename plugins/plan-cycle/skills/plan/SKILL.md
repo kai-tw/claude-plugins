@@ -174,12 +174,14 @@ laws up the same way a project's own Stop hook backs up its formatter and build:
   owns the rest; see its §Plan-cycle ledger). You add
   **no** new step: keep invoking `archivist` at each Notion moment and the ledger
   stays current on its own.
-- **The Stop hook (`stop-validate.sh`) blocks turn-end** on either of two gaps:
-  **(Gate 1, IL6)** the cycle advanced *past* a plan phase whose row never landed
-  in Notion; **(Gate 2, IL7)** the PR recorded by `pr-opened <PR#>` has **merged**
-  onto the base but the cycle was never closed out (`clear`). The block reason
-  names the exact gap and is fed back as your next input — uploading the plan
-  resolves Gate 1, `clear` resolves Gate 2.
+- **The plugin's Stop hook blocks turn-end** on any of the ledger's gates — a
+  plan phase advanced past without its Notion row, a merged PR never closed out,
+  unreviewed commits piling up, a `// review-dismiss:` that fails its own rule, a
+  frozen test edited without a reason, and **a PR opened whose tests were never
+  graded for strength (`plan-qa-report`)**. The gates and their exact conditions
+  are defined once, in `bin/plan-cycle` — never restated here, because a copy
+  drifts and this one already had. The block reason names the gap and is fed
+  back as your next input; doing the named thing clears it.
 
 **If a turn-end is blocked by the "Plan-cycle upload gate":** that is this gate
 firing — the named plan exists only in chat. Invoke `archivist` to upload it
@@ -1017,6 +1019,16 @@ When the task is complete, the cycle is **not done until these run** (Iron Law 7
    record it: `plan-cycle pr-opened <PR#> "$BASE"` — **run it from the worktree**,
    which is where it reads the branch name that Step 6.6's teardown is verified
    against (`pr-opened <PR#> <base> <branch>` if you must call it from elsewhere).
+
+   **Then grade the tests and post the report** — scoped the way the change is:
+   ```bash
+   plan-qa-report -- flutter test test/features/<feature>/
+   ```
+   Coverage and mutation, one comment on the PR, and the `qa-green` mark that
+   stops the ledger's test-strength gate blocking turn-end. `/review` and lint
+   already ran because gates stop the turn without them; this is the gate for the
+   two that ask whether the tests are worth anything, and it is the reason
+   `pr-opened` is not the last thing this step does.
 
    **Then stop — the rest of Step 6 waits for the merge.**
 

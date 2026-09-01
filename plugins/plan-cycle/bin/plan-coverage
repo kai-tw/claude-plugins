@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Did the tests REACH the lines this cycle changed? The half plan-mutation
+# cannot see — an unexecuted line produces no mutant, so it never survives.
+#
+# A launcher, not an implementation — the script lives with the skill that owns
+# it (see the exec line). It exists so skill files, agent files and this
+# plugin's own prose can invoke it by BARE NAME: the plugin's bin/ is on the
+# Bash tool's PATH whenever the plugin is enabled, while the install path
+# (~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/) is not knowable
+# from a project-relative reference and changes on every version bump.
+set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+impl="$here/../skills/qa/scripts/coverage.sh"
+
+# `flutter test --coverage` is the slow shape of the suite (measured ~20 min vs
+# ~4 min plain on NovelGlide), and this script types it INSIDE itself where the
+# resource-gate hook — which only sees the top-level Bash command — cannot. Route
+# it through the slot budget so it cannot spend the machine off the books.
+case "${1:-}" in
+  --help|-h) exec bash "$impl" "$@" ;;   # printing help must not need a slot
+esac
+exec bash "$here/../skills/qa/scripts/plan_test.sh" --exec bash "$impl" "$@"
