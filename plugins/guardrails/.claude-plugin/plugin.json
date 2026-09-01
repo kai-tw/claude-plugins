@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "guardrails",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Turns corrections into rules that fire. A bounded inbox collects what went wrong; consuming an entry fuses it into a rule set that hooks enforce at the moment of the mistake.",
   "author": {
     "name": "Kai",
