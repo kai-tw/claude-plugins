@@ -157,7 +157,8 @@ as a normal report.
 
   rm $stale
 
-This script prints its findings to stdout and writes no report file.
+This script prints its findings to stdout and writes nothing into the repo. The
+engine's raw JSON is kept outside it, at the path the run prints on the way out.
 EOF
   exit 2
 done
@@ -176,14 +177,32 @@ done
 # one, and the third is the one that bites silently:
 #   - no yaml entry          → never declared
 #   - yaml but no lock entry → declared, `pub get` never run
-#   - lock entry below 0.2.0 → the FOUR-operator engine, which runs, scores and
-#                              reports normally over half the mutation space
+#   - lock entry below the floor → an engine that runs, scores and reports
+#                              normally while measuring or costing the wrong
+#                              thing; see the two cases the gate distinguishes
 #
 # Not `dart run dart_mutants --version`, which is what this comment used to
 # propose: that flag does not exist (measured — the engine answers "Could not
 # find an option named --version" and exits 64). The lockfile is also free,
 # where spawning dart costs a few hundred ms on every run.
-MIN_ENGINE=0.2.0
+#
+# The floor is 0.2.3, not 0.2.0, because of what a timeout costs on a machine
+# somebody is also working on. `flutter test` is three processes; through 0.2.2
+# the timeout SIGKILLed only the direct child, and POSIX reparents the orphaned
+# `flutter_tester` to init rather than killing it, so it went on running the
+# mutant with nothing left to reap it — measured by the engine at 1.86 GB on
+# the kill and 2.25 GB three seconds later, roughly 130 MB/s indefinitely, per
+# timed-out mutant, SURVIVING the run that created it. Two runs exhausted a
+# workstation. `trap cleanup` below cannot help: the escaped process is no
+# longer a descendant of anything this script can see. And the remedy this gate
+# prints for a timeout is a LARGER --timeout, which multiplies the exposure,
+# because a mutant allocates for the whole window.
+MIN_ENGINE=0.2.3
+
+# A older than B. Used by the gate and again by its explanation, which differs
+# by how far back the resolved version is.
+older_than() { [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" != "$2" ]; }
+
 lock_ver=""
 [ -f pubspec.lock ] && lock_ver=$(awk '
   /^  dart_mutants:/ { inpkg=1; next }
@@ -191,15 +210,27 @@ lock_ver=""
   inpkg && /^    version:/ { gsub(/[" ]/,""); sub(/^version:/,""); print; exit }
 ' pubspec.lock)
 
-if [ -n "$lock_ver" ] && [ "$(printf '%s\n%s\n' "$MIN_ENGINE" "$lock_ver" | sort -V | head -1)" != "$MIN_ENGINE" ]; then
+if [ -n "$lock_ver" ] && older_than "$lock_ver" "$MIN_ENGINE"; then
+  # Two different defects live below the floor, and naming the wrong one sends
+  # the reader after the wrong thing. Branch on which it actually is.
+  if older_than "$lock_ver" 0.2.0; then
+    why="$lock_ver ships FOUR operators — ternary, switch-arm, ?? and relational. It runs,
+scores and prints a normal-looking table over half the mutation space: statement
+deletion, condition negation, &&/|| and arithmetic produce nothing, and no row
+says which engine produced the number."
+  else
+    why="$lock_ver measures correctly and LEAKS a runaway process on every timeout. It
+SIGKILLs the direct child; the \`flutter_tester\` underneath is orphaned to init
+instead of killed, and goes on running the mutant at roughly 130 MB/s until the
+machine is out of memory. It outlives this run, so the cost accumulates across
+runs — and the remedy this gate prints for a timeout, a larger --timeout, makes
+each leak bigger."
+  fi
   cat >&2 <<EOF
 plan-mutation: this project resolves dart_mutants $lock_ver, and this gate needs
 $MIN_ENGINE or newer. Nothing was measured.
 
-$lock_ver ships FOUR operators — ternary, switch-arm, ?? and relational. It runs,
-scores and prints a normal-looking table over half the mutation space: statement
-deletion, condition negation, &&/|| and arithmetic produce nothing, and no row
-says which engine produced the number.
+$why
 
 Update the ref in pubspec.yaml to dart_mutants-v$MIN_ENGINE or newer, then
 \`flutter pub get\`.
@@ -231,16 +262,18 @@ Add it to pubspec.yaml under dev_dependencies:
       git:
         url: https://github.com/kai-tw/kai-packages.git
         path: packages/dart_mutants
-        ref: dart_mutants-v0.2.0
+        ref: dart_mutants-v0.2.3
 
 then `flutter pub get`. (It replaced `mutation_test`, which was installed
 globally — the prerequisite moved from the machine to the project.)
 
-Take the ref above verbatim. v0.1.0 ships four operators and v0.2.0 eight, and
-the four it adds — statement deletion, condition negation, `&&`/`||`, arithmetic
-— are the half that asks whether a line's effect is asserted at all. Pinned to
-v0.1.0 the tool runs, scores, and reports normally over a pool that cannot see
-any of that. Nothing about the output says which engine produced it.
+Take the ref above verbatim; both halves of it are load-bearing. v0.1.0 ships
+four operators and v0.2.0 eight, and the four it adds — statement deletion,
+condition negation, `&&`/`||`, arithmetic — are the half that asks whether a
+line's effect is asserted at all; pinned below v0.2.0 the tool runs, scores and
+reports normally over a pool that cannot see any of that, and nothing about the
+output says which engine produced it. v0.2.3 is where a timed-out mutant stops
+orphaning a test process that outlives the run and eats the machine.
 EOF
   exit 2
 fi
@@ -267,6 +300,24 @@ count_files=$(printf '%s\n' "$files" | grep -c .)
 
 out=$(mktemp -d) || exit 2
 snap=$(mktemp -d) || exit 2
+
+# THE ENGINE'S RAW REPORT OUTLIVES THE RUN.
+#
+# `$out` is deleted on every exit path, and the report lived only in it — so
+# "just jq the report yourself" was false for everyone, this script's own author
+# included. Choosing not to DISPLAY one of the engine's fields is this layer's
+# call; destroying its output so nobody else can read it is not, and the two got
+# conflated. It matters because every table below RE-DERIVES the display with
+# jq: a field the engine adds and this script does not read is invisible and
+# unreachable at once, which is how `timedOutMutants` went unread across four
+# consecutive reports on one PR.
+#
+# A stable path, not `$out`'s random name — an unpredictable path is barely
+# better than a deleted one when the reader is a hand-back three messages later.
+# One file, overwritten per run: this is the last run's evidence, not an archive.
+# Outside the repo, because `build/mutation-report.md` above is the standing
+# lesson about what a stale report at a canonical in-repo path does to a reader.
+REPORT_KEEP="${TMPDIR:-/tmp}/plan-mutation-report.json"
 
 # MUTATED SOURCE MUST NEVER OUTLIVE THE RUN.
 #
@@ -382,6 +433,10 @@ started=$(date +%s)
 dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" --json $files > "$out/report.json" 2>"$out/err"
 elapsed=$(( $(date +%s) - started ))
 
+# Preserved BEFORE the parse check, not after: a report this script cannot read
+# is exactly the one somebody needs the bytes of, and the check below exits.
+[ -s "$out/report.json" ] && cp "$out/report.json" "$REPORT_KEEP" 2>/dev/null
+
 jq -e . "$out/report.json" >/dev/null 2>&1 || {
   # Say what happened, not what was declined. "Not scoring anything off that"
   # reads like a cautious judgement about a result; there IS no result — the
@@ -393,6 +448,8 @@ plan-mutation: THE ENGINE DID NOT RUN. Nothing was measured — this is not a lo
 score, not a pass, and not a result of any kind. Its output was:
 
 $(head -20 "$out/err" 2>/dev/null | sed 's/^/  /')
+
+Whatever it wrote on stdout is at $REPORT_KEEP.
 
 Until that is fixed, no file in this diff has a mutation score.
 EOF
@@ -494,6 +551,7 @@ printf '%-18s %5s %8s %8s %9s  %s\n' VERDICT SCORE MUTANTS INVALID TIMEDOUT FILE
 printf '%s\n' "$rows" | awk -F'\t' '{ s = ($2 == "-") ? "  n/a" : sprintf("%4s%%", $2);
   printf "%-18s %5s %8s %8s %9s  %s\n", $6, s, $3, $4, $5, $1 }'
 echo "plan-mutation: elapsed ${elapsed}s."
+echo "plan-mutation: raw engine report — $REPORT_KEEP (every field, including any this table does not render)."
 
 surv=$(jq -r '.files | to_entries[] | .value.undetectedMutants[]?
   | "  • \(.filePath | split("/") | last):\(.line):\(.column)  \(.operatorName) — \(.description)"' "$out/report.json")
@@ -531,13 +589,24 @@ byop=$(jq -r '[.files[].undetectedMutants[]?.operatorName] | group_by(.)
 
 # Timeouts get their own note, because the remedy is different from a thin
 # mutant pool and the two causes behind them are indistinguishable from here.
+#
+# The IDENTITIES, not just the count. A LOW-SIGNAL row now blocks the turn, so a
+# timeout stops the caller and then has to tell them what to go and look at —
+# "re-run with a larger --timeout" without naming which mutants leaves them
+# re-running the whole file to find out. The engine has carried these since
+# 0.2.1 and this script read only the count, which is the same shape of miss as
+# the deleted report above: the display is re-derived here, so a field nobody
+# adds a jq for does not exist for anyone downstream.
 if printf '%s\n' "$rows" | awk -F'\t' '$5 > 0' | grep -q .; then
   to_total=$(printf '%s\n' "$rows" | awk -F'\t' '{ n += $5 } END { print n+0 }')
+  timed=$(jq -r '.files | to_entries[] | .value.timedOutMutants[]?
+    | "  • \(.filePath | split("/") | last):\(.line):\(.column)  \(.operatorName) — \(.description)"' "$out/report.json" 2>/dev/null)
   cat >&2 <<EOF
 
 plan-mutation: ${to_total} mutant(s) TIMED OUT — those candidates were never
 answered. They are not kills and not survivors, so they are excluded from the
 score, and the rows above under-report how much of each file was actually asked.
+$( [ -n "$timed" ] && printf '\nTimed-out mutants:\n%s' "$timed" )
 
 A timeout has two causes and this tool cannot tell them apart:
   · the budget is too tight — ${MUTANT_TIMEOUT}s must cover a FULL run of your test
@@ -546,6 +615,10 @@ A timeout has two causes and this tool cannot tell them apart:
 
 Re-run those files with a larger --timeout. If the timeouts disappear it was the
 budget; if one persists, that mutant is hanging and worth reading.
+
+Raising --timeout raises PEAK MEMORY too — a mutant that allocates inside its
+loop allocates for the whole window — so widen it on the files that timed out,
+not on the whole diff.
 EOF
 fi
 
