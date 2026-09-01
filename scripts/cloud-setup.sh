@@ -107,44 +107,127 @@ bootstrap_projects() {
 }
 
 # Install the plugins the cloned projects declare, so the plan cycle is actually
-# there. A container starts with NO marketplace configured: the registration
-# lives in ~/.claude/settings.json → extraKnownMarketplaces, which is user scope
-# and per-container, not in any repo. So a project's `enabledPlugins` resolves to
-# nothing until the marketplace is added back — and the failure is silent, the
-# skills simply are not offered. Both the registration and the plugin cache sit
+# there. A container starts with no marketplace REGISTERED and no plugin cache.
+# A project CAN declare the source in its own settings — `--scope project`
+# writes `extraKnownMarketplaces` and the CLI honours it — but declaring a
+# source installs nothing, and an unregistered `@marketplace` makes every plugin
+# id under it resolve to nothing. Silently: a skill that never loaded has no way
+# to announce its own absence. Both the registration and the plugin cache live
 # under $HOME, so this snapshots like everything else.
 MARKETPLACE_NAME="kai-tw"
 MARKETPLACE_REPO="kai-tw/claude-plugins"
 
+# Where a failed bootstrap gets to speak. The setup log is written once, into a
+# settings pane nobody reopens; user-scope CLAUDE.md is loaded into EVERY
+# session in this container — the only channel left when the thing that failed
+# to install is the tooling itself. Appended under a marker and removed by it,
+# so this never eats a CLAUDE.md the environment put there for its own reasons.
+REPORT="$HOME/.claude/CLAUDE.md"
+REPORT_HEAD="## Claude plugins are MISSING from this environment"
+
+clear_report() {
+  [ -f "$REPORT" ] || return 0
+  # Not `sed -i`: its in-place flag takes an argument on BSD and none on GNU,
+  # and this file is edited on a mac while it runs on linux.
+  sed "/^${REPORT_HEAD}\$/,\$d" "$REPORT" > "$REPORT.keep" 2>/dev/null \
+    && mv "$REPORT.keep" "$REPORT"
+}
+
+report() {
+  mkdir -p "$(dirname "$REPORT")"
+  clear_report
+  printf '%s\n\n%s\n' "$REPORT_HEAD" "$1" >> "$REPORT"
+  log "!! PLUGINS UNAVAILABLE — recorded in $REPORT"
+}
+
+# Register the marketplace. A checkout the environment already cloned beats
+# github: a directory source needs no credential, and this marketplace is
+# private, so the network path is the one that 401s on an environment whose
+# github.com credential does not cover it.
+register_marketplace() {
+  local mp dir
+  while IFS= read -r mp; do
+    [ "$(jq -r '.name // empty' "$mp" 2>/dev/null)" = "$MARKETPLACE_NAME" ] || continue
+    dir="$(cd "$(dirname "$mp")/.." && pwd)"
+    if claude plugin marketplace add "$dir" >/dev/null 2>&1; then
+      log "marketplace $MARKETPLACE_NAME registered from $dir"
+      return 0
+    fi
+  done < <(find "$WORKSPACE" -maxdepth 3 -path '*/.claude-plugin/marketplace.json' 2>/dev/null)
+
+  # Probe before adding, because `marketplace add` failing and `marketplace add`
+  # having nothing to do look identical from here — and a 401 on a private repo
+  # is the exact failure this block exists to make visible.
+  if ! git ls-remote "https://github.com/$MARKETPLACE_REPO" HEAD >/dev/null 2>&1; then
+    report "\`https://github.com/$MARKETPLACE_REPO\` is UNREACHABLE from this container, so
+every \`@$MARKETPLACE_NAME\` plugin this project enables is absent — the plan cycle,
+its gates and every \`plan-*\` command included. Work without them and say so;
+do not improvise a substitute for a gate.
+
+To fix the environment: either register a github.com API credential that covers
+this private repo (claude.ai -> Settings -> Claude Code -> the environment), or
+add \`$MARKETPLACE_REPO\` to the environment's cloned repositories — a local
+checkout needs no credential at all. Then edit the Setup script (any edit) to
+force a snapshot rebuild."
+    return 1
+  fi
+
+  claude plugin marketplace add "$MARKETPLACE_REPO" >/dev/null 2>&1 && return 0
+  report "\`$MARKETPLACE_REPO\` is reachable but would not register as a marketplace, so
+every \`@$MARKETPLACE_NAME\` plugin this project enables is absent. Work without
+them and say so; do not improvise a substitute for a gate."
+  return 1
+}
+
 install_plugins() {
-  command -v claude >/dev/null 2>&1 || { log "claude CLI absent — skipping plugins"; return 0; }
+  clear_report
+  if ! command -v claude >/dev/null 2>&1; then
+    report "The \`claude\` CLI was not on PATH while this environment was provisioned, so
+nothing could be installed and every \`@$MARKETPLACE_NAME\` plugin this project
+enables is absent. Work without them and say so; do not improvise a substitute
+for a gate."
+    return 0
+  fi
 
   # Take the list from what each project ENABLES rather than hardcoding one:
   # a hardcoded list is a second copy of the project's own declaration, and the
-  # copy is what goes stale.
+  # copy is what goes stale. `select(.value == true)` so a plugin somebody
+  # deliberately switched off does not come back.
   local wanted
   wanted="$(find "$WORKSPACE" -maxdepth 3 -path '*/.claude/settings.json' -print0 2>/dev/null \
-    | xargs -0 -r jq -r '(.enabledPlugins // {}) | keys[]' 2>/dev/null \
+    | xargs -0 -r jq -r '(.enabledPlugins // {}) | to_entries[] | select(.value == true) | .key' 2>/dev/null \
     | grep -- "@${MARKETPLACE_NAME}\$" | sort -u)"
   if [ -z "$wanted" ]; then
     log "no @${MARKETPLACE_NAME} plugins declared by any cloned project"
     return 0
   fi
 
-  claude plugin marketplace add "$MARKETPLACE_REPO" >/dev/null 2>&1 \
-    || { log "WARNING: could not register the ${MARKETPLACE_NAME} marketplace"; return 0; }
+  register_marketplace || return 0
 
   # --scope user, never project: project scope writes enabledPlugins back into
   # the repo's tracked .claude/settings.json, so every session would open on a
   # modified file it did not touch.
-  local p
+  local p missing=""
   for p in $wanted; do
-    if claude plugin install "$p" --scope user -y >/dev/null 2>&1; then
+    claude plugin install "$p" --scope user -y >/dev/null 2>&1
+    # Ask the registry, not the exit status: `install` prints `already
+    # installed` and exits 0 having done nothing, so its status cannot tell an
+    # install from a no-op — and an install that reported success while leaving
+    # nothing loadable is the whole reason this script exists.
+    if jq -e --arg p "$p" '(.plugins // {}) | has($p)' \
+         "$HOME/.claude/plugins/installed_plugins.json" >/dev/null 2>&1; then
       log "installed $p"
     else
-      log "WARNING: install failed: $p"
+      log "WARNING: not installed: $p"
+      missing="${missing} $p"
     fi
   done
+
+  [ -z "$missing" ] && return 0
+  report "These plugins are enabled by the project but did NOT install:$missing
+
+Their skills, hooks and commands are absent. Work without them and say so; do
+not improvise a substitute for a gate."
 }
 
 install_flutter && persist_env && bootstrap_projects
