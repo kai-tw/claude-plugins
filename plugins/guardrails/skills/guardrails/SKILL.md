@@ -19,12 +19,19 @@ Two rule sets, each read by its own hook. Nothing else.
 | `rules/tool.tsv` | `PreToolUse` on Bash | before a matching command runs |
 | `rules/discipline.md` | `SessionStart` | injected once, binds every turn |
 
-One rule is not in either set because it **denies** rather than warns:
-`hooks/deletion-gate.sh` routes deletion to whichever of `rm` / `trash` this
-machine actually has and refuses the other. It lives in its own file so
-`intercept.sh` keeps its "never blocks" promise — that promise is what lets it
-speak on every command without becoming noise. Adding a second blocking rule
-means asking first whether a warning would do.
+Two more rules are in neither set because they **deny** rather than warn. Each
+is its own file so `intercept.sh` keeps its "never blocks" promise — that
+promise is what lets it speak on every command without becoming noise.
+
+| Gate | Refuses |
+|---|---|
+| `hooks/deletion-gate.sh` | deleting through whichever of `rm` / `trash` this machine does NOT have |
+| `hooks/push-gate.sh` | a force-push or a delete aimed at `main` / `master` — force onto any other branch is fine |
+
+A gate earns its place only where the decision needs something the command
+string does not carry: which binary exists here, which branch you are on. That
+is also why neither could be a `permissions` pattern. Anything a warning would
+cover stays a warning.
 
 ## The bar
 

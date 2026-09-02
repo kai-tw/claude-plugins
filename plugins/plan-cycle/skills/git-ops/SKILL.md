@@ -80,7 +80,7 @@ leaves the canonical remote stale and the team blind to your work.
   even for direct-to-main-editable files (fastlane metadata, docs, `.claude/`):
   if the change is related to an open PR, put it on **that** branch, not main —
   "no worktree required" is not "push to main is free." Already pushed? Don't
-  force-push main to fix it (rewriting main is confirm-first) — surface the split,
+  force-push main to fix it — `guardrails`' `push-gate` refuses that — surface the split,
   verify the eventual merge is clean (`git merge-tree --write-tree`), and let the
   founder decide.
 
@@ -102,10 +102,10 @@ git commit -- <file> [<file>...]     # or stage first, then commit
 ```
 
 A project may define an escape-hatch env var for broad staging; it is almost
-never right — reach for explicit pathspecs first. Also note `git reset --hard*`
-and `git push --force*` are **deny-listed** in `.claude/settings.json` (they
-never run); §4 explains why `reset --hard` is banned even to "fix" a diverged
-local `main`.
+never right — reach for explicit pathspecs first. Separately, force-pushing or
+deleting `main` / `master` is refused by `guardrails`' `push-gate` (force onto
+any other branch is fine); §4 explains why `reset --hard` is banned even to
+"fix" a diverged local `main`.
 
 ---
 

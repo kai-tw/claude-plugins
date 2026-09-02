@@ -43,11 +43,11 @@ uses_rm() {
   return 1
 }
 
-deny() {
-  jq -cn --arg r "$1" \
-    '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:$r}}'
-  exit 0
-}
+# exit 2, not a JSON `permissionDecision: "deny"`: only exit 2 is documented to
+# take precedence over a `permissions.allow` rule, and both consumer projects
+# carry an allow that covers the commands this gate judges. The reason goes to
+# stderr, which is what Claude is shown.
+deny() { printf '%s\n' "$1" >&2; exit 2; }
 
 if command -v trash >/dev/null 2>&1 || [ -x /usr/bin/trash ]; then
   uses_rm "$cmd" && deny \
