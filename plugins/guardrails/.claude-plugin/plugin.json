@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "guardrails",
-  "version": "0.4.2",
-  "description": "Turns corrections into rules that fire. A bounded inbox collects what went wrong; consuming an entry fuses it into a rule set that hooks enforce at the moment of the mistake.",
+  "version": "0.5.0",
+  "description": "Rules that fire on their own — a PreToolUse check on every Bash command and a discipline block carried at session start.",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"
@@ -11,10 +11,9 @@
   "license": "MIT",
   "keywords": [
     "guardrails",
-    "corrections",
     "rules",
     "hooks",
-    "ledger"
+    "discipline"
   ],
   "skills": [
     "./skills/guardrails"

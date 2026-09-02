@@ -1,0 +1,198 @@
+name: vendor-sync
+
+# Push the released payload into every consumer repo's vendored copy, as a PR.
+#
+# WHY THIS EXISTS
+#   A cloud session's github credential covers only the repos that session
+#   mounted. This marketplace is private, so a session that mounted only a
+#   consumer repo cannot clone it and every `@kai-tw` plugin is absent. The
+#   consumers therefore carry a copy; this workflow is what keeps that copy
+#   honest, because the alternative — remembering to run the sync by hand — is
+#   the failure this repo has already paid for twice (`.claude/rules/releasing.md`).
+#
+# TAG-TRIGGERED, not push-to-main. `plugin-release` tags `<plugin>--v<version>`,
+# and an install is cached per version: content that changes without a bump is
+# served stale forever. Mirroring on every main push would therefore ship
+# unbumped content into the consumers under a version number that already means
+# something else. The tag IS the statement that a version is final.
+
+on:
+  push:
+    tags:
+      - '*--v*'
+  workflow_dispatch:
+    inputs:
+      consumer:
+        description: 'Only this consumer (owner/name). Blank = all of them.'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  # Split out so the consumer list is parsed ONCE and every failure in it stops
+  # the run before any consumer is touched — a half-synced fleet is worse than
+  # an unsynced one, because the two halves disagree and nothing says so.
+  consumers:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.read.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        # Through env, never interpolated into the script body: `${{ }}` is
+        # substituted before bash sees the line, so a dispatch input with a
+        # quote in it would be shell syntax rather than an argument.
+        env:
+          ONLY: ${{ inputs.consumer }}
+        run: |
+          set -euo pipefail
+          if [ -n "$ONLY" ]; then
+            m=$(node .github/scripts/vendor-consumers.mjs --repo "$ONLY")
+          else
+            m=$(node .github/scripts/vendor-consumers.mjs)
+          fi
+          echo "matrix=$m" >> "$GITHUB_OUTPUT"
+          echo "$m"
+
+  sync:
+    needs: consumers
+    runs-on: ubuntu-latest
+    strategy:
+      # Not fail-fast: one consumer's PR failing must not cancel the others'.
+      # They are independent repos, and a partial sync that is REPORTED is
+      # recoverable; one that was cancelled silently is not.
+      fail-fast: false
+      matrix:
+        consumer: ${{ fromJSON(needs.consumers.outputs.matrix) }}
+    steps:
+      - name: Check out the marketplace (source of truth)
+        uses: actions/checkout@v4
+        with:
+          path: source
+          fetch-depth: 0 # vendor-sync records the ref it synced from
+
+      # An unset variable or secret resolves to an EMPTY STRING, and the action
+      # then fails somewhere inside a JWT signing routine rather than saying
+      # which one you never set. Name it here, before anything else runs.
+      - name: Check the App credentials are configured
+        env:
+          CLIENT_ID: ${{ vars.VENDOR_SYNC_APP_CLIENT_ID }}
+          PRIVATE_KEY: ${{ secrets.VENDOR_SYNC_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          [ -n "$CLIENT_ID" ]   || { echo "::error::repository VARIABLE VENDOR_SYNC_APP_CLIENT_ID is not set" >&2; exit 1; }
+          [ -n "$PRIVATE_KEY" ] || { echo "::error::repository SECRET VENDOR_SYNC_APP_PRIVATE_KEY is not set" >&2; exit 1; }
+
+      # One App, installed on each consumer's owner, instead of one token per
+      # owner: a fine-grained PAT is scoped to a single resource owner and these
+      # consumers have different ones, so PATs would mean a secret per owner and
+      # a new one every time a consumer is added. The App mints a SHORT-LIVED
+      # installation token per row, scoped to that one repository, and the only
+      # stored credential is the App's private key.
+      #
+      # GITHUB_TOKEN cannot be used at all: it is scoped to THIS repo.
+      - name: Mint an installation token for this consumer
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VENDOR_SYNC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VENDOR_SYNC_APP_PRIVATE_KEY }}
+          owner: ${{ matrix.consumer.owner }}
+          repositories: ${{ matrix.consumer.name }}
+          # Narrower than the App's own grant: this job pushes a branch and
+          # opens a PR, and nothing else.
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Check out the consumer
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.consumer.repo }}
+          ref: ${{ matrix.consumer.base }}
+          path: consumer
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
+      - name: Regenerate the vendored copy
+        run: |
+          set -euo pipefail
+          node source/scripts/vendor-sync.mjs \
+            --source source \
+            --out "consumer/${{ matrix.consumer.path }}" \
+            --ref "${GITHUB_REF_NAME}"
+
+      - name: Open or update the bump PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BOT: ${{ steps.app-token.outputs.app-slug }}
+          REPO: ${{ matrix.consumer.repo }}
+          BASE: ${{ matrix.consumer.base }}
+          VPATH: ${{ matrix.consumer.path }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          cd consumer
+
+          # One stable branch, reset from base on every run, rather than a
+          # branch per tag: two releases before a merge would otherwise leave
+          # two open PRs racing to write the same directory, and the older one
+          # merges the older payload. The branch is a generated artifact and
+          # nothing is ever based on it, which is what makes resetting it safe.
+          BRANCH="chore/vendor-kai-tw"
+
+          # The App's own slug, not a made-up name: whoever reads `git log` on
+          # the consumer should be able to look the committer up and find the
+          # thing that actually made the commit.
+          git config user.name  "${BOT}[bot]"
+          git config user.email "${BOT}[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+
+          git add -A -- "$VPATH"
+          if git diff --cached --quiet; then
+            echo "no change to $VPATH — $REPO is already at $TAG"
+            exit 0
+          fi
+
+          # The diff is hundreds of files, so the version table is the only place
+          # a reviewer learns what actually moved. Derived from the tree that was
+          # just written, by the same script that wrote it.
+          node "$GITHUB_WORKSPACE/source/scripts/vendor-sync.mjs" \
+            --print-versions "$VPATH" > /tmp/versions.txt
+
+          # Built line by line into a file rather than as one multi-line shell
+          # string: a `run: |` block is a YAML literal scalar, so a continuation
+          # line at column 0 ends the block and breaks the workflow parse.
+          {
+            printf 'chore(vendor): 同步 kai-tw marketplace 到 %s\n\n' "$TAG"
+            cat /tmp/versions.txt
+            printf '\n\n由 kai-tw/claude-plugins 的 vendor-sync workflow 產生。'
+            printf '這棵樹是產物，手改會在下一次同步時被無聲還原——\n'
+            printf '要改就改上游、發版、收下一個 bump PR。\n'
+          } > /tmp/commit-msg.txt
+
+          git commit -F /tmp/commit-msg.txt
+          git push --force-with-lease origin "$BRANCH"
+
+          # Ask for the STATE, not just for a PR: `gh pr view <branch>` also
+          # answers for a CLOSED or MERGED one, so testing existence alone would
+          # see last release's merged PR and skip opening this release's — the
+          # sync would then report success with nothing to review.
+          STATE=$(gh pr view "$BRANCH" --repo "$REPO" --json state --jq .state 2>/dev/null || true)
+          if [ "$STATE" = "OPEN" ]; then
+            echo "updated the open PR on $BRANCH"
+          else
+            {
+              printf '由 [kai-tw/claude-plugins](https://github.com/kai-tw/claude-plugins) 的 '
+              printf '`vendor-sync` workflow 在 `%s` 產生。\n\n' "$TAG"
+              printf '## 這一份帶的版本\n\n'
+              cat /tmp/versions.txt
+              printf '\n\n`%s` 整棵是產物，每次同步整棵重建。' "$VPATH"
+              printf '手改會被無聲還原——要改請改上游、發版，然後收下一個 bump PR。\n\n'
+              printf '來源 ref 與 commit sha 記在 `%s/VENDORED.md`。\n' "$VPATH"
+            } > /tmp/pr-body.txt
+            gh pr create --repo "$REPO" --base "$BASE" --head "$BRANCH" \
+              --title "chore(vendor): 同步 kai-tw marketplace 到 ${TAG}" \
+              --body-file /tmp/pr-body.txt
+          fi

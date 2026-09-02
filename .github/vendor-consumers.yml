@@ -1,0 +1,33 @@
+# Repos that carry a vendored copy of this marketplace.
+#
+# Adding one is a row here — nothing else. The workflow reads this file, so a
+# consumer that is listed is a consumer that gets a bump PR, and there is no
+# second list anywhere to keep in agreement with it.
+#
+# `path` is where the vendored marketplace lands inside that repo. It is also
+# what the consumer's own `.claude/settings.json` names as its `directory`
+# source, so the two must agree — a mismatch produces a PR that changes files
+# nothing loads.
+#
+# A consumer must be PRIVATE. The sync copies this repo's whole payload into
+# it, so listing a public repo publishes every plugin here — the row looks like
+# any other and the leak arrives as a routine bump PR. A public repo that wants
+# the plan cycle needs a different answer, not a row here.
+#
+# A new consumer also needs the vendor-sync GitHub App INSTALLED on its owner,
+# with access to that repo. The workflow mints a per-consumer installation
+# token, so a listed repo the App cannot see fails that row and no other.
+#
+# A consumer under a NEW owner needs the App to be PUBLIC — a private App
+# installs only on the account that owns it, and these owners differ. Public
+# here means an install page exists at github.com/apps/<slug>; it is not a
+# Marketplace listing (that is a separate, deliberate step) and it grants
+# nobody access to anything of ours: an installation only ever covers the
+# installer's own repositories, and the signing key stays here.
+consumers:
+  - repo: NovelGlide/NovelGlide-Flutter
+    path: .claude/vendor/kai-tw
+    base: main
+  - repo: kai-tw/CherishCRM-Flutter
+    path: .claude/vendor/kai-tw
+    base: main

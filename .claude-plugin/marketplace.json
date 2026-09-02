@@ -53,7 +53,7 @@
     },
     {
       "name": "guardrails",
-      "description": "Turns corrections into rules that fire — a bounded inbox, a fusion gate, and hooks that speak at the moment of the mistake",
+      "description": "Rules that fire on their own — a PreToolUse check on every Bash command and a discipline block carried at session start",
       "source": "./plugins/guardrails",
       "category": "productivity",
       "author": {

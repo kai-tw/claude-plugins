@@ -144,6 +144,12 @@ report() {
 # github: a directory source needs no credential, and this marketplace is
 # private, so the network path is the one that 401s on an environment whose
 # github.com credential does not cover it.
+#
+# Two shapes qualify, and the VENDORED one is why the github path is now the
+# rare case: a consumer repo carries `.claude/vendor/<marketplace>/`, so a
+# session that mounted only that repo already has the marketplace on disk. The
+# two globs are stated separately rather than as one deeper `-maxdepth`, which
+# would walk `node_modules/` and `build/` in every cloned project to find them.
 register_marketplace() {
   local mp dir
   while IFS= read -r mp; do
@@ -153,22 +159,31 @@ register_marketplace() {
       log "marketplace $MARKETPLACE_NAME registered from $dir"
       return 0
     fi
-  done < <(find "$WORKSPACE" -maxdepth 3 -path '*/.claude-plugin/marketplace.json' 2>/dev/null)
+  done < <(
+    find "$WORKSPACE" -maxdepth 3 -path '*/.claude-plugin/marketplace.json' 2>/dev/null
+    find "$WORKSPACE" -maxdepth 6 -path '*/.claude/vendor/*/.claude-plugin/marketplace.json' 2>/dev/null
+  )
 
   # Probe before adding, because `marketplace add` failing and `marketplace add`
   # having nothing to do look identical from here — and a 401 on a private repo
   # is the exact failure this block exists to make visible.
   if ! git ls-remote "https://github.com/$MARKETPLACE_REPO" HEAD >/dev/null 2>&1; then
-    report "\`https://github.com/$MARKETPLACE_REPO\` is UNREACHABLE from this container, so
+    report "No \`$MARKETPLACE_NAME\` marketplace was found on disk, and
+\`https://github.com/$MARKETPLACE_REPO\` is UNREACHABLE from this container, so
 every \`@$MARKETPLACE_NAME\` plugin this project enables is absent — the plan cycle,
 its gates and every \`plan-*\` command included. Work without them and say so;
 do not improvise a substitute for a gate.
 
-To fix the environment: either register a github.com API credential that covers
-this private repo (claude.ai -> Settings -> Claude Code -> the environment), or
-add \`$MARKETPLACE_REPO\` to the environment's cloned repositories — a local
-checkout needs no credential at all. Then edit the Setup script (any edit) to
-force a snapshot rebuild."
+The normal path is the VENDORED copy each consumer repo carries at
+\`.claude/vendor/$MARKETPLACE_NAME/\`, which needs no credential because it is
+already part of the checkout. Not finding one means either this project has not
+been given a copy yet, or its copy was deleted — open a PR against
+\`$MARKETPLACE_REPO\` to add the repo to \`.github/vendor-consumers.yml\`, then
+release a tag to populate it.
+
+Failing that, add \`$MARKETPLACE_REPO\` to the environment's cloned repositories
+(a local checkout needs no credential either), then edit the Setup script (any
+edit) to force a snapshot rebuild."
     return 1
   fi
 
