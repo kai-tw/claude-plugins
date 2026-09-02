@@ -21,6 +21,7 @@
 //
 // Usage:
 //   node scripts/vendor-sync.mjs --out <dir> [--source <repo root>] [--ref <ref>]
+//   node scripts/vendor-sync.mjs --print-versions <dir>   # the table, from disk
 
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -46,17 +47,39 @@ const flag = (name) => {
   return i === -1 ? undefined : args[i + 1];
 };
 
-const source = resolve(flag('source') ?? join(HERE, '..'));
-const out = flag('out') ? resolve(flag('out')) : undefined;
-if (!out) {
-  console.error('usage: vendor-sync.mjs --out <dir> [--source <repo root>] [--ref <ref>]');
-  process.exit(2);
-}
-
 const die = (msg) => {
   console.error(`vendor-sync: ${msg}`);
   process.exit(1);
 };
+
+// `--print-versions` reads the table back off a vendored tree that already
+// exists. It lives here rather than in the caller so the versions a commit
+// message states and the versions the tree actually carries are derived once,
+// from the same files — a second derivation is a second thing to go stale.
+const printVersions = flag('print-versions');
+if (printVersions) {
+  const dir = resolve(printVersions);
+  const pluginsDir = join(dir, 'plugins');
+  if (!existsSync(pluginsDir)) die(`no plugins/ under ${dir}`);
+  const rows = readdirSync(pluginsDir, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => {
+      const m = join(pluginsDir, e.name, '.claude-plugin', 'plugin.json');
+      if (!existsSync(m)) die(`no plugin.json under plugins/${e.name}`);
+      return `- ${e.name} ${JSON.parse(readFileSync(m, 'utf8')).version}`;
+    })
+    .sort();
+  console.log(rows.join('\n'));
+  process.exit(0);
+}
+
+const source = resolve(flag('source') ?? join(HERE, '..'));
+const out = flag('out') ? resolve(flag('out')) : undefined;
+if (!out) {
+  console.error('usage: vendor-sync.mjs --out <dir> [--source <repo root>] [--ref <ref>]');
+  console.error('       vendor-sync.mjs --print-versions <dir>');
+  process.exit(2);
+}
 
 const readJson = (path) => {
   try {

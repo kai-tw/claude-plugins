@@ -1,0 +1,17 @@
+# Repos that carry a vendored copy of this marketplace.
+#
+# Adding one is a row here — nothing else. The workflow reads this file, so a
+# consumer that is listed is a consumer that gets a bump PR, and there is no
+# second list anywhere to keep in agreement with it.
+#
+# `path` is where the vendored marketplace lands inside that repo. It is also
+# what the consumer's own `.claude/settings.json` names as its `directory`
+# source, so the two must agree — a mismatch produces a PR that changes files
+# nothing loads.
+consumers:
+  - repo: NovelGlide/NovelGlide-Flutter
+    path: .claude/vendor/kai-tw
+    base: main
+  - repo: kai-tw/CherishCRM-Flutter
+    path: .claude/vendor/kai-tw
+    base: main
