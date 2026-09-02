@@ -375,17 +375,17 @@ propose Python if no non-Python path exists — and then in an isolated venv, an
 flag it. Exemption: a **one-off stdlib** `python3 -c` that installs nothing (e.g.
 decoding PNG pixels for the alignment-measurement above) is fine.
 
-**`rm` is denied → use `/usr/bin/trash -v`; same-volume trash frees no disk until
-emptied.** The permission layer denies `rm`; delete with `/usr/bin/trash -v
-<targets…>` (system binary, multiple targets). WHY/caveat (machine-local — these
-are macOS host facts on *this* machine, not repo config): `trash` moves files to
-`~/.Trash` on the **same volume**, so it frees **no disk space** until the Trash
-is emptied; and emptying from the shell is TCC-blocked
-(`osascript … empty trash` fails with AppleEvent -10000, and `~/.Trash` itself is
-TCC-protected). HOW: for a "space is critical" request, tell the user the final
-step is theirs — empty the Trash manually in Finder (⌘⇧⌫); the shell cannot do
-it. (The use-`trash`-not-`rm` directive is also stated in
-`${CLAUDE_PLUGIN_ROOT}/skills/archivist/SKILL.md`.)
+**Deletion: the machine decides, and `guardrails` enforces it.** `trash` where
+this machine has it, `rm` where it does not — a cloud container has no `trash`
+at all, so a single answer for both would leave one of them unable to delete
+anything. `guardrails`' `deletion-gate.sh` denies whichever one is wrong here,
+so this is not a rule to remember.
+
+What the gate cannot tell you, and you must: on macOS `trash` moves files to
+`~/.Trash` on the **same volume**, so it frees **no disk space** until emptied —
+and emptying is TCC-blocked from a shell (`osascript … empty trash` fails with
+AppleEvent -10000). On a "space is critical" request, say plainly that the last
+step is the founder's: Finder, ⌘⇧⌫.
 
 **Dispatching a sub-agent: forbid its commit, and match the model to the task.**
 Two standing defaults govern every sub-agent you spawn. (1) **Tell it NOT to commit

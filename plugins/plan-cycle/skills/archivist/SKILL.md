@@ -240,8 +240,9 @@ to review the per-row plan.
 8. **The user feedback log is canonical in Notion.** Append new entries to the
    Notion page; never create a repo-side copy — two canonical copies is exactly
    the problem this shape avoids.
-9. **Use `trash`, not `rm`** for repo files (directories alike); to remove a
-   Notion page use `ntn pages trash <id> --yes`.
+9. **Repo files: `guardrails` decides `trash` vs `rm`** — it denies whichever
+   one this machine cannot use, so just delete. To remove a Notion page use
+   `ntn pages trash <id> --yes`.
 10. **Report Notion URLs** for every page created / updated, plus the removal
     manifest of repo files trashed.
 
@@ -319,7 +320,6 @@ removal manifest.
 - Overwriting a hand-authored (un-marked) Notion page.
 - Duplicating a shipped feature into the TaskList instead of linking Feature Archive.
 - Inventing new Notion DBs/structure without confirming scope.
-- `rm` instead of `trash`.
 
 ## Tone
 

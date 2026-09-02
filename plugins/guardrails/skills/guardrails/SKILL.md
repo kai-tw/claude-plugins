@@ -19,6 +19,13 @@ Two rule sets, each read by its own hook. Nothing else.
 | `rules/tool.tsv` | `PreToolUse` on Bash | before a matching command runs |
 | `rules/discipline.md` | `SessionStart` | injected once, binds every turn |
 
+One rule is not in either set because it **denies** rather than warns:
+`hooks/deletion-gate.sh` routes deletion to whichever of `rm` / `trash` this
+machine actually has and refuses the other. It lives in its own file so
+`intercept.sh` keeps its "never blocks" promise — that promise is what lets it
+speak on every command without becoming noise. Adding a second blocking rule
+means asking first whether a warning would do.
+
 ## The bar
 
 **A rule belongs here only if the idiom fails SILENTLY** — it hands back a

@@ -348,15 +348,15 @@ PR. Run the gates yourself before you push / merge (legs:
 
 ---
 
-## 8. Deletion: `rm` is denied — use `trash`
+## 8. Deletion: whichever tool this machine has
 
-Plain `rm` is blocked by the permission layer and `rm -rf *` is deny-listed in
-`.claude/settings.json` — never spend a turn on `rm`. The sanctioned deletion
-tool is the system binary `/usr/bin/trash -v <target>…` (takes multiple targets;
-prints `Moved … to ~/.Trash/…`).
+`guardrails`' `deletion-gate.sh` denies `rm` where `trash` exists and denies
+`trash` where it does not, so delete without deciding. Where `trash` is the
+answer it is `/usr/bin/trash -v <target>…` (multiple targets; prints
+`Moved … to ~/.Trash/…`).
 
-**Space caveat** (observed on this Darwin machine): `trash` moves to `~/.Trash`
-on the **same volume**, so it frees **no disk space** until the Trash is emptied.
+**Space caveat**, which the gate cannot tell you: on macOS `trash` moves to
+`~/.Trash` on the **same volume**, so it frees **no disk space** until emptied.
 Emptying from the shell is TCC-blocked (`osascript … empty trash` returns
 AppleEvent -10000; `~/.Trash` itself is TCC-protected). So for any "disk is full"
 request, tell the **user** that emptying the Trash manually (Finder → Empty Trash

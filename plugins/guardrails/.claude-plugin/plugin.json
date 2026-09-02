@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "guardrails",
-  "version": "0.5.0",
+  "version": "0.7.0",
   "description": "Rules that fire on their own — a PreToolUse check on every Bash command and a discipline block carried at session start.",
   "author": {
     "name": "Kai",
