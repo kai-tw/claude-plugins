@@ -20,7 +20,7 @@ const die = (msg) => {
   process.exit(1);
 };
 
-const KEYS = new Set(['repo', 'path', 'base', 'secret']);
+const KEYS = new Set(['repo', 'path', 'base']);
 const lines = readFileSync(file, 'utf8').split(/\r?\n/);
 
 const consumers = [];
@@ -58,18 +58,15 @@ if (current) consumers.push(current);
 if (consumers.length === 0) die('no consumers listed');
 for (const c of consumers) {
   for (const k of KEYS) if (!c[k]) die(`consumer ${JSON.stringify(c.repo ?? '?')} is missing "${k}"`);
-  if (!/^[\w.-]+\/[\w.-]+$/.test(c.repo)) die(`consumer repo ${JSON.stringify(c.repo)} is not owner/name`);
+  const m = c.repo.match(/^([\w.-]+)\/([\w.-]+)$/);
+  if (!m) die(`consumer repo ${JSON.stringify(c.repo)} is not owner/name`);
+  // Split here rather than in the workflow: a GitHub expression has no string
+  // split, and the App installation is addressed by owner.
+  [, c.owner, c.name] = m;
   // A path that escapes the consumer checkout would have the sync write outside
   // the repo — refuse it here rather than discovering it as a mysterious diff.
   if (c.path.startsWith('/') || c.path.split('/').includes('..')) {
     die(`consumer ${c.repo}: path ${JSON.stringify(c.path)} must be repo-relative with no ".." segment`);
-  }
-  // `secrets[<name>]` returns an empty string for a name that does not exist,
-  // and a checkout with an empty token silently falls back to the run's own
-  // credentials — which cannot reach another repo. Catching the shape here at
-  // least rules out a typo'd name reaching that point.
-  if (!/^[A-Z][A-Z0-9_]*$/.test(c.secret)) {
-    die(`consumer ${c.repo}: secret ${JSON.stringify(c.secret)} is not a repository-secret name`);
   }
 }
 

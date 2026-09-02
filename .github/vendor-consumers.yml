@@ -9,18 +9,13 @@
 # source, so the two must agree — a mismatch produces a PR that changes files
 # nothing loads.
 #
-# `secret` names the repository secret holding a token that can write to this
-# consumer. It is PER CONSUMER because a fine-grained PAT is scoped to ONE
-# resource owner ("The token will only be able to access resources owned by the
-# selected resource owner"), and these consumers have different owners — one
-# token cannot reach both. Two consumers under the same owner may name the same
-# secret; swapping to a GitHub App later means pointing every row at one.
+# A new consumer also needs the vendor-sync GitHub App INSTALLED on its owner,
+# with access to that repo. The workflow mints a per-consumer installation
+# token, so a listed repo the App cannot see fails that row and no other.
 consumers:
   - repo: NovelGlide/NovelGlide-Flutter
     path: .claude/vendor/kai-tw
     base: main
-    secret: VENDOR_SYNC_TOKEN_NOVELGLIDE
   - repo: kai-tw/CherishCRM-Flutter
     path: .claude/vendor/kai-tw
     base: main
-    secret: VENDOR_SYNC_TOKEN_KAI_TW

@@ -73,21 +73,38 @@ jobs:
           path: source
           fetch-depth: 0 # vendor-sync records the ref it synced from
 
-      # A secret that does not exist resolves to an empty string, and the two
-      # steps below then fail deep inside checkout or `gh` with a 404 that reads
-      # like "the repo is gone" rather than "you never set this secret". Say
-      # which name is missing, before anything else runs.
-      - name: Check the consumer's token secret is set
+      # An unset variable or secret resolves to an EMPTY STRING, and the action
+      # then fails somewhere inside a JWT signing routine rather than saying
+      # which one you never set. Name it here, before anything else runs.
+      - name: Check the App credentials are configured
         env:
-          TOKEN: ${{ secrets[matrix.consumer.secret] }}
-          SECRET_NAME: ${{ matrix.consumer.secret }}
+          CLIENT_ID: ${{ vars.VENDOR_SYNC_APP_CLIENT_ID }}
+          PRIVATE_KEY: ${{ secrets.VENDOR_SYNC_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          if [ -z "$TOKEN" ]; then
-            echo "::error::repository secret ${SECRET_NAME} is not set — ${{ matrix.consumer.repo }} cannot be synced." >&2
-            echo "A fine-grained PAT is scoped to one resource owner, so each owner needs its own secret." >&2
-            exit 1
-          fi
+          [ -n "$CLIENT_ID" ]   || { echo "::error::repository VARIABLE VENDOR_SYNC_APP_CLIENT_ID is not set" >&2; exit 1; }
+          [ -n "$PRIVATE_KEY" ] || { echo "::error::repository SECRET VENDOR_SYNC_APP_PRIVATE_KEY is not set" >&2; exit 1; }
+
+      # One App, installed on each consumer's owner, instead of one token per
+      # owner: a fine-grained PAT is scoped to a single resource owner and these
+      # consumers have different ones, so PATs would mean a secret per owner and
+      # a new one every time a consumer is added. The App mints a SHORT-LIVED
+      # installation token per row, scoped to that one repository, and the only
+      # stored credential is the App's private key.
+      #
+      # GITHUB_TOKEN cannot be used at all: it is scoped to THIS repo.
+      - name: Mint an installation token for this consumer
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VENDOR_SYNC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VENDOR_SYNC_APP_PRIVATE_KEY }}
+          owner: ${{ matrix.consumer.owner }}
+          repositories: ${{ matrix.consumer.name }}
+          # Narrower than the App's own grant: this job pushes a branch and
+          # opens a PR, and nothing else.
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Check out the consumer
         uses: actions/checkout@v4
@@ -95,11 +112,7 @@ jobs:
           repository: ${{ matrix.consumer.repo }}
           ref: ${{ matrix.consumer.base }}
           path: consumer
-          # Named per consumer because a fine-grained PAT is scoped to ONE
-          # resource owner, and these consumers have different owners. Needs
-          # Contents and Pull requests, both read+write. GITHUB_TOKEN cannot be
-          # used at all: it is scoped to THIS repo and cannot reach another one.
-          token: ${{ secrets[matrix.consumer.secret] }}
+          token: ${{ steps.app-token.outputs.token }}
           persist-credentials: true
 
       - name: Regenerate the vendored copy
@@ -112,7 +125,8 @@ jobs:
 
       - name: Open or update the bump PR
         env:
-          GH_TOKEN: ${{ secrets[matrix.consumer.secret] }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BOT: ${{ steps.app-token.outputs.app-slug }}
           REPO: ${{ matrix.consumer.repo }}
           BASE: ${{ matrix.consumer.base }}
           VPATH: ${{ matrix.consumer.path }}
@@ -128,8 +142,11 @@ jobs:
           # nothing is ever based on it, which is what makes resetting it safe.
           BRANCH="chore/vendor-kai-tw"
 
-          git config user.name  'vendor-sync[bot]'
-          git config user.email 'vendor-sync@users.noreply.github.com'
+          # The App's own slug, not a made-up name: whoever reads `git log` on
+          # the consumer should be able to look the committer up and find the
+          # thing that actually made the commit.
+          git config user.name  "${BOT}[bot]"
+          git config user.email "${BOT}[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
 
           git add -A -- "$VPATH"
