@@ -88,6 +88,13 @@ hardcoded number is a staleness bug waiting to print.)
 
 ## Spawn protocol
 
+**No `Agent` tool → stop, don't self-review.** Check first. This skill's only
+mechanism is spawning the matched sub-agent(s); reviewing the diff yourself
+instead, and flagging that only in a closing footnote, is exactly the silent
+skip `§What "silent skip" means` forbids. Reply with just: which sub-agent(s)
+the request would have spawned, and that the caller must invoke `Agent`
+directly, from its own context, to spawn them.
+
 **Spawn in background by default** (`run_in_background: true`):
 
 - The agent's file reads and sub-sub-agent spawns stay in its sub-context; background

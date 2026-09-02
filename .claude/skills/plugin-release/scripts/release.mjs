@@ -114,10 +114,11 @@ step(6, 'update the locally installed copy');
 // `claude plugin update` defaults to user scope and errors out if the plugin
 // lives anywhere else, so read the scope back rather than assuming it. A plugin
 // may also be released without being installed here at all — that is a normal
-// state, not a failure, but it means nothing local can be verified.
-const installed = JSON.parse(
-  readFileSync(join(process.env.HOME, '.claude/plugins/installed_plugins.json'), 'utf8'),
-);
+// state, not a failure, but it means nothing local can be verified. The file
+// itself can also be absent (no plugin ever installed on this machine), not
+// just empty of this plugin — same non-failure, so treat it the same way.
+const installedPath = join(process.env.HOME, '.claude/plugins/installed_plugins.json');
+const installed = existsSync(installedPath) ? JSON.parse(readFileSync(installedPath, 'utf8')) : {};
 const scopes = [
   ...new Set((installed.plugins?.[`${plugin}@${marketplace.name}`] ?? []).map((e) => e.scope)),
 ];
