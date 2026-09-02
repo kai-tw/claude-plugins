@@ -23,6 +23,7 @@
 //   node scripts/vendor-sync.mjs --out <dir> [--source <repo root>] [--ref <ref>]
 //   node scripts/vendor-sync.mjs --print-versions <dir>   # the table, from disk
 
+import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -214,6 +215,16 @@ gates, every \`plan-*\` command — is absent. Vendoring removes the second
 credential from the path: the marketplace becomes a directory this repo already
 checked out.
 
+## Checking it was not hand-edited
+
+\`\`\`bash
+node <this dir>/verify.mjs
+\`\`\`
+
+Recomputes every file's sha256 and executable bit against \`CHECKSUMS.txt\` and
+exits non-zero on any add, edit, deletion or mode change. It needs no access to
+the private source repo, so a consumer's own CI can run it.
+
 ## What is NOT here
 
 Two maintenance generators under \`plan-cycle/skills/lead/scripts/\` are excluded.
@@ -221,6 +232,96 @@ They rewrite files inside the plugin tree, which is harmless where that tree is 
 throwaway cache copy and is not harmless where it is this repo's own artifact.
 `,
 );
+
+// ------------------------------------------------------------------ checksums
+
+// "A hand-edit is silently reverted by the next sync" is the same shape as
+// every failure this repo has paid for: it is true, and nobody is told. The
+// manifest is what lets the consumer's own CI say it out loud instead —
+// `verify.mjs` beside it recomputes these and fails on a mismatch, needing no
+// access to the private source repo.
+const walk = (dir, base = dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const p = join(dir, e.name);
+    return e.isDirectory() ? walk(p, base) : [relative(base, p).split('\\').join('/')];
+  });
+
+writeFileSync(
+  join(out, 'verify.mjs'),
+  `#!/usr/bin/env node
+// Fail if anything in this vendored tree was hand-edited.
+//
+// Generated alongside CHECKSUMS.txt by scripts/vendor-sync.mjs in
+// kai-tw/claude-plugins. Standalone on purpose: the consumer's CI cannot reach
+// the private source repo, so the check has to be answerable from this
+// directory alone.
+//
+// Usage (from anywhere):  node <this dir>/verify.mjs
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)));
+const walk = (dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const p = join(dir, e.name);
+    return e.isDirectory() ? walk(p) : [relative(root, p).split('\\\\').join('/')];
+  });
+
+const SELF = new Set(['CHECKSUMS.txt']);
+const expected = new Map(
+  readFileSync(join(root, 'CHECKSUMS.txt'), 'utf8')
+    .split('\\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [hash, x, ...rest] = line.split(' ');
+      return [rest.join(' '), { hash, exec: x === 'x' }];
+    }),
+);
+
+const problems = [];
+const seen = new Set();
+for (const f of walk(root)) {
+  if (SELF.has(f)) continue;
+  seen.add(f);
+  const want = expected.get(f);
+  if (!want) {
+    problems.push(\`added:    \${f}\`);
+    continue;
+  }
+  const got = createHash('sha256').update(readFileSync(join(root, f))).digest('hex');
+  if (got !== want.hash) problems.push(\`modified: \${f}\`);
+  const exec = (statSync(join(root, f)).mode & 0o111) !== 0;
+  if (exec !== want.exec) problems.push(\`mode:     \${f} (expected \${want.exec ? 'executable' : 'non-executable'})\`);
+}
+for (const f of expected.keys()) if (!seen.has(f)) problems.push(\`deleted:  \${f}\`);
+
+if (problems.length === 0) {
+  console.log(\`vendored marketplace intact — \${seen.size} files\`);
+  process.exit(0);
+}
+console.error('This directory is a generated artifact, and it has been edited:');
+for (const p of problems.sort()) console.error(\`  \${p}\`);
+console.error('');
+console.error('Change the source in kai-tw/claude-plugins, release it, and take the');
+console.error('bump PR. An edit made here is reverted by the next sync.');
+process.exit(1);
+`,
+);
+
+const CHECKSUMS = 'CHECKSUMS.txt';
+const hashed = walk(out)
+  .filter((f) => f !== CHECKSUMS)
+  .sort()
+  .map((f) => {
+    const h = createHash('sha256').update(readFileSync(join(out, f))).digest('hex');
+    // The executable bit is content for our purposes: `bin/` lands on PATH from
+    // this directory, so a file that arrives non-executable is a broken command.
+    const x = (statSync(join(out, f)).mode & 0o111) !== 0 ? 'x' : '-';
+    return `${h} ${x} ${f}`;
+  });
+writeFileSync(join(out, CHECKSUMS), `${hashed.join('\n')}\n`);
 
 // ---------------------------------------------------------------------- report
 
