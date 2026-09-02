@@ -12,6 +12,13 @@
 # A new consumer also needs the vendor-sync GitHub App INSTALLED on its owner,
 # with access to that repo. The workflow mints a per-consumer installation
 # token, so a listed repo the App cannot see fails that row and no other.
+#
+# A consumer under a NEW owner needs the App to be PUBLIC — a private App
+# installs only on the account that owns it, and these owners differ. Public
+# here means an install page exists at github.com/apps/<slug>; it is not a
+# Marketplace listing (that is a separate, deliberate step) and it grants
+# nobody access to anything of ours: an installation only ever covers the
+# installer's own repositories, and the signing key stays here.
 consumers:
   - repo: NovelGlide/NovelGlide-Flutter
     path: .claude/vendor/kai-tw
