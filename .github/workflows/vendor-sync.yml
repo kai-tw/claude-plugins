@@ -228,24 +228,32 @@ jobs:
           # cannot fail. A lease that cannot fail reads as a safeguard.
           git push --force origin "$BRANCH"
 
+          # Title and body both name the release, so build them once — and
+          # REFRESH them on an existing PR. They go stale the moment a second
+          # release lands on the same branch: measured on NovelGlide#269, still
+          # titled with the first release while its only commit carried two
+          # later ones. A sync that succeeds while the PR misreports what it
+          # carries is the failure shape this pipeline exists to remove.
+          TITLE="chore(vendor): 同步 kai-tw marketplace 到 ${LABEL}"
+          {
+            printf '由 [kai-tw/claude-plugins](https://github.com/kai-tw/claude-plugins) 的 '
+            printf '`vendor-sync` workflow 在 `%s` 產生。\n\n' "$LABEL"
+            printf '## 這一份帶的版本\n\n'
+            cat /tmp/versions.txt
+            printf '\n\n`%s` 整棵是產物，每次同步整棵重建。' "$VPATH"
+            printf '手改會被無聲還原——要改請改上游、發版，然後收下一個 bump PR。\n\n'
+            printf '來源 ref 與 commit sha 記在 `%s/VENDORED.md`。\n' "$VPATH"
+          } > /tmp/pr-body.txt
+
           # Ask for the STATE, not just for a PR: `gh pr view <branch>` also
           # answers for a CLOSED or MERGED one, so testing existence alone would
           # see last release's merged PR and skip opening this release's — the
           # sync would then report success with nothing to review.
           STATE=$(gh pr view "$BRANCH" --repo "$REPO" --json state --jq .state 2>/dev/null || true)
           if [ "$STATE" = "OPEN" ]; then
+            gh pr edit "$BRANCH" --repo "$REPO" --title "$TITLE" --body-file /tmp/pr-body.txt
             echo "updated the open PR on $BRANCH"
           else
-            {
-              printf '由 [kai-tw/claude-plugins](https://github.com/kai-tw/claude-plugins) 的 '
-              printf '`vendor-sync` workflow 在 `%s` 產生。\n\n' "$LABEL"
-              printf '## 這一份帶的版本\n\n'
-              cat /tmp/versions.txt
-              printf '\n\n`%s` 整棵是產物，每次同步整棵重建。' "$VPATH"
-              printf '手改會被無聲還原——要改請改上游、發版，然後收下一個 bump PR。\n\n'
-              printf '來源 ref 與 commit sha 記在 `%s/VENDORED.md`。\n' "$VPATH"
-            } > /tmp/pr-body.txt
             gh pr create --repo "$REPO" --base "$BASE" --head "$BRANCH" \
-              --title "chore(vendor): 同步 kai-tw marketplace 到 ${LABEL}" \
-              --body-file /tmp/pr-body.txt
+              --title "$TITLE" --body-file /tmp/pr-body.txt
           fi
