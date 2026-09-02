@@ -9,6 +9,11 @@
 # source, so the two must agree — a mismatch produces a PR that changes files
 # nothing loads.
 #
+# A consumer must be PRIVATE. The sync copies this repo's whole payload into
+# it, so listing a public repo publishes every plugin here — the row looks like
+# any other and the leak arrives as a routine bump PR. A public repo that wants
+# the plan cycle needs a different answer, not a row here.
+#
 # A new consumer also needs the vendor-sync GitHub App INSTALLED on its owner,
 # with access to that repo. The workflow mints a per-consumer installation
 # token, so a listed repo the App cannot see fails that row and no other.
