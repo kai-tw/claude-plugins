@@ -207,7 +207,26 @@ jobs:
           } > /tmp/commit-msg.txt
 
           git commit -F /tmp/commit-msg.txt
-          git push --force-with-lease origin "$BRANCH"
+
+          # --force, because the `checkout -B` above rebuilt the branch from
+          # the base branch: the new commit is not a descendant of what is on
+          # the remote. That reset is what keeps the open PR at exactly one
+          # commit of "current payload vs current base", and what stops it ever
+          # conflicting. Continuing the existing branch instead would be a
+          # fast-forward, at the cost of both.
+          #
+          # What force normally protects — someone's commits — does not exist
+          # here: only this job writes this branch, and a hand-edit to the
+          # vendored tree is documented as reverted anyway.
+          #
+          # --force-with-lease cannot substitute. `actions/checkout` fetched
+          # only the base branch, so the bare form refuses with "stale info"
+          # for want of an authoritative remote-tracking ref — which reads
+          # identically to "the branch moved", and only ever bites on the
+          # SECOND release into a repo. Fetching the branch to name the lease
+          # explicitly then compares a value read one second earlier, so it
+          # cannot fail. A lease that cannot fail reads as a safeguard.
+          git push --force origin "$BRANCH"
 
           # Ask for the STATE, not just for a PR: `gh pr view <branch>` also
           # answers for a CLOSED or MERGED one, so testing existence alone would
