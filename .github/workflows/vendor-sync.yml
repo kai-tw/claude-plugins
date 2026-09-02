@@ -73,16 +73,33 @@ jobs:
           path: source
           fetch-depth: 0 # vendor-sync records the ref it synced from
 
+      # A secret that does not exist resolves to an empty string, and the two
+      # steps below then fail deep inside checkout or `gh` with a 404 that reads
+      # like "the repo is gone" rather than "you never set this secret". Say
+      # which name is missing, before anything else runs.
+      - name: Check the consumer's token secret is set
+        env:
+          TOKEN: ${{ secrets[matrix.consumer.secret] }}
+          SECRET_NAME: ${{ matrix.consumer.secret }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TOKEN" ]; then
+            echo "::error::repository secret ${SECRET_NAME} is not set — ${{ matrix.consumer.repo }} cannot be synced." >&2
+            echo "A fine-grained PAT is scoped to one resource owner, so each owner needs its own secret." >&2
+            exit 1
+          fi
+
       - name: Check out the consumer
         uses: actions/checkout@v4
         with:
           repository: ${{ matrix.consumer.repo }}
           ref: ${{ matrix.consumer.base }}
           path: consumer
-          # A fine-grained PAT with Contents: read+write and Pull requests:
-          # read+write on each consumer repo. GITHUB_TOKEN cannot be used: it is
-          # scoped to THIS repo and cannot push to another one.
-          token: ${{ secrets.VENDOR_SYNC_TOKEN }}
+          # Named per consumer because a fine-grained PAT is scoped to ONE
+          # resource owner, and these consumers have different owners. Needs
+          # Contents and Pull requests, both read+write. GITHUB_TOKEN cannot be
+          # used at all: it is scoped to THIS repo and cannot reach another one.
+          token: ${{ secrets[matrix.consumer.secret] }}
           persist-credentials: true
 
       - name: Regenerate the vendored copy
@@ -95,7 +112,7 @@ jobs:
 
       - name: Open or update the bump PR
         env:
-          GH_TOKEN: ${{ secrets.VENDOR_SYNC_TOKEN }}
+          GH_TOKEN: ${{ secrets[matrix.consumer.secret] }}
           REPO: ${{ matrix.consumer.repo }}
           BASE: ${{ matrix.consumer.base }}
           VPATH: ${{ matrix.consumer.path }}

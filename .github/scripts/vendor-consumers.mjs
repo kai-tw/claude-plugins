@@ -20,7 +20,7 @@ const die = (msg) => {
   process.exit(1);
 };
 
-const KEYS = new Set(['repo', 'path', 'base']);
+const KEYS = new Set(['repo', 'path', 'base', 'secret']);
 const lines = readFileSync(file, 'utf8').split(/\r?\n/);
 
 const consumers = [];
@@ -63,6 +63,13 @@ for (const c of consumers) {
   // the repo — refuse it here rather than discovering it as a mysterious diff.
   if (c.path.startsWith('/') || c.path.split('/').includes('..')) {
     die(`consumer ${c.repo}: path ${JSON.stringify(c.path)} must be repo-relative with no ".." segment`);
+  }
+  // `secrets[<name>]` returns an empty string for a name that does not exist,
+  // and a checkout with an empty token silently falls back to the run's own
+  // credentials — which cannot reach another repo. Catching the shape here at
+  // least rules out a typo'd name reaching that point.
+  if (!/^[A-Z][A-Z0-9_]*$/.test(c.secret)) {
+    die(`consumer ${c.repo}: secret ${JSON.stringify(c.secret)} is not a repository-secret name`);
   }
 }
 
