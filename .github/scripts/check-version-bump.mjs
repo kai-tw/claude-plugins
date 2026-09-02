@@ -86,11 +86,11 @@ for (const name of readdirSync(pluginsDir)) {
     );
   } else {
     console.log(`✔ ${name}: ${before} → ${after} (${changed.length} file(s) changed)`);
-    // A bump is a release. Surface the tag command at the moment it applies —
-    // the tag can only be made after this commit exists, so this is a reminder
-    // rather than a gate.
+    // Informational. The tag is created by .github/workflows/plugin-tag.yml
+    // once this commit is on main, so an untagged version here is the normal
+    // state on a pull request rather than something to act on.
     if (!gitOrNull('rev-parse', '--verify', `refs/tags/${name}--v${after}`)) {
-      console.log(`  ↳ not tagged yet:  claude plugin tag --push plugins/${name}`);
+      console.log(`  ↳ not tagged yet — plugin-tag will tag it when this lands on main`);
     }
   }
 }

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Release a plugin: bump → validate → commit → tag → push → update → VERIFY.
+// Release a plugin: bump → validate → commit → push → update → VERIFY.
+// The TAG is CI's (`.github/workflows/plugin-tag.yml`), not this script's.
 //
 // The verify step is the point. A bump that is not installed is invisible, and
 // that failure is silent: dart-lsp once shipped without its skill because the
@@ -103,9 +104,10 @@ try {
   );
 }
 
-step(5, 'tag + push');
-// `claude plugin tag` also checks plugin.json agrees with the marketplace entry.
-console.log(run('claude', ['plugin', 'tag', '--push', `plugins/${plugin}`]));
+step(5, 'push');
+// No tag from here. `.github/workflows/plugin-tag.yml` tags whatever version
+// arrives on main and then calls vendor-sync; tagging locally would satisfy it,
+// so it would find nothing to do and the consumers would never be told.
 run('git', ['push', 'origin', 'HEAD']);
 
 step(6, 'update the locally installed copy');
@@ -121,8 +123,8 @@ const scopes = [
 ];
 
 if (scopes.length === 0) {
-  console.log(`  ⚠ not installed locally — released and tagged, but nothing here to update or verify`);
-  console.log(`\n✔ ${plugin} ${next} released and tagged (not installed locally)`);
+  console.log(`  ⚠ not installed locally — released, but nothing here to update or verify`);
+  console.log(`\n✔ ${plugin} ${next} released (not installed locally)`);
   process.exit(0);
 }
 
@@ -131,7 +133,7 @@ for (const scope of scopes) {
     console.log(run('claude', ['plugin', 'update', `${plugin}@${marketplace.name}`, '--scope', scope]));
   } catch (e) {
     die(
-      `update failed at scope "${scope}" — the release is pushed and tagged, but\n` +
+      `update failed at scope "${scope}" — the release is pushed, but\n` +
         `    this machine still runs the old copy:\n    ${(e.stderr ?? e.message).trim()}`,
     );
   }
@@ -164,4 +166,4 @@ if (missing.length) {
 }
 
 console.log(`  ✔ ${inCache.size} file(s) match source`);
-console.log(`\n✔ ${plugin} ${next} released, tagged, installed and verified`);
+console.log(`\n✔ ${plugin} ${next} released, installed and verified`);

@@ -34,3 +34,7 @@
 - **裸名呼叫自己的腳本.** plugin 的 `bin/` 在啟用時就在 PATH 上；安裝路徑不可從專案
   相對位置推得、且每次 bump 都會變。寫 `plan-lint`，不要寫 `bash .claude/hooks/…`——
   後者失敗時只印一行 `No such file or directory`，和「這次沒事做」長得一樣。
+- **Tag 不是人打的，也不要試.** 版本一進 `main`，`plugin-tag` workflow 就照 `plugin.json`
+  建 `<plugin>--v<version>`、push，然後呼叫 `vendor-sync` 開消費端的 bump PR。雲端 session
+  的 GitHub 授權本來就拒絕 push tag（403），而**本機先打 tag 更糟**：workflow 看到 tag
+  已存在就無事可做，消費端永遠收不到這一版。

@@ -1,6 +1,6 @@
 ---
 name: plugin-release
-description: Release a plugin from this marketplace repo — pick the semver level, bump plugin.json, commit, tag, push, reinstall locally, and verify the installed copy actually matches source. Use when a plugin's files have changed and the change needs to reach anyone, or when asked to bump, release, tag or publish a plugin here.
+description: Release a plugin from this marketplace repo — pick the semver level, bump plugin.json, commit, push, reinstall locally, and verify the installed copy actually matches source. Use when a plugin's files have changed and the change needs to reach anyone, or when asked to bump, release, tag or publish a plugin here.
 ---
 
 # Releasing a plugin
@@ -63,14 +63,18 @@ unrelated edits. Commit or stash those first.
    with the others in step 2 — at that point the bump exists only in the working
    tree, and the check would compare the still-unbumped `HEAD` and fail every
    release by construction.
-5. **Tag and push.** Same reason, one step later: a tag can only point at a
-   commit that already exists. `claude plugin tag` also validates that
-   `plugin.json` and the marketplace entry agree — a plain `git tag` does not.
+5. **Push.**
 6. **Update the local install.**
 7. **Verify** the installed cache contains every file that exists in source.
 
-Steps 4 and 5 are both downstream of the commit for the same underlying reason:
-anything that inspects committed history has to wait for the commit.
+Step 4 is downstream of the commit because anything that inspects committed
+history has to wait for the commit.
+
+**This script does not tag.** The tag belongs to
+`.github/workflows/plugin-tag.yml`, which tags whatever version arrives on
+`main` and then ships it to the consumers. Tagging here would satisfy that
+workflow, so it would find nothing to do and the consumers would never hear
+about the release.
 
 Step 7 is the one that matters. Every earlier step succeeded during the dart-lsp
 incident; the failure was visible only by looking inside the cache. If it
@@ -78,6 +82,10 @@ reports missing files, the release did not land — do not report success.
 
 ## After a release
 
-Nothing else is required. LSP servers and hooks from the updated plugin take
-effect on the **next session**, not this one — if the user expects to see the
-change immediately, tell them to restart.
+Nothing else is required by hand. On the push, CI creates `<plugin>--v<version>`
+and opens a vendored-copy PR on every consumer repo; those PRs are Kai's to
+merge.
+
+LSP servers and hooks from the updated plugin take effect on the **next
+session**, not this one — if the user expects to see the change immediately,
+tell them to restart.

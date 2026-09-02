@@ -1,0 +1,80 @@
+name: plugin-tag
+
+# Tag every plugin version that reached `main` untagged, then ship it.
+#
+# WHY A WORKFLOW AND NOT ONLY THE LOCAL RELEASE SCRIPT
+#   The tag is what `vendor-sync` ships from, so a version that lands on `main`
+#   without one leaves every consumer on the previous release with nothing
+#   saying so. Two ordinary routes produce exactly that: a bump merged through
+#   a pull request, and a cloud session — where the GitHub authorization
+#   refuses a tag push outright (403), so the release simply cannot be finished
+#   by hand from there.
+#
+# WHY IT CALLS vendor-sync INSTEAD OF LETTING THE TAG TRIGGER IT
+#   Events raised by `GITHUB_TOKEN` do not start workflow runs — GitHub's
+#   recursion guard, documented for every event except `workflow_dispatch` and
+#   `repository_dispatch`. A tag pushed from here is created and pushed
+#   successfully and triggers nothing, with no error anywhere. Calling the
+#   workflow directly is the only version of this that cannot fail silently,
+#   and it is why `vendor-sync` no longer listens for tags at all: one entry
+#   point, so a release cannot behave differently depending on who tagged it.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # creates and pushes the tags
+    outputs:
+      tags: ${{ steps.plan.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the tags themselves, and vendor-sync records the sha
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # A tag is the statement that a version is final; it must not land on a
+      # tree that fails the structural checks. Re-running the script costs
+      # seconds and keeps this job's ref unambiguous — chaining on the
+      # `validate` workflow's result would mean a `workflow_run` event, where
+      # the commit that triggered it and the commit that gets checked out are
+      # two different things.
+      - name: Repo checks
+        run: node .github/scripts/validate.mjs
+
+      - name: Create the missing tags
+        id: plan
+        run: |
+          set -euo pipefail
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          node .github/scripts/plugin-tags.mjs --create
+
+      - name: Push them
+        if: steps.plan.outputs.tags != ''
+        env:
+          TAGS: ${{ steps.plan.outputs.tags }}
+        # Deliberately unquoted: this is a list of refs and word splitting is
+        # what turns it into one. Through env rather than `${{ }}` so the value
+        # stays an argument instead of becoming shell syntax. `--atomic` so a
+        # partial push cannot leave the sync below shipping under a tag that
+        # does not exist.
+        run: git push --atomic origin $TAGS
+
+  sync:
+    needs: tag
+    if: needs.tag.outputs.tags != ''
+    uses: ./.github/workflows/vendor-sync.yml
+    with:
+      tags: ${{ needs.tag.outputs.tags }}
+    secrets: inherit

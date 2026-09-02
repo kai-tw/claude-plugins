@@ -12,7 +12,7 @@
 // WHAT IT PRODUCES  (<out>/ is a build artifact — never hand-edited)
 //   <out>/.claude-plugin/marketplace.json   generated, never copied
 //   <out>/plugins/<name>/…                  payload, modes preserved
-//   <out>/VENDORED.md                       provenance: source ref + sha
+//   <out>/VENDORED.md                       provenance: what was released + sha
 //
 // The marketplace manifest is GENERATED rather than copied so it can never
 // describe a plugin this run did not write: every entry is emitted from the
@@ -20,7 +20,7 @@
 // hard error rather than a manifest that lies.
 //
 // Usage:
-//   node scripts/vendor-sync.mjs --out <dir> [--source <repo root>] [--ref <ref>]
+//   node scripts/vendor-sync.mjs --out <dir> [--source <repo root>] [--release <label>]
 //   node scripts/vendor-sync.mjs --print-versions <dir>   # the table, from disk
 
 import { createHash } from 'node:crypto';
@@ -77,7 +77,7 @@ if (printVersions) {
 const source = resolve(flag('source') ?? join(HERE, '..'));
 const out = flag('out') ? resolve(flag('out')) : undefined;
 if (!out) {
-  console.error('usage: vendor-sync.mjs --out <dir> [--source <repo root>] [--ref <ref>]');
+  console.error('usage: vendor-sync.mjs --out <dir> [--source <repo root>] [--release <label>]');
   console.error('       vendor-sync.mjs --print-versions <dir>');
   process.exit(2);
 }
@@ -179,7 +179,7 @@ writeFileSync(join(out, '.claude-plugin', 'marketplace.json'), `${JSON.stringify
 // ------------------------------------------------------------------ provenance
 
 const sha = git('rev-parse', 'HEAD') ?? 'unknown';
-const ref = flag('ref') ?? git('describe', '--tags', '--exact-match') ?? git('rev-parse', '--abbrev-ref', 'HEAD') ?? 'unknown';
+const release = flag('release') ?? git('describe', '--tags', '--exact-match') ?? git('rev-parse', '--abbrev-ref', 'HEAD') ?? 'unknown';
 const repo = srcManifest.owner?.url ? `${srcManifest.owner.url.replace(/\/$/, '')}/claude-plugins` : 'kai-tw/claude-plugins';
 
 const rows = entries
@@ -198,7 +198,7 @@ message. Change the source, release it, and take the bump PR.
 | Source | |
 |---|---|
 | Repo | ${repo} |
-| Ref | \`${ref}\` |
+| Release | \`${release}\` |
 | Commit | \`${sha}\` |
 | Synced | ${new Date().toISOString().slice(0, 10)} |
 
@@ -333,4 +333,4 @@ const count = (dir) =>
 
 console.log(`vendor-sync: ${srcManifest.name} → ${out}`);
 for (const { entry, manifest: m } of entries) console.log(`  ${entry.name} ${m.version}`);
-console.log(`  ${count(out)} files, ${excluded} excluded, from ${ref} (${sha.slice(0, 8)})`);
+console.log(`  ${count(out)} files, ${excluded} excluded, from ${release} (${sha.slice(0, 8)})`);

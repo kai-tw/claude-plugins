@@ -10,18 +10,35 @@ name: vendor-sync
 #   honest, because the alternative — remembering to run the sync by hand — is
 #   the failure this repo has already paid for twice (`.claude/rules/releasing.md`).
 #
-# TAG-TRIGGERED, not push-to-main. `plugin-release` tags `<plugin>--v<version>`,
-# and an install is cached per version: content that changes without a bump is
-# served stale forever. Mirroring on every main push would therefore ship
-# unbumped content into the consumers under a version number that already means
-# something else. The tag IS the statement that a version is final.
+# RELEASE-DRIVEN, not push-to-main. An install is cached per version, so
+# content that changes without a bump is served stale forever; mirroring every
+# main push would ship unbumped content into the consumers under a version
+# number that already means something else. A tag is the statement that a
+# version is final, and `plugin-tag` calls this workflow once it has created
+# the tags for a commit. It does NOT listen for the tag push itself — a tag
+# pushed by a workflow raises no event, so that trigger would fire for a
+# hand-pushed tag and stay silent for an identical automatic one.
 
+# Both triggers declare BOTH inputs. Whether `inputs.<name>` is readable when
+# the OTHER trigger declared it is not something the docs answer, and the price
+# of being wrong is a release that fails at the step which names what it ships.
 on:
-  push:
-    tags:
-      - '*--v*'
+  workflow_call:
+    inputs:
+      tags:
+        description: 'The tags this run is shipping, space separated.'
+        required: true
+        type: string
+      consumer:
+        description: 'Only this consumer (owner/name). Blank = all of them.'
+        required: false
+        type: string
   workflow_dispatch:
     inputs:
+      tags:
+        description: 'The tags this run is shipping. Blank = label it with the source commit.'
+        required: false
+        type: string
       consumer:
         description: 'Only this consumer (owner/name). Blank = all of them.'
         required: false
@@ -59,6 +76,15 @@ jobs:
   sync:
     needs: consumers
     runs-on: ubuntu-latest
+    # One writer per consumer branch. Two releases landing close together
+    # otherwise reset and force-push `chore/vendor-kai-tw` at the same time,
+    # and whichever finishes last wins by accident. Queued rather than
+    # cancelled in flight; if a third run makes the queued one redundant,
+    # dropping it is safe because every run rebuilds the whole tree from its
+    # own source commit and the later commit already contains the earlier one.
+    concurrency:
+      group: vendor-sync-${{ matrix.consumer.repo }}
+      cancel-in-progress: false
     strategy:
       # Not fail-fast: one consumer's PR failing must not cancel the others'.
       # They are independent repos, and a partial sync that is REPORTED is
@@ -72,6 +98,15 @@ jobs:
         with:
           path: source
           fetch-depth: 0 # vendor-sync records the ref it synced from
+
+      - name: Name what this run is shipping
+        env:
+          TAGS: ${{ inputs.tags }}
+        run: |
+          set -euo pipefail
+          # Empty on a manual dispatch, where there is no release to name — the
+          # source commit is then the only honest label to put on the PR.
+          echo "LABEL=${TAGS:-$(git -C source rev-parse --short HEAD)}" >> "$GITHUB_ENV"
 
       # An unset variable or secret resolves to an EMPTY STRING, and the action
       # then fails somewhere inside a JWT signing routine rather than saying
@@ -121,7 +156,7 @@ jobs:
           node source/scripts/vendor-sync.mjs \
             --source source \
             --out "consumer/${{ matrix.consumer.path }}" \
-            --ref "${GITHUB_REF_NAME}"
+            --release "$LABEL"
 
       - name: Open or update the bump PR
         env:
@@ -130,7 +165,6 @@ jobs:
           REPO: ${{ matrix.consumer.repo }}
           BASE: ${{ matrix.consumer.base }}
           VPATH: ${{ matrix.consumer.path }}
-          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           cd consumer
@@ -151,7 +185,7 @@ jobs:
 
           git add -A -- "$VPATH"
           if git diff --cached --quiet; then
-            echo "no change to $VPATH — $REPO is already at $TAG"
+            echo "no change to $VPATH — $REPO is already at $LABEL"
             exit 0
           fi
 
@@ -165,7 +199,7 @@ jobs:
           # string: a `run: |` block is a YAML literal scalar, so a continuation
           # line at column 0 ends the block and breaks the workflow parse.
           {
-            printf 'chore(vendor): 同步 kai-tw marketplace 到 %s\n\n' "$TAG"
+            printf 'chore(vendor): 同步 kai-tw marketplace 到 %s\n\n' "$LABEL"
             cat /tmp/versions.txt
             printf '\n\n由 kai-tw/claude-plugins 的 vendor-sync workflow 產生。'
             printf '這棵樹是產物，手改會在下一次同步時被無聲還原——\n'
@@ -185,7 +219,7 @@ jobs:
           else
             {
               printf '由 [kai-tw/claude-plugins](https://github.com/kai-tw/claude-plugins) 的 '
-              printf '`vendor-sync` workflow 在 `%s` 產生。\n\n' "$TAG"
+              printf '`vendor-sync` workflow 在 `%s` 產生。\n\n' "$LABEL"
               printf '## 這一份帶的版本\n\n'
               cat /tmp/versions.txt
               printf '\n\n`%s` 整棵是產物，每次同步整棵重建。' "$VPATH"
@@ -193,6 +227,6 @@ jobs:
               printf '來源 ref 與 commit sha 記在 `%s/VENDORED.md`。\n' "$VPATH"
             } > /tmp/pr-body.txt
             gh pr create --repo "$REPO" --base "$BASE" --head "$BRANCH" \
-              --title "chore(vendor): 同步 kai-tw marketplace 到 ${TAG}" \
+              --title "chore(vendor): 同步 kai-tw marketplace 到 ${LABEL}" \
               --body-file /tmp/pr-body.txt
           fi

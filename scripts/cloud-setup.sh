@@ -178,8 +178,8 @@ The normal path is the VENDORED copy each consumer repo carries at
 \`.claude/vendor/$MARKETPLACE_NAME/\`, which needs no credential because it is
 already part of the checkout. Not finding one means either this project has not
 been given a copy yet, or its copy was deleted — open a PR against
-\`$MARKETPLACE_REPO\` to add the repo to \`.github/vendor-consumers.yml\`, then
-release a tag to populate it.
+\`$MARKETPLACE_REPO\` to add the repo to \`.github/vendor-consumers.yml\`, then run its
+\`vendor-sync\` workflow by hand to populate it.
 
 Failing that, add \`$MARKETPLACE_REPO\` to the environment's cloned repositories
 (a local checkout needs no credential either), then edit the Setup script (any
