@@ -20,6 +20,9 @@
 #       schema's sanctioned forms (框架/平台：…→… / canonical home：grep … /
 #       套件 <名>@<版>：… / 歸屬：…) — the "should this exist" column is the
 #       reuse question's only landing spot, and a blank one passed for months
+#     - every §Classes canonical-home cell names an actual search term, and no
+#       two NEW rows claim the same term has no owner — canonical-home's corpus
+#       is defined to include this plan's own §Classes, not just existing code
 #     - every contract-table `既有方法夠嗎` cell is typed evidence, same
 #       vocabulary as §事實帳 (file:line / 貼出簽名 / F<n> / 實驗：指令 → 觀察 /
 #       不足 → <調整> / 今天成立：<條件> / 未讀) — 憑印象作答 is the one
@@ -33,7 +36,9 @@
 #   trip: section presence (headings are TRANSLATED to 繁體中文 under the
 #   per-skill §Language section, so an English-only match would false-FAIL),
 #   (NEW) files that already exist (legitimate mid-implementation), unresolved
-#   §-refs (most point at the upstream plan), and back-referenced counts.
+#   §-refs (most point at the upstream plan), back-referenced counts, and a
+#   §事實帳 absence/count claim backed by only one verification method (a
+#   Chinese-keyword heuristic — eyeball, don't trust blindly).
 #
 # THE MECHANICAL HALF OF THE ENGINEERING-PLAN GATE.
 #   `blueprint-reviewer` owns the judgment; this script owns the
@@ -41,9 +46,11 @@
 #   comparison a reviewer should never be spent on: does the thing the plan
 #   names actually exist, does every promise map to a method, does every pointer
 #   resolve. Measured motivation — one cycle wrote the same call-site count
-#   wrong three revisions running, and another asserted a method signature that
-#   did not exist, each burning an opus round-trip. Judgement items (silent
-#   failure, right owner, SSOT, race) are NOT here.
+#   wrong three revisions running, another asserted a method signature that
+#   did not exist, and a third stacked two DAOs on one table because each NEW
+#   row's canonical-home grep only ever saw existing code, never the sibling
+#   NEW row the same plan was adding — each burning an opus round-trip.
+#   Judgement items (silent failure, right owner, SSOT, race) are NOT here.
 #
 # Usage: plan_lint.sh <engineering-plan.md> [--diff]
 # Exit: 0 = no hard failures, 1 = hard failure printed above, 2 = bad usage.
@@ -355,7 +362,12 @@ else
       if (cell == "" || cell == "—" || cell == "-" || cell ~ /^未讀/) { print "MISSING\t" first; next }
       ok = 0
       if (cell ~ /^框架\/平台[：:]/ && cell ~ /→/) ok = 1
-      if (cell ~ /^canonical home[：:]/ && cell ~ /grep/) ok = 1
+      if (cell ~ /^canonical home[：:]/ && cell ~ /grep/) {
+        gpos = index(cell, "grep"); apos = index(cell, "→")
+        term = (apos > gpos + 4) ? substr(cell, gpos + 4, apos - gpos - 4) : ""
+        gsub(/^[ \t`:：]+|[ \t`:：]+$/, "", term)
+        if (term != "") { ok = 1; print "CHOME\t" first "\t" term }
+      }
       if (cell ~ /^套件/) ok = 1
       if (cell ~ /^歸屬[：:]./) ok = 1
       if (!ok) print "BADFORM\t" first "\t" cell
@@ -368,6 +380,15 @@ else
   reuse_badform="$(grep '^BADFORM	' <<< "$reuse_out" | cut -f2,3 | sed 's/\t/ → /')"
   reuse_mismatch="$(grep '^MISMATCH	' <<< "$reuse_out" | cut -f2 | tr '\n' ' ')"
   reuse_n="$(grep '^COUNT	' <<< "$reuse_out" | cut -f2)"
+  # Same search term cited "→ 無既有擁有者" by ≥2 NEW rows: canonical-home's
+  # corpus is defined to include this plan's own §Classes, not just existing
+  # code — a grep is structurally blind to a sibling NEW row, so two rows can
+  # each honestly report zero hits on the same term and both be wrong together.
+  chome_dup="$(grep '^CHOME	' <<< "$reuse_out" | cut -f2,3 | awk -F'\t' '
+    { term = $2; gsub(/^[ \t]+|[ \t]+$/, "", term); norm = tolower(term)
+      rows[norm] = rows[norm] $1 " "; cnt[norm]++ }
+    END { for (t in cnt) if (cnt[t] >= 2) print t "\t" rows[t] }
+  ')"
   if [ -n "$reuse_missing" ]; then
     echo "FAIL  §Classes NEW 列的 \`為何要新增\` 空白／—／未讀: ${reuse_missing}"
     echo "        NEW 列必答，擇一或並列：框架/平台：<查過什麼 → 結論>／canonical home：grep <什麼> → <為何 reuse 不了>／"
@@ -375,8 +396,17 @@ else
     fail=1
   fi
   if [ -n "$reuse_badform" ]; then
-    echo "FAIL  §Classes NEW 列的 \`為何要新增\` 不是三種帶證據的形式（自由散文＝憑印象）:"
+    echo "FAIL  §Classes NEW 列的 \`為何要新增\` 不是三種帶證據的形式（自由散文＝憑印象；canonical home 沒有逐字搜尋詞——\"grep → 無\" 不是答案——也算）:"
     printf '%s\n' "$reuse_badform" | sed 's/^/        /'
+    fail=1
+  fi
+  if [ -n "$chome_dup" ]; then
+    echo "FAIL  §Classes 有 ≥2 個 NEW 列對同一個 canonical-home 搜尋詞都答「無既有擁有者」——這幾列彼此看不見對方，都自認是唯一歸屬:"
+    while IFS=$'\t' read -r term rows; do
+      [ -n "$term" ] || continue
+      echo "        搜尋詞「${term}」→ 列 ${rows}"
+    done <<< "$chome_dup"
+    echo "        擇一：把其中一列的理由改成指向另一列（本計畫 §Classes 的 <Class> 已是這個資料源的擁有者），或合併成一個 class。"
     fail=1
   fi
   [ -n "$reuse_mismatch" ] && echo "ADVISORY  §Classes 總表列的欄數與表頭不符——這幾列沒進比對: ${reuse_mismatch}"
@@ -703,7 +733,7 @@ if [ -z "$facts_body" ]; then
 else
   bad_ev=""; exp_broken=""; exp_undecided=""; fact_rows=0
   n_unread=0; n_device=0; n_exp=0
-  device_rows=""; unread_rows=""
+  device_rows=""; unread_rows=""; absence_single=""
   while IFS= read -r row; do
     case "$row" in \|*) ;; *) continue ;; esac
     grep -qE '^\|[[:space:]|:-]*$' <<< "$row" && continue
@@ -716,6 +746,19 @@ else
     # keywords inconsistently, and a type check that fails on formatting would
     # teach the author to distrust the whole check (same lesson as check 4).
     evs="$(sed -E 's/^[\` []+//' <<< "$ev")"
+    # A claim asserting absence or a count ("只有一處"／"沒有任何呼叫端"／"僅 3
+    # 個") needs a second, DIFFERENT method — the same corpus searched twice
+    # (two greps, two reads of the same doc) shares one blind spot. Heuristic
+    # on Chinese function words, so this stays advisory, never a HARD gate.
+    claim="$(awk -F'|' '{ gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3 }' <<< "$row")"
+    if grep -qE '只有|只由|全部|沒有|從來|唯一|僅有|僅[0-9]|[0-9]+ *(個|次|條|處|列|種)' <<< "$claim"; then
+      methods=0
+      grep -qE '[A-Za-z0-9_/.-]+\.[A-Za-z0-9_]+:[0-9]+|grep' <<< "$ev" && methods=$((methods + 1))
+      grep -qE '實驗|只能實測' <<< "$ev" && methods=$((methods + 1))
+      grep -qE '文件|spec|§|計畫|plan' <<< "$ev" && methods=$((methods + 1))
+      grep -qE 'pubspec\.lock|git ls-tree|建置狀態|lock 檔' <<< "$ev" && methods=$((methods + 1))
+      [ "$methods" -le 1 ] && absence_single="${absence_single}${first} "
+    fi
     if grep -qE '^未讀' <<< "$evs"; then
       n_unread=$((n_unread + 1)); unread_rows="${unread_rows}${first} "
     elif grep -qE '^實驗[：:]' <<< "$evs"; then
@@ -750,6 +793,11 @@ else
     [ -n "$exp_undecided" ] && echo "        實驗列未標 升格／銷毀（任務清單定案時要二選一）: ${exp_undecided}"
   else
     echo "NOTE  §事實帳: 0 列——沒有任何載重斷言的計畫罕見；確認那一行「不依賴」的理由成立"
+  fi
+  if [ -n "$absence_single" ]; then
+    echo "ADVISORY  §事實帳 缺席／計數斷言（含 只/全部/沒有/從來/唯一/N個）疑似只用了一種方法查證: ${absence_single}"
+    echo "        同一語料庫查兩次不算兩種——換一種再查一次：搜程式碼・讀實作・實驗・讀文件或本計畫其他章節・查建置狀態；"
+    echo "        或者這句其實是單點宣告（一種夠），眼球確認即可。"
   fi
 fi
 

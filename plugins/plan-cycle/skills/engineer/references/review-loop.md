@@ -90,6 +90,10 @@ prompt is the only channel for the discipline — state it there verbatim:
 
 - return per row: **證實**（the evidence, re-cited）/ **證偽**（the
   counter-evidence）/ **查不到**;
+- for a row asserting an **absence or a count** (只／全部／沒有／從來／唯一／N
+  個), re-verify with a **method different from the one the row already
+  cites** — re-running the same grep re-confirms the same blind spot, not
+  the claim;
 - for an `實驗` row, the verbatim command + output (可重跑是實驗與軼事的
   分界); probes exercise the **real path** — faking the layer under claim
   is circular — run **side-effect-free, local only**, live in a throwaway
@@ -105,9 +109,11 @@ Measured motivation: one review round's findings were entirely draft-time
 -checkable facts (a wrong line ref, a formula written differently in two
 places, a missed construction site) — a full opus review round spent on
 what this sweep settles; reviewer-caught「宣稱既有機制已涵蓋，實查沒有」
-hit 7 times in a single cycle; and one unverified dartdoc sentence carried
+hit 7 times in a single cycle; one unverified dartdoc sentence carried
 a whole design into a cold-start bug that took a TestFlight build to
-falsify.
+falsify; and 「`birthdayMonth` 只由一處寫」was reused as precedent for a new
+design while checked by the same method twice — neither pass looked
+anywhere but the one write site it already knew about.
 
 ## Step 1 — Spawn `blueprint-reviewer`
 

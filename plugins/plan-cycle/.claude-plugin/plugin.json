@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "plan-cycle",
-  "version": "0.47.0",
+  "version": "0.48.0",
   "description": "Gated planning cycle — PM → designer → engineer → code → QA → close-out, with a Stop-hook ledger that blocks turn-end when a plan phase advanced without its plan landing.",
   "author": {
     "name": "Kai",

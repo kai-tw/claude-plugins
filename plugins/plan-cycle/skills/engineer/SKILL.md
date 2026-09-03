@@ -455,10 +455,13 @@ to print the full section questionnaire with descriptions and hints):
   F-rows, so a falsified row shows exactly which decisions fall with it.
   The full discipline — what counts as load-bearing, the three experiment
   rules, the epistemics (reading proves declarations, sweeps prove counts
-  and absence, experiments prove behavior on the exercised path) — lives in
+  and absence, experiments prove behavior on the exercised path; an absence
+  or count claim needs a **second, different** method — the same corpus
+  searched twice is one method twice) — lives in
   the questionnaire hint (`notion-payload hints engineering-plan`); the
   claim sweep (`references/review-loop.md`) verifies every row before the
-  reviewer is spawned, and `plan_lint.sh` gates the evidence typing.
+  reviewer is spawned, and `plan_lint.sh` gates the evidence typing and
+  flags a single-method absence/count claim.
 - **§Classes** — lead with a **Mermaid composition graph** (Notion
   renders it) showing block→block wiring (widget → state holder → use case →
   repository → data source). This is the reviewer's 30-second shape + the
