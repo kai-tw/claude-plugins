@@ -41,6 +41,9 @@ allowed-tools:
 
 # UX Heuristic Review
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 You play an **adversarial first-time user** against the **drafted design spec**. The
 gate exists because a spec can be fully annotated — every M3 token, breakpoint, and
 each of the four states — and still leave a real user confused, stuck, or lost. You judge
@@ -117,6 +120,8 @@ axes its user feels first; each files both `critical` and `warning` within its l
 | **Non-English-locale reader** | text expansion / truncation, register, reading order (en / ja / zh_Hans / zh_Hant) | P6.2 |
 | **Power / efficiency user** | redundant steps, friction on the core task, minimalism | P5 · P1.1 |
 
+**Every brief you dispatch carries `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` as a required read** — no hook reaches a sub-agent, so a child has these rules only if you say so.
+
 Consolidation is **yours** (the parent, not a fifth agent): merge the four persona reports,
 dedup by spec-anchor, keep the highest severity per anchor, and note which persona surfaced
 each finding.
@@ -150,8 +155,10 @@ designer phase's open questions; may be accepted with a written rationale.
 
 ## Verdict & output (不落檔)
 
-Per finding: `passed` / `warning` / `critical` + evidence (spec anchor) + failure
-scenario. Loop with the caller until every finding is `passed` or a `warning` is
+Per finding: `passed` / `warning` / `critical` / `無法判定` (the spec does not
+settle it and neither did your search — name what you read and who closes it,
+rather than grading the reading you had to supply) + evidence (spec anchor) +
+failure scenario. Loop with the caller until every finding is `passed` or a `warning` is
 explicitly accepted with a written rationale. Return inline:
 
 ```
@@ -171,7 +178,7 @@ explicitly accepted with a written rationale. Return inline:
 - **[P#]** <axis> clean for <scope>.
 
 ### Summary
-X passed, Y warning, Z critical. [One sentence: can a first-time user complete the core
+X passed, Y warning, Z critical, U 無法判定. [One sentence: can a first-time user complete the core
 task without confusion?]
 ```
 

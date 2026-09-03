@@ -174,6 +174,36 @@ for (const path of manifestFiles) {
   }
 }
 
+// --------------------------------------------------- agents/ holds only agents
+
+// GAP 6 — everything under a plugin's `agents/` is loaded as an agent
+// definition, at any depth. A reference or notes file parked there is silently
+// registered as a callable agent (named after its path) with no frontmatter and
+// every tool granted. Nothing upstream objects: the file is valid markdown and
+// `claude plugin validate` never looks in `agents/`. Reference material belongs
+// under a skill's `references/`.
+for (const entry of entries) {
+  const agentsDir = join(resolve(root, entry.source ?? ''), 'agents');
+  if (!existsSync(agentsDir)) continue;
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const full = join(dir, name);
+      if (statSync(full).isDirectory()) { walk(full); continue; }
+      if (!name.endsWith('.md')) continue;
+      const rel = full.slice(root.length + 1);
+      if (dirname(full) !== agentsDir) {
+        fail(rel, 'markdown under a subdirectory of `agents/` — it loads as an agent named after its path; move reference material to a skill\'s `references/`');
+        continue;
+      }
+      const fm = frontmatter(readFileSync(full, 'utf8'));
+      if (!fm?.name || !fm?.description) {
+        fail(rel, 'lives in `agents/` but has no `name` + `description` frontmatter — it is not an agent, so it must not be there');
+      }
+    }
+  };
+  walk(agentsDir);
+}
+
 // ------------------------------------------------------- README install docs
 
 const readmePath = join(root, 'README.md');

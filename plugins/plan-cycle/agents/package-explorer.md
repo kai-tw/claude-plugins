@@ -25,6 +25,9 @@ allowed-tools:
 
 # Package Explorer
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 > **Mission.** Verify whether a Flutter / Dart package can deliver
 > a specific design contract — with source-code evidence — before
 > the engineering plan commits to it. The plan's §Classes `為何要新增`
@@ -113,7 +116,7 @@ or pub.dev URL):
 
 | Check | Evidence shape |
 |---|---|
-| **Contract clause satisfied** (the yes/no questions from the brief) | Source-code line emitting the required callback / using the required primitive. If the source contradicts the contract, that's a NO, not a partial. |
+| **Contract clause satisfied** (the yes/no questions from the brief) | Source-code line emitting the required callback / using the required primitive. If the source contradicts the contract, that's a NO, not a partial. Not finding it in the file you read is not a NO — sweep the package's public surface, or answer `無法判定` and name what you read. |
 | **Drag-driven path** (if the contract has both implicit + user-driven flavors) | Separate source-code citation for the user-driven path. |
 | **Latest stable version** | pub.dev version page. |
 | **Last publish date** | pub.dev page. Flag if > 12 months. |
@@ -173,6 +176,7 @@ Report in this exact shape (under 600 words total — be terse):
 |---|---|---|---|---|---|---|
 | [pkg A]   | Pass     | Pass        | Pass      | Pass | None | **RECOMMEND** |
 | [pkg B]   | Fail     | Pass        | Pass      | -   | -    | **REJECT** |
+| [pkg C]   | 無法判定 | Pass        | Pass      | -   | -    | **UNSETTLED** (what is unread, and how to close it) |
 
 ## Per-candidate detail
 

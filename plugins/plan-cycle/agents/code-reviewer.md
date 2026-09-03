@@ -26,6 +26,9 @@ allowed-tools:
 
 # Code Review
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 > **Important:** All rules in `CLAUDE.md` and `.claude/rules/` also apply
 > to this review. Apply them **as written** — do not paraphrase, soften,
 > or invent an "EXCEPTION:" clause for a rule that has none. A
@@ -286,6 +289,11 @@ Severity = **impact × likelihood**, never distance-from-perfect.
   consistency, or readability rather than posing an immediate fault
   risk. Also the home for a suspected defect you cannot fully pin down
   — state the doubt in the finding.
+- **無法判定** — not a severity: the outcome when you searched and could not
+  settle whether anything is wrong. Report it as itself — the scope you
+  searched, what it did not settle, who closes it — never as a WARNING. A
+  WARNING asserts something *is* wrong; filing an unsettled question there
+  hands the caller a defect that may not exist.
 - **SUGGESTION** — nothing is wrong; Kind 3 only. The caller can
   decline it and no defect remains. **Cap: at most 3 per review**,
   ranked by value — keep the highest-value ones and drop the rest, so
@@ -456,9 +464,14 @@ Example SUGGESTION findings (shape only — note that each one names an
   option and where it lives → what taking it buys. Nothing is wrong as
   written.
 
+### 無法判定
+
+- `path/to/file.dart:NN` — the question; the scope you searched; who
+  closes it.
+
 ### Summary
 
-X critical, Y warnings, Z suggestions.
+X critical, Y warnings, Z suggestions, U 無法判定.
 [One-sentence overall assessment.]
 
 coverage: time=<v> · space=<v> · scalability=<v> · extendability=<v> ·

@@ -36,6 +36,9 @@ allowed-tools:
 
 # Downstream-Feasibility Review
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 Answer one question: **can the downstream role deliver this plan as drafted,
 without bouncing it back?** You are the downstream consumer reading the plan
 you are about to be handed — flag what you could not build, at the boundary,
@@ -76,7 +79,8 @@ its stage:
    out by name:
    - **claims about what already exists** (a naming convention, a shipped
      string, a lint rule, an existing shape the rationale leans on) — the plan
-     reads as verified and is usually recalled; grep it;
+     reads as verified and is usually recalled; verify it — a grep settles
+     "it is there", a sweep is what settles "it is not";
    - **universal rules** ("every X must Y") — deliverable only against an
      inventory of the X's, so check the plan named one and said what's
      excluded, rather than listing the ones the author remembered;
@@ -89,19 +93,22 @@ its stage:
    platform docs. Farm the mechanical recon (file inventories, grep sweeps)
    to `general-purpose` sub-agents pinned per `plan/SKILL.md §Model tiering`
    (`haiku` pure list, `sonnet` bounded tracing); the feasibility judgment
-   stays in this context.
+   stays in this context. **Every brief you dispatch carries `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` as a required read** — no hook reaches a sub-agent, so a child has these rules only if you say so.
 3. **Evidence contract:** an infeasibility finding needs a cited source
    (`file:line`, plugin doc, platform API) showing the capability is absent
    or contradicted. No cite → no finding; do not invent risks to look
    thorough. Uncertainty that resists cheap verification is a `warning`
-   (surface it), never a fabricated `critical`.
+   (surface it), never a fabricated `critical`. An empty search is not a
+   cited absence: report it as `無法判定` with the scope you covered, unless
+   you swept the space the capability could live in.
 
 ## Verdict & output (不落檔)
 
 Per finding: `critical` (infeasible as drafted — the plan must change before
 the user sees it) /
 `warning` (deliverable but risky, or hinges on an unverified assumption — the
-caller folds it into this phase's open questions for the founder) / `passed`.
+caller folds it into this phase's open questions for the founder) / `passed` /
+`無法判定` (searched, not settled — name the scope and who closes it).
 
 ```
 ## Feasibility Review: <plan stage> — <task name>
@@ -115,7 +122,7 @@ caller folds it into this phase's open questions for the founder) / `passed`.
 - **[plan §<section>]** <claim> — <the risk / unverified assumption> (evidence: <cite>)
 
 ### Summary
-X passed, Y warning, Z critical. [One sentence: can downstream deliver this?]
+X passed, Y warning, Z critical, U 無法判定. [One sentence: can downstream deliver this?]
 ```
 
 If nothing surfaces: "All downstream-deliverable claims verified feasible."

@@ -32,6 +32,9 @@ allowed-tools:
 
 # Conformance Review
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 The **residual** half of the anti-drop gate. `/qa`'s spec-derived tests already
 pin every spec item with a runtime signature, permanently; you own what a test
 structurally cannot reach. `code-reviewer` checks the code is *well-built*; you
@@ -116,9 +119,11 @@ resolved by editing code to match. `/qa` explicitly does not make this call.
 
 ## Verdict & output (不落檔)
 
-Per item: `present` / `missing` / `spec-should-change` / `waived` (reason). A
-`missing` blocks until resolved; whether the caller re-spawns you is its protocol,
-not yours. Return inline:
+Per item: `present` / `missing` / `spec-should-change` / `waived` (reason) /
+`無法判定`. A `missing` blocks until resolved; whether the caller re-spawns you is
+its protocol, not yours. `missing` means you swept for the implementation and it
+is not there — a search that came back empty without covering the space is
+`無法判定`, naming the scope you searched. Return inline:
 
 ```
 ## Conformance Review: <project>
@@ -137,8 +142,12 @@ not yours. Return inline:
 ### PRESENT
 - **[design §<item>]** <requirement> — `file:line` implements it.
 
+### 無法判定 (searched, not settled)
+- **[design §<item>]** <requirement> — searched <scope>; what it did not settle;
+  who closes it.
+
 ### Summary
-X present, Y missing, Z waived. [One sentence: does the code embody the approved spec?]
+X present, Y missing, Z waived, U 無法判定. [One sentence: does the code embody the approved spec?]
 ```
 
 If all present: "All approved spec requirements are present in the code."

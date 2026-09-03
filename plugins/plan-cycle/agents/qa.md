@@ -28,6 +28,9 @@ allowed-tools:
 
 # QA (Test Authoring) — isolated executor
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 > **Your complete contract is `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md`.** Read it in full
 > before authoring a line of test code — its Iron Laws, test-design technique
 > catalog, failure-class catalog, category checklist, mock rules, and hand-back

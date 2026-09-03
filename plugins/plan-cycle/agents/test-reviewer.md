@@ -29,6 +29,9 @@ allowed-tools:
 
 # Test-Design Review (sub-agent, report-only, 不落檔)
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 You grade the **design** of every test in the diff. A suite that is green and a
 suite that is worth keeping are different things: a change-detector test is green
 today and a tax on every refactor after it, and a test asserting the shape of the
@@ -114,7 +117,8 @@ means over-specified, low score + elegant means empty, and only both green is re
 Per finding: `critical` (a test that will block a future refactor, silently stop
 testing anything, or leak — a change-detector, an untagged case, a forbidden mock
 shape, a partition breach) / `warning` (a design weakness worth the author's
-judgment) / `passed`.
+judgment) / `passed` / `無法判定` (you looked and could not settle it — name the
+scope and who closes it, never report it as a defect).
 
 ```
 ## Test-Design Review: <project>
@@ -129,7 +133,7 @@ judgment) / `passed`.
 - **`test/…_test.dart:NN`** — <the weakness> — <the trade-off the author should weigh>
 
 ### Summary
-X critical, Y warning across N files. [One sentence: will these tests still catch
+X critical, Y warning, U 無法判定 across N files. [One sentence: will these tests still catch
 the bug next year?]
 ```
 

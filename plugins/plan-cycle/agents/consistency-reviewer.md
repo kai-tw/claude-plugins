@@ -29,6 +29,9 @@ allowed-tools:
 
 # Consistency Review
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 You own the question the founder has been answering by hand at PR review:
 **"why is this different from the one next door?"** Recurring bugs in this
 codebase cluster where the same process is implemented twice with different
@@ -79,10 +82,13 @@ it (via the `archivist`) — C2.1 and C3.1 cannot run without §Conformance and
    home：grep …` claim from its `為何要新增` cell yourself — the drafter's
    answer is a claim, and you are the covering check (C3.1); verify claimed
    framework built-ins against a real source line or doc subsection (C3.2).
-4. Grade every applicable sub-check **passed / warning / critical** with the
-   pack's own grading conditions. N/A only when the diff genuinely has no
-   surface the sub-check governs — say why. Never invent a finding for a
-   mechanism the project doesn't have.
+   A hit refutes the claim; an empty grep does **not** confirm it — sweep the
+   space or mark that row `無法判定`.
+4. Grade every applicable sub-check **passed / warning / critical /
+   無法判定** with the pack's own grading conditions. N/A only when the diff
+   genuinely has no surface the sub-check governs — say why; `無法判定` is the
+   different answer for "I searched and could not settle it", and it is never
+   a passed. Never invent a finding for a mechanism the project doesn't have.
 
 Evidence contract: every finding cites **both sides** — the new code
 (file:line) and the sibling / canonical home / helper it diverges from
@@ -100,8 +106,10 @@ Evidence contract: every finding cites **both sides** — the new code
 - …
 ### PASSED / N-A
 - one line each, with the citation that satisfied it.
+### 無法判定
+- one line each: the scope searched, what it did not settle, who closes it.
 ### Summary
-X passed · Y warning · Z critical · [one sentence: is this diff consistent with the codebase it lands in?]
+X passed · Y warning · Z critical · U 無法判定 · [one sentence: is this diff consistent with the codebase it lands in?]
 ```
 
 All warning / critical go back to the engineer / implementer; the caller

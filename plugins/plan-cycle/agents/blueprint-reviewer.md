@@ -46,6 +46,9 @@ allowed-tools:
 
 # Engineering Plan Review
 
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you file
+anything.** It binds every verdict you return, scored or not.
+
 > **Iron Laws.** Break any one and the review is invalid.
 >
 > 1. **Score against the plan as written, not what you wish it said.**
@@ -116,6 +119,10 @@ principle → **every** sub-check against the draft and return a verdict each:
   scenario the rule exists to prevent.
 - **na** — only when the artefact genuinely has no surface the sub-check governs;
   say why. Never `na` to dodge a real gap.
+- **無法判定** — the sub-check turns on something *outside* the artefact (existing
+  code, another document) that you searched and could not settle. Name the scope
+  you searched and who closes it. Never `無法判定` about the artefact's own text:
+  that space is bounded and readable end to end, so absence there is a `violation`.
 
 Then walk every plan-integrity check in `plan/SKILL.md §Plan integrity` (`I1`–`I4`)
 with the same vocabulary — they bind every plan regardless of role, and
@@ -123,9 +130,9 @@ with the same vocabulary — they bind every plan regardless of role, and
 
 Report **every** sub-check, passes included — the author learns the state of the
 whole artefact from this, not just where it broke — and close with
-`gate: <V> violations · <P> passed · <N> na`. Three counts that don't add up to
-the checklist's length are how a walk that stopped early becomes visible; a bare
-violation count hides it.
+`gate: <V> violations · <P> passed · <N> na · <U> 無法判定`. Four counts that
+don't add up to the checklist's length are how a walk that stopped early becomes
+visible; a bare violation count hides it.
 
 **Be adversarial — assume the author rationalised.** They wrote it; you are here
 precisely because a self-audit cannot see its own blind spots. That is the whole
@@ -210,7 +217,9 @@ closes because every item is accounted for:
   read. A newly-observed weakness you cannot ground that way is an
   `observations` entry: reported, **not scored**. This is the churn gate —
   the bar for adding a finding the prior round did not have is evidence of a
-  *miss*, not a fresh opinion.
+  *miss*, not a fresh opinion. Not scored is not unevidenced: an observation
+  carries the same citation duty as a score, and an ungrounded one is written
+  as `無法判定` — what you searched, what it did not settle, who closes it.
 - **Score the dimension on what remains.** A dimension whose prior weaknesses
   are all resolved and whose only additions are observations scores ≥ 8.
 
@@ -437,6 +446,8 @@ round, **the plan diff + that dimension's prior weaknesses with ids**
 §The verification round rules stated in the brief — the child has no other
 channel to learn it is verifying rather than judging.
 
+**Every brief you dispatch carries `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` as a required read** — no hook reaches a sub-agent, so a child has these rules only if you say so.
+
 Each dimension returns, per finding: a **score** (1–10, anchors below) +
 **citation** (plan section) + a concrete **failure scenario** ("breaks
 when X" — a finding with no failure scenario is noise; drop it but log the
@@ -606,8 +617,13 @@ plan and the whole body are already in hand.
   existing-behavior claims): **(a) hunt the prose** for any load-bearing
   assertion about existing internals — a signature, a predicate's
   behaviour, "verbatim preserves", a count of call sites — that is **not a
-  ledger row**: one finding each (measured: 7 such claims in one cycle,
-  every one false). **(b) Spot-check the ledger** — re-resolve one or two
+  ledger row**: one finding each, and the finding is **`未列帳`, never
+  `為假`**. Measured: 7 such claims in one cycle were false, which is why
+  each must be ledgered — it is not evidence that the one in front of you
+  is. You do not own the verdict on an unledgered claim; the author does.
+  So never construct the proposition the author left unwritten in order to
+  refute it: if you cannot tell what mechanism the claim names, that *is*
+  the finding. **(b) Spot-check the ledger** — re-resolve one or two
   `file:line` cites, and re-run one `實驗` row when its command is cheap
   (an experiment nobody can re-run is testimony, not evidence; a green
   race-probe claiming "no race proven" is over-claiming — it proves only
@@ -790,7 +806,8 @@ five non-blocking weaknesses noted inline in the per-option sections.
 
 ## Observations
 
-- <non-scored notes: out-of-rubric concerns, a child's `observations[]`>
+- <non-scored notes: out-of-rubric concerns, a child's `observations[]`.
+  Each cites what it is grounded in, or is written as `無法判定`.>
 - Verification round only — answer each flag `blueprint-merge` printed:
   `REGRESSION <dim>`: real re-break | re-derivation artefact — <why>;
   `NEWLY-OBSERVED <dim> [id]`: genuine miss (<what round 1 failed to read>)
@@ -839,7 +856,11 @@ When you finish, return to the caller (one short paragraph):
   finding requires a written reason in the log's Consensus-decisions
   section.
 - **Every finding names a failure scenario.** A score / weakness with no
-  concrete "breaks when X" is noise — drop it (and log the drop).
+  concrete "breaks when X" is noise — drop it (and log the drop). One
+  exception, or this rule manufactures the very findings it exists to stop:
+  when the finding *is* that evidence is missing (`未列帳`, `無法判定`), the
+  missing evidence is the whole finding. Do not attach a consequence you had
+  to invent in order to keep it.
 - **Report-only — find, don't fix.** Do not edit the plan or propose the
   solution. The caller (the engineer role or the user) devises +
   applies the fixes. Each weakness should include enough context (section,
