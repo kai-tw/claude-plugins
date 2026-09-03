@@ -18,8 +18,8 @@ description: |
   extendability, error handling, testability and startup order are graded on
   the **diff** by `code-reviewer`, where the artefact is real code rather than
   a table describing hypothetical code.) It
-  **dispatches one fresh-context sub-agent per dimension batch, each writing its
-  scores to JSON that `blueprint-merge` joins and merges** — which
+  **walks all five dimensions itself, in one context, writing each one's
+  score to JSON that `blueprint-merge` validates and merges** — which
   dimensions run is gated by what the plan's §Classes actually
   touch (none of the five is droppable once its surface is present)
   — each grounded in `.claude/rules/` and the section's own authoring
@@ -34,9 +34,11 @@ description: |
   skill or the user) devises and applies the fixes from the named
   weaknesses. Returns its report inline to the caller (不落檔 — no docs file).
   Mechanical comparisons belong to `engineer/scripts/plan_lint.sh`, not here.
+model: opus
 allowed-tools:
   - Bash
   - Read
+  - Write
   - Grep
   - Glob
   - WebFetch
@@ -99,7 +101,7 @@ the stage the caller names, and nothing else:
 
 | Stage | Rubric | Shape |
 |---|---|---|
-| **engineering plan** | the 5 scope-gated dimensions in this file | fan-out — one sub-agent per dimension batch, joined by `blueprint-merge` (Stages 1–4 below) |
+| **engineering plan** | the 5 scope-gated dimensions in this file | one context, all in-scope dimensions, validated by `blueprint-merge` (Stages 1–4 below) |
 | **PM plan** | `${CLAUDE_PLUGIN_ROOT}/skills/pm/references/rules.md` | **checklist mode** (below) |
 
 **You do not review the design spec.** The designer ships the widgets, so its
@@ -205,10 +207,10 @@ closes because every item is accounted for:
 
 - **Scope by diff.** A dimension whose gating §Classes the diff did not touch
   is **carried**: copy its prior JSON into this round's dir, add
-  `"carried": true`, do not re-dispatch (§1b). Fail-closed: any doubt → re-dispatch.
-- **Every prior weakness gets a disposition.** The re-dispatched child receives
-  its dimension's prior weaknesses with ids (`blueprint-merge prior <prev-dir>
-  --criteria <n>`) and returns each as `resolved` or `origin: prior` (still
+  `"carried": true`, do not re-score (§1b). Fail-closed: any doubt → re-score.
+- **Every prior weakness gets a disposition.** For each re-scored dimension, pull
+  its prior weaknesses with ids (`blueprint-merge prior <prev-dir>
+  --criteria <n>`) and return each as `resolved` or `origin: prior` (still
   open — cite what in the rev failed to lift it). A prior id that is neither
   is rejected by `blueprint-merge`.
 - **Every new weakness names its origin.** `diff-introduced` — the fix broke
@@ -249,7 +251,7 @@ never into a third round.
 
 **Stages 1–4 are the engineering-plan rubric.** In checklist mode you read the
 draft and its upstream, walk the role's rules file, and return — none of the
-scope-gating, fan-out, pre-passes or scoring below applies.
+scope-gating, pre-passes or scoring below applies.
 
 ### 1a — Read
 
@@ -287,7 +289,7 @@ into a non-scored `## Observations` note. Don't let drift change the
 dimension scores — judging "what shipped" instead of "what the plan said"
 is a different review the caller didn't ask for.
 
-### 1b — Scope-gate: decide which dimensions to dispatch
+### 1b — Scope-gate: decide which dimensions to score
 
 From the plan's **§Classes** inventory table (the NEW/MOD rows, by layer) and the
 `持有狀態` column — the table answers the gating questions directly, so gate on it
@@ -311,7 +313,7 @@ rather than pattern-matching prose:
   Seeing one of them go wrong here is still worth a **non-scored
   `## Observations` note** — but never a score, and never a round.
 
-Record the decision in the log (`Dimensions dispatched: … ; not dispatched
+Record the decision in the log (`Dimensions scored: … ; not scored
 (surface absent): …`) so a skipped dimension is an auditable decision,
 never a silent absence.
 
@@ -320,22 +322,22 @@ passes the **prior round's scores dir + the diff since it**, whatever the prior
 verdict was), the scope-gate becomes a cache **keyed on §Classes**: a dimension
 whose gating §Classes are **untouched by the diff** is a HIT — **carry it: copy
 the prior JSON into this round's dir with `"carried": true`, do not
-re-dispatch.** Re-dispatch only the dimensions whose §Classes the diff changed,
+re-score.** Re-score only the dimensions whose §Classes the diff changed,
 plus any dimension the changed §Classes newly trip (Iron Law 6 — a change can
 newly *trigger* a previously out-of-surface dimension; that is a MISS, never
 carried). **Fail-closed: any doubt whether the diff touches a dimension's
-§Classes is a MISS (re-dispatch), never a HIT.** Record carried-vs-redispatched
-in the log (`Carried (unchanged §Classes): … ; re-dispatched (diff): …`) just as
-1b records dispatch — a carried score is an auditable decision, never a silent
-reuse. The all-`passed` bar still spans **every** in-scope dimension (carried +
-re-dispatched), so the verdict covers the whole plan.
+§Classes is a MISS (re-score), never a HIT.** Record carried-vs-rescored
+in the log (`Carried (unchanged §Classes): … ; re-scored (diff): …`) just as
+1b records the scope-gate decision — a carried score is an auditable decision,
+never a silent reuse. The all-`passed` bar still spans **every** in-scope
+dimension (carried + re-scored), so the verdict covers the whole plan.
 
 ### 1c — Package pre-pass (hoisted)
 
 If the plan introduces or version-changes a dependency, **spawn
 `package-explorer` ONCE here** as a shared pre-pass and feed its verdict
-into the Package-usage dimension's brief. Hoisting prevents N dimension
-sub-agents each re-spawning it.
+into the Package-usage dimension. Hoisting keeps you from re-deriving it
+when you reach that dimension in Stage 2.
 
 ### 1d — Version-diff pre-pass (release→dev baseline)
 
@@ -390,65 +392,65 @@ shows the *already-accumulated* release→dev delta; criterion 11 judges that
 **plus** the plan's *described* future schema changes as the combined
 migration path a `<baseline>` user crosses.
 
-## Stage 2: Dispatch the dimension batches, join their files
+## Stage 2: Walk each dimension yourself, write its file
 
-Dispatch the in-scope dimensions (Stage 1b) as **batches**, one
-`general-purpose` sub-agent each, grouped so dimensions needing the same greps
-share them. Drop whatever 1b put out of scope; an emptied batch isn't dispatched.
+Walk every in-scope dimension (Stage 1b) **in this same context — no
+sub-agent fan-out.** Order them so dimensions needing the same greps sit back
+to back (5+10 share §Data flow / §Classes reads, 6+11 share the migration
+artifact, 8 stands alone) — that's a research-sharing convenience, not a
+formal grouping; drop whatever 1b put out of scope.
 
-| Batch | Dimensions |
-|---|---|
-| `shape` | 5 coupling · 10 abstraction/ownership |
-| `change` | 6 correctness/race · 11 migration |
-| `deps` | 8 package |
+**Because one agent now holds every dimension's findings, guard against
+restating the same root cause under two headings.** Before writing a
+dimension's weakness, check the files you already wrote this round: if it's
+the same evidence and the same problem statement you already scored under an
+earlier dimension — not a different facet of it (Stage 3's root-cause pairs,
+e.g. criterion 6's race symptom + criterion 10's single-writer-gate weakness,
+are deliberately two findings, not one) — don't write it again; score it
+once, under the dimension whose rubric owns it most directly, and leave the
+other dimension to its own remaining merits. (This was the fan-out's failure
+mode — independent children, blind to each other's output, each wrote up the
+same defect in their own words. Stage 3's `blueprint-merge` dedup is still
+the backstop, but catch it here first.)
 
-**Each child writes one JSON file per dimension; its return value is not the
-deliverable and you must not wait on it.** Measured: across 19 fan-out reviews
-84 children were dispatched and 2 results ever came back — a nested `Agent` call
-returns `Async agent launched successfully.` and nothing else. So the brief
-names an absolute output path per dimension, `<dir>/<criterion>.json`, where
-`<dir>` is a fresh `mktemp -d` for this round. **Print that path in the report
-header** — the next round passes it as `--prev` and without it the regression
-check has nothing to compare against:
+Write one JSON file per dimension to `<dir>/<criterion>.json`, where `<dir>`
+is a fresh `mktemp -d` for this round — **compact, single-line JSON, no
+pretty-printing.** `jq` (what `blueprint-merge` parses with) doesn't care
+about whitespace, so indentation only spends your output tokens on a file
+nobody reads directly. **Print that path in the report header** — the next
+round passes it as `--prev` and without it the regression check has nothing
+to compare against:
 
 ```json
-{"criterion": 7, "dimension": "error-handling", "score": 5,
- "cites": ["§Error policy"],
- "weaknesses": [{"problem": "…", "failure_scenario": "…", "severity": "blocking"}]}
+{"criterion": 7, "dimension": "error-handling", "score": 5, "cites": ["§Error policy"], "weaknesses": [{"problem": "…", "failure_scenario": "…", "severity": "blocking"}]}
 ```
 
-`dimension` must be the canonical slug for that criterion — that is the dispatch
-echo-back, and `blueprint-merge` rejects a mismatch instead of you eyeballing it.
-On a verification round the file also carries `resolved` + an `origin` per
+`dimension` must be the canonical slug for that criterion —
+`blueprint-merge` rejects a mismatch instead of you eyeballing it. On a
+verification round the file also carries `resolved` + an `origin` per
 weakness (`prior` with its `id` / `diff-introduced` / `newly-observed` with
-`missed_because`) and optional `observations` — the exact shape is the contract
-at the top of `agents/scripts/blueprint_merge.sh`. Then join, which is what
-makes the round real:
+`missed_because`) and optional `observations` — the exact shape is the
+contract at the top of `agents/scripts/blueprint_merge.sh`. Once every
+in-scope dimension has a file, run the mechanical completeness gate:
 
 ```
 blueprint-merge wait <dir> --criteria <in-scope csv> [--prev <prior round's dir>]
 ```
 
-It blocks until every expected dimension has landed and validated, and exit 1
-names the holes. **Re-dispatch only the names it printed, then run it again.**
-You may not score a dimension yourself to fill a hole and you may not publish
-while one stands — the recorded failure here is not a missing row, it is a round
-that invented the scores that never arrived.
+Exit 1 names any criterion still missing or invalid. **Go back and write it
+properly, then run it again.** You may not move on to Stage 3 while one
+stands — the recorded failure here is not a missing row, it is a round that
+invented the scores that never arrived.
 
-Each sub-agent's brief carries: the **plan path**; the dimension's
-**question + score anchors** (below); the **rule files** it must read for
-that dimension (`.claude/rules/`); the **authoring requirements for the plan
-section it scores** (`notion-payload hints engineering-plan` — one source, so a
-schema update is auto-included with no brief edit); the
-`package-explorer` verdict (Package dimension only); and, on a verification
-round, **the plan diff + that dimension's prior weaknesses with ids**
-(`blueprint-merge prior <prev-dir> --criteria <n>`, pasted verbatim) with the
-§The verification round rules stated in the brief — the child has no other
-channel to learn it is verifying rather than judging.
+For each dimension, before scoring, read: the **rule files** it needs
+(`.claude/rules/`); the **authoring requirements for the plan section it
+scores** (`notion-payload hints engineering-plan` — one source, so a schema
+update needs no edit here); the Stage 1c `package-explorer` verdict (Package
+dimension only); and, on a verification round, that dimension's **prior
+weaknesses with ids** (`blueprint-merge prior <prev-dir> --criteria <n>`)
+plus §The verification round rules.
 
-**Every brief you dispatch carries `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` as a required read** — no hook reaches a sub-agent, so a child has these rules only if you say so.
-
-Each dimension returns, per finding: a **score** (1–10, anchors below) +
+Each dimension gets, per finding: a **score** (1–10, anchors below) +
 **citation** (plan section) + a concrete **failure scenario** ("breaks
 when X" — a finding with no failure scenario is noise; drop it but log the
 drop) + the **weakness statement** (the problem, NOT a proposed fix) +
@@ -569,9 +571,9 @@ Judge the upgrade a **real user** crosses — **baseline against the last
 RELEASED version, NOT `HEAD` / the last commit.** In-flight users run the
 last release (while `dev` builds 1.2.7 they are on the shipped 1.2.6).
 **Judge against the Stage 1d version-diff artifact** (the verified,
-scoped release→dev delta) — do NOT re-derive the diff inside this
-sub-agent; reason on the concrete, inspectable git output the pre-pass
-captured, plus the plan's described future schema changes.
+scoped release→dev delta) — do NOT re-derive the diff here; reason on the
+concrete, inspectable git output the pre-pass captured, plus the plan's
+described future schema changes.
 
 - **NECESSITY FIRST — does the migration's source state even exist on a
   released device?** For ANY migration / one-time cleanup the plan adds,
@@ -731,8 +733,8 @@ justifies it.
 **Plan:** the Notion Engineering Plan DB row (title + URL)
 **Options reviewed:** N
 **Weighting:** equal (1× each) | custom: <criterion>=<weight>, ...
-**Round:** first pass | verification of <prev dir> (carried: <list> · re-dispatched: <list>)
-**Dimensions dispatched:** <list> · **not dispatched (surface absent):** <list>
+**Round:** first pass | verification of <prev dir> (carried: <list> · re-scored: <list>)
+**Dimensions scored:** <list> · **not scored (surface absent):** <list>
 **Scores dir:** <the mktemp -d path> (pass as `--prev` on the verification round)
 
 ## Option A — <name>
@@ -806,7 +808,7 @@ five non-blocking weaknesses noted inline in the per-option sections.
 
 ## Observations
 
-- <non-scored notes: out-of-rubric concerns, a child's `observations[]`.
+- <non-scored notes: out-of-rubric concerns, a dimension's `observations[]`.
   Each cites what it is grounded in, or is written as `無法判定`.>
 - Verification round only — answer each flag `blueprint-merge` printed:
   `REGRESSION <dim>`: real re-break | re-derivation artefact — <why>;

@@ -38,3 +38,7 @@
   建 `<plugin>--v<version>`、push，然後呼叫 `vendor-sync` 開消費端的 bump PR。雲端 session
   的 GitHub 授權本來就拒絕 push tag（403），而**本機先打 tag 更糟**：workflow 看到 tag
   已存在就無事可做，消費端永遠收不到這一版。
+- **一個 PR 全程只 bump 一次版號，收尾前才跑.** Tag 只在進 `main` 那一刻打（上一條）
+  ——PR 存續期間中途 bump 幾次都不會被 tag、不會被任何消費端看到，只會在 `git log`
+  裡留下一串從未真正存在過的版本。改動確定收斂、真的要送出這個 PR 時才跑一次
+  `release.mjs`。

@@ -1253,7 +1253,7 @@ Two execution mechanisms:
 | `engineer` | `skills/engineer/SKILL.md` | Skill (in-thread) / session |
 | `translator` | `lib/i18n/CLAUDE.md` ownership split | Agent / sonnet |
 | `qa` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` (+ `agents/qa.md`) | Agent / sonnet |
-| `blueprint-reviewer` | the engineering plan (scope-gated dimensions) | Agent / **caller-picks** (see §Model tiering) |
+| `blueprint-reviewer` | the engineering plan (scope-gated dimensions) | Agent / opus |
 | `security-reviewer` | `review/rules/security/` | Agent / opus |
 | `privacy-reviewer` | `review/rules/privacy/` | Agent / opus |
 | `code-reviewer` | the diff | Agent / opus |
@@ -1272,13 +1272,9 @@ nature — never inherited from the session model for mechanical work:**
 bounded recon or pattern work (grep sweeps, call-chain tracing,
 fact-checks), `opus` = judgment (authoring, adversarial review, synthesis).
 Pinning happens **at dispatch**; an agent definition's `model:` is only a
-default for callers that don't. `blueprint-reviewer` deliberately carries **no**
-default, because its two jobs sit in different tiers — a first full
-design-quality pass is synthesis (`opus`), a scoped verification pass over named
-assertions can be fact-checking (`sonnet`). The caller must therefore state the
-tier every time; choose it from what the pass actually has to do, not from the
-gate's name. When the pass has to judge whether a *fix's reasoning* holds (not
-merely whether the fix is present), that is `opus` — see **Green is not proof**.
+default for callers that don't. **A pass that has to judge whether a *fix's
+reasoning* holds, not merely whether the fix is present, is `opus`** — see
+**Green is not proof**.
 This applies to the table above **and** to every ad-hoc spawn inside a
 phase (the authoring roles' recon sweeps, tracers, `archivist` bulk
 reads). The main thread stays the orchestrator — it decides, dispatches,
