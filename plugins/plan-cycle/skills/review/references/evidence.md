@@ -16,6 +16,14 @@ that breaks one of these is invalid even when every citation in it resolves.
   prompt is the only channel), or downgrade the sentence to an existential one:
   "I looked in A, B and C; not there", never "only X exists".
 
+- **A count or list claim needs the list, not the number.** "3 matches" /
+  「只有 N 個」costs exactly the same to type whether the search happened or
+  not — the number is not the evidence, the list behind it is. State a count
+  only attached to what it counts: one citable item (`file:line` or
+  equivalent) per unit claimed, printed with it. Fewer citable items than the
+  stated count, or a count with no list at all, is `無法判定` — never round it
+  up to the number written.
+
 - **Name the question you actually searched.** The common failure is silent
   substitution: the original question has no findable answer, so a neighbouring
   one that does gets answered instead and its answer is reported as the

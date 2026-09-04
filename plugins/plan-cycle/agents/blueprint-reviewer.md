@@ -770,16 +770,25 @@ justifies it.
 > Name the problem + failure scenario + citation. **No `Suggestion:`
 > line** — devising the fix is the engineer's job, not the reviewer's.
 > A weakness may add **`Directions (unranked, not a recommendation):`**
-> with ≥2 short angles — divergent options, never the chosen one.
+> with ≥2 short angles — divergent options, never the chosen one. A count or
+> absence claim (「three callers」, 「only N places」) cites `[E<n>]` and
+> prints the numbered list right under the weakness — a bare number is not
+> evidence (`evidence.md §A count or list claim needs the list, not the
+> number`).
 
 **[11. Migration & back-compat — 5/10]**
 - §Migration impact has no row for the deleted `BookMetadataWrapper`; cite
-  §Classes, which marks it (DEL) while three callers still resolve it.
+  §Classes, which marks it (DEL) while three callers still resolve it ([E1]).
 - Failure scenario: an existing install updates, the boot path resolves a
   deleted symbol and the library reads empty — recoverable only by reinstall.
 - Directions (unranked, not a recommendation): keep a tombstone that
   resolves to null instead of deleting the symbol outright; or gate the
   delete behind the same migration that retires its last caller.
+
+  [E1] grep -rn "BookMetadataWrapper" lib/ → 3 matches
+    1. lib/library/book_repository.dart:88
+    2. lib/library/legacy_import.dart:14
+    3. lib/sync/metadata_bridge.dart:52
 
 **[5. Low coupling — 6/10]**
 - `BookRepository` carries both read and write surface; read-only state holders

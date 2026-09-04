@@ -482,6 +482,24 @@ Omit any section that has no findings — an empty **SUGGESTION** heading
 invites filling it next time. If no findings at all: "No issues found.
 The changes follow project conventions."
 
+**A finding whose evidence is a count or an absence claim cites `[E<n>]`
+and prints the numbered list right under it** — a bare number is not
+evidence (`evidence.md §A count or list claim needs the list, not the
+number`):
+
+```
+- **[Check]** `path/to/file.dart:NN` — only 2 other call sites still
+  read the old field ([E1]).
+
+  [E1] grep -rn "oldFieldName" lib/ → 2 matches
+    1. lib/foo/bar.dart:12
+    2. lib/foo/baz.dart:41
+```
+
+Number `[E<n>]` sequentially across the whole report. Reuse `[E1]` if a
+later finding needs the same fact — never re-run the search or retype the
+list for a fact already shown.
+
 **The `coverage:` line is mandatory and never omitted.** Those seven
 dimensions used to be scored on the plan before code; they now land here
 (`notion-payload criteria engineering-plan` — the `diff` rows), and a
