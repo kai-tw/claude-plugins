@@ -117,6 +117,11 @@ through the designer role and land in the spec before the diff ships.
   blocks any class no §Classes NEW row names, so an internal
   subsystem that "grew" mid-implementation routes through here
   first or does not land.
+- **Authoring the next phase of a just-in-time Phased plan.** A rev that
+  fills in a phase §Later phases already named is planned work arriving on
+  schedule, not a scope change — the founder approved the cut when the plan
+  was phased (`engineer/SKILL.md` §Right-size the plan). Dropping or
+  growing what that line promised is divergence; route it.
 - **Bug-fix exemptions discovered along the way.** Finding a real
   bug while implementing a feature, fixing it inline (no flow
   change), and noting it in the commit is fine — the bug fix is

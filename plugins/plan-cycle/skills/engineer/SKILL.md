@@ -292,6 +292,17 @@ sketch. Decide the plan shape from the upstream artifacts:
   bug-investigation verification) that must complete before
   later phases. Phase letters (A, B, C…) plus per-phase pre-gate
   audit tasks (`pre-B`, `pre-E`) when an audit blocks a phase.
+
+  **Phases may be authored just-in-time.** The default is to plan every
+  phase up front; when the plan is too large for Phase 8.5 to converge
+  (the trigger lives there), author only the next phase's §Classes at
+  gate-able detail and name the rest in §Later phases, one line each —
+  then rev the body per phase as the previous one lands (a Delta plan rev
+  of the same row: same PR, same task, same Notion row). Every
+  Phased-plan rule binds unchanged, §Per-phase gate included. §Later
+  phases plus this phase's §Conformance must cover everything the product / design
+  plan asked for; dropping any of it is a scope change and routes per
+  `plan/divergence.md`.
 - **Delta plan** — when the work is a rev of an existing plan
   (e.g., scope amendment from the PM role, design rev from
   the designer role). Reference the prior plan — the feature's Notion
@@ -944,6 +955,16 @@ The loop, in brief — full protocol in
    Anything still sub-8 goes to the user grouped by origin (fix didn't
    land / fix broke it / newly-observed with its `missed_because`) —
    never a third spawn.
+
+   **A sub-8 that a cut would remove is a size defect, not a quality
+   one.** Before handing the user the residue, check where the surviving
+   weaknesses sit: all in §Classes rows a later phase could own, none in
+   the rows this phase needs → propose just-in-time phasing (§Right-size
+   the plan) to the founder — the cut, what stays, what moves to §Later
+   phases. On approval, rev to this phase only and re-enter Phase 8.5;
+   the body is now a different, smaller one, so its two rounds start
+   over. A weakness that survives the cut, or that spans every phase,
+   goes to the user as above — splitting does not resolve it.
 5. **Cite the review log** in the plan header so the calibration is
    auditable months later.
 
@@ -1121,7 +1142,8 @@ Once the user approves the task list as enumerated (and only then):
 Engineering plan: <Engineering Plan DB row url> (Task: <task url>)
 Source: the feature's Notion task (Product Plan + Design Plan rows)
         (spec = "non-UI work" when no UI)
-Mode: <full / phased / delta (parent: <Engineering Plan DB row>) / single-slice>
+Mode: <full / phased (phases authored: <n>/<N>) / delta (parent: <Engineering
+      Plan DB row>) / single-slice>
 Audit: <count> items resolved, <count> open questions surfaced
 Plan review: blueprint-reviewer (不落檔; verdict recorded in the plan header)
               verdict: <approve | approve-with-improvements>; every in-scope

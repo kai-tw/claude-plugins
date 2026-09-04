@@ -829,6 +829,58 @@ if [ -n "$paraphrased" ]; then
   fail=1
 fi
 
+# 6d. HARD — §Later phases entries must be addressable and concrete.
+#     A just-in-time Phased plan (`engineer/SKILL.md` §Right-size the plan)
+#     authors one phase and defers the rest to this section, so this section IS
+#     the deferred scope — nothing else records it. An entry with no phase id
+#     cannot be cited by the rev that later fills it in, and a vague one cannot
+#     be told apart from scope that quietly evaporated during the cut. Check 2
+#     already bans the English placeholders anywhere in the body; the Chinese
+#     ones are banned HERE and only here, because 「之後再說」is legitimate prose
+#     in §Risks and is exactly the failure mode in this section.
+#
+#     Absence of the section is not a skip: a fully-authored plan has no
+#     deferred phases, and announcing that as unchecked would fire on every
+#     ordinary plan.
+later_body="$(section_body '^#{1,2} +(Later phases|後續 ?phase|後續階段)')"
+if [ -n "$(printf '%s' "$later_body" | tr -d '[:space:]')" ]; then
+  later_rows=0; later_bad=""
+  while IFS= read -r line; do
+    # Data lines only: a `- ` bullet or a `| … |` table row, never prose,
+    # separators or headers.
+    case "$line" in
+      \|*) grep -qE '^\|[[:space:]|:-]*$' <<< "$line" && continue ;;
+      -\ *|\*\ *) ;;
+      *) continue ;;
+    esac
+    body="$(sed -E 's/^[-*][[:space:]]*//; s/^\|[[:space:]]*//' <<< "$line" | tr -d '`*')"
+    # The header row must be identified by its FIRST CELL, not by the whole
+    # row — `| Phase | 延後範圍 |` matched neither, so every table-form section
+    # reported its own header as an entry with no phase id.
+    cell1="$(sed -E 's/[[:space:]]*\|.*$//; s/[[:space:]]+$//' <<< "$body")"
+    case "$cell1" in ''|Phase|phase|階段|Scope|範圍|延後範圍|內容|說明) continue ;; esac
+    later_rows=$((later_rows + 1))
+    # Addressable: opens with a phase id (`B`, `Phase B`, `階段 B`, `B-1`).
+    if ! grep -qE '^((Phase|階段)[[:space:]]*)?[A-Z][0-9-]*([[:space:]]|[—–:：|]|$)' <<< "$body"; then
+      later_bad="${later_bad}
+        無 phase 代號: $(cut -c1-90 <<< "$body")"
+      continue
+    fi
+    # Concrete: the deferral says WHAT is deferred, not that it is deferred.
+    if grep -qE '(之後再說|再說|待定|另議|其餘|等等|視情況)' <<< "$body"; then
+      later_bad="${later_bad}
+        佔位語: $(cut -c1-90 <<< "$body")"
+    fi
+  done <<< "$later_body"
+  if [ -n "$later_bad" ]; then
+    echo "FAIL  §Later phases 有無法追蹤的延後項目——切分把 scope 弄丟就是從這裡開始:${later_bad}"
+    echo "        每列開頭給一個 phase 代號（B / Phase B / 階段 B），內容寫「延後什麼」而非「延後」。"
+    echo "        真的要縮 scope 就不是延後，走 plan/divergence.md 回上游改 plan。"
+    fail=1
+  fi
+  echo "NOTE  §Later phases: ${later_rows} 個延後 phase（此計畫為 just-in-time phased）"
+fi
+
 # 5. ADVISORY — required-section presence (bilingual; never gates).
 #    The list comes from schemas/engineering-plan.mjs, never from a copy here:
 #    a second copy is how a retired section stayed in this linter, telling every

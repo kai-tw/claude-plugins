@@ -516,10 +516,10 @@ private field shared across callers) are found by judgment, not by execution, an
 stay worth sending.
 
 **`blueprint-reviewer` runs on every engineer plan** — never skipped, not even on
-a single-slice increment, which would otherwise have no judgment gate at all, only
+a single-slice plan, which would otherwise have no judgment gate at all, only
 a script. The cost stays proportionate because its own **Stage 1b scope-gate**
 right-sizes the fan-out over its **five** dimensions — the ones expensive to
-reverse once code exists — and a single-slice increment dispatches only those
+reverse once code exists — and a single-slice plan dispatches only those
 whose surface it actually touches. The other seven (time, space, scalability,
 extendability, error handling, testability, startup) are graded on the diff by
 `code-reviewer`, which declares them in its `coverage:` line; the split is

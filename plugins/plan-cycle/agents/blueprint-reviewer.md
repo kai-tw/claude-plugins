@@ -168,8 +168,9 @@ Three callers invoke this agent:
    is non-obvious), then re-spawns this agent **once, as a verification
    round** (§The verification round): it passes the prior round's scores
    dir + the plan diff, and you disposition every prior weakness instead
-   of re-deriving the dimension. Two rounds total; whatever is still sub-8
-   after the verification goes to the user, split by origin. When a
+   of re-deriving the dimension. Two rounds total **against one plan
+   body**; the engineer routes whatever is still sub-8 after the
+   verification (`engineer/SKILL.md` §Phase 8.5), split by origin. When a
    weakness needs upstream (product/design) scope, say so explicitly and
    route via `## Open questions` — don't pretend the engineer can solve it
    inline.
@@ -232,8 +233,8 @@ closes because every item is accounted for:
   are all resolved and whose only additions are observations scores ≥ 8.
 
 `blueprint-merge report --prev` then prints a `CONVERGENCE:` ledger and flags
-`NEWLY-OBSERVED` dimensions; the engineer routes those to the user by kind,
-never into a third round.
+`NEWLY-OBSERVED` dimensions; the engineer routes those by kind, never into a
+third round against this body.
 
 ## What you do not do
 
