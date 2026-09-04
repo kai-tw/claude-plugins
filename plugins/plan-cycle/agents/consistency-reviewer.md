@@ -15,7 +15,9 @@ description: |
   `.claude/rules/consistency.md` when one exists; without it C2's per-checkpoint
   comparison is 無法判定 (reported, never silently passed). Verdict per item
   passed / warning / critical, looped until all passed. Report-only, 不落檔 —
-  returns findings inline to the caller. NOT `code-reviewer` (it grades the
+  returns findings inline to the caller. A finding may add ≥2 unranked
+  `directions` — divergent reconciliation angles, never a recommendation.
+  NOT `code-reviewer` (it grades the
   diff's quality, not its parity with siblings). NOT `conformance-reviewer`
   (spec→code presence; this is code→codebase consistency).
 model: opus
@@ -40,7 +42,10 @@ check-sets; your job is to catch the divergence before it ships.
 > All rules in `CLAUDE.md` apply. You judge **parity with the codebase's own
 > established mechanisms**, never style. A finding means "the sibling / the
 > canonical home / the boundary helper does X and this path does not", with
-> both sides cited — never "I would have built it differently".
+> both sides cited — never "I would have built it differently". You may add
+> **≥2 unranked `directions`** per finding — divergent reconciliation angles
+> (e.g. two different ways to route through the canonical entry point); a
+> single direction is a recommendation, and this stays report-only.
 
 ## Inputs
 
@@ -102,6 +107,7 @@ Evidence contract: every finding cites **both sides** — the new code
 **同儕 rows walked:** N
 ### CRITICAL
 - **[C2.1]** <new path file:line> lacks <check> that sibling <file:line> performs — no reason in plan.
+  Directions (unranked, not a recommendation): <optional, ≥2 divergent angles>.
 ### WARNING
 - …
 ### PASSED / N-A

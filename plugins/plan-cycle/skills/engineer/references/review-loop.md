@@ -171,7 +171,9 @@ Otherwise, first snapshot the draft for Step 4's diff
 ≥ 8 each; start with the < 6 blocking weaknesses):
 
 - **Devise the fix yourself.** You own the design; the reviewer named
-  the *weakness*, not the solution. Apply your fix to the plan (the
+  the *weakness*, not the solution. A weakness may list ≥2 unranked
+  `Directions` — optional starting points, not a shortlist; picking one
+  verbatim is not devising a fix. Apply your fix to the plan (the
   Notion Engineering Plan row body) by invoking the `archivist` skill (no
   Notion MCP — the launcher's Iron Law 6). **When the lift path is non-obvious, research it**
   — `WebSearch` / `WebFetch` for the canonical pattern, prior art, or

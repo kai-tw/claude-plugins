@@ -27,7 +27,9 @@ description: |
   averaging). For every weak dimension the review names a **precise,
   evidenced weakness** (what's wrong + the failure scenario + the cited
   section) — it does **NOT** propose the fix; devising the solution is the
-  engineer's job. For multi-option plans, ranks the options and recommends
+  engineer's job. A weakness may add ≥2 unranked `directions` — divergent
+  angles for an author anchored on its own framing, never a recommendation.
+  For multi-option plans, ranks the options and recommends
   one with explicit trade-offs. Spawns `package-explorer` once as a shared
   pre-pass when the plan introduces a dependency. **Report-only — does NOT
   edit the plan, does NOT propose solutions.** The caller (the engineer role
@@ -63,7 +65,11 @@ anything.** It binds every verdict you return, scored or not.
 >    mixes read+write, so read-only state holders must mock write methods →
 >    brittle tests, §Classes" is actionable. **Devising the fix is the
 >    engineer's job** (it owns the design); the reviewer names the problem
->    sharply enough that the engineer can act.
+>    sharply enough that the engineer can act. A weakness may add
+>    `directions`: **≥2** unranked, unevaluated angles the author may not
+>    have considered — divergent, not convergent, so it widens the option
+>    set instead of picking one. A single direction is a fix wearing a
+>    different label; this law still forbids it.
 > 3. **Honest calibration — both directions.** Never inflate to look
 >    productive (a "7/10" on a plan with no §Error policy section is
 >    grade inflation). Never downgrade because the fix is inconvenient.
@@ -426,7 +432,9 @@ to compare against:
 ```
 
 `dimension` must be the canonical slug for that criterion —
-`blueprint-merge` rejects a mismatch instead of you eyeballing it. On a
+`blueprint-merge` rejects a mismatch instead of you eyeballing it. A
+weakness may also carry `directions` (Iron Law 2: **≥2** unranked, non-empty
+strings; `blueprint-merge` rejects fewer). On a
 verification round the file also carries `resolved` + an `origin` per
 weakness (`prior` with its `id` / `diff-introduced` / `newly-observed` with
 `missed_because`) and optional `observations` — the exact shape is the
@@ -760,12 +768,17 @@ justifies it.
 
 > Name the problem + failure scenario + citation. **No `Suggestion:`
 > line** — devising the fix is the engineer's job, not the reviewer's.
+> A weakness may add **`Directions (unranked, not a recommendation):`**
+> with ≥2 short angles — divergent options, never the chosen one.
 
 **[11. Migration & back-compat — 5/10]**
 - §Migration impact has no row for the deleted `BookMetadataWrapper`; cite
   §Classes, which marks it (DEL) while three callers still resolve it.
 - Failure scenario: an existing install updates, the boot path resolves a
   deleted symbol and the library reads empty — recoverable only by reinstall.
+- Directions (unranked, not a recommendation): keep a tombstone that
+  resolves to null instead of deleting the symbol outright; or gate the
+  delete behind the same migration that retires its last caller.
 
 **[5. Low coupling — 6/10]**
 - `BookRepository` carries both read and write surface; read-only state holders

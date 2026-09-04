@@ -27,7 +27,9 @@
 #   that is the dispatch echo-back, checked mechanically instead of by eye, so a
 #   child briefed for coupling that scored testability is rejected, not merged.
 #   `weaknesses` is required when score < 8 (a sub-8 with no named weakness is
-#   not a finding), and `severity` must be `blocking` when score < 6.
+#   not a finding), and `severity` must be `blocking` when score < 6. A
+#   weakness may add `directions`: an array of >=2 non-empty strings — never
+#   1, which reads as a recommendation instead of divergent angles.
 #
 # THE VERIFICATION ROUND (--prev <prior round's dir>)
 #   A re-review verifies the prior round; it is not a fresh judgment — a
@@ -212,6 +214,8 @@ scan() {
         reason="a weakness is missing .problem / .failure_scenario, or .severity is not blocking|weakness"
       elif [ "$score" -lt 6 ] && [ "$(jq -r '[.weaknesses[] | select(.severity == "blocking")] | length' "$f")" -lt 1 ]; then
         reason="score $score is sub-6 but no weakness is marked blocking"
+      elif [ "$(jq -r '[.weaknesses[] | select(((.directions // []) | length) > 0) | select(([.directions[] | select(. != "")] | length) < 2)] | length' "$f")" -gt 0 ]; then
+        reason="a weakness has .directions with fewer than 2 non-empty entries — divergent means >=2, or omit the field"
       fi
     fi
     [ -z "$reason" ] && [ -n "$prev" ] && reason=$(verify_against_prior "$f" "$crit" "$score")
@@ -335,9 +339,11 @@ report)
       if [ -n "$prev" ] && ! is_carried "$f"; then
         jq -r --arg c "$c" '.weaknesses | to_entries[] | .value as $w |
           "- [\($c).\(.key + 1)] \(if $w.origin == "prior" then "still open (was \($w.id))" else $w.origin end): \($w.problem)\n  - Failure scenario: \($w.failure_scenario)\n  - Severity: \($w.severity)"
-          + (if $w.origin == "newly-observed" then "\n  - Missed because: \($w.missed_because)" else "" end)' "$f"
+          + (if $w.origin == "newly-observed" then "\n  - Missed because: \($w.missed_because)" else "" end)
+          + (if ($w.directions // []) != [] then "\n  - Directions (unranked, not a recommendation): " + ($w.directions | join(" · ")) else "" end)' "$f"
       else
-        jq -r --arg c "$c" '.weaknesses | to_entries[] | "- [\($c).\(.key + 1)] \(.value.problem)\n  - Failure scenario: \(.value.failure_scenario)\n  - Severity: \(.value.severity)"' "$f"
+        jq -r --arg c "$c" '.weaknesses | to_entries[] | "- [\($c).\(.key + 1)] \(.value.problem)\n  - Failure scenario: \(.value.failure_scenario)\n  - Severity: \(.value.severity)"
+          + (if (.value.directions // []) != [] then "\n  - Directions (unranked, not a recommendation): " + (.value.directions | join(" · ")) else "" end)' "$f"
       fi
       printf '\n'
     done

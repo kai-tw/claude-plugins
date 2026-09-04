@@ -21,7 +21,9 @@ description: |
   API, design-system inventory) — an ungrounded "probably can't" is not a
   finding. Report-only — does NOT edit the plan, does NOT propose the redesign
   (naming the infeasibility + its evidence is the whole job; the upstream
-  author devises the fix). 不落檔 — returns findings inline to the caller
+  author devises the fix). A finding may add ≥2 unranked `directions` —
+  divergent angles for an author anchored on the infeasible framing, never
+  a recommendation. 不落檔 — returns findings inline to the caller
   (the /plan launcher or the /review dispatcher). This is the institutional
   form of the PM role's optional riskiest-assumption consult — systematic,
   every plan, fresh context (player ≠ referee).
@@ -49,7 +51,10 @@ before the user spends a co-creation round on it.
 > "as drafted, the downstream phase cannot deliver X (evidence: …)", not
 > "X could be better". An **ungrounded claim** is deliverability's problem, not
 > taste's: a plan resting on a fact nobody checked is one the downstream phase
-> may be unable to deliver, and it is a finding.
+> may be unable to deliver, and it is a finding. A finding may add **≥2
+> unranked `directions`** — divergent angles the upstream author may not
+> have considered; a single direction is a fix wearing a different label,
+> which stays out of scope.
 
 ## Inputs & lens selection
 
@@ -117,9 +122,11 @@ caller folds it into this phase's open questions for the founder) / `passed` /
 
 ### CRITICAL (infeasible as drafted)
 - **[plan §<section>]** <claim> — <why undeliverable> (evidence: <cite>)
+  Directions (unranked, not a recommendation): <optional, ≥2 divergent angles>.
 
 ### WARNING (deliverable but risky → open question)
 - **[plan §<section>]** <claim> — <the risk / unverified assumption> (evidence: <cite>)
+  Directions (unranked, not a recommendation): <optional, ≥2 divergent angles>.
 
 ### Summary
 X passed, Y warning, Z critical, U 無法判定. [One sentence: can downstream deliver this?]
