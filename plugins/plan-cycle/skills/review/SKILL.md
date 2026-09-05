@@ -3,10 +3,10 @@ name: review
 description: >-
   The single entry for every review concern — spawns the matching report-only
   sub-agent against the relevant artifact (an uncommitted diff, or a plan):
-  code-reviewer · blueprint-reviewer (engineering-plan design quality, AND the
-  per-role rules checklist for a pm plan / design spec in checklist mode) ·
+  code-reviewer · engineer-plan-reviewer (engineering-plan design quality) ·
+  pm-plan-reviewer (the PM plan's rules walk) ·
   security-reviewer (threat
-  model) · privacy-reviewer (data minimization) · conformance-reviewer (the residue
+  model, the diff) · privacy-reviewer (data minimization, the diff) · conformance-reviewer (the residue
   of "code embodies the approved plan" that /qa's spec tests can't pin) ·
   test-reviewer (test DESIGN, both halves of the test/** partition) ·
   ux-reviewer (design-spec usability) · feasibility-reviewer (downstream
@@ -17,7 +17,7 @@ description: >-
   review the tests · test review · are these tests any good · 審一下測試 ·
   check my code · review before commit · security review · threat model X ·
   review X for vulnerabilities · privacy review · minimization review ·
-  rules audit X · review the plan · blueprint review · design-quality review ·
+  rules audit X · review the plan · engineering-plan review · design-quality review ·
   conformance review · feasibility review · ux review · usability review ·
   heuristic review · will this confuse a first-time user · run review ·
   consistency review · 一致性檢查 · 跟既有的做法一致嗎 · duplicate implementation ·
@@ -60,10 +60,10 @@ and the threshold). Treat the block as late, not as the schedule.
 | User intent | Sub-agent | Reviews | Output |
 |---|---|---|---|
 | Code review (semantic, architectural, lint-uncatchable) | `code-reviewer` | the uncommitted diff | **return to caller** (no file) |
-| Engineering-plan **design quality** (5 scope-gated dimensions; the other 7 are graded on the diff by `code-reviewer`) | `blueprint-reviewer` | an engineering plan | **return to caller** (no file) |
-| Plan **rules compliance** (a role's rules checklist, sub-check by sub-check) | `blueprint-reviewer` (checklist mode) | a pm plan or design spec | **return to caller** (no file) |
-| **Security** (threat model, attack surface) | `security-reviewer` | PM plan / engineer plan / code | **return to caller** (no file) |
-| **Privacy** (data-minimization) | `privacy-reviewer` | PM plan / engineer plan / code | **return to caller** (no file) |
+| Engineering-plan **should-this-exist** (2 scope-gated dimensions; the other 9 are graded on the diff by `code-reviewer`) | `engineer-plan-reviewer` | an engineering plan | **return to caller** (no file) |
+| **PM-plan rules compliance** (`P1`–`P8` + plan integrity, sub-check by sub-check) | `pm-plan-reviewer` | a pm plan | **return to caller** (no file) |
+| **Security** (threat model, attack surface) | `security-reviewer` | the diff — never a plan | **return to caller** (no file) |
+| **Privacy** (data-minimization) | `privacy-reviewer` | the diff + store declarations — never a plan; "should this be collected at all" is PM rule `P8` | **return to caller** (no file) |
 | **Conformance** (the residue /qa's spec tests can't pin — §Non-goals, token drift, stale docs, `spec-should-change`) | `conformance-reviewer` | approved product / design plan vs the diff, after QA | **return to caller** (no file) |
 | **Test design** (change-detectors, untagged cases, illegal fakes, partition breaches) — **not** replaced by `plan-mutation`, which grades the opposite error and scores a change-detector perfectly | `test-reviewer` | every test the diff adds / changes — engineer-owned and `/qa`-owned alike | **return to caller** (no file) |
 | **UX** (usability, first-time-user confusion) | `ux-reviewer` | a design spec (at design time; it right-sizes itself — say "go deep" / "light pass" to override) | **return to caller** (no file) |
@@ -82,7 +82,7 @@ actually implemented), not mockup-vs-design-rules.
 **Every reviewer above is 不落檔** — they grade and **return their
 findings to this dispatcher** (security/privacy/ux/feasibility/consistency:
 each item `passed` / `warning` / `critical`, looped until all `passed`;
-code-reviewer / blueprint-reviewer: the consolidated report
+code-reviewer / engineer-plan-reviewer: the consolidated report
 inline). No file output. (No count here on purpose — the roster grows, and a
 hardcoded number is a staleness bug waiting to print.)
 
@@ -109,7 +109,7 @@ review in this main context.
 
 ## After the agent returns
 
-The agent returns its findings (counts + log path for code/blueprint;
+The agent returns its findings (counts for code and the engineering plan;
 graded findings for security / privacy / ux / feasibility) + a one-line overall assessment.
 **Every finding gets an explicit verdict — silent skipping is forbidden.**
 

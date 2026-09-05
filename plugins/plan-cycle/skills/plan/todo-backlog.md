@@ -77,6 +77,12 @@ This preserves the lineage — the same task carries its Trigger
 history and its plan relations, so the backlog → plan transition
 stays on one board.
 
+**A sibling task from a PM split** (`pm/SKILL.md` §Split into sibling tasks)
+is the mechanical case of "dependency landing": its Trigger names the
+specific sibling it waits on, and `/plan` checks it automatically at that
+sibling's close-out (`plan/SKILL.md` §Step 6.4a) — the one Trigger case that
+doesn't wait on the founder noticing it by hand.
+
 ## Migration of existing plans
 
 Plans authored before this rule was codified may still have a

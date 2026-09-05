@@ -7,7 +7,7 @@
 //   kind        — para | bullets | table | checklist | raw
 //   required    — ADVISORY (freeformBody): drives `hints`, does not gate
 //                 create/update. Any `## heading` is legal.
-//   criteria    — always [] (blueprint-reviewer covers engineering plans only)
+//   criteria    — always [] (engineer-plan-reviewer covers engineering plans only)
 //   description — one-line description of what this section IS
 //   hint        — authoring guidance for the LLM filling this section
 //

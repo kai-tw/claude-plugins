@@ -1,10 +1,14 @@
 # Security rules — threat-model baseline
 
-目標 **OWASP MASVS L1**（消費級 app）。`security-reviewer` 對審查對象（**PM plan
-功能機制攻擊面 + engineer plan threat model + code**）**逐母規則 → 逐 threat** 對照本
-清單旁觀審查（player ≠ referee，禁實作者自審）：每個 threat 逐項問「目前是否已防禦?」→
-標 **passed / warning / critical** → 所有 warning / critical 回報 engineer / 實作者修正
-→ 迴圈重審，**直到所有 threat = passed** 才放行。禁 deferred & dismiss。
+目標 **OWASP MASVS L1**（消費級 app）。`security-reviewer` 對 **diff** 逐母規則 →
+逐 threat 對照本清單旁觀審查（player ≠ referee，禁實作者自審）：每個 threat 逐項問
+「目前是否已防禦?」→ 標 **passed / warning / critical**。
+
+**計畫不審。** 下面每一條 threat 都錨在 parser sink、憑證、deep-link 參數或相依鎖上——
+計畫沒有這些東西，它寫的是對 sink 的**宣稱**，而 diff **就是** sink。
+
+`critical` 擋到解決為止；`warning` 不觸發下一輪，套用 fix 或記一行 accepted debt
+（`plan/SKILL.md §Gate loop policy` —— 這道 gate 在 ② 層，一次 + 一次驗證，禁 loop-to-green）。
 
 ## 這份是基線，不是全部 —— 專案要疊加自己的
 
@@ -40,8 +44,6 @@ STRIDE：Tampering + DoS + Elevation of Privilege。
 finding。專案獨有的格式或服務（某種文件格式、某個內容 SDK）掛在
 `.claude/rules/security.md` 疊加層。
 
-每個 threat 逐項判 **passed / warning / critical**，未 passed 回報 engineer / 實作者
-修正，迴圈至全 passed。
 
 - **P1.1 不受信任內容 → WebView 逃逸** — Check: 專案若在 WebView 載入非自產內容
   （使用者檔案、遠端 HTML、第三方嵌入），該內容是否載入 null-origin sandboxed iframe
@@ -88,8 +90,6 @@ finding。專案獨有的格式或服務（某種文件格式、某個內容 SDK
 **server-side rules** 而非 client（client 端 config 是公開識別碼）。
 STRIDE：Spoofing + Information Disclosure。
 
-每個 threat 逐項判 **passed / warning / critical**，未 passed 回報 engineer / 實作者
-修正，迴圈至全 passed。
 
 - **P2.1 OAuth / 雲端 token 外洩** — Check: 是否用 Authorization
   Code + PKCE（無 implicit、無 device 端 client secret）、token 存 iOS Keychain /
@@ -115,8 +115,6 @@ OS 自動備份）與**超範圍權限**都擴大事故 blast radius，必須在
 path-provider**層 by-construction 排除，而非 per-callsite scrubbing。
 STRIDE：Information Disclosure。此原則與 privacy review 交集。
 
-每個 threat 逐項判 **passed / warning / critical**，未 passed 回報 engineer / 實作者
-修正，迴圈至全 passed。
 
 - **P3.1 Crashlytics / Analytics PII 外洩** — Check: `LogSystem` 是否
   以 **allowlist**（非 deny-list）限定可記欄位、user text（lookup query / 選取 /
@@ -149,8 +147,6 @@ STRIDE：Information Disclosure。此原則與 privacy review 交集。
 插值；同步用的穩定識別碼即使非憑證，也會 round-trip 進使用者雲端儲存、長期可連結，
 需**揭露 + 重置**而非移除或靜默 scrub。STRIDE：Tampering + Information Disclosure。
 
-每個 threat 逐項判 **passed / warning / critical**，未 passed 回報 engineer / 實作者
-修正，迴圈至全 passed。
 
 - **P4.1 雲端／後端查詢字串字面插值注入** — Check: 雲端 query DSL（Drive `q:`、Firestore where、任何
   cloud DSL：Firestore where、Realm、Algolia filter）查詢字串是否經單一
@@ -178,8 +174,7 @@ STRIDE：Information Disclosure。此原則與 privacy review 交集。
 **Principle:** 控制 deep-link / universal link / app link / Android intent 的攻擊者就
 控制了 app 的進入路徑。入口必須驗 scheme + host + path、視參數為不可信輸入、且在
 auto-import 檔案或觸發副作用前要求 user 確認。STRIDE：Elevation of Privilege +
-Tampering。逐項判 **passed / warning / critical**，未 passed 回報 engineer / 實作者，
-迴圈至全 passed。
+Tampering。
 
 - **P5.1 Deep-link / intent 入口未驗證來源** — Check: deep-link / intent
   handler 是否在入口驗 scheme / host / path、視 parameter 為不可信（length / type /
@@ -196,8 +191,7 @@ Tampering。逐項判 **passed / warning / critical**，未 passed 回報 engine
 **Principle:** 一個高 CVSS CVE 只有當其 vulnerable sink **從本 codebase 的 untrusted
 input 可達**時才 load-bearing。專案的 untrusted-input 邊界（使用者檔案、遠端內容、
 後端回應）決定哪些 CVE 屬最高風險的供應鏈類。STRIDE：Tampering +
-Elevation of Privilege。逐項判 **passed / warning / critical**，未 passed 回報
-engineer / 實作者，迴圈至全 passed。
+Elevation of Privilege。
 
 - **P6.1 可達的相依 CVE / 供應鏈污染** — Check: dep diff
   （`pubspec.lock` / `package-lock.json`）是否伴隨 `dart pub outdated` / `npm audit`、

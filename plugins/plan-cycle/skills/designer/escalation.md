@@ -16,8 +16,8 @@ finding that surfaces a UX question.
    appended to the existing **Design Plan row body**, plus a one-line
    ruling for the parent flow to consume verbatim.
 4. Pass the same gates the main flow has (Phase 8 of `SKILL.md` — this
-   role has no checklist gate, and `blueprint-reviewer` refuses design
-   specs by charter): re-run `design-lint` on every widget the amendment
+   role has no checklist gate — no agent walks a checklist over a design
+   spec): re-run `design-lint` on every widget the amendment
    touches and fix to all-green; when the amendment changes visible
    surface, re-render and spawn `ux-reviewer` against the renders
    (player ≠ referee; no self-audit — escalations are exactly when

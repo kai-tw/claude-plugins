@@ -3,7 +3,7 @@
 `Read` 本檔只在新增 / 修改 / 合併 / 刪除 PM rule 時。
 
 **這是什麼.** PM role 的規則庫，組織成**母規則（principle）+ sub-check** 兩層 —— 母規則
-是通則、sub-check 是可操作的具體判準。`blueprint-reviewer` 以 checklist mode 在 PM plan
+是通則、sub-check 是可操作的具體判準。`pm-plan-reviewer` 在 PM plan
 **撰寫後、給 user 看 OQ 前**逐 principle → 逐 sub-check 對照 `../references/rules.md` 旁觀審查
 （player ≠ referee，禁 PM 自審）；任何違規**當場修正、禁 deferred & dismiss**，迴圈至全 passed，
 上限 3 輪（見 `../SKILL.md` Phase 6）。

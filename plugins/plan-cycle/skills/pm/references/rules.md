@@ -3,7 +3,7 @@
 **Read this BEFORE drafting the PM plan.** Every entry constrains the writing,
 and the writing is where honouring it costs a sentence.
 
-**逐條走這張清單的是 `blueprint-reviewer` 的 checklist mode**，在 PM plan 撰寫後、給 user
+**逐條走這張清單的是 `pm-plan-reviewer`**，在 PM plan 撰寫後、給 user
 看 OQ 前旁觀審查（**player ≠ referee，禁 PM 自審**）；任何違規當場修正、禁 deferred &
 dismiss，迴圈至全 passed，上限 3 輪（見 SKILL.md Phase 6）。SKILL.md Phase 5 的自查是你自己先擋一輪，
 **不是**它的替代品——規則你要懂，但審的人不能是你。
@@ -152,3 +152,34 @@ risk，但**必為第一條且形態不同**：最危險假設帶驗證法，殘
   性），而非使用者會不會要 / 商業能不能撐，標記為誤判，退回重寫。挑一個自己已經知道怎麼
   低風險驗證的可行性項目來填這格，是常見的迴避行為——用來檢查它。Example:「這個演算法效能
   夠不夠」通常不是最危險假設，除非整個產品的存續繫於它。
+
+## P8 — 蒐集要有 purpose，且拿不掉才收
+
+**Principle:** 每個離開裝置的 user-derived 欄位，在 plan 裡就要決定**為什麼收、能不能不收、
+以多低的識別度收、留多久**。這些是產品決策，不是實作細節——等到 diff，那個欄位已經在傳了、
+傳得也對、sink 也處理得好，沒有人會再問它該不該存在。`privacy-reviewer` 與 `security-reviewer`
+審的是 diff 的真實 sink（collection-site `file:line`、log 樣板、parser、權限實作），
+**不審 plan**；plan 這一端就是本條。
+
+plan 沒有新增蒐集 / 埋點 / 權限時，整條 `na`。
+
+- **P8.1 欄位逐一明列，不用籠統詞** — Check: 新增的埋點 / 上傳 / 雲端同步，欄位逐一列出了嗎
+  （禁「user context」「request body」「使用資料」）？列不出來就是還沒想清楚要收什麼 → 違規。
+  Example:「上傳閱讀進度」沒說是 `bookId + percent` 還是整個 session 物件。
+- **P8.2 每個欄位綁一個已寫下的 outcome** — Check: 每個欄位對得上本 plan §Acceptance criteria
+  或 §成功指標的哪一條？「之後可能有用 / 先收著」不是 purpose → 違規（拿掉）。
+  Example:「先記錄完整 reading-session 物件，未來分析用」。
+- **P8.3 拿掉會破壞 outcome** — Check: 移除這個欄位，被綁的 outcome 就量不出來嗎？拿得掉卻收
+  → 違規。Example: outcome 只需「是否用過某功能」，卻收逐次輸入內容。
+- **P8.4 沒有更低識別度的形式** — Check: 有沒有更低識別度的形式滿足同一 outcome（boolean 取代
+  timestamp、bucket 取代 raw、count 取代 list、hash 取代明文）？可降未降 → 違規。
+  Example: 收 raw 時間戳，但 outcome 只需「當日是否活躍」。
+- **P8.5 敏感度分級 + 組合風險** — Check: 每個欄位標了敏感度層級嗎（anonymous / technical /
+  behavioral / quasi-identifier / PII / sensitive PII）？**free-form 使用者文字（標題、檔名、
+  筆記、搜尋詞）預設 sensitive PII**，使用行為預設 behavioral，兩者都不得無證據降級；
+  數個 anonymous 欄位合起來會不會變成 quasi-identifier（locale + timezone + screen + OS
+  近乎唯一），評估過嗎？未標 / 靜默降級 / 未評估組合 → 違規。
+- **P8.6 保留期與清除路徑、權限、商店宣告三者顯式** — Check: (a) 這些欄位留多久、誰刪、使用者
+  主動刪除會不會真的清掉，plan 寫死了嗎（保留期 > purpose 生命週期 → 違規）？(b) 新增的權限
+  逐平台佐證了「這個 feature 嚴格需要」嗎？(c) 蒐集有變，Play Data Safety / App Privacy 的
+  宣告要不要跟著改，plan 點名了嗎？三者任一留白 → 違規——留白 = 未授權，工程只能猜。

@@ -44,7 +44,7 @@ silently route around it.
    (launcher's Iron Law 6); the row body is canonical for content, so
    silent drift between it and the task list breaks the audit.
 4. **Re-audit the rev'd plan (Phase 9) — `plan_lint.sh` clean, then
-   `blueprint-reviewer` on what changed plus its blast radius, *before*
+   `engineer-plan-reviewer` on what changed plus its blast radius, *before*
    re-approval** (a divergence rev is a plan change like any other;
    `/plan` §Re-audit every plan
    change). This is exactly where a new

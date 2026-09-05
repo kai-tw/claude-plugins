@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dimension-report join + merge for the blueprint fan-out.
+# Verification-round accounting for a plan review.
 #
 # A launcher, not an implementation — the script lives with the agent that owns
 # it (see the exec line). It exists so agent files and this plugin's own prose
@@ -9,4 +9,4 @@
 # from a project-relative reference and changes on every version bump.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec bash "$here/../agents/scripts/blueprint_merge.sh" "$@"
+exec bash "$here/../agents/scripts/plan_converge.sh" "$@"

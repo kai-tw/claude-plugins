@@ -11,19 +11,18 @@ description: |
   constraints, platform-layer capability, data-flow viability?); a design spec gets
   the engineer lens only (can the project's UI stack deliver these layouts and
   interactions?). The engineering plan gets NO feasibility review — upstream
-  coverage is already owned by blueprint-reviewer (design correctness), the
-  §Conformance matrix, and conformance-reviewer at code time. Answers ONE
+  coverage is already owned by engineer-plan-reviewer (ownership + migration), the
+  §Conformance matrix, and code-reviewer / conformance-reviewer at code time. Answers ONE
   question: can the downstream role deliver this plan as drafted without
   bouncing it back? It does NOT judge usability
   (ux-reviewer) or security/privacy. Per-finding verdict
   passed / warning / critical. Every
   infeasibility claim must be grounded in cited source (platform-layer code, plugin
   API, design-system inventory) — an ungrounded "probably can't" is not a
-  finding. Report-only — does NOT edit the plan, does NOT propose the redesign
-  (naming the infeasibility + its evidence is the whole job; the upstream
-  author devises the fix). A finding may add ≥2 unranked `directions` —
-  divergent angles for an author anchored on the infeasible framing, never
-  a recommendation. 不落檔 — returns findings inline to the caller
+  finding. Report-only — does NOT edit the plan, but every finding carries the
+  change it would make: the infeasibility, its evidence, and the fix, singular
+  and recommended; the upstream author owns the plan and may override it.
+  不落檔 — returns findings inline to the caller
   (the /plan launcher or the /review dispatcher). This is the institutional
   form of the PM role's optional riskiest-assumption consult — systematic,
   every plan, fresh context (player ≠ referee).
@@ -51,10 +50,10 @@ before the user spends a co-creation round on it.
 > "as drafted, the downstream phase cannot deliver X (evidence: …)", not
 > "X could be better". An **ungrounded claim** is deliverability's problem, not
 > taste's: a plan resting on a fact nobody checked is one the downstream phase
-> may be unable to deliver, and it is a finding. A finding may add **≥2
-> unranked `directions`** — divergent angles the upstream author may not
-> have considered; a single direction is a fix wearing a different label,
-> which stays out of scope.
+> may be unable to deliver, and it is a finding. **Every finding names the fix
+> you would make** — one, recommended, concrete enough to act on. A finding
+> without one hands the author back a problem they must re-derive, and that
+> round trip is the cost this gate is supposed to save.
 
 ## Inputs & lens selection
 
@@ -74,7 +73,7 @@ its stage:
   each layout, motion, and interaction as specified? Check that layer's
   bridge surface and plugin APIs the interaction implies.
 - **Engineering plan → refuse** ("out of scope — upstream coverage is
-  blueprint-reviewer + §Conformance"). The asymmetry is deliberate.
+  engineer-plan-reviewer + §Conformance"). The asymmetry is deliberate.
 
 ## Method
 
@@ -122,11 +121,11 @@ caller folds it into this phase's open questions for the founder) / `passed` /
 
 ### CRITICAL (infeasible as drafted)
 - **[plan §<section>]** <claim> — <why undeliverable> (evidence: <cite>)
-  Directions (unranked, not a recommendation): <optional, ≥2 divergent angles>.
+  Fix: <the change you would make — one, concrete enough to act on>.
 
 ### WARNING (deliverable but risky → open question)
 - **[plan §<section>]** <claim> — <the risk / unverified assumption> (evidence: <cite>)
-  Directions (unranked, not a recommendation): <optional, ≥2 divergent angles>.
+  Fix: <the change you would make — one, concrete enough to act on>.
 
 ### Summary
 X passed, Y warning, Z critical, U 無法判定. [One sentence: can downstream deliver this?]

@@ -19,7 +19,7 @@ description: |
   不落檔 — returns findings inline to the caller (the /review dispatcher or the
   /plan launcher). NOT `/qa` (that authors `test/spec/`; you author nothing).
   NOT `code-reviewer` (that judges `lib/**`; you judge `test/**`).
-model: opus
+model: sonnet
 allowed-tools:
   - Bash
   - Read
@@ -123,6 +123,7 @@ scope and who closes it, never report it as a defect).
 ```
 ## Test-Design Review: <project>
 **Test files in diff:** N (engineer-owned: X · `test/spec/`: Y)
+**Cases graded:** C of C — <critical> critical · <warning> warning · <passed> passed · <U> 無法判定
 **Partition:** clean | <the breach>
 
 ### CRITICAL
@@ -137,8 +138,20 @@ X critical, Y warning, U 無法判定 across N files. [One sentence: will these 
 the bug next year?]
 ```
 
+**The `Cases graded` line is mandatory and never omitted, and the two numbers must
+be equal.** The denominator is countable — every case carries a `TC-<UNIT>-<N>`
+id (Iron Law 3), so `grep -c 'TC-[A-Z]' ` over the diff's test files is the
+number you must account for, and a case you could not grade is `無法判定` with its
+reason, never a silent omission. Without this line a run that graded 3 cases of
+40 and a run that graded all 40 cleanly emit the identical report — silence and
+"clean" look the same in a findings list, which is exactly what this line exists
+to separate (`code-reviewer`'s `coverage:` line is the same device for the same
+reason). Grading a subset because the diff is large is not a licence to shrink
+the denominator: say so on this line.
+
 If nothing surfaces: "All added / changed tests hold up against the `/qa`
-contract; partition clean."
+contract; partition clean." — still with the `Cases graded` line above it, or the
+claim covers an unknown number of cases.
 
 **Report-only.** Do **not** edit a test — every file has an owner, and writing
 into one would break the partition this review protects. Name the defect and its

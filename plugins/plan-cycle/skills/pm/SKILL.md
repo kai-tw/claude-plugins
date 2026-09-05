@@ -270,6 +270,35 @@ expensive point to discover it.
 
 State the decision in the closing report's `Slice:` line.
 
+## Split into sibling tasks — many things vs one thing cut smaller
+
+§Slice the cycle above cuts **one** feature (one problem/user/outcome) down
+to a validatable v1, revising the same row later. This is different: the ask
+is **already** ≥2 distinct problems/users/outcomes (Phase 4 — "two of any of
+those means you have two plans"), or Phase 3 picked **Roadmap**. Don't force
+that into one plan or one task.
+
+- **`ask`(§Working in a team) once**: propose the split — name each slice
+  with its own problem/user/outcome, and the order between them — your
+  recommendation first (`/plan` §Two interaction rules).
+- Author the **Roadmap** product plan (Phase 3) on the task `/plan` already
+  created — Now/Next/Later, each item one slice.
+- **Invoke the `archivist` skill once per slice** to open a new TaskList
+  task, same **Area** as the roadmap task. Each slice's own product plan
+  scopes to just that slice and cites the roadmap (`per <roadmap>
+  §Now/Next/Later`, `I2`) instead of restating it.
+- **Order between siblings.** No hard blocker → `Next` (do first) vs
+  `Backlog` (later). A real blocker (B needs A built first) → open B as
+  `Deferred`, **Trigger**: "`<A>` ships" — the field `todo-backlog.md`
+  already defines for "dependency landing," naming the specific sibling.
+- **The roadmap task closes out immediately**, same turn the siblings open —
+  a plan-only cycle, same as any other (`plan/SKILL.md` §Step 6). The row
+  survives close-out, citable by every sibling. Each sibling then runs its
+  own ordinary `/plan` cycle, independently, whenever picked up.
+
+State it in the closing report's `Split:` line — the sibling task URLs and
+their order/dependency.
+
 ## Project context
 
 Prioritization is worthless ungrounded — "retention over acquisition" is a
@@ -371,7 +400,7 @@ that works — oversized artifacts mask scope confusion as rigor.
 | **PRD** | Substantial features. Adds user stories, solution sketch (no mocks), rollout plan, dependencies, instrumentation. |
 | **PR-FAQ** | Bets that need narrative clarity. Forces the launch story before the build. |
 | **Strategy memo** (Rumelt's kernel) | "What's our approach to X?" — diagnosis + guiding policy + coherent actions. |
-| **Roadmap** | Outcome-themed Now / Next / Later, never dated feature lists. |
+| **Roadmap** | Outcome-themed Now / Next / Later, never dated feature lists — each item becomes its own sibling task (§Split into sibling tasks). |
 | **Opportunity Solution Tree** | Connecting outcome → opportunities → solutions → experiments. |
 | **Discovery brief** | Pre-build evaluation — what did we learn, what's confirmed / killed? |
 
@@ -396,7 +425,7 @@ For the section structure of the chosen artifact type, run:
 you think."
 
 **One problem, one user, one outcome per plan.** Two of any of those
-means you have two plans.
+means you have two plans — §Split into sibling tasks.
 
 Surface non-goals **explicitly**. Iron Law 3 isn't "prefer non-goals" —
 it's "name them, in writing, in the plan."
@@ -440,12 +469,13 @@ Then verify by judgment:
 - Any numeric target is grounded in a baseline, or annotated as
   "founder sets threshold at first data review" (P1.1)
 
-## Phase 6 — Rules audit gate（`blueprint-reviewer`，checklist mode）
+## Phase 6 — Rules audit gate（`pm-plan-reviewer`）
 
 撰寫完成後、**給 user 看 OQ 前**，這份 plan 必須通過 rules audit：由
-`blueprint-reviewer` 以 **checklist mode** 執行（旁觀者，**player ≠ referee，禁 PM 自審**）
+`pm-plan-reviewer` 執行（旁觀者，**player ≠ referee，禁 PM 自審**）
 ——**逐 principle → 逐 sub-check** 對照 PM 的 rules checklist（`references/rules.md`，
-單一檔案）。Phase 5 的自查是**你**便宜地先擋一輪，不是這道 gate 的替代品：規則你要懂，
+單一檔案）。`P8`（蒐集的 purpose / 最小化 / 敏感度 / 保留 / 權限 / 商店宣告）也在這一輪走完；
+plan 期沒有另一道 security / privacy gate，那兩個 reviewer 讀的是 diff 的真實 sink。Phase 5 的自查是**你**便宜地先擋一輪，不是這道 gate 的替代品：規則你要懂，
 但審的人不能是你。
 
 - **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下，**上限 3 輪**。
@@ -459,7 +489,7 @@ Then verify by judgment:
   改了沒重審＝未通過，先前的 green 不算數 —— 改動處正是新違規進來的地方，而它上一次被審時
   往往還不存在。（實測：兩次 P4.2 違規都出現在 founder 的裁決把一整個新機制納入範圍**之後**。）
 
-> 機制：`/plan` launcher 在 PM phase 撰寫後 spawn `blueprint-reviewer`（stage = PM plan）。
+> 機制：`/plan` launcher 在 PM phase 撰寫後 spawn `pm-plan-reviewer`。
 > 本 role **不自審**、也**不在 plan body 留 `## Memory Audit` 區塊** —— audit 是一道 gate，
 > 不是 plan 的一節。
 
@@ -538,8 +568,9 @@ Type: <one-pager / prd / prfaq / ...>
 Mechanism diff: <when the user proposed the mechanism — how it differs from the original / existing one; omit only if no mechanism changed>
 Riskiest assumption: <one line> — validate via: <cheap validation move> (Iron Law 4)
 Slice: <full scope this cycle | thin slice — core flow: <name>; rest deferred, see Non-goals>
+Split: <n/a — single task | N sibling tasks: <urls>, order/dependency: <...>>
 Open questions: <all resolved with the user, or the deferrals they explicitly confirmed — none left dangling (Iron Law 7)>
-Rules audit: <all passed | N 違規已修, 全 passed> (blueprint-reviewer checklist, Phase 6)
+Rules audit: <all passed | N 違規已修, 全 passed> (pm-plan-reviewer, Phase 6)
 Design follow-up: <none — no UI / inline in plan / the designer role delta / the designer role full>
 Stage → <Design Plan when Design follow-up routes to the designer role; else Engineering Plan>
 Next discovery step: <one-line concrete next move>

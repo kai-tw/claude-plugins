@@ -245,14 +245,18 @@ two checks are now written into the verdict protocol itself —
 this entry keeps the incident that justifies them.)
 
 **Distrust the review gates on "should this exist at all".** The engineer-stage
-gate (`blueprint-reviewer`) optimizes *within* the chosen design and
-will happily endorse the over-built option; it has no canonical-home step.
+gate (`engineer-plan-reviewer`) optimizes *within* the chosen design and will
+happily endorse the over-built option — a second face is always well-formed, so
+it reads as "added nicely". Criterion 10's canonical-home step exists **because**
+of the incident below, and is why that one dimension is the single escalation
+in the gate: a `warning` there goes to the founder rather than being quietly
+accepted.
 WHY: both gates preferred a NEW operator method + lock extraction over reusing an
 existing `syncMetadata` that already no-ops — to save one probe the codebase
 already tolerates; the founder invoked minimal-mechanism and the minimal option
-scored *higher* on re-review. Separately, a plan added `Book.language`
+came back *cleaner* on re-review. Separately, a plan added `Book.language`
 "projected from `BookMetadata.language`" — a second source of truth that drifted
-— and it **passed both gates** (they score a field as well-formed, never ask if
+— and it **passed both gates** (they judge a field as well-formed, never ask if
 it should exist). HOW: before accepting a gate-preferred abstraction, ask "is
 there a minimal option that reuses an existing method and deletes the whole
 sub-decision?"; for every new field/entity/marker, **grep for an existing

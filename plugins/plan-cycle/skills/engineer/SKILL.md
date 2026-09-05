@@ -131,8 +131,8 @@ from a clean result.
 >   (no Notion MCP here), **before the task-list approval gate** — the user
 >   approves the plan in its canonical Notion form, never a chat-only draft.
 > - **Review is not self-review.** After your draft, `/plan` spawns a separate
->   **isolated** `blueprint-reviewer` to score it (player ≠ referee). Fix every
->   returned weakness in place — no deferred, no dismiss.
+>   **isolated** `engineer-plan-reviewer` to judge it (player ≠ referee). Every
+>   `critical` is resolved before the plan proceeds — no deferred, no dismiss.
 
 
 # Engineering Plan Authoring
@@ -171,7 +171,7 @@ produce the engineering-plan artifact.
 >    against the canonical `.claude/rules/` entry for each concern,
 >    resolving items in the plan body or surfacing them as open questions
 >    (the concern → rule table is in Phase 8). The plan is *graded* by
->    `blueprint-reviewer` in Phase 8.5 — this is the pre-flight, not the
+>    `engineer-plan-reviewer` in Phase 8.5 — this is the pre-flight, not the
 >    gate.
 > 4. **Notion row + TaskCreate are paired artifacts.** The row body is
 >    canonical for content, TaskCreate canonical for live status — both
@@ -211,12 +211,13 @@ produce the engineering-plan artifact.
 >    product-plan commitment and design-spec observable item maps to a
 >    row, every row to a `Class.method` §Classes defines — the anti-drop
 >    inverse of "source from the spec, never invent."
-> 9. **Design quality is scored before approval (Phase 8.5).** The
->    `blueprint-reviewer` sub-agent scores the plan across scope-gated
->    quality dimensions; `approve` requires every in-scope dimension ≥
->    8. For each sub-8 dimension the engineer devises and applies the
->    fix, then re-spawns once as a verification round (prior scores dir
->    + diff); what is still sub-8 goes to the user, never a third spawn.
+> 9. **Design quality is judged before approval (Phase 8.5).** The
+>    `engineer-plan-reviewer` sub-agent walks the plan's scope-gated
+>    quality dimensions and returns findings by severity; `proceed` requires
+>    **no `critical`**. The engineer applies each finding's proposed fix or a
+>    better one of its own, then re-spawns once as a verification round (prior
+>    round JSON + diff); what is still open goes to the user, never a third
+>    spawn.
 >    This is the pre-approval gate against the *plan*; Iron
 >    Law 7's `/review` is the post-implementation gate against *code*.
 >    Full protocol: Phase 8.5.
@@ -249,7 +250,7 @@ the PM role; bug investigation that should go to `/bug-investigate`;
 authoring **spec-derived** tests — the ones pinning the shipped flow to the
 approved plan are `/qa`'s (`testing.md` Rule 1); MASVS L2 hardening demands (route
 to the `security-reviewer` for the risk-based call); ghostwriting product or
-design content; blueprint-review skip / 自審 (Phase 8.5); plans missing
+design content; engineer-plan-review skip / 自審 (Phase 8.5); plans missing
 the audit pass (Iron Law 3); plans with Notion-row / TaskCreate drift (Iron Law 4);
 "ship without review" or "skip the review, looks fine" requests
 that bypass Phase 12 (Iron Law 7).
@@ -423,7 +424,7 @@ deps-graph) parallelises as filesystem read/grep.
 **Run `notion-payload template engineering-plan` and `hints engineering-plan`
 first**, alongside the SOPs below. The questionnaire's cells *are* the drafting
 constraints — answering `為何要新增` honestly is the check that nothing else can
-make, because `blueprint-reviewer` scores inside the design space you drew and
+make, because `engineer-plan-reviewer` judges inside the design space you drew and
 will endorse a well-built thing that should not exist. A constraint honoured
 here costs a sentence; missed here, it ships. **Before sketching, consult the
 `house-rules` skill (§Engineering taste)** — "how much to build" is exactly the
@@ -585,15 +586,15 @@ classes; named-method-reference rule for stream subscriptions
 **Author against the dimensions while you sketch.** The goal of Phase
 8.5 is to converge to a single *confirming* review pass, not to remove
 review — so author the draft against the **same rubric the reviewer
-scores** (`.claude/agents/blueprint-reviewer.md` §"Criterion 1–11" — the SSOT,
-not re-copied), then **self-score the draft and lift anything < 8 before
-spawning the reviewer**. Run
+applies** (`.claude/agents/engineer-plan-reviewer.md` §"Criterion 10 / 11" — the
+SSOT, not re-copied), then **self-check the draft and fix anything you would
+call `critical` yourself before spawning the reviewer**. Run
 `plan-scope-gate <plan-path>` to scope the
 in-scope dimensions, design each plan section for the criterion it earns,
-and grade yourself first. This raises the floor so the reviewer's first
+and judge yourself first. This raises the floor so the reviewer's first
 pass confirms rather than iterates; it does **not** retire the
 independent gate (player ≠ referee — you can't self-catch blind spots).
-Full protocol (the criterion→section routing map + the self-score gate):
+Full protocol (the criterion→section routing map + the self-check gate):
 `${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/review-loop.md` §"Author against the
 dimensions FIRST".
 
@@ -611,7 +612,11 @@ walk-through ratifies are made *with* the user here.
 Baseline the migration surface against the **last released version**,
 not HEAD: in-flight users run the last release, so the delta that
 matters is release→dev. Run
-`tool/version_diff.sh <path> [<path>…]`
+`version-diff <path> [<path>…]`
+(bare name — it ships with this plugin; `--tag-pattern 'v*'` when the repo tags
+more than releases, and **read the `## Baseline:` line it prints**: it names the
+tag and sha it resolved, and a baseline that is not a real release makes every
+line under it the wrong comparison)
 on the migration-relevant paths — it resolves the baseline to the last
 release tag (falling back to `main`), reports whether each path even
 existed at that baseline (an ABSENT path has no migration *from* it),
@@ -626,9 +631,17 @@ describes an intention that nothing verifies; the test is the same statement,
 executable. (Where it lands is unchanged: a one-time migration under
 `lib/features/migration/processes/`, or default-on-read-fallback.)
 
-The discovery step above is what stays prose, because it is the half a test
-cannot do: **you cannot write a migration test for a schema change you have not
-noticed.** Tests verify; they do not find.
+Discovery is the half a test cannot do — **you cannot write a migration test for
+a schema change you have not noticed**; tests verify, they do not find — so
+`version-diff` enumerates the candidates rather than leaving you to spot them in
+the diff: a `## Persistence surfaces in this delta` section listing serialized
+types whose declarations changed, store files whose key literals changed, and
+data-file name literals. **Every surface it lists owes §Migration impact a row**
+(a migration test, or a stated read-compatibility).
+
+What stays yours is the other direction: it is a keyword scan over the paths you
+scoped, so **its silence is not a clearance**. It prints what it searched for —
+read that, and add the surface it could not have matched.
 
 Three impacts are neither testable nor caught elsewhere, so name them here:
 
@@ -885,7 +898,7 @@ none of it auto-loads while you are drafting a Notion plan row.
 | Security, privacy | the `security-reviewer` / `privacy-reviewer` gates own these — don't self-grade; just make sure the plan gives them something to review |
 | Lint compliance | the project's lint command (the commit gate, not this phase) |
 
-No downstream gate walks a checklist for this plan — `blueprint-reviewer`
+No downstream gate walks a checklist for this plan — `engineer-plan-reviewer`
 (Phase 8.5) grades *consequences* and `plan_lint.sh` compares facts. So a
 concern you wave through here is not deferred to a gate; it is decided.
 
@@ -912,7 +925,7 @@ context. Split the work by *kind*, not by parallelism:
 
 The genuinely *independent* check — the fresh-context reviewer that
 catches what the hot-context author can't see — is Phase 8.5's
-`blueprint-reviewer` (player ≠ referee). Phase 8 is the author's pre-flight;
+`engineer-plan-reviewer` (player ≠ referee). Phase 8 is the author's pre-flight;
 Phase 8.5 is the gate.
 
 The audit is the difference between an engineering plan and a
@@ -925,51 +938,49 @@ Phase 8 confirms the plan **complies with the project's rules** — rule
 compliance is necessary but not sufficient: an audit-clean plan can
 still be O(N²) on a hot path, leaky across feature boundaries, or carry
 an §Error policy matrix that ticks every cell while missing half the
-real failure modes. This phase scores the plan across the reviewer's
+real failure modes. This phase reviews the plan across the reviewer's
 scope-gated **design-quality** dimensions that the rule-compliance audit
-doesn't cover, and iterates until every in-scope dimension is ≥ 8,
+doesn't cover, and iterates until there are no critical findings,
 before the user is asked to approve in Phase 10. Iron Law 9 binds: this
 phase is non-skippable.
 
 The loop, in brief — full protocol in
 **`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/review-loop.md`**:
 
-1. **Spawn `blueprint-reviewer`** (foreground; report-only, see
-   `.claude/agents/blueprint-reviewer.md`) against the drafted plan, listing
+1. **Spawn `engineer-plan-reviewer`** (foreground; report-only, see
+   `.claude/agents/engineer-plan-reviewer.md`) against the drafted plan, listing
    any alternative options to rank.
-2. **Read the verdict** — per-dimension scores (1–10) + an evidenced
-   **weakness** per sub-8 dimension (what's wrong + failure scenario +
-   citation). The reviewer names weaknesses; it does **not** propose
-   fixes. Verdict: `approve` (every in-scope dimension ≥ 8) /
-   `approve-with-improvements` (some 6–7) / `send back to revise`
-   (any < 6).
-3. **Devise + apply the fix yourself** for every sub-8 dimension —
-   snapshot the draft first (the verification diff); you own the design;
-   research the lift path (`WebSearch` / `WebFetch`) when it's
+2. **Read the verdict** — findings by severity, each with an evidenced
+   problem (what's wrong + failure scenario + citation) **and the `Fix:` the
+   reviewer would make**. Verdict: `blocked` (one or more `critical`) or
+   `proceed` (none).
+3. **Apply that fix, or a better one of your own**, for every critical and
+   warning — snapshot the draft first (the verification diff); you own the
+   design; research the fix path (`WebSearch` / `WebFetch`) when it's
    non-obvious; route to the PM role / the designer role via `## Open
-   questions` when the lift needs new scope; mirror each fix into
-   `## Revision history` naming the weakness ids it resolves.
+   questions` when the fix needs new scope; mirror each fix into
+   `## Revision history` naming the finding ids it resolves.
 4. **Verification round — the second and last spawn.** Brief carries
-   round 1's `Scores dir:` as `--prev` + the plan diff; the reviewer
-   dispositions every prior weakness and tags every new one by origin.
-   Anything still sub-8 goes to the user grouped by origin (fix didn't
+   round 1's `Round JSON:` as `--prev` + the plan diff; the reviewer
+   dispositions every prior finding and tags every new one by origin.
+   Anything still open goes to the user grouped by origin (fix didn't
    land / fix broke it / newly-observed with its `missed_because`) —
    never a third spawn.
 
-   **A sub-8 that a cut would remove is a size defect, not a quality
+   **A finding that a cut would remove is a size defect, not a quality
    one.** Before handing the user the residue, check where the surviving
-   weaknesses sit: all in §Classes rows a later phase could own, none in
+   findings sit: all in §Classes rows a later phase could own, none in
    the rows this phase needs → propose just-in-time phasing (§Right-size
    the plan) to the founder — the cut, what stays, what moves to §Later
    phases. On approval, rev to this phase only and re-enter Phase 8.5;
    the body is now a different, smaller one, so its two rounds start
-   over. A weakness that survives the cut, or that spans every phase,
+   over. A finding that survives the cut, or that spans every phase,
    goes to the user as above — splitting does not resolve it.
 5. **Cite the review log** in the plan header so the calibration is
    auditable months later.
 
 Authoring-against-the-dimensions (Phase 3) is what makes step 1 return
-`approve` on the first pass; the reviewer stays the independent gate
+`proceed` on the first pass; the reviewer stays the independent gate
 regardless. This phase does **not** re-run Phase 8's rule audit, edit
 upstream artefacts, invoke the `security-reviewer`, or write tests — route those
 out per the review-loop reference.
@@ -977,15 +988,15 @@ out per the review-loop reference.
 ## Phase 9 — 每次修訂都重審（audit-first）
 
 **這份計畫沒有逐條走查的 checklist gate。** 起草約束是問卷本身的格子，判斷歸 Phase 8.5 的
-`blueprint-reviewer`（維度 + 三條橫切檢查），機械比對歸 Phase 8 的 `plan_lint.sh`。
+`engineer-plan-reviewer`（維度 + 三條橫切檢查），機械比對歸 Phase 8 的 `plan_lint.sh`。
 留在這一格的是唯一無法外包的紀律：**重審的時機**。
 
 任何對 plan body 的更動——co-creation 決議、founder 回饋、Phase 11 divergence rev、後續
-revision——都要**先重跑 Phase 8 的 `plan_lint.sh`、再把 `blueprint-reviewer` 對改動處
+revision——都要**先重跑 Phase 8 的 `plan_lint.sh`、再把 `engineer-plan-reviewer` 對改動處
 ＋其波及範圍重跑一次，才往下（task-list approval / 實作 / resume）**。改了沒重審＝未通過，
 先前的 green 不算數——改動處正是新缺陷進來的地方，而上游那一輪從來沒看過它。
 （範例：一次 rev 把兩個語意不同的 user action 折成同一個 terminal value，悄悄觸發原本被
-其中一 arm 擋掉的導航——這正是 `blueprint-reviewer` 的 PM-scope 橫切檢查在抓的東西。）
+其中一 arm 擋掉的導航——這正是 `engineer-plan-reviewer` 的 PM-scope 橫切檢查在抓的東西。）
 
 若過程中浮現問卷格子沒問到的新 learning：把它變成 schema 裡的一個欄位或一句 hint
 （`skills/archivist/schemas/engineering-plan.mjs`），不要另立規則檔——問卷問得到的才會被回答。
@@ -995,10 +1006,10 @@ revision——都要**先重跑 Phase 8 的 `plan_lint.sh`、再把 `blueprint-r
 
 ## Phase 10 — Save, review with the user, seed TaskCreate, request approval
 
-**Order matters: the blueprint-reviewer (Phase 8.5) reviews the engineering
+**Order matters: the engineer-plan-reviewer (Phase 8.5) reviews the engineering
 plan _draft_ BEFORE it is posted as the Engineering Plan DB row.** The
-review step needs no Notion access — it scores the in-thread draft. Once
-Phase 8.5 passes (every in-scope dimension ≥ 8), you author the row **and
+review step needs no Notion access — it judges the in-thread draft. Once
+Phase 8.5 passes (no critical findings), you author the row **and
 upload it to Notion BEFORE the task-list approval gate** — the founder
 reviews and approves the plan in its canonical, founder-readable Notion form,
 not a chat-only draft (a plan approved only in chat is a plan the founder never
@@ -1145,10 +1156,9 @@ Source: the feature's Notion task (Product Plan + Design Plan rows)
 Mode: <full / phased (phases authored: <n>/<N>) / delta (parent: <Engineering
       Plan DB row>) / single-slice>
 Audit: <count> items resolved, <count> open questions surfaced
-Plan review: blueprint-reviewer (不落檔; verdict recorded in the plan header)
-              verdict: <approve | approve-with-improvements>; every in-scope
-              dimension ≥ 8 after <N> cycle(s) | escalated: <dimension>
-              accepted at <score> by user
+Plan review: engineer-plan-reviewer (不落檔; verdict recorded in the plan header)
+              verdict: proceed; no critical findings after <N> round(s)
+              | accepted: <dimension> <finding id> carried as debt by user
 Handed to the founder: <Notion row URL> — awaiting their review
               <their changes folded into Rev <n> and re-uploaded | no changes requested>
 Plan lint: <PASS | N hard failures 已修> (plan_lint.sh, Phase 8)
@@ -1184,7 +1194,7 @@ reach implementation, not while drafting.
   out wrong mid-implementation (layer doesn't compose, a race
   surfaces, a library fails a constraint): stop, update the affected
   tasks, write the change into the Notion row body + `## Revision
-  history`, re-run `plan_lint.sh` and `blueprint-reviewer` on the rev'd
+  history`, re-run `plan_lint.sh` and `engineer-plan-reviewer` on the rev'd
   plan (Phase 9), re-request approval, resume.
   Route scope divergence to the PM role, UI divergence to the designer
   role, security divergence to the `security-reviewer`. Never silently
@@ -1237,7 +1247,7 @@ Phase 3 and by the `engineering-plan` body schema. The archivist's
 an engineer or a reviewer, and a pointer they can't grep is a pointer they
 have to re-derive. Every pointer is still **verified against source at
 authoring time** — an unchecked path or a mis-stated symbol is worse than
-none, and is what `blueprint-reviewer` grades.
+none, and is what `engineer-plan-reviewer` judges.
 
 The TaskCreate task list mirrors the conversation language — it is
 session-scoped and less audit-relevant for cross-time readers.
@@ -1249,7 +1259,7 @@ session-scoped and less audit-relevant for cross-time readers.
 engineering-plan` 讀得到）——格子在落筆的那一刻施加約束，比指望作者回想另一個檔案可靠。
 
 把關分工：**問卷**問「該不該存在、查證了沒」（§Classes 的 `為何要新增` /
-`既有方法夠嗎`）· **`plan_lint.sh`** 比對事實 · **`blueprint-reviewer`** 判斷後果，
+`既有方法夠嗎`）· **`plan_lint.sh`** 比對事實 · **`engineer-plan-reviewer`** 判斷後果，
 外加三條橫切檢查（PM-scope 授權、對既有 code 的斷言、plan integrity）。
 
 > Phase 8 的 self-check 沒有第二份清單 —— 它直接指向 `.claude/rules/` 的各章節

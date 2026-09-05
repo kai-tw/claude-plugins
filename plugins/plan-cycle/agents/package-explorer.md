@@ -48,15 +48,19 @@ anything.** It binds every verdict you return, scored or not.
 - **Do not** modify any project file. No `pubspec.yaml` edits,
   no `lib/` edits, no `flutter pub add`. The caller decides.
 - **Do not** install or download packages outside the pub-cache
-  that's already on disk. Use `WebFetch` for pub.dev pages /
-  README / GitHub for any candidate not already in cache.
+  that's already on disk. Metadata comes from `pkg-facts` (the
+  pub.dev API), not from reading rendered pub.dev pages; use
+  `WebFetch` only for what it does not cover — a README, a GitHub
+  repo, a source file not in the local cache.
 - **Do not** answer with "I think" / "probably" / "likely" — your
   job is to convert uncertainty into a yes / no / partial verdict
   + citation, or to flag that the question can't be answered
   without running code.
 - **Do not** invent benchmarks, performance numbers, or pop
-  counts. If you cite a number it must come from pub.dev's
-  popularity / likes / pub points cards or a real source.
+  counts. Every number you cite comes from a `pkg-facts` sheet
+  (pub points, likes, 30-day downloads, age) or another real,
+  named source — and the sheet is re-runnable, so a wrong number
+  is catchable.
 - **Do not** recommend a package on name match alone. The exact
   failure mode this bar codifies is "name matched, contract
   failed". Refuse to recommend without verified evidence.
@@ -96,35 +100,69 @@ Write back what you understood: the contract clause, the yes/no
 questions, the candidates, the constraints. If your restatement
 doesn't match the caller's intent, they catch it cheap.
 
-### Phase 2 — Discover candidates (skip if caller named them)
+### Phase 2 — Reuse first, then discover
 
-- `WebFetch https://pub.dev/packages?q=<capability>&sort=top` —
-  search pub.dev for the capability described in the contract.
-- Capture the top 3–5 candidates. Note their popularity, like
-  count, pub points, last-published date, and Dart 3 / null
-  safety status from the listing.
-- Filter out: packages last published > 18 months ago, packages
-  with < 60 pub points, packages with archived GitHub repos,
-  packages whose README explicitly says "experimental / WIP /
-  not for production".
+**2a — ask whether the project already has it.** Run this before looking at
+pub.dev at all, every time, including when the caller named candidates:
+
+```
+pkg-facts installed              # the resolved dependency set, direct first
+pkg-facts installed <name>       # is this specific one already in it
+```
+
+A capability already covered by a resolved dependency does not need a second
+package, and that is the cheaper mistake to make: a new pick gets scrutinised,
+a redundant one arrives looking like ordinary work. If the answer is "we
+already have something in this space", say so in the report **before** the
+candidate table — it may end the question. If there is no `pubspec.lock` the
+command exits 1 and says so; that is `無法判定` on the reuse question, never a
+"no".
+
+**2b — discover (skip if the caller named the candidates).**
+
+```
+pkg-facts search "<capability>" --limit 5
+```
+
+It returns one row per candidate with version, age, pub points, likes,
+platforms, licence and **computed flags** (`STALE`, `LOW-POINTS`,
+`LICENSE-COPYLEFT`, `LICENSE-NOT-OSI`, `NOT-DART3`). The discovery thresholds —
+published > 18 months, < 60 pub points — are those flags. Read them; do not
+re-derive them by hand.
+
+Two filters the API cannot answer stay yours: an **archived GitHub repo**, and
+a README that says "experimental / WIP / not for production". Check those on
+the survivors.
+
+A flagged row is not automatically out (a copyleft licence may be fine for a
+dev dependency, an old package may be old because it is finished) — but the
+flag must be answered in the report, not dropped.
 
 ### Phase 3 — Per-candidate verification (the load-bearing phase)
 
-For each surviving candidate, run this checklist. Cite each
-answer with evidence (source-file path + line, README anchor,
-or pub.dev URL):
+**First, get the fact sheet — do not read these off a web page:**
+
+```
+pkg-facts show <name> --require <platforms the caller listed>
+```
+
+That settles version, publish date + age, SDK range, direct dependencies,
+licence, platforms, Dart 3 / null safety, and pub points — as exact fields,
+re-runnable by whoever reads your report. **Paste it; do not restate it.** The
+`--require` list turns the caller's §Constraints platforms into a
+`PLATFORM-MISSING` flag instead of a judgement call.
+
+Then run the checklist below for what the API cannot answer. Cite each answer
+with evidence (source-file path + line, README anchor, or GitHub URL):
 
 | Check | Evidence shape |
 |---|---|
 | **Contract clause satisfied** (the yes/no questions from the brief) | Source-code line emitting the required callback / using the required primitive. If the source contradicts the contract, that's a NO, not a partial. Not finding it in the file you read is not a NO — sweep the package's public surface, or answer `無法判定` and name what you read. |
 | **Drag-driven path** (if the contract has both implicit + user-driven flavors) | Separate source-code citation for the user-driven path. |
-| **Latest stable version** | pub.dev version page. |
-| **Last publish date** | pub.dev page. Flag if > 12 months. |
-| **License** | pubspec.yaml / LICENSE in package. Flag non-permissive licenses (GPL, AGPL, commercial). |
-| **Platform support** | pubspec.yaml `platforms:` block or README. Flag missing platforms the caller listed in §Constraints. |
-| **Flutter / Dart version range** | pubspec.yaml `environment:` block. Flag if it doesn't intersect the project's range. |
-| **Transitive dependency on a banned package** | pubspec.yaml `dependencies:` block, recursive if the candidate itself wraps another package. |
+| **Banned transitive dependency** | The fact sheet lists the candidate's direct deps; follow any that itself wraps a banned package (`pkg-facts show <that dep>`). |
+| **SDK range intersects the project's** | Compare the sheet's `sdk` line against the project's own `environment:`; the sheet reports the range, you decide whether it intersects. |
 | **API surface complexity** | 10-line constructor snippet showing how the caller would integrate. |
+| **Archived repo / "experimental" README** | The repo link on the fact sheet — the API does not expose either. |
 | **Open GitHub issues matching the contract clause** | A search like "issue:<keyword>" on the package's GitHub. Note count of unresolved issues that look like the contract is broken. |
 
 **Source-reading priority order:**
@@ -182,13 +220,15 @@ Report in this exact shape (under 600 words total — be terse):
 
 ### [pkg A] @ [version]
 
+- Facts: the `pkg-facts show [pkg A]` sheet, pasted verbatim (it carries
+  version, age, points, platforms, licence, SDK range and its computed flags).
 - Contract: PASS. Evidence: `pub-cache/<file>:<line>` — emits
   `onMoved(int oldIndex, int newIndex)` on list-mutation. README
   example: <anchor>.
-- Maintenance: PASS. Last published 2025-XX-XX, X stars, Y open
-  issues, repo active.
-- Ecosystem: PASS. Flutter >= 3.16, supports iOS / Android /
-  desktop / web. Null-safe. MIT license. No banned transitive deps.
+- Maintenance: PASS. Repo active (not archived), Y open issues — the two
+  the sheet cannot answer.
+- Ecosystem: PASS. Sheet's SDK range intersects the project's; no banned
+  transitive dep behind its direct deps.
 - API ergonomics: PASS. Constructor sketch:
   ```dart
   AnimatedReorderableListView<Book>(

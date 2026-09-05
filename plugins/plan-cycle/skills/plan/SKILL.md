@@ -56,7 +56,7 @@ change reports here first. It does two jobs:
 The main thread **is** the author of every plan, spec, and test — it runs each
 role's contract (`pm` / `designer` / `engineer` / `qa`) in-context and asks the
 user directly. It spawns **isolated sub-agents only for the gates that must stay
-independent** — the review roles (`blueprint-reviewer` /
+independent** — the review roles (`engineer-plan-reviewer` /
 security / privacy / `code-reviewer`, so the referee never grades the player) and
 `translator`. Notion writes go through the `archivist` skill, also run in-thread.
 `/plan` and `/review` **share one review sub-agent pool** — `/review` is the
@@ -240,7 +240,9 @@ the main tree.
 ### Step 2 — Ensure the feature's TaskList task exists (only task-creator)
 
 Every feature's planning artifacts link to **one** anchor: its **TaskList
-task**. `/plan` is the sole task-creator.
+task**. `/plan` is the sole task-creator — this step runs once per feature,
+and **once per sibling** when the PM phase splits a big ask into several
+(`pm/SKILL.md` §Split into sibling tasks), never a second mechanism.
 
 - **Task exists:** note its URL; carry it through the cycle. Leave its **Stage**
   untouched.
@@ -299,8 +301,8 @@ Open a phase only when its criterion is met:
 | **designer** | the change produces or alters any user-visible surface | `designer` |
 | **translator** | the change adds or changes user-facing copy needing i18n | `translator` |
 | **engineer** | any non-trivial implementation (always, for code work) | `engineer` |
-| **security** (cross-cutting gate) | **boundary-gated at every stage** — spawn only when the artifact touches a trust boundary / attack surface (PM plan: a new online mechanism, permission boundary, or failure path; engineer plan: §Classes; code: the diff). Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `security-reviewer` |
-| **privacy** (cross-cutting gate) | **boundary-gated at every stage** — spawn only when the artifact touches a data-egress sink / telemetry / collection (PM plan: new collection or a new event; engineer plan: §Classes; code: the diff). Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `privacy-reviewer` |
+| **security** (cross-cutting gate) | **the code only** — boundary-gated on the diff's own sink signals. Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `security-reviewer` |
+| **privacy** (cross-cutting gate) | **the code only** — boundary-gated on the diff's own sink signals. Whether a field should be collected **at all** is PM rule `P8`, walked at ① by `pm-plan-reviewer`. Default to spawn when unsure — fail-closed | `privacy-reviewer` |
 | **QA test** | any code lands | `qa` |
 | **code review** | after code is written | `code-reviewer` |
 | **conformance** | after code + after QA's spec tests, when an approved product / design plan exists — **residual only**: §Non-goals violations, token-level drift, doc the change made false, and the `spec-should-change` judgment | `conformance-reviewer` |
@@ -390,10 +392,12 @@ Authoring main sequence (fixed order, non-overlapping):
   downstream of translator in the DAG and its scope depends on what shipped
   upstream.
 - **Security / privacy are cross-cutting reviewers, boundary-gated everywhere.**
-  They intervene at three points — the PM plan (mechanism attack surface +
-  telemetry / data minimization), the engineer plan (threat model + data flow),
-  and the code (sinks) — and at **each** of the three the spawn is gated on the
-  artifact actually touching that boundary (see the audit-matrix note). The
+  They intervene at **two** points — the PM plan (mechanism attack surface +
+  telemetry / data minimization: *should this exist at all*) and the code
+  (sinks: *is it built right*) — and at **both** the spawn is gated on the
+  artifact actually touching that boundary (see the audit-matrix note). There is
+  deliberately no engineer-plan spawn: a plan's threat model and data flow are
+  the plan's *claim* about sinks, and the diff is where the sinks are. The
   **designer plan does not run security / privacy by default** (a
   screen layer rarely adds collection or attack surface). If a design introduces
   a new data display / collection interaction, route back to the **PM role** to
@@ -421,9 +425,9 @@ it never grades a draft that is about to change.
 
 | Stage produced | ① Sanity (cheap, before Resolve) | ② Adversarial (opus, judgment, after Resolve) |
 |---|---|---|
-| **PM plan** | `blueprint-reviewer`(checklist mode, pm rules) | `feasibility-reviewer`(designer + engineer lens) ∥ `security-reviewer` — *boundary-gated* ∥ `privacy-reviewer` — *boundary-gated* |
+| **PM plan** | `pm-plan-reviewer` (pm rules `P1`–`P8` + plan integrity) | `feasibility-reviewer`(designer + engineer lens) |
 | **designer plan** | `design-lint` (script, not an agent — the shipped widgets) | `ux-reviewer`(usability, against the renders + widget source) ∥ `feasibility-reviewer`(engineer lens) |
-| **engineer plan** | `plan_lint.sh` (script, not an agent) | `blueprint-reviewer` ∥ `security-reviewer`(threat model) — *boundary-gated* ∥ `privacy-reviewer`(data flow) — *boundary-gated* |
+| **engineer plan** | `plan_lint.sh` (script, not an agent) | `engineer-plan-reviewer` |
 | **code (after implementation)** | `code-reviewer` | `security-reviewer`(code) — *boundary-gated on the diff* ∥ `privacy-reviewer`(code sinks) — *boundary-gated on the diff* |
 | **after QA** | — | `conformance-reviewer` — the residue QA's spec tests can't pin ∥ `test-reviewer` — test design, both halves ∥ `consistency-reviewer` — cross-feature mechanism parity, *boundary-gated*: runs when the plan carries §Conformance `同儕：` rows, or the diff touches a mechanism the project's `.claude/rules/consistency.md` table names, or spans ≥ 2 features |
 
@@ -431,15 +435,14 @@ Because PM and designer share one round (§Step 4), their two Sanity cells run a
 one batch and their two Adversarial cells as one battery — one Resolve between
 them, not two.
 
-**`blueprint-reviewer` is the ① reviewer for every plan**, with the checks
-rehomed **by kind**:
+The ① cell is a different agent per stage, with the checks rehomed **by kind**:
 
 - **The checklist walk stays a walk, and stays independent.** A PM plan gets
-  `blueprint-reviewer` in **checklist mode** — one pass over
-  `pm/references/rules.md`, passed / violation / na per sub-check. An author
+  `pm-plan-reviewer` — one pass over `pm/references/rules.md` `P1`–`P8` plus
+  `§Plan integrity`, passed / violation / na / 無法判定 per sub-check. An author
   may know its rules; it may never grade itself (player ≠ referee), so this cell
   is never a self-check.
-- **Engineering judgment → the dimensions**, inside `blueprint-reviewer`'s scored
+- **Engineering judgment → the dimensions**, inside `engineer-plan-reviewer`'s walked
   dimensions and cross-cutting checks.
 - **Design judgment → `ux-reviewer`.** The designer rules also live inside the
   ② usability sweep, so a spec that lies about state, hides a distinction in one
@@ -457,8 +460,8 @@ rehomed **by kind**:
 - **① Sanity — loop to green, capped at 3 rounds.** It walks a **finite,
   enumerated checklist**, so green is a real state and a re-run genuinely verifies
   the fix rather than producing a fresh opinion — which is also why it is the
-  cheap tier. For the PM plan and design spec that walk is
-  `blueprint-reviewer` in checklist mode (**旁觀, 禁自審**): every `violation`
+  cheap tier. For the PM plan that walk is
+  `pm-plan-reviewer` (**旁觀, 禁自審**): every `violation`
   fixed in place, no deferred and no dismiss, re-spawn, loop. The loop earns its
   keep — one measured cycle took 5 rounds, and a later round caught that the
   author's *fix* was itself wrong (a weak undocumented token substituted where a
@@ -475,8 +478,8 @@ rehomed **by kind**:
   measures the gate's own variance rather than the plan's quality. So: run it
   once; resolve every finding; then run **one** verification pass scoped to what
   changed plus its blast radius, **briefed with the prior findings** so it
-  dispositions each one rather than re-deriving (for `blueprint-reviewer` this is
-  the `--prev` round — `agents/blueprint-reviewer.md §The verification round`).
+  dispositions each one rather than re-deriving (for `engineer-plan-reviewer` this is
+  the `--prev` round — `agents/engineer-plan-reviewer.md §The verification round`).
   - **`critical` blocks until resolved** — unchanged, and non-negotiable. What is
     dropped is re-deriving the whole judgment each round, not the blocking.
   - **`warning` never triggers a loop** — it goes to the founder to weigh, or is
@@ -515,64 +518,65 @@ ownership and shared-state defects (a capability sitting in the wrong layer, a
 private field shared across callers) are found by judgment, not by execution, and
 stay worth sending.
 
-**`blueprint-reviewer` runs on every engineer plan** — never skipped, not even on
+**`engineer-plan-reviewer` runs on every engineer plan** — never skipped, not even on
 a single-slice plan, which would otherwise have no judgment gate at all, only
 a script. The cost stays proportionate because its own **Stage 1b scope-gate**
-right-sizes the fan-out over its **five** dimensions — the ones expensive to
-reverse once code exists — and a single-slice plan dispatches only those
-whose surface it actually touches. The other seven (time, space, scalability,
-extendability, error handling, testability, startup) are graded on the diff by
-`code-reviewer`, which declares them in its `coverage:` line; the split is
-recorded once in `notion-payload criteria engineering-plan`.
+right-sizes the fan-out over its **two** dimensions — abstraction / reuse /
+ownership, and migration & back-compat, the two that ask *should this exist at
+all* — and a single-slice plan dispatches only those whose surface it actually
+touches. Package choice is not a third: `package-explorer` returns a
+source-evidenced verdict that the review carries intact rather than re-judging. Everything that asks *is it built right*
+(time, space, scalability, extendability, coupling, correctness & race, error
+handling, testability, startup) is graded on the diff by `code-reviewer`, which
+declares all nine in its `coverage:` line; the split is recorded once in
+`notion-payload criteria engineering-plan`.
 
-**Security / privacy are boundary-gated at EVERY stage — including the PM plan.**
-Decide the two reviewers **independently** (one may be in scope while the other
-is not); when in doubt, spawn (fail-closed).
+**Security / privacy are gated at the code, and only there.** Decide the two
+reviewers **independently** (one may be in scope while the other is not); when in
+doubt, spawn (fail-closed). Gate on the **actual diff, NOT the plan's claim** —
+the code is where real sinks live. Spawn `security-reviewer` / `privacy-reviewer`
+only when the diff **introduces** one of these mechanical sink signals: a new
+network / HTTP call, a new non-`debug` `LogSystem` interpolation, a new
+persistent-storage or file write, a new platform-channel call, a new dependency,
+or a `Clipboard` / `Share` sink. A diff that adds **none** — a pure removal (a
+deleted egress), or a delta on an already-reviewed feature that adds no new sink
+— skips the corresponding gate. Detect the signals mechanically from `git diff`
+before spawning; any hit, or any ambiguity about whether a line is a sink, →
+spawn (fail-closed). The removal case is the clearest skip: a diff whose content
+is the *deletion* of an egress cannot introduce one.
 
-- **PM plan** — gate on the **mechanism**: spawn `security-reviewer` when the
-  plan adds or changes an online mechanism, a permission boundary, or a **failure
-  path / error source**; `privacy-reviewer` when it adds collection, a new event,
-  or changes what leaves the device. A plan that touches none — a copy-honesty
-  fix, a pure UI-state reclassification — skips the corresponding gate.
-  *Evidence:* one cycle's PM plan drew 4 `security-reviewer` spawns and 4
-  consecutive passes with **zero** graded findings; two independent ledger
-  entries nominated the always-on rule for demotion. Its two genuinely useful
-  contributions that cycle were a fact correction `privacy-reviewer` also caught
-  in the same batch, and a constraint the engineer-plan gate re-derives anyway.
-  The failure-path trigger above is deliberate: that cycle's scope-growing
-  decision *did* add a new failure path, and would still fire.
-- **Engineer plan** — gate on **§Classes**: spawn `security-reviewer` only when
-  §Classes touches a trust boundary / attack surface, `privacy-reviewer` only
-  when it touches a data-egress sink / telemetry / collection. A
-  behavior-preserving refactor (DI rewiring, consolidation, UI plumbing) that
-  touches neither skips the corresponding gate.
-- **Code** — gate on the **actual diff, NOT the plan's claim** (the code is
-  where real sinks live, so a plan's "no boundary" claim can't be trusted here —
-  the *diff* must be read). Spawn `security-reviewer` / `privacy-reviewer` only
-  when the diff **introduces** one of these mechanical sink signals: a new
-  network / HTTP call, a new non-`debug` `LogSystem` interpolation, a new
-  persistent-storage or file write, a new platform-channel call, a new
-  dependency, or a `Clipboard` / `Share` sink. A diff that adds **none** — a
-  pure removal (a deleted egress), or a delta on an already-reviewed feature
-  that adds no new sink — skips the corresponding gate. Detect the signals
-  mechanically from `git diff` before spawning; any hit, or any ambiguity about
-  whether a line is a sink, → spawn (fail-closed). The removal case is the
-  clearest skip: a diff whose content is the *deletion* of an egress cannot
-  introduce one.
+**Neither runs on a plan — engineer or PM.** Every rule in
+`review/rules/security/` is anchored to a parser sink, a credential, a
+deep-link parameter or a dependency lock, and every rule in
+`review/rules/privacy/` to a collection-site `file:line` or a log template. A
+plan has none of them: it states a *claim* about sinks while the diff *is* the
+sinks, so a plan walk grades a code checklist against prose. Measured: the
+engineer-plan spawn was nominated as pure latency by five consecutive cycles,
+every one self-exiting `passed` with zero findings; the PM-plan security spawn
+ran 4 times in one cycle for 4 passes and zero graded findings, and its two
+useful contributions were a fact correction `privacy-reviewer` caught in the same
+batch and a constraint the engineer gate re-derives anyway.
 
-Evidence: five consecutive cycles nominated the always-on **engineer-plan**
-spawn as pure latency (`shared-search-bar → integration-test → #89 → #91 →
-#92`), and three consecutive cycles then nominated the always-on **code-stage**
-spawn on a no-new-sink / removal diff (PR #105 increment A · PR #105 increment C
-· #109 — the last a diff that *deleted* the egress) — every one self-exited
-`passed` with zero findings — while the same cycles show security and privacy
-each independently earning a spawn when their boundary *was* touched.
+**What plan stage still owes is a product decision, not a sink audit**, and it
+lives in PM rule `P8` (`pm/references/rules.md`): every collected field named,
+bound to a written outcome, unremovable without breaking it, at the lowest
+identifiability that works, with its sensitivity tier, retention bound,
+permission justification and store-declaration delta. Those are answerable from
+a plan and **unanswerable from a diff** — by then the field is already flowing,
+correctly, to a sink that handles it properly, and nobody asks whether it should
+exist. Same structure as engineering criteria 10 and 11.
+
+The code-stage spawn survives but stays boundary-gated on its own evidence: three
+consecutive cycles nominated the always-on version on a no-new-sink / removal
+diff (PR #105 increment A · PR #105 increment C · #109 — the last a diff that
+*deleted* the egress). The same cycles show security and privacy each
+independently earning a spawn when their boundary *was* touched.
 
 **`feasibility-reviewer` is the downstream consumer's lens on an upstream
 plan** — the early-bounce gate that catches at the boundary what would
 otherwise surface as a mid-flow divergence rev one or two phases later. Its
 direction is deliberately asymmetric: downstream reviews upstream only (the
-engineer plan gets none — upstream coverage is `blueprint-reviewer` +
+engineer plan gets none — upstream coverage is `engineer-plan-reviewer` +
 §Conformance + QA's spec tests + `conformance-reviewer` on their residue). A `critical`
 (infeasible as drafted, evidence-cited) blocks until resolved; a `warning`
 (deliverable but risky) goes to the founder to weigh (§Gate loop policy — neither
@@ -598,7 +602,7 @@ directly. A round has five steps, and **the founder appears exactly once**:
    options, your recommendation, what it blocks) — don't surface them yet.
    *In the merged PM + designer round, draft both artifacts here, back-to-back.*
 2. **① Sanity gate (旁觀, player ≠ referee).** For a **pm** artifact,
-   spawn `blueprint-reviewer` in **checklist mode** as an **isolated sub-agent**
+   spawn `pm-plan-reviewer` as an **isolated sub-agent**
    over `skills/pm/references/rules.md`. **The author never audits itself.** Any
    `violation` → fix it **in place** — **no deferred, no dismiss** — and
    re-spawn. Loop to green, **cap 3 rounds**; escalate earlier once the finding
@@ -698,7 +702,7 @@ initial-draft check. Any time a plan body changes — a co-creation
 decision, founder feedback folded in, a finalize-round expansion, or a mid-flow
 divergence rev (§Mid-flow divergence) — **re-run the matrix gates for that
 stage on the changed plan BEFORE any implementation or next-stage work
-proceeds**: the ① cell to clean (`blueprint-reviewer` checklist mode loop-to-green cap 3, or
+proceeds**: the ① cell to clean (`pm-plan-reviewer` loop-to-green cap 3, or
 `plan_lint.sh` exit 0), the Adversarial tier one pass
 + one verification, per §Gate loop policy. Audit first, then implement. A revised plan that has not been
 re-audited is **not** approved, regardless of an earlier green pass — the change
@@ -723,7 +727,7 @@ still signs off the whole plan.
 These constraints bind **every** plan body regardless of which role authored it —
 they govern the artifact, not the role's domain — so they live here once instead
 of as a copy in each role's checklist. They are **drafting constraints
-first**: honour them while writing. `blueprint-reviewer` grades them by id on
+first**: honour them while writing. `engineer-plan-reviewer` grades them by id on
 every plan — inside the checklist walk for pm / designer, as a
 cross-cutting check on the engineer plan — and `plan_lint.sh` catches their
 mechanical tells. `ux-reviewer` catches the provenance half again at ②.
@@ -903,11 +907,14 @@ the working tree and report the diff"). Full protocol: `git-ops` skill
 
 #### After code: the implementation gates
 
-After the engineer phase ships code, run the code-stage row of the matrix
-(`code-reviewer` ∥ `security-reviewer` ∥ `privacy-reviewer`), then the **QA**
-phase (spawn the `qa` agent — it authors the spec-derived tests; the engineer
-role already wrote the contract-derived ones), and **only then** the after-QA
-pair: `conformance-reviewer` ∥ `test-reviewer`.
+Three **ordered** steps, not one batch:
+
+1. **The code-stage row of the matrix** — `code-reviewer`, plus
+   `security-reviewer` ∥ `privacy-reviewer` when the diff's own sink signals fire.
+2. **The QA phase** — spawn the `qa` agent; it authors the spec-derived tests,
+   the engineer role already wrote the contract-derived ones.
+3. **Only then the after-QA row** — `conformance-reviewer` ∥ `test-reviewer`,
+   plus `consistency-reviewer` when its boundary fires.
 
 **That order is load-bearing.** `conformance-reviewer` is now the *residual*
 gate: it opens by listing `test/spec/` and skips every item those tests already
@@ -918,6 +925,22 @@ verdict-per-finding protocol (FIX / DISMISS-with-rationale / ESCALATE / DEFER);
 every security / privacy `critical` blocks until resolved, and a `warning` goes
 to the founder — neither re-runs the whole judgment (§Gate loop policy). No
 silent skips.
+
+**Not finished until both measured gates are green.** They are the QA phase's
+output rather than an opinion about it, and `qa/SKILL.md` §Iron Law 1 owns the bar:
+
+- **`plan-coverage`** — every line the cycle changed either executed, or carrying
+  `// coverage-ignore: <reason>`. Deliberately **per line, not per percent**: two
+  files at 92% are not the same file when one missed a logging branch and the
+  other missed the error path, and a percentage cannot express the difference.
+- **`plan-mutation`** — every changed file kills its own mutants above the
+  threshold the script prints on each run. A survivor is a missing case or a line
+  nothing asserts; keeping one means writing why.
+
+They **stack rather than substitute** — a line no test executes produces no
+mutant, so it never survives and never appears; mutation grades what was reached,
+coverage grades the reach. And neither retires `test-reviewer`, which catches the
+opposite error: a change-detector scores perfectly on both.
 
 **During authoring, tests belong to the `qa` agent and you run none.** Across
 10+ cycles the agent returned "waiting for the run" with **no final result**,
@@ -1095,6 +1118,11 @@ report (§After code) is already on it; pressing the button stays theirs.
    safe-to-delete list (see §Closing report); the `PR:` line carries the PR URL.
    **No Close-out citation → the cycle is still open** (cite-or-it-didn't-happen,
    per Iron Law 7).
+4a. **Check for unblocked siblings.** If this task shares an **Area** with any
+    `Deferred` sibling (`pm/SKILL.md` §Split into sibling tasks), invoke the
+    `archivist` skill to check whether that sibling's **Trigger** names this
+    task. If it does, say so in the closing report and propose promoting it
+    to `Next` — don't leave a satisfied Trigger unnoticed on the board.
 5. Report back to the user which local artifacts (if any) are now safe to delete
    manually.
 6. **Tear down the isolated checkout — merge-aware.** Check the PR's merge state
@@ -1253,13 +1281,14 @@ Two execution mechanisms:
 | `engineer` | `skills/engineer/SKILL.md` | Skill (in-thread) / session |
 | `translator` | `lib/i18n/CLAUDE.md` ownership split | Agent / sonnet |
 | `qa` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` (+ `agents/qa.md`) | Agent / sonnet |
-| `blueprint-reviewer` | the engineering plan (scope-gated dimensions) | Agent / opus |
+| `pm-plan-reviewer` | the PM plan (`pm/references/rules.md` + plan integrity) | Agent / sonnet |
+| `engineer-plan-reviewer` | the engineering plan (scope-gated dimensions) | Agent / opus |
 | `security-reviewer` | `review/rules/security/` | Agent / opus |
 | `privacy-reviewer` | `review/rules/privacy/` | Agent / opus |
 | `code-reviewer` | the diff | Agent / opus |
 | `conformance-reviewer` | the plan's residue after QA's spec tests | Agent / opus |
-| `consistency-reviewer` | `review/rules/consistency/` + the plan's 同儕 rows | Agent / opus |
-| `test-reviewer` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` vs every test in the diff | Agent / opus |
+| `consistency-reviewer` | `review/rules/consistency/` + the plan's 同儕 rows | Agent / sonnet |
+| `test-reviewer` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` vs every test in the diff | Agent / sonnet |
 | `feasibility-reviewer` | the upstream plan vs downstream deliverability | Agent / opus |
 | `ux-reviewer` | `review/rules/ux/` (the design spec's usability) | Agent / opus |
 | `archivist` | `${CLAUDE_PLUGIN_ROOT}/skills/archivist/SKILL.md` | Skill (in-thread) / session |
@@ -1290,8 +1319,8 @@ in-context to author the phase):
   `scripts/{plan_lint,scope_gate}.sh`).
 
 **Per-role rules**: only `skills/pm/references/rules.md` — one file holding every
-principle with its sub-checks and examples inline, walked by `blueprint-reviewer`
-in checklist mode (`skills/pm/rules/CONVENTIONS.md` is its maintenance contract).
+principle with its sub-checks and examples inline, walked by `pm-plan-reviewer`
+(`skills/pm/rules/CONVENTIONS.md` is its maintenance contract).
 **The designer and engineer roles have no rules file**: their drafting
 constraints are their questionnaire's own cells (`schemas/design-plan.mjs`,
 `schemas/engineering-plan.mjs`), which apply at the moment of writing rather than

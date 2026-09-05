@@ -41,7 +41,7 @@
 #   Chinese-keyword heuristic — eyeball, don't trust blindly).
 #
 # THE MECHANICAL HALF OF THE ENGINEERING-PLAN GATE.
-#   `blueprint-reviewer` owns the judgment; this script owns the
+#   `engineer-plan-reviewer` owns the judgment; this script owns the
 #   comparisons. Everything here is a
 #   comparison a reviewer should never be spent on: does the thing the plan
 #   names actually exist, does every promise map to a method, does every pointer
@@ -323,14 +323,14 @@ fi
 
 # 3b. HARD — §Classes 總表 `為何要新增`. The schema calls this column the ONLY
 #     landing spot for "should this exist at all" — and the drafter's duty, not
-#     the gate's, precisely because blueprint-reviewer scores inside the design
+#     the gate's, precisely because engineer-plan-reviewer judges inside the design
 #     space the author drew. A duty that is nobody's to check decays like any
 #     other prose obligation, so the CELL SHAPE is checked here, the same way
 #     §事實帳 evidence is: the three sanctioned forms all start with their
 #     evidence discipline visible (框架/平台：<查過什麼> → <結論> /
 #     canonical home：grep <什麼> → … / 套件 <名>@<版>：…), plus 歸屬：… for a
 #     MOD that adds a public member to someone else's owner. Whether the answer
-#     is TRUE stays blueprint-reviewer's judgment; that a NEW row ANSWERED, in
+#     is TRUE stays engineer-plan-reviewer's judgment; that a NEW row ANSWERED, in
 #     an evidence-bearing form, is a comparison — and comparisons live here.
 classes_body="$(section_body "$(section_pat 'Classes')")"
 if [ -z "$classes_body" ]; then
@@ -344,21 +344,37 @@ elif ! grep -q '為何要新增' <<< "$classes_body"; then
     skip_check "§Classes 為何要新增（HARD）沒跑" "總表沒有該欄也沒有 NEW 列（純 MOD/DEL 計畫屬正常）"
   fi
 else
-  reuse_out="$(awk -F'|' '
+  reuse_out="$(awk '
     function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+    # `|` inside a backtick span (a quoted grep pattern, e.g. `foo|bar`) is not
+    # a column separator — mask it before splitting, restore it in each field
+    # after. Without this, any evidence cell citing a grep alternation corrupts
+    # the row'\''s column count, and the row drops into MISMATCH silently unread.
+    function maskbt(s,    i, c, out, in_bt) {
+      out = ""; in_bt = 0
+      for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        if (c == "`") { in_bt = !in_bt; out = out c; continue }
+        if (c == "|" && in_bt) { out = out "\001"; continue }
+        out = out c
+      }
+      return out
+    }
     /^\|/ {
+      n = split(maskbt($0), f, "|")
+      for (i = 1; i <= n; i++) gsub(/\001/, "|", f[i])
       if (!inTab && $0 ~ /為何要新增/ && $0 !~ /^[|: -]+$/) {
-        for (i = 2; i <= NF; i++) if (trim($i) ~ /為何要新增/) col = i
-        ncols = NF; inTab = 1; next
+        for (i = 2; i <= n; i++) if (trim(f[i]) ~ /為何要新增/) col = i
+        ncols = n; inTab = 1; next
       }
       if (!inTab) next
       if ($0 ~ /^[|: -]+$/) next
-      first = trim($2); gsub(/[`*]/, "", first)
+      first = trim(f[2]); gsub(/[`*]/, "", first)
       if (first == "" || first == "Class") next
       if ($0 !~ /\((\*\*)?NEW/) next
       nnew++
-      if (NF != ncols) { print "MISMATCH\t" first; next }
-      cell = trim($col); gsub(/`/, "", cell)
+      if (n != ncols) { print "MISMATCH\t" first; next }
+      cell = trim(f[col]); gsub(/`/, "", cell)
       if (cell == "" || cell == "—" || cell == "-" || cell ~ /^未讀/) { print "MISSING\t" first; next }
       ok = 0
       if (cell ~ /^框架\/平台[：:]/ && cell ~ /→/) ok = 1
@@ -409,7 +425,8 @@ else
     echo "        擇一：把其中一列的理由改成指向另一列（本計畫 §Classes 的 <Class> 已是這個資料源的擁有者），或合併成一個 class。"
     fail=1
   fi
-  [ -n "$reuse_mismatch" ] && echo "ADVISORY  §Classes 總表列的欄數與表頭不符——這幾列沒進比對: ${reuse_mismatch}"
+  [ -n "$reuse_mismatch" ] && skip_check "§Classes 為何要新增（部分列）沒跑" \
+    "欄數與表頭不符,這幾列沒進比對" "${reuse_mismatch}"
   echo "NOTE  §Classes 為何要新增: 檢查 ${reuse_n:-0} 個 NEW 列"
 fi
 
@@ -419,27 +436,41 @@ fi
 #     answer. `未讀` stays legal and non-gating: it converts to a recon TODO
 #     and is surfaced below exactly like §事實帳's 未讀 rows.
 if [ -n "$classes_body" ] && grep -q '既有方法夠嗎' <<< "$classes_body"; then
-  enough_out="$(awk -F'|' '
+  enough_out="$(awk '
     function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+    # Same backtick guard as the 為何要新增 pass above (check 3b) — a `|` inside
+    # a quoted grep pattern must not read as a column separator.
+    function maskbt(s,    i, c, out, in_bt) {
+      out = ""; in_bt = 0
+      for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        if (c == "`") { in_bt = !in_bt; out = out c; continue }
+        if (c == "|" && in_bt) { out = out "\001"; continue }
+        out = out c
+      }
+      return out
+    }
     /^### / {
       cls = $0; sub(/^### +/, "", cls); gsub(/[`*]/, "", cls)
       sub(/[^A-Za-z0-9_].*$/, "", cls); intable = 0; next
     }
     cls != "" && /^\|/ {
+      n = split(maskbt($0), f, "|")
+      for (i = 1; i <= n; i++) gsub(/\001/, "|", f[i])
       hdr = $0; gsub(/[`* |]/, "", hdr)
       if (hdr ~ /^method/) {
-        ecol = 0; ncols = NF
-        for (i = 2; i <= NF; i++) { c = trim($i); gsub(/[`*]/, "", c); if (c ~ /既有方法夠嗎/) ecol = i }
+        ecol = 0; ncols = n
+        for (i = 2; i <= n; i++) { c = trim(f[i]); gsub(/[`*]/, "", c); if (c ~ /既有方法夠嗎/) ecol = i }
         intable = 1
         if (!ecol) print "NOCOL\t" cls
         next
       }
       if (!intable || !ecol) next
       if ($0 ~ /^[|: -]+$/) next
-      m = trim($2); gsub(/[`*]/, "", m); sub(/\(.*$/, "", m)
+      m = trim(f[2]); gsub(/[`*]/, "", m); sub(/\(.*$/, "", m)
       if (m == "" || m ~ /^</) next
-      if (NF != ncols) { print "MISMATCH\t" cls "." m; next }
-      cell = trim($ecol); gsub(/^`+|`+$/, "", cell)
+      if (n != ncols) { print "MISMATCH\t" cls "." m; next }
+      cell = trim(f[ecol]); gsub(/^`+|`+$/, "", cell)
       if (cell ~ /^未讀/)                    { print "UNREAD\t" cls "." m; next }
       if (cell == "—" || cell == "-")        next
       if (cell ~ /^F[0-9]+$/)                next
@@ -468,7 +499,8 @@ if [ -n "$classes_body" ] && grep -q '既有方法夠嗎' <<< "$classes_body"; t
     echo "FAIL  契約表缺 \`既有方法夠嗎\` 欄: ${enough_nocol}"
     fail=1
   fi
-  [ -n "$enough_mm" ] && echo "ADVISORY  契約表列欄數與表頭不符——這幾列沒進比對: ${enough_mm}"
+  [ -n "$enough_mm" ] && skip_check "既有方法夠嗎（部分列）沒跑" \
+    "欄數與表頭不符,這幾列沒進比對" "${enough_mm}"
   [ -n "$enough_unread" ] && echo "NOTE  既有方法夠嗎 未讀（recon 待辦，approval 前要歸零或明示接受）: ${enough_unread}"
 elif [ -n "$classes_body" ]; then
   # A §Classes with contract tables but no 既有方法夠嗎 column anywhere is the
@@ -482,7 +514,7 @@ fi
 
 # ── The closure checks ────────────────────────────────────────────────────────
 # Everything below is a comparison between two things the plan already wrote.
-# They live here, not in blueprint-reviewer's rubric, because a script settles
+# They live here, not in engineer-plan-reviewer's rubric, because a script settles
 # them for free and deterministically — and because two verdicts on one question
 # can disagree. The reviewer is told to take these as given.
 

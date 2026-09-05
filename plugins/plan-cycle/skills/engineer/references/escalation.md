@@ -29,7 +29,7 @@ that surfaces an engineering question.
      plus a one-line ruling for the parent flow to consume
      verbatim. No full plan rev needed.
 4. **Re-audit the amendment** (Phase 9 of engineer/SKILL.md) — run
-   `scripts/plan_lint.sh`, then spawn `blueprint-reviewer` against the new /
+   `scripts/plan_lint.sh`, then spawn `engineer-plan-reviewer` against the new /
    amended plan (player ≠ referee, 禁自審); escalations are exactly the moments
    engineering anti-patterns surface, so this must run before handback.
 5. **Re-upload to Notion (the launcher's Iron Law 6).** You have no Notion MCP —
@@ -39,7 +39,7 @@ that surfaces an engineering question.
 6. **Hand back to the parent flow** with: `(a)` the Notion
    **Engineering Plan row** URL (written via the `archivist`),
    `(b)` the verbatim ruling, `(c)` the re-audit result (plan lint +
-   blueprint verdict). Do not paraphrase.
+   the engineer-plan review's verdict). Do not paraphrase.
 
 ## Routing upstream
 
@@ -85,5 +85,5 @@ to>
 Plan amendment: the feature's Notion Engineering Plan DB row (rev N)
 Task list update: <TaskUpdate N: <subject>> / no change
 
-Re-audit: <plan_lint PASS> · <blueprint approve | N weaknesses 已修> (Phase 9)
+Re-audit: <plan_lint PASS> · <engineer-plan-reviewer proceed | N critical 已修> (Phase 9)
 ```

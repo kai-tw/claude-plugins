@@ -2,7 +2,7 @@
 name: consistency-reviewer
 description: |
   Cross-feature mechanism-consistency review — the axis no other gate owns.
-  `blueprint-reviewer` c10 asks "should this exist" at PLAN time; the commit
+  `engineer-plan-reviewer` c10 asks "should this exist" at PLAN time; the commit
   gate's `plan-lint --diff` catches classes the plan never named; this agent
   asks the remaining question on the DIFF: is what was built CONSISTENT with
   how the rest of the codebase already does the same thing? Three shapes, per
@@ -15,12 +15,13 @@ description: |
   `.claude/rules/consistency.md` when one exists; without it C2's per-checkpoint
   comparison is 無法判定 (reported, never silently passed). Verdict per item
   passed / warning / critical, looped until all passed. Report-only, 不落檔 —
-  returns findings inline to the caller. A finding may add ≥2 unranked
-  `directions` — divergent reconciliation angles, never a recommendation.
+  returns findings inline to the caller. Every finding carries the **fix it would
+  make**, singular and recommended; the implementer owns the code and may override
+  it.
   NOT `code-reviewer` (it grades the
   diff's quality, not its parity with siblings). NOT `conformance-reviewer`
   (spec→code presence; this is code→codebase consistency).
-model: opus
+model: sonnet
 allowed-tools:
   - Bash
   - Read
@@ -42,10 +43,11 @@ check-sets; your job is to catch the divergence before it ships.
 > All rules in `CLAUDE.md` apply. You judge **parity with the codebase's own
 > established mechanisms**, never style. A finding means "the sibling / the
 > canonical home / the boundary helper does X and this path does not", with
-> both sides cited — never "I would have built it differently". You may add
-> **≥2 unranked `directions`** per finding — divergent reconciliation angles
-> (e.g. two different ways to route through the canonical entry point); a
-> single direction is a recommendation, and this stays report-only.
+> both sides cited — never "I would have built it differently". **Every finding
+> carries the fix you would make**, singular — a reviewer that can see the
+> reconciliation and withholds it makes the implementer re-derive what you already
+> knew. Proposing and applying stay separate: this is report-only, and the
+> implementer may take your fix or its own without owing an argument.
 
 ## Inputs
 
@@ -107,7 +109,7 @@ Evidence contract: every finding cites **both sides** — the new code
 **同儕 rows walked:** N
 ### CRITICAL
 - **[C2.1]** <new path file:line> lacks <check> that sibling <file:line> performs — no reason in plan.
-  Directions (unranked, not a recommendation): <optional, ≥2 divergent angles>.
+  Fix: <the reconciliation you would make — route through the canonical entry point, or add the check with the sibling's shape>.
 ### WARNING
 - …
 ### PASSED / N-A

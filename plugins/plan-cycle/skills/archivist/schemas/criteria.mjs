@@ -1,12 +1,18 @@
-// Blueprint-reviewer criteria registry.
+// Engineer-plan-reviewer criteria registry.
 // SSOT for criterion numbers + labels used across all plan schemas, AND for
 // which gate owns each one (`where`) — the split lives here once, and both
 // reviewers cite it rather than restating it.
 //
-//   where: 'plan' — graded before code by `blueprint-reviewer`, because getting
-//                   it wrong is expensive to reverse once code exists (layering,
-//                   ownership, migration strategy, dependency choice).
-//                   Full rubric: blueprint-reviewer.md §Criterion N.
+//   where: 'plan' — graded before code by `engineer-plan-reviewer`, because the
+//                   question is "should this exist at all" and by the time code
+//                   exists it does, and it looks fine (ownership, dependency
+//                   choice, migration necessity).
+//                   Full rubric: engineer-plan-reviewer.md §Criterion N.
+//   where: 'pre-pass' — not graded by either gate. A named pre-pass agent
+//                   already returns a verdict on it with source evidence, and
+//                   re-judging that verdict adds a second opinion on a settled
+//                   question rather than a check. `engineer-plan-reviewer` carries
+//                   the verdict into its report instead.
 //   where: 'diff'  — graded on real code by `code-reviewer`, against the
 //                   `.claude/rules/` file that owns it. Sharper there: a catch
 //                   block is inspectable, a predicted one is not. `code-reviewer`
@@ -23,10 +29,10 @@ export const CRITERIA = {
   c2:  { n: 2,  label: 'Space complexity',              where: 'diff' },
   c3:  { n: 3,  label: 'Scalability',                   where: 'diff' },
   c4:  { n: 4,  label: 'Extendability',                 where: 'diff' },
-  c5:  { n: 5,  label: 'Low coupling',                  where: 'plan' },
-  c6:  { n: 6,  label: 'Design correctness',            where: 'plan' },
+  c5:  { n: 5,  label: 'Low coupling',                  where: 'diff' },
+  c6:  { n: 6,  label: 'Design correctness',            where: 'diff' },
   c7:  { n: 7,  label: 'Runtime error handling',        where: 'diff' },
-  c8:  { n: 8,  label: 'Package usage',                 where: 'plan' },
+  c8:  { n: 8,  label: 'Package usage',                 where: 'pre-pass' },
   c9:  { n: 9,  label: 'Testability',                   where: 'diff' },
   c10: { n: 10, label: 'Abstraction, reuse & ownership', where: 'plan' },
   c11: { n: 11, label: 'Migration & back-compat',       where: 'plan' },

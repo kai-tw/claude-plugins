@@ -1087,8 +1087,9 @@ function printCriteria(dbKey) {
 
   console.log(`# ${dbKey} — criteria routing\n`);
   console.log(`Criterion → which gate grades it → plan section(s) where it is earned.`);
-  console.log(`  plan = blueprint-reviewer, before code (rubric: blueprint-reviewer.md §Criterion N)`);
-  console.log(`  diff = code-reviewer, on real code (rule: the owning .claude/rules/ file)\n`);
+  console.log(`  plan = engineer-plan-reviewer, before code (rubric: engineer-plan-reviewer.md §Criterion N)`);
+  console.log(`  diff = code-reviewer, on real code (rule: the owning .claude/rules/ file)`);
+  console.log(`  pre-pass = a named agent's verdict, carried into the report intact\n`);
   console.log(`| Criterion | Graded on | Earned in plan section(s) |`);
   console.log(`|---|---|---|`);
   for (const [key, crit] of Object.entries(CRITERIA)) {

@@ -1,9 +1,14 @@
 # Privacy rules — minimization checklist
 
-`privacy-reviewer` 對審查對象（**PM plan 埋點 / 資料蒐集 + engineer plan 資料流 + code
-sink**）**逐軸 → 逐 check** 對照本清單旁觀審查（player ≠ referee）：每個 check 逐項判
-**passed / warning / critical** → 所有 warning / critical 回報 PM / engineer / 實作者
-修正 → 迴圈重審，**直到全 passed** 才放行。禁 deferred & dismiss。
+`privacy-reviewer` 對 **diff + 商店宣告**逐軸 → 逐 check 對照本清單旁觀審查
+（player ≠ referee）：每個 check 逐項判 **passed / warning / critical**。
+
+**計畫不審。** 下面每一條 check 都錨在 collection-site `file:line` 或 log 樣板上，計畫沒有
+這些東西。「這個欄位該不該收」是計畫期的產品決策，由 `pm-plan-reviewer` 走 PM 規則 `P8`；
+「收了之後有沒有收得安全」才是這裡。
+
+`critical` 擋到解決為止；`warning` 不觸發下一輪，套用 fix 或記一行 accepted debt
+（`plan/SKILL.md §Gate loop policy` —— 這道 gate 在 ② 層，一次 + 一次驗證，禁 loop-to-green）。
 本檔即完整基線（母規則 + sub-check + Example 同檔），沒有另外的細節檔；維護慣例 + 三級判定見 `CONVENTIONS.md`。
 
 每個 finding 錨定 collection-site `file:line` + 明列欄位（無「user context」籠統詞）。
@@ -25,8 +30,7 @@ sink**）**逐軸 → 逐 check** 對照本清單旁觀審查（player ≠ refer
 ## P1 — Purpose（GDPR 5(1)(b)）
 
 **Principle:** 每個離開裝置的 user-derived 欄位都要有單一、outcome-bound、可追溯到核准
-plan / spec 的 purpose；「之後可能有用」不是 purpose。逐 check 判 passed / warning /
-critical、迴圈至全 passed。
+plan / spec 的 purpose；「之後可能有用」不是 purpose。
 
 - **P1.1 site 錨定 + 欄位明列** — Check: collection-site 有 `file:line`、蒐集欄位逐一列出
   （無「user context」「request body」籠統詞）？無法定位 / 籠統 → warning（先補齊才能審）。
@@ -44,8 +48,7 @@ critical、迴圈至全 passed。
 
 ## P2 — Necessity / 最小化（GDPR 5(1)(c)）
 
-**Principle:** 只蒐集達成 outcome「拿不掉」的最小資料，且以最低識別度形式蒐集。逐 check 判
-passed / warning / critical、迴圈至全 passed。
+**Principle:** 只蒐集達成 outcome「拿不掉」的最小資料，且以最低識別度形式蒐集。
 
 - **P2.1 拿掉會破壞 outcome** — Check: 移除此欄位會明確打破已記錄 outcome？拿得掉卻收 →
   critical（移除）。Example: outcome 只需「是否用過某功能」卻收逐次輸入內容。
@@ -61,8 +64,7 @@ passed / warning / critical、迴圈至全 passed。
 
 ## P3 — Retention（GDPR 5(1)(e) / MASVS-PRIVACY-3）
 
-**Principle:** 保留期不得超過 purpose 生命週期；可識別資料要有明確上限與清除路徑。逐 check
-判 passed / warning / critical、迴圈至全 passed。
+**Principle:** 保留期不得超過 purpose 生命週期；可識別資料要有明確上限與清除路徑。
 
 - **P3.1 sink 預設保留期具名** — Check: 此 sink 的預設保留期有寫明（Crashlytics ~90d、
   典型：analytics 依 config 14m–indefinite、performance ~60d、使用者控制的雲端儲存、local
@@ -79,7 +81,7 @@ passed / warning / critical、迴圈至全 passed。
 ## P4 — Sensitivity Tier
 
 **Principle:** 每個欄位明確指派敏感度層級，並以最壞合理假設處理 free-form 與穩定識別碼；
-組合風險要評估。逐 check 判 passed / warning / critical、迴圈至全 passed。
+組合風險要評估。
 
 | Tier | 通用範例（專案在疊加層列自己的欄位） |
 |---|---|
@@ -122,8 +124,7 @@ passed。
 ## P6 — 跨切面 meta（每次 review 一次）
 
 **Principle:** 有些最小化風險不屬單一欄位，而屬整體設定 —— 第三方 SDK 預設遙測、權限、
-log 層 PII scrub。每次 review 跑一遍（非每 finding）。逐 check 判 passed / warning /
-critical、迴圈至全 passed。
+log 層 PII scrub。每次 review 跑一遍（非每 finding）。
 
 - **P6.1 SDK 預設遙測盤點** — Check: 第三方 SDK 預設遙測已盤點（Firebase 不論程式都 phone
   home）？標明哪些自動蒐集、是否 `setAnalyticsCollectionEnabled(false)` gated 到 consent？

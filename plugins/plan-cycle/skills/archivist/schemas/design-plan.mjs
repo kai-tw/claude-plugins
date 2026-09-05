@@ -20,7 +20,7 @@
 //   kind        — para | bullets | table | checklist | images | raw
 //   required    — ADVISORY (freeformBody): drives `hints`, does not gate
 //                 create/update. Any `## heading` is legal.
-//   criteria    — always [] for design plan (blueprint-reviewer covers engineering plans only)
+//   criteria    — always [] for design plan (engineer-plan-reviewer covers engineering plans only)
 //   description — one-line description of what this section IS
 //   hint        — authoring guidance for the LLM filling this section
 //   template    — the literal skeleton `notion-payload template` emits

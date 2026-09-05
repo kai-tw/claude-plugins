@@ -80,7 +80,7 @@ The gate verifies the engineering plan covers, at a minimum:
 A plan missing any of the above is **incomplete** and the gate
 routes the user back to the engineer role for the missing section.
 The plan carries **no** `## Memory Audit` section — grading is external
-(`blueprint-reviewer` for judgment, `engineer/scripts/plan_lint.sh` for the
+(`engineer-plan-reviewer` for judgment, `engineer/scripts/plan_lint.sh` for the
 mechanical comparisons), not a section the author writes.
 
 ## Approval gate

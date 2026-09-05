@@ -5,9 +5,9 @@
 **這是什麼.** `security-reviewer` 的威脅模型規則庫，組織成**母規則（threat-model
 category）+ threat sub-check** 兩層 —— 母規則是一個攻擊面 / STRIDE 類別、sub-check
 是該類別下一個可逐項判定的具體 threat。目標 **OWASP MASVS L1**（消費級 reader app）；
-拒絕 L2 resilience 要求當 security theater。`security-reviewer` sub agent 對審查對象
-（**PM plan 的功能機制攻擊面 + engineer plan 的 threat model + code**）**逐母規則 →
-逐 threat** 對照 `index.md` 旁觀審查（player ≠ referee，禁實作者自審）。
+拒絕 L2 resilience 要求當 security theater。`security-reviewer` sub agent 對 **diff**
+**逐母規則 → 逐 threat** 對照 `index.md` 旁觀審查（player ≠ referee，禁實作者自審）。
+**計畫不審**——每條 threat 都錨在 sink 上，計畫沒有 sink，只有對 sink 的宣稱。
 
 **判定模式（threat-model 特性，與 pm 不同處）.** 每個 threat sub-check 不是二元
 passed/違規，而是**三級判定**：

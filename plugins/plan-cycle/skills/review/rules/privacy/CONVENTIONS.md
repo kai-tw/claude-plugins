@@ -6,9 +6,9 @@
 （minimization axis）+ sub-check** 兩層 —— 母規則是一個 GDPR-mapped 最小化軸 / 一個跨
 切面 meta 面向、sub-check 是該軸下一個可逐項判定的具體 check。目標：把離開裝置的
 user-derived 資料壓到「達成已記錄 outcome 所需的最小」；拒絕「之後可能有用」的蒐集。
-`privacy-reviewer` sub agent 對審查對象（**PM plan 的埋點 / 資料蒐集 + engineer plan 的
-資料流 + code 的 sink**）**逐軸 → 逐 check** 對照 `index.md` 旁觀審查（player ≠ referee，
-禁實作者自審）。
+`privacy-reviewer` sub agent 對 **diff + 商店宣告**逐軸 → 逐 check 對照 `index.md`
+旁觀審查（player ≠ referee，禁實作者自審）。**計畫不審**——每條 check 都錨在
+collection-site `file:line` 或 log 樣板上；「該不該收」是計畫期的 PM 規則 `P8`。
 
 **判定模式（與 security 相同的三級 + 迴圈）.** 每個 sub-check 三級判定：
 - **passed** — 該 collection-site / 欄位在此軸已最小化 / 合規。

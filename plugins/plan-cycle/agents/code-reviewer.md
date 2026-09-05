@@ -115,10 +115,12 @@ just gathered, before starting the pass:
 - **Trivial** — ≤2 files, all Modified (no new file), no new
   `class` / `mixin` / `enum` declared, no `pubspec.yaml` change (a copy
   fix, an ARB-only change, a one-line bug fix inside an existing
-  function using an existing call pattern). Run rule compliance and the
-  latent-correctness counterexample. Skip abstraction calibration and
-  the extensibility counterexample — there is no new structure to
-  construct a failure scenario against. A SUGGESTION here is possible
+  function using an existing call pattern). Run rule compliance, the
+  latent-correctness counterexample, and shared-state & ordering — a one-line
+  change inside an existing function is a perfectly ordinary way to introduce a
+  race. Skip abstraction calibration, the extensibility counterexample and
+  layering — there is no new structure or new edge to construct a failure
+  scenario against (`coupling=na（無新 edge）`). A SUGGESTION here is possible
   but rare; do not manufacture one to fill the section.
 - **Localized** — a handful of files, extends or modifies existing
   patterns (no new abstraction layer — repository / use case / state holder /
@@ -249,6 +251,23 @@ scenario traced to actual lines.
 - **Latent-correctness counterexample.** Construct the input / state /
   sequence that misbehaves — empty, single, max, malformed, concurrent,
   re-entrant, the error path — and trace it to the actual code.
+- **Layering & edge direction.** Enumerate the edges the diff actually adds —
+  who now imports whom, what got registered in DI, which state holder reached
+  for which — and check each against the direction `architecture.md` sets
+  (`§Adding New Abstractions` steps 1+2). **The diff is where this is finally
+  legible**: the import block and the call sites *are* the edge list, where a
+  plan only ever had a table describing one. Cite the import or the call site.
+  The shapes: a data-layer file reaching into presentation, two state holders
+  sharing a mutable value, a service locator resolved inside a widget, a
+  portal-rendered widget re-bridging inherited context (`presentation.md §11`).
+- **Shared-state & ordering.** For every value the diff lets two or more
+  writers reach, check the change actually holds the gate its rule prescribes
+  (`data.md §Per-Key Serialization`, `code-style.md §Async`). This is the
+  *design* half — whether a write gate exists at all — where the
+  latent-correctness bullet above is the *symptom* half (the interleaving that
+  corrupts it); file the two together when both hold, not as duplicates of each
+  other. 「目前呼叫順序上不會撞」 is the claim this bullet exists to refuse: name
+  what enforces the order, or it is a finding.
 
 ---
 
@@ -475,7 +494,8 @@ X critical, Y warnings, Z suggestions, U 無法判定.
 [One-sentence overall assessment.]
 
 coverage: time=<v> · space=<v> · scalability=<v> · extendability=<v> ·
-error-handling=<v> · testability=<v> · startup=<v>
+coupling=<v> · correctness=<v> · error-handling=<v> · testability=<v> ·
+startup=<v>
 ```
 
 Omit any section that has no findings — an empty **SUGGESTION** heading
@@ -500,15 +520,20 @@ Number `[E<n>]` sequentially across the whole report. Reuse `[E1]` if a
 later finding needs the same fact — never re-run the search or retype the
 list for a fact already shown.
 
-**The `coverage:` line is mandatory and never omitted.** Those seven
-dimensions used to be scored on the plan before code; they now land here
-(`notion-payload criteria engineering-plan` — the `diff` rows), and a
-dimension nobody must answer for is a dimension nobody checks. Each `<v>` is
+**The `coverage:` line is mandatory and never omitted.** Those nine
+dimensions are the `diff` rows of `notion-payload criteria engineering-plan` —
+none of them is graded before code, and a dimension nobody must answer for is a
+dimension nobody checks. **`coupling` and `correctness` are the newest two**,
+and they are here rather than at plan stage for a reason worth remembering when
+one of them feels like it belonged upstream: an edge is legible in an import
+block and not in a table describing one, and paper review is structurally weak
+at truth tables (`plan/SKILL.md §Gate loop policy` — an inverted `!=` survived
+three review rounds). Each `<v>` is
 `finding` (it produced one above), `pass` (you checked it against its rule and
 the diff is clean), or `na` **plus a reason in the same breath**
 (`testability=na（diff 無新 seam）`). Silence and "clean" look identical in a
 findings list, which is exactly what this line exists to separate — the same
-reason checklist mode closes on three counts rather than a violation count.
+reason `pm-plan-reviewer` closes on four counts rather than a violation count.
 The rules themselves stay where they are (`code-style.md §Performance &
 Complexity`, `error-handling.md`, `testing.md`, …); this line says only whether
 you looked.

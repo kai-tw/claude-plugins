@@ -7,7 +7,7 @@
 一致嗎？」→ 標 **passed / warning / critical** → 所有 warning / critical 回報
 engineer / 實作者修正 → 迴圈重審，**直到全 passed** 才放行。禁 deferred & dismiss。
 
-這一包補的是其他 gate 結構上不問的那一題：`blueprint-reviewer` criterion 10 在
+這一包補的是其他 gate 結構上不問的那一題：`engineer-plan-reviewer` criterion 10 在
 **plan 階段**問「該不該存在」，commit gate 的 `plan-lint --diff` 抓**計畫沒寫過的**
 新 class——但一條「計畫寫了、也真的新的」流程，其檢查點是否與同一機制的既有 feature
 一致，至今沒有人問。同一流程檢查不一的 bug 會逐 feature 復發，且每次都要人工在 PR
@@ -136,5 +136,5 @@ entry point 在哪、各自的檢查點清單長什麼樣——那是專案的�
 
 多數 diff 只觸發一兩個母規則；**diff 同時觸及兩個以上 feature、或新增任何機制表
 所列機制的呼叫端**時，三個母規則逐項重判。與其他 pack 的分工：該不該存在（plan）
-→ `blueprint-reviewer` c10｜計畫沒寫的新 class → `plan-lint --diff`｜spec 有沒有
+→ `engineer-plan-reviewer` c10｜計畫沒寫的新 class → `plan-lint --diff`｜spec 有沒有
 做出來 → `conformance-reviewer`｜這裡只管**一致**。
