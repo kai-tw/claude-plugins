@@ -19,11 +19,11 @@
   ],
   "skills": [
     "./skills/archivist",
+    "./skills/commit-gate",
     "./skills/designer",
     "./skills/engineer",
     "./skills/feedback-ledger",
     "./skills/git-ops",
-    "./skills/house-rules",
     "./skills/lead",
     "./skills/plan",
     "./skills/pm",

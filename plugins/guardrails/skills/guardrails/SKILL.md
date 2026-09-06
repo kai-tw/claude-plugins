@@ -64,7 +64,7 @@ it — growing a sibling is how a set stops being read.
 
 ## What does not belong here
 
-- How Kai wants to be worked with → the `house-rules` skill.
+- How Kai wants to be worked with → `plan-cycle`'s `skills/plan/founder-corrections.md`.
 - Facts about one repo's configuration → that project's own memory.
 - Anything that already errors out. The bar is **silent** failure: a confident
   wrong answer, not a stack trace.

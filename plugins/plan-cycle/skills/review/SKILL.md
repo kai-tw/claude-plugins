@@ -115,9 +115,10 @@ graded findings for security / privacy / ux / feasibility) + a one-line overall 
 
 ### Verdict per finding
 
-**Before verdicting, pass each finding through two checks** (the measured
-failure both ran the other way — see `house-rules §Gate every reviewer finding
-through severity + minimalism`): a **severity check** — is it truly CRITICAL
+**Before verdicting, pass each finding through two checks** — the measured
+failure ran both the other way (a reflexive `isImporting` flag added to a shared
+state type on an over-graded CRITICAL, where an existing enum already modeled
+it): a **severity check** — is it truly CRITICAL
 (data-loss / crash / security), or a minor / self-healing trade-off wearing the
 label? — and a **minimalism check** — does existing domain state (a code, an
 enum, a nullable) already model the fact, so the "fix" would build a parallel
@@ -204,8 +205,7 @@ prevent. The pre-fix comment is the evidence a finding existed; the post-fix
 comment is answerable to it.
 
 **Why the sha.** A review comment without one records that a review happened but
-not *against what*, so "how far has the branch drifted since" has no answer — and
-on PR #204 the answer went unasked for 40+ commits and 24 hand-found defects. The
+not *against what*, so "how far has the branch drifted since" has no answer. The
 `plan-cycle reviewed` mark is the machine half of the same fact and arms Gate 3.
 Post the sha even when there is no ledger to mark: the comment is what a human
 reads.

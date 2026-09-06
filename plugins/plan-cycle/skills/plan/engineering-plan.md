@@ -107,7 +107,7 @@ the delta.
 Do not silently choose a different architecture mid-diff. See
 `divergence.md` for the full procedure. This is not left to
 self-report alone: the commit gate's reconciliation leg
-(`plan-lint <plan> --diff`, `closeout.md §Step 5.5` leg 3) blocks any
+(`plan-lint <plan> --diff`, `commit-gate` leg 3) blocks any
 diff that adds a file or class no §Classes NEW row names, so a
 subsystem invented mid-implementation must pass back through this
 divergence route — or be deleted — before it can land.

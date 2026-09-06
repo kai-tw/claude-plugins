@@ -421,9 +421,7 @@ engineering-plan`), and — on a verification round — the prior round's findin
 
 A finding is classified by **what should happen because of it**, never by a
 number — a number invites a threshold, and any threshold an adversarial reader
-can always name one more minor gap under is an asymptote rather than a state
-(measured: one cycle ran 20 rounds without converging, the findings multiplying
-each round):
+can always name one more minor gap under is an asymptote rather than a state:
 
 | Severity | What it means | What it does |
 |---|---|---|
@@ -539,9 +537,9 @@ plan and the whole body are already in hand.
   assertion about existing internals — a signature, a predicate's
   behaviour, "verbatim preserves", a count of call sites — that is **not a
   ledger row**: one finding each, and the finding is **`未列帳`, never
-  `為假`**. Measured: 7 such claims in one cycle were false, which is why
-  each must be ledgered — it is not evidence that the one in front of you
-  is. You do not own the verdict on an unledgered claim; the author does.
+  `為假`**. That such claims often turn out false is why each must be
+  ledgered — it is not evidence that the one in front of you is. You do not
+  own the verdict on an unledgered claim; the author does.
   So never construct the proposition the author left unwritten in order to
   refute it: if you cannot tell what mechanism the claim names, that *is*
   the finding. **(b) Spot-check the ledger** — re-resolve one or two
@@ -596,7 +594,7 @@ approve or override (Iron Law 8). Measured reason: a second face is always
 well-formed, so "a bit thin, the engineer will polish it" is exactly how the
 over-built option ships; both recorded incidents (the `syncMetadata` rebuild,
 `Book.language`) sat in the passing band. The founder's minimal-mechanism ruling
-outranks the reviewer's (`house-rules §Distrust the review gates`).
+outranks the reviewer's (`plan/founder-corrections.md §Distrust the review gates`).
 
 For **multi-option** plans: build a comparison table (findings × options),
 **recommend one option** with a one-paragraph rationale — what drove the call,

@@ -31,7 +31,7 @@ shrinks.
 
 - **Lint-enforced rules**: the file passes the project's lint command
   after the change. The `/plan` engineer
-  commit gate (closeout.md Step 5.5 leg 1) enforces this — a lint-dirty
+  commit gate (`commit-gate` leg 1) enforces this — a lint-dirty
   diff does not commit. (A pre-existing failure in a file the PR does NOT
   touch is the previous author's in-flight work, not the current PR's —
   don't fix another cycle's uncommitted mid-refactor state.)

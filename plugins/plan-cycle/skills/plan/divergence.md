@@ -100,8 +100,17 @@ through the designer role and land in the spec before the diff ships.
   repository-side judgment, a one-shot timer for a continuous
   threshold). Re-inventing the mechanism mid-iteration is a
   divergence, not an optimization — route it, or build to the plan
-  verbatim (`house-rules §Implement the APPROVED plan's mechanism
-  verbatim`; PR #76 is the measured incident).
+  verbatim. **Before writing a device-reported fix, re-read the plan**
+  (`ntn pages get <eng-plan-id>` + design / product) and grep the exact
+  mechanism, grounding both the action predicate and any
+  button-disable predicate in the plan rather than intuition; if the
+  plan is underspecified, write the precise state table INTO it first,
+  then build to that. The plan's spec is itself a load-bearing claim
+  and carries the same source-first bar as any other. *Measured:* a
+  repository-side per-chapter threshold judgment was re-invented
+  during device iterations as a view-side "nearest earlier chapter"
+  plus a one-shot timer, breaking the restart-grace re-arm and the
+  button-disable on three counts.
 
 ## What does NOT count as divergence
 

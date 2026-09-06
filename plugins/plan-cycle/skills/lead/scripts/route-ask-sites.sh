@@ -14,7 +14,7 @@ set -uo pipefail
 P=/Users/kai/GitHub/claude-plugins/plugins/plan-cycle/skills
 R='`ask`(§Working in a team)'
 
-for role in pm designer engineer qa plan house-rules; do
+for role in pm designer engineer qa plan; do
   f="$P/$role/SKILL.md"
   [ -f "$f" ] || { echo "  $role: no SKILL.md, skipped"; continue; }
   before=$(grep -c 'AskUserQuestion' "$f")

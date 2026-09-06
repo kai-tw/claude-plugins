@@ -17,7 +17,7 @@ description: >-
   worktree 收尾 · 分支可以刪了嗎 · merge 後 build 壞掉 · merge 之後要不要 regen ·
   怎麼 commit · git add 被擋 · 刪掉這個檔案 · CI 會擋嗎
   NOT for: the commit-gate DISCIPLINE, i.e. which legs run before a commit →
-  `engineer/references/closeout.md §Step 5.5` (cited in the body, never restated)
+  the `commit-gate` skill (cited in the body, never restated)
   · worktree CREATION mechanics and the /plan cycle →
   `plan/SKILL.md §Worktree isolation` · "which worktree am I in" thread state →
   /session-journal · Notion flips or archiving → /archivist · release tagging or
@@ -33,8 +33,8 @@ run it — none of these fail loud, so you only find out you were wrong later
 mirror).
 
 Scope note: the **discipline** of what must pass before a commit (codegen, lint,
-tests, `/review`) lives in `engineer/references/closeout.md
-§Step 5.5 (Iron Law 10)` — the SSOT. This skill is only the mechanical traps
+tests, `/review`) lives in the `commit-gate` skill — the SSOT. This skill is
+only the mechanical traps
 around push, merge-verify, worktree teardown, codegen-after-merge, and staging.
 
 ---
@@ -127,7 +127,7 @@ review/audit) during git-adjacent work:
   a lib change that breaks a mock or caller under `test/` passes lint clean.
   Run `flutter test` over the affected scope before trusting "lint clean."
   (Lint scope + gate legs: the project's `CLAUDE.md §Rules`,
-  `closeout.md §Step 5.5`.)
+  the `commit-gate` skill.)
 
 - **Sub-agents spawned inside a worktree read the MAIN tree.** Review/audit
   sub-agents do NOT inherit the worktree cwd — they grep the **main tree**
@@ -343,8 +343,8 @@ The consequence: **the local gate stack is the only quality wall BEFORE a merge*
 — the project's linter, its test suite, and its own Stop hook (whatever
 formatter and build that hook enforces). If a plan or a
 sub-agent says "CI will catch it," that is **wrong pre-merge** — nothing gates the
-PR. Run the gates yourself before you push / merge (legs:
-`closeout.md §Step 5.5`).
+PR. Run the gates yourself before you push / merge (legs: the
+`commit-gate` skill).
 
 ---
 
@@ -385,8 +385,8 @@ Diff against that tag to see what a change adds over the release; something on
 ## What this is not
 
 - **Not the commit gate.** Which legs must pass before a commit (codegen → lint →
-  test → plan reconciliation → `/review` → user auth, plus the staged-safety check) is
-  `engineer/references/closeout.md §Step 5.5 (Iron Law 10)`. This skill only
+  test → plan reconciliation → `/review`, plus the staged-safety check) is the
+  `commit-gate` skill. This skill only
   covers the mechanical traps around those operations.
 - **Not worktree creation / the /plan cycle.** Precondition, base capture,
   `EnterWorktree`, `tool/worktree-init.sh`, the full teardown Step 6 →

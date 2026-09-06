@@ -111,15 +111,10 @@ before spawning the reviewer. A sweep returning all-證實 with zero 未讀
 rows on the first pass is suspicious — reread the prose for unledgered
 claims instead of celebrating.
 
-Measured motivation: one review round's findings were entirely draft-time
--checkable facts (a wrong line ref, a formula written differently in two
-places, a missed construction site) — a full opus review round spent on
-what this sweep settles; reviewer-caught「宣稱既有機制已涵蓋，實查沒有」
-hit 7 times in a single cycle; one unverified dartdoc sentence carried
-a whole design into a cold-start bug that took a TestFlight build to
-falsify; and 「`birthdayMonth` 只由一處寫」was reused as precedent for a new
-design while checked by the same method twice — neither pass looked
-anywhere but the one write site it already knew about.
+The sweep exists because a review round spent on draft-time-checkable facts — a
+wrong line ref, a formula written differently in two places, a missed
+construction site — is a round bought at judgment prices. 「宣稱既有機制已涵蓋，
+實查沒有」is the recurring shape.
 
 ## Step 1 — Spawn `engineer-plan-reviewer`
 
@@ -186,11 +181,10 @@ then whichever suggestions you take**:
   the PM role or the designer role per the same escalation rules as Phase 11.
 - **When a finding invalidates the plan's *model* — a mechanism premise, an
   architecture choice — rewrite every section that describes that model,
-  never patch the one section the finding names.** Measured: a rev that
-  patched one section after a model change left the others describing the
-  dead model — seven self-contradictions, the rev was voided by the next
-  review round. After the rewrite, `plan_lint.sh`'s closure checks verify
-  the sections agree again.
+  never patch the one section the finding names** — a patched section leaves
+  the others describing the dead model, and the next review round voids the
+  rev. After the rewrite, `plan_lint.sh`'s closure checks verify the sections
+  agree again.
 - Mirror every fix into the Notion row body's `## Revision history` (via the `archivist`)
   (`Rev N: engineer-plan-reviewer pass — resolved <severity> <dimension> via
   <fix summary>`), **naming the finding ids it resolves** (`[10.1]`, `[11.2]`

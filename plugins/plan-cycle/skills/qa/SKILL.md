@@ -296,11 +296,10 @@ judgment. `plan-mutation <scoped-test-command>` makes the same question
 mechanical: flip an operator in the source, re-run the tests, and **a mutation
 nothing turns red on is a hole**.
 
-Measured on an 8-line function with six tests written to be complete, it
-surfaced four survivors — two planted weak assertions, and two real gaps the
-author had not noticed (`<= 0` → `== 0` with no negative case; `&&` → `||` with
-the one distinguishing combination untested). Adding exactly those three cases
-took it from rating F to A, so survivors are actionable, not advisory.
+Survivors are actionable, not advisory: on a function whose six tests were
+written to be complete, the survivors were two weak assertions plus two real
+gaps (`<= 0` → `== 0` with no negative case; `&&` → `||` with the one
+distinguishing combination untested).
 
 - **Every changed file must kill ≥80% of its own mutants.** Per-file, not
   aggregate — an aggregate lets a well-tested file carry a badly-tested one

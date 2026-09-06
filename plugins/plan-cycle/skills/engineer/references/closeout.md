@@ -236,85 +236,14 @@ sub-agent caches little state. Stop only when:
 
 ## Step 5.5 — Commit gate (Iron Law 10)
 
-Four legs must **all** be green before any `git commit` fires —
-and they are checked **here, explicitly**, NOT left to the
-turn-end Stop hook (the gate is the source of truth; do not rely
-on the hook running after the commit):
+**The `commit-gate` skill is the SSOT** — invoke it; do not restate its legs
+here. It owns all five (codegen → lint + format → tests → plan reconciliation →
+`/review`), the index-read discipline, the test-first mode, and the tooling
+carve-out, and it is reachable from every path that lands code rather than only
+from this reference file.
 
-0. **Regenerate codegen first (when applicable).** If the diff changed
-   any freezed / json_serializable codegen **input** — a new or edited
-   `@freezed` / `@Freezed` / `@unfreezed` / `@JsonSerializable` class, a
-   field add / remove / rename, a new `fromJson` / `toJson` — run
-   `dart run build_runner build --delete-conflicting-outputs` and include
-   the regenerated `*.freezed.dart` / `*.g.dart` (+ `lib/generated/**`)
-   in the diff. Stale generated files fail legs 1–2 and ship a broken
-   build, so this runs **before** lint/test. Never hand-edit generated
-   files (`.claude/rules/code-style.md §Generated Files`).
-1. **Lint + format clean.** Run the project's lint command (no
-   arguments) and `dart format` on the changed Dart files — confirm
-   **zero** issues (analyzer + custom rules). The custom rules cover
-   `lib`/`test`/`tool` via all three zones; `flutter analyze` itself
-   still defaults to `lib` only in this no-argument form — `test`/`tool`
-   each carry a real, untriaged stock-lint backlog the changed-files-only
-   gate never caught (`the lint package's own docs`).
-   Never call `flutter analyze` / `dart analyze` directly (deny-listed —
-   the wrapper is the source of truth). A lint-dirty / unformatted diff
-   does **not** commit; fix it
-   first.
-2. **Tests green.** Run `flutter test` over the affected scope and
-   confirm it passes — no red, no unexplained skip. A failing test
-   blocks the commit.
-
-   **Test-first stage: run `plan-test-first flutter test` instead.** The
-   test-authoring stage ends red *by construction* — the contract exists as
-   stubs, nothing is implemented — so this leg would make that stage
-   uncommittable. The answer is a narrower leg, never an exemption: the gate's
-   purpose is "no **unexplained** red", and here exactly one red is explained.
-   `plan-test-first` passes only when every failure is a stub throwing
-   `UnimplementedError`; a real assertion failure, a different throw, a broken
-   existing test, or a suite that would not load all still block. Once
-   implementation lands it reports the suite green and this leg is back to its
-   normal meaning, so there is nothing to switch off afterwards.
-3. **Plan reconciliation clean.** After staging (`git add`), run
-   `plan-lint <engineering-plan> --diff` — every file and class the
-   staged diff **adds** must map to a §Classes NEW row. This is the
-   reverse direction of the plan-stage lint (which verifies what the
-   plan names exists) and the one mechanical net against a subsystem
-   quietly invented mid-implementation: `conformance-reviewer` walks
-   spec→code and only ever finds what is *missing*, and `code-reviewer`
-   grades the diff's quality, not its inventory. A FAIL has exactly two
-   exits — route the addition through Phase 11 divergence (add the
-   §Classes row, 為何要新增 included, re-audit, then re-run), or delete
-   it and reuse what exists. "It's a sub-decision inside an approved
-   layer" does not exempt a *class*: a name the plan never wrote is
-   precisely what this leg surfaces.
-4. **`/review` clean.** Per Iron Law 7 — `/review` has run, every
-   finding has a written verdict, and a re-review confirms clean
-   when CRITICALs existed.
-Only when legs 1–4 are **all** green does `git commit` fire. Legs
-1–3 are mechanical (run them, don't assume); leg 4 is the review leg.
-**Read the index before committing:** run `git diff --cached` as its
-**own** call — confirm only the intended files are staged, and if it
-already holds work you did not add (the user's pre-staged changes),
-`git restore --staged` it first rather than committing it blind.
-Post the close-out report **with** the commit — affected files, lint +
-test results, `/review` cycle count + verdict mix, plan path, hash.
-
-**Leg-3 tooling carve-out.** A **tooling / lint-package** change (a new
-the project's linter AST-visitor rule, an analyzer-plugin tweak) that a
-purpose-built probe has verified — true-positive fires, true-negative
-stays silent, zero false positives — skips the `/review` leg (leg 4): the
-`code-reviewer` is **off-domain** for AST-visitor / analyzer-plugin code
-and has hallucinated on the analyzer-API surface, so its pass adds no
-signal there. Legs 1–3 still bind; the carve-out is leg 4 only, and
-only for a change whose own probe *is* the correctness evidence. App-code
-changes never qualify.
-
-If the user dismisses some part of the diff ("revert the X change"):
-apply the revert as a normal edit, re-fire `/review` against the
-smaller diff (Step 5 cap still applies), then return to Step 5.5. The
-diff that gets committed is the diff `/review` saw last, not an
-earlier snapshot.
+Leg 3 (`plan-lint <plan> --diff`) is the only leg that needs a plan; inside a
+`/plan` cycle it always applies.
 
 ## Step 6 — Close out
 

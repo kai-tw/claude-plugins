@@ -426,12 +426,12 @@ first**, alongside the SOPs below. The questionnaire's cells *are* the drafting
 constraints — answering `為何要新增` honestly is the check that nothing else can
 make, because `engineer-plan-reviewer` judges inside the design space you drew and
 will endorse a well-built thing that should not exist. A constraint honoured
-here costs a sentence; missed here, it ships. **Before sketching, consult the
-`house-rules` skill (§Engineering taste)** — "how much to build" is exactly the
-decision its measured incidents teach (minimal mechanism over the gate-preferred
-abstraction, parallel-marker tells, nullable canonical types); the questionnaire
-asks the questions, house-rules carries the corrections that show how founders
-have answered them.
+here costs a sentence; missed here, it ships. **Before sketching, read
+`${CLAUDE_PLUGIN_ROOT}/skills/plan/founder-corrections.md` §Engineering taste** —
+"how much to build" is exactly the decision its measured corrections teach
+(minimal mechanism over the gate-preferred abstraction, parallel-marker tells).
+The questionnaire asks the questions; that file carries how the founder has
+answered them.
 
 **Phase 3 is assembly (串連), not per-block design.** Every code artifact
 the plan introduces — state holder, use case, repository, DTO, widget, exception,
@@ -824,7 +824,7 @@ belong at **phase** granularity, not saved for the end. Each phase runs
    construction, and that is the point — the tests state the requirement while
    nothing yet satisfies it, so they cannot be shaped by an implementation that
    does not exist. Commit-gate leg 2 accepts this stage through
-   `plan-test-first` (closeout.md §Step 5.5), which passes only when every
+   `plan-test-first` (`commit-gate` leg 2), which passes only when every
    failure is an `UnimplementedError`.
 3. **Freeze, then implement.** Run `plan-cycle tests-frozen` — from here a test
    edit needs `// test-change: <why the TEST was wrong>` at the site (Gate 5).

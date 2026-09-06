@@ -283,15 +283,11 @@ the task **by name** — never hardcode a Notion id here.
 **Before opening the PM phase, pull the usage baseline.** When the task is a
 *should we build this* question and its outcome is a metric the project's
 analytics already tracks (adoption / retention / engagement / a specific event),
-query it through the project's own usage-data skill **first** — one
-query, before any phase opens. Competitor research answers "how do others do
-this"; the baseline answers "does anyone here reach it", and the second can make
-the first moot for a fraction of the cost. *Measured:* a reading-time-estimate
-task ran a full feasibility study, an issue, a PM draft and three checklist
-rounds before the baseline surfaced in PM Phase 2 — 211 active users, 21 who had
-ever opened a book — and the founder ruled it out on that number. Cite the
-figure either way; at low traffic it is **directional, not significant**, and
-product judgment still leads (P1.1).
+query it through the project's own usage-data skill **first** — one query,
+before any phase opens. Competitor research answers "how do others do this"; the
+baseline answers "does anyone here reach it", and the second can moot the first
+for a fraction of the cost. Cite the figure either way; at low traffic it is
+**directional, not significant**, and product judgment still leads (P1.1).
 
 Open a phase only when its criterion is met:
 
@@ -372,10 +368,9 @@ Authoring main sequence (fixed order, non-overlapping):
   the **round**: draft both back-to-back, gate both in one Sanity batch, take
   **one** Resolve pass to the founder, run **one** Adversarial battery, finalize
   both. A non-UI cycle simply has no designer half and the round degenerates to
-  the PM plan alone; a pure-restyle cycle degenerates the other way.
-  *Why:* measured, the split cost 2 founder round-trips and 2 opus batteries per
-  cycle, and the second battery routinely ran on a draft the founder's answers in
-  the first were about to invalidate.
+  the PM plan alone; a pure-restyle cycle degenerates the other way. Split, the
+  second battery routinely graded a draft the first round's answers were about to
+  invalidate.
 - **Translation runs INSIDE the designer phase, always before the render.**
   `translator` still owns the whole ARB string (keys, the `app_en.arb` source
   value, all four translations; ja / zh_Hant still need founder sign-off) — what
@@ -462,10 +457,9 @@ The ① cell is a different agent per stage, with the checks rehomed **by kind**
   the fix rather than producing a fresh opinion — which is also why it is the
   cheap tier. For the PM plan that walk is
   `pm-plan-reviewer` (**旁觀, 禁自審**): every `violation`
-  fixed in place, no deferred and no dismiss, re-spawn, loop. The loop earns its
-  keep — one measured cycle took 5 rounds, and a later round caught that the
-  author's *fix* was itself wrong (a weak undocumented token substituted where a
-  purpose-built semantic one existed). **Not green by round 3 → stop looping and
+  fixed in place, no deferred and no dismiss, re-spawn, loop — a later round
+  catching that an earlier round's *fix* was itself wrong is the loop working.
+  **Not green by round 3 → stop looping and
   hand the founder a plain-language report**, one entry per unresolved item:
   **缺失項目 / 原因 / reviewer 評價 / 自提解法**. Write about the plan's defect and
   what you would do about it — never about the gate, the checklist, or how the bar
@@ -488,35 +482,27 @@ The ① cell is a different agent per stage, with the checks rehomed **by kind**
     ceiling, not a quota. Once a finding stops being a *verifiable error* (a wrong
     number, a missing section, a claim the source contradicts) and becomes a
     *debatable judgment* (the reviewer would rank the trade-off differently), no
-    further round can settle it — that call is the founder's. *Measured:* one
-    third round spent 169k tokens to conclude "escalate to the founder", a
-    conclusion already legible in the second round's finding. Judge by the
+    further round can settle it — that call is the founder's. Judge by the
     finding's kind, never by the round number.
 
 **Green is not proof — and neither is red.** A gate's verdict is evidence, not a
 certificate, in both directions: a re-run can pass against wrong reasoning, and a
-finding can be wrong on its face. *Measured:* one author fixed against a finding
-whose conclusion was right but whose supporting reasoning was false, and the
-re-run passed it; another adopted a race finding that the method's own doc
-comment and a pinned test both contradicted, and only the suite going red
-revealed it. So before a finding becomes a code change, **name what makes it
-true** — the existing test it turns red, or the source line that proves it.
-Neither can be named? Write the failing test first; if that test cannot be
-written, the finding is what is wrong.
+finding can be wrong on its face. So before a finding becomes a code change,
+**name what makes it true** — the existing test it turns red, or the source line
+that proves it. Neither can be named? Write the failing test first; if that test
+cannot be written, the finding is what is wrong.
 
 **A direction claim is settled by executing it, never by reviewing it again.**
-Paper review is structurally weak at truth-table errors — an inverted
-comparison, a reversed guard — because each round's attention follows what
-changed most recently, so a line that stopped changing reads as already
-verified, and the rounds accumulate confidence instead of evidence. *Measured:*
-an inverted `!=` survived three consecutive review rounds plus the author's own
-truth-table checks, across revisions in which the new feature never once
-executed. When a plan adds a condition to an existing loop or method, the first
-verification is a runnable test of that truth table — a throwaway worktree is
-enough — not another review round. The converse is what review is *for*:
-ownership and shared-state defects (a capability sitting in the wrong layer, a
-private field shared across callers) are found by judgment, not by execution, and
-stay worth sending.
+Paper review is structurally weak at truth-table errors — an inverted comparison,
+a reversed guard — because each round's attention follows what changed most
+recently, so a line that stopped changing reads as already verified and the rounds
+accumulate confidence instead of evidence (an inverted `!=` survived three rounds
+plus the author's own truth-table checks). When a plan adds a condition to an
+existing loop or method, the first verification is a runnable test of that truth
+table — a throwaway worktree is enough — not another review round. The converse
+is what review is *for*: ownership and shared-state defects (a capability sitting
+in the wrong layer, a private field shared across callers) are found by judgment,
+not by execution, and stay worth sending.
 
 **`engineer-plan-reviewer` runs on every engineer plan** — never skipped, not even on
 a single-slice plan, which would otherwise have no judgment gate at all, only
@@ -550,12 +536,7 @@ is the *deletion* of an egress cannot introduce one.
 deep-link parameter or a dependency lock, and every rule in
 `review/rules/privacy/` to a collection-site `file:line` or a log template. A
 plan has none of them: it states a *claim* about sinks while the diff *is* the
-sinks, so a plan walk grades a code checklist against prose. Measured: the
-engineer-plan spawn was nominated as pure latency by five consecutive cycles,
-every one self-exiting `passed` with zero findings; the PM-plan security spawn
-ran 4 times in one cycle for 4 passes and zero graded findings, and its two
-useful contributions were a fact correction `privacy-reviewer` caught in the same
-batch and a constraint the engineer gate re-derives anyway.
+sinks, so a plan walk grades a code checklist against prose.
 
 **What plan stage still owes is a product decision, not a sink audit**, and it
 lives in PM rule `P8` (`pm/references/rules.md`): every collected field named,
@@ -566,11 +547,9 @@ a plan and **unanswerable from a diff** — by then the field is already flowing
 correctly, to a sink that handles it properly, and nobody asks whether it should
 exist. Same structure as engineering criteria 10 and 11.
 
-The code-stage spawn survives but stays boundary-gated on its own evidence: three
-consecutive cycles nominated the always-on version on a no-new-sink / removal
-diff (PR #105 increment A · PR #105 increment C · #109 — the last a diff that
-*deleted* the egress). The same cycles show security and privacy each
-independently earning a spawn when their boundary *was* touched.
+The code-stage spawn survives but stays boundary-gated: a no-new-sink or removal
+diff skips it, while security and privacy each earn a spawn independently when
+their boundary *is* touched.
 
 **`feasibility-reviewer` is the downstream consumer's lens on an upstream
 plan** — the early-bounce gate that catches at the boundary what would
@@ -581,10 +560,7 @@ engineer plan gets none — upstream coverage is `engineer-plan-reviewer` +
 (infeasible as drafted, evidence-cited) blocks until resolved; a `warning`
 (deliverable but risky) goes to the founder to weigh (§Gate loop policy — neither
 re-runs the whole judgment). It institutionalises the PM role's optional
-riskiest-assumption consult — systematic, every plan, fresh context. It has
-**earned its keep**: on the cycle where it was still formally on probation it was
-the highest-yield gate of the round, returning two `critical`s that would each
-have shipped user-visible bad behavior.
+riskiest-assumption consult — systematic, every plan, fresh context.
 
 #### Co-creation round (per authoring phase; PM + designer share one)
 
@@ -592,12 +568,12 @@ The main thread runs each authoring phase in-thread, so it can ask the user
 directly. A round has five steps, and **the founder appears exactly once**:
 
 1. **Draft.** Run the authoring role (`pm` / `designer` / `engineer`) in-context
-   by invoking its skill **via the Skill tool**. **Consult the `house-rules`
-   skill before proposing a solution or sizing what to build** — its
-   §Engineering-taste rules carry the measured incidents (minimal mechanism,
-   parallel markers, gate distrust) that the questionnaires ask about but
-   cannot teach; this is one of the three consult points its own description
-   names, now wired in rather than left to memory. Do everything that does
+   by invoking its skill **via the Skill tool**. **Read
+   `${CLAUDE_PLUGIN_ROOT}/skills/plan/founder-corrections.md` §Engineering taste
+   before proposing a solution or sizing what to build** — it carries the
+   measured corrections (minimal mechanism, parallel markers, gate distrust) the
+   questionnaires ask about but cannot teach. Read the file; it is not a skill
+   and there is nothing to invoke. Do everything that does
    **not** need the user, and collect the open questions (each: the question,
    options, your recommendation, what it blocks) — don't surface them yet.
    *In the merged PM + designer round, draft both artifacts here, back-to-back.*
@@ -614,10 +590,9 @@ directly. A round has five steps, and **the founder appears exactly once**:
 3. **Resolve — the one founder round.** Put **every** open question and every
    load-bearing fork to the user in one `AskUserQuestion` pass. (This is also
    where the user grants the approval the three principles require.) **This is
-   the step that must precede the expensive gates**: measured, a founder decision
-   arriving *after* the opus battery invalidated a clean pass and forced the whole
-   battery to re-run — 11 of one cycle's 20 gate invocations were spent on a draft
-   whose scope the next answer changed.
+   the step that must precede the expensive gates** — a founder decision arriving
+   after the battery invalidates a clean pass and forces the whole battery to
+   re-run.
 4. **② Adversarial gate.** Now the scope is settled, spawn the Adversarial tier
    for this stage (matrix column ②). **One pass**, then one verification pass
    scoped to the fixes — never loop-to-green (§Gate loop policy). Resolve every
@@ -741,15 +716,8 @@ mechanical tells. `ux-reviewer` catches the provenance half again at ②.
   above", "the third constraint" and "§4" all decay silently the moment the thing
   they point at is edited — the prose stays grammatical and becomes false, which
   is the one kind of staleness a reader cannot see. Name what you mean instead
-  ("the gating metric on log level"). *Measured:* one plan's "the two items above"
-  survived a rev that merged them into one, and a privacy reviewer spent a pass on
-  it.
-  *Measured:* one design plan reached 641 lines carrying four live
-  self-contradictions (a fully token-specced two-button control replaced 150
-  lines later, the original untouched; a card design superseded eight lines after
-  it was written; a state retired by one rev and reintroduced by a later one; a
-  component retired then un-retired) — the reader had to reconcile all four by
-  hand to learn what the spec actually said.
+  ("the gating metric on log level") — "the two items above" survives a rev that
+  merges them into one, and a reviewer spends a pass on it.
 - **I2 — Downstream cites upstream; it does not re-derive it, and does not
   promote what upstream never ruled.** When a plan depends on a ruling made
   upstream, cite it (`per <upstream> §<section>`) and stop — do not restate its
@@ -764,13 +732,9 @@ mechanical tells. `ux-reviewer` catches the provenance half again at ②.
   or escalate for an explicit one. Nor may a plan answer *downstream's*
   question in its own body: a spec that settles a routing or state-reconciliation
   mechanism has banked an unverified engineering decision as settled design.
-  Record the observable behaviour and defer the mechanism, with an owner.
-  *Measured:* a spec imported "e.g. take the newest when progress differs by
-  < 5%" from a risk section as a binding threshold — contradicting its own
-  "never silently pick a side" principle, which is what exposed it.
-  *Measured:* both sampled design plans re-argued their product plan's decisions
-  in full while also citing them, and `48dp 觸控目標` appeared **seven** times in
-  one spec.
+  Record the observable behaviour and defer the mechanism, with an owner. The
+  classic tell is a spec importing an "e.g." threshold from a risk section as
+  binding, against a principle the same spec states.
 - **I3 — Point-form, one claim per line; the reader gets the plan in a minute.**
   Bullets and tables carry the body; prose only where a bullet cannot hold the
   thought. **Every line must answer "which ruling or fact do I carry" — if it
@@ -942,12 +906,11 @@ mutant, so it never survives and never appears; mutation grades what was reached
 coverage grades the reach. And neither retires `test-reviewer`, which catches the
 opposite error: a change-detector scores perfectly on both.
 
-**During authoring, tests belong to the `qa` agent and you run none.** Across
-10+ cycles the agent returned "waiting for the run" with **no final result**,
-forcing a main-thread re-run, because it had launched the bare `flutter test`
-(~5 min) and then backgrounded-and-polled it. Both halves of that are gone: the
-agent runs **only the change's blast radius**, never the bare suite
-(`.claude/agents/qa.md` §Test-run discipline), and you don't re-run on top.
+**During authoring, tests belong to the `qa` agent and you run none.** The agent
+runs **only the change's blast radius**, never the bare suite
+(`.claude/agents/qa.md` §Test-run discipline), and you don't re-run on top — a
+bare `flutter test` backgrounded-and-polled is how it hands back "waiting for the
+run" with no result.
 
 Your job is to read the hand-back: the tally **and the paths it ran**. That path
 list is your only view of what went uncovered — if it looks narrower than the
@@ -955,10 +918,6 @@ change (a signature / required-field edit is the classic case, where a run
 scoped to the edited files compiles green and hides sibling breakage), send it
 back to widen. If it hands back without a tally, don't resume it in a poll loop
 — read what it already produced, or re-dispatch its scope.
-
-(The reviewer half of this friction is gone by construction: `code-reviewer` no
-longer spawns sub-agents at all. The root-cause harness fix — agents returning
-their own final result — is not ours to make.)
 
 #### The full-suite run — twice, on the main thread, reported to the PR
 
@@ -1095,9 +1054,8 @@ report (§After code) is already on it; pressing the button stays theirs.
 > The close-out gate arms on the **merge**, not on the PR opening —
 > `plan-cycle.sh check` watches for the squash commit's `(#N)` on
 > `origin/$BASE`, so turn-end starts blocking only once there is genuinely
-> something to close out. (Arming at PR-open blocked every turn-end across the
-> whole founder-review window while demanding work that could not yet be done;
-> filed three times — #92, #109, #111 — before the edge moved.)
+> something to close out — arming at PR-open instead blocks every turn-end
+> across the founder-review window demanding work that cannot yet be done.
 1. Invoke the `archivist` skill to create a **Feature Archive** row — a **synthesis**
    (problem / final approach / key decisions / outcome), **not** a verbatim dump.
 1a. **Repoint the GitHub issue before the task is trashed.** Close-out deletes
@@ -1335,6 +1293,10 @@ over a description of it.
 - `divergence.md` — mid-flow re-authoring procedure.
 - `todo-backlog.md` — deferred items go to the feature's TaskList task.
 - `migration.md` — pre-existing-violation compliance rule.
+- `founder-corrections.md` — the collaboration contract: the judgment calls that
+  went wrong and the corrections that fixed them. **Read before proposing a
+  solution, sizing what to build, dismissing a review finding, or making an
+  outward-facing judgment call.** Not a skill — there is nothing to invoke.
 
 ## Plan-spec language
 
