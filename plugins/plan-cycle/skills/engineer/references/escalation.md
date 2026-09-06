@@ -46,7 +46,7 @@ that surfaces an engineering question.
 Sometimes an escalation into the engineer role reveals the problem
 isn't engineering's to solve — it's a scope shift
 (the PM role), a layout shift (the designer role), or a new attack surface
-(the `security-reviewer`). When that happens:
+(the `security-privacy-reviewer`). When that happens:
 
 - **Product scope changed** — the implementation requires a
   surface the product plan didn't authorize. Stop the
@@ -57,7 +57,7 @@ isn't engineering's to solve — it's a scope shift
   the designer role. Engineering rejoins after the spec rev.
 - **New attack surface** — the implementation introduces a
   network call / platform-channel / IPC / persisted schema the
-  threat model didn't cover. Route to the `security-reviewer` for risk
+  threat model didn't cover. Route to the `security-privacy-reviewer` for risk
   assessment; engineering continues in parallel where possible
   but does not ship the surfaced behavior until the security
   gate clears.

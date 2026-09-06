@@ -567,20 +567,20 @@ that already exists.
 
 **這個 role 沒有 checklist gate。** 起草約束是問卷本身的格子（`States` 問「什麼時候進入」、
 `Seam` 問「期待什麼可觀察行為」），機械判準歸 `design-lint`，判斷歸 Resolve 之後的
-`ux-reviewer`——它對著**渲染出來的畫面與 widget 原始碼**評分，而不是對著一份描述畫面的文件。
+`design-plan-reviewer`——它對著**渲染出來的畫面與 widget 原始碼**評分，而不是對著一份描述畫面的文件。
 
 ```bash
 design-lint                      # sweeps every *.design.dart under the tree
 ```
 
 **每一條 FAIL 當場修，禁 deferred & dismiss**，全綠才往下。ADVISORY 逐條過目：
-semantics label 的有無它查得動，**唸出來對不對只有 `ux-reviewer` 對著 render 判得了**。
+semantics label 的有無它查得動，**唸出來對不對只有 `design-plan-reviewer` 對著 render 判得了**。
 
 **每次修訂都重跑（audit-first）**：任何對 widget 或 spec body 的更動（co-creation 決議、
 founder 回饋、後續 revision、mid-flow 補 state / surface）都要**先重跑 `design-lint`、
 必要時重新 render，才往下**。改了沒重跑＝未通過，先前的綠不算數。
 
-> 本 role **不自審**、也**不在 spec body 留 audit 區塊** —— 判斷那一半是 `ux-reviewer`
+> 本 role **不自審**、也**不在 spec body 留 audit 區塊** —— 判斷那一半是 `design-plan-reviewer`
 > 的，player ≠ referee。
 
 ## Phase 9 — Save and offer next step
@@ -632,7 +632,7 @@ Mode: <full / delta (parent: <Design Plan row url>) / single-breakpoint>
 Design diff: <when revving an existing spec — how the new layout differs from the current one; omit only for a brand-new spec>
 Open questions: <all resolved with the user, or the deferrals they explicitly confirmed — none left dangling (Iron Law 9)>
 Renders: <build/design-mockups/<slug>/ — N PNGs surfaced; or "none (copy-only / pattern-following delta)">
-Design gates: <design-lint 全綠 · ux-reviewer <verdict / pending Adversarial>> (Phase 8 — 本 role 沒有 checklist gate)
+Design gates: <design-lint 全綠 · design-plan-reviewer <verdict / pending Adversarial>> (Phase 8 — 本 role 沒有 checklist gate)
 Stage → Engineering Plan (TaskList task advanced via the archivist skill)
 Next step: <hand-off to engineering, open questions, or follow-up>
 ```
@@ -670,5 +670,5 @@ paraphrase has shipped bugs.
 讀得到）——格子在落筆的那一刻施加約束，比指望作者回想另一個檔案可靠。
 
 把關分工：**問卷**問「什麼時候進入這個狀態、期待什麼可觀察行為」· **`design-lint`**
-逐檔查 widget 的層邊界與 token · **`ux-reviewer`** 對著 render 與原始碼判斷
+逐檔查 widget 的層邊界與 token · **`design-plan-reviewer`** 對著 render 與原始碼判斷
 「使用者會不會困惑、有多嚴重」——設計規則的判斷那一半全在它的六軸裡，沒有第二份。

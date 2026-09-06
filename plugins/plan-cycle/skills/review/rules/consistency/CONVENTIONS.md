@@ -2,10 +2,10 @@
 
 `Read` 本檔只在新增 / 修改 / 合併 / 刪除 consistency rule 時。
 
-**這是什麼.** `consistency-reviewer` 的跨 feature 一致性規則庫，組織成**母規則
+**這是什麼.** `post-qa-reviewer` 的跨 feature 一致性規則庫，組織成**母規則
 （一致性類別）+ sub-check** 兩層——母規則是一種「不一致」的形狀（第二真相源 /
 機制檢查點分歧 / 能力重複實作）、sub-check 是該形狀下一個可逐項判定的具體檢查。
-`consistency-reviewer` sub agent 對審查對象（**diff + engineering plan 的同儕
+`post-qa-reviewer` sub agent 對審查對象（**diff + engineering plan 的同儕
 row + 同儕 feature 實作**）**逐母規則 → 逐 sub-check** 對照 `index.md` 旁觀審查
 （player ≠ referee，禁實作者自審）。
 

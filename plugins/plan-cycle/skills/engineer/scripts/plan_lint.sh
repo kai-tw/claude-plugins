@@ -613,7 +613,7 @@ else
     fi
     # A cross-cutting flow may answer 同儕：<feature> <file:line> instead of a
     # Class.method — naming the sibling mechanism it mirrors. The file:line is
-    # what consistency-reviewer walks checkpoint-by-checkpoint, so a 同儕 with
+    # what post-qa-reviewer walks checkpoint-by-checkpoint, so a 同儕 with
     # no anchor is a claim with nothing to compare against.
     if grep -qE '同儕[：:]' <<< "$row"; then
       if grep -qE '同儕[：:][^|]*[A-Za-z0-9_./-]+\.[A-Za-z0-9_]+:[0-9]+' <<< "$row"; then

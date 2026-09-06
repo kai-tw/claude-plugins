@@ -59,7 +59,7 @@ silently route around it.
 If the divergence is **scope** (product plan didn't authorize this),
 route to the PM role. If **UI** (design spec didn't cover this state /
 surface / token), route to the designer role. If **security** (new
-attack surface), route to the `security-reviewer`. Read
+attack surface), route to the `security-privacy-reviewer`. Read
 `${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/escalation.md` for the
 verbatim-handback protocol when this role is invoked mid-flow from
 another skill.
@@ -174,7 +174,7 @@ When `/review` returns, every CRITICAL / WARNING / INFO finding
 gets an explicit verdict from the `/review` skill's verdict set
 — **FIX**, **DISMISS (with rationale written into the code or
 the log file)**, **ESCALATE** (route to the PM role / the designer role /
-the `security-reviewer`), or **DEFER** (only when written into a TaskList
+the `security-privacy-reviewer`), or **DEFER** (only when written into a TaskList
 task — Status `Deferred` + a Trigger, opened via the `archivist`
 skill). Silent skipping is forbidden — re-read the `/review`
 skill's "What 'silent skip' means" section before composing a
@@ -306,14 +306,14 @@ Status: Shipped (Notion row Status property set + revision-history entry landed,
   deferred to the turn-end Stop hook. Never call `flutter analyze` /
   `dart analyze` directly (deny-listed — the wrapper is the source of
   truth).
-- Phase 12 does **not** invoke the `security-reviewer`. Security
+- Phase 12 does **not** invoke the `security-privacy-reviewer`. Security
   review is a separate gate; if the review surfaces a finding that
   crosses into vulnerability territory (new attack surface, secret
-  handling, auth boundary), ESCALATE to the `security-reviewer`
+  handling, auth boundary), ESCALATE to the `security-privacy-reviewer`
   (via `/review`) rather than resolving in the engineer role.
 - Phase 12 does **not** run a design-review pass. Design adherence is the
   engineer's job to enforce against the design spec during implementation;
-  `ux-reviewer` already gated the spec, and mockup-fidelity is a manual
+  `design-plan-reviewer` already gated the spec, and mockup-fidelity is a manual
   founder check.
 - Phase 12 does **not** edit code from the reviewer's sub-agent
   — `/review` is report-only and the main thread applies fixes.

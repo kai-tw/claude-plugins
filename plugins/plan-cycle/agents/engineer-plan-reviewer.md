@@ -119,7 +119,7 @@ constraint stated three sections later.
 **You review the engineering plan only.** The PM plan's rules walk is
 `pm-plan-reviewer` (a finite enumerated list, so it loops to green); the design
 spec's cheap gate is `design-lint` off the widget source and its judgment gate is
-`ux-reviewer` against the renders. Both are different artefacts with different
+`design-plan-reviewer` against the renders. Both are different artefacts with different
 bars — grading one of them here grades the wrong thing.
 
 ## Callers

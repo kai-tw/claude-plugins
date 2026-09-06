@@ -2,11 +2,11 @@
 
 `Read` 本檔只在新增 / 修改 / 合併 / 刪除 privacy rule 時。
 
-**這是什麼.** `privacy-reviewer` 的 data-minimization 規則庫，組織成**母規則
+**這是什麼.** `security-privacy-reviewer` 的 data-minimization 規則庫，組織成**母規則
 （minimization axis）+ sub-check** 兩層 —— 母規則是一個 GDPR-mapped 最小化軸 / 一個跨
 切面 meta 面向、sub-check 是該軸下一個可逐項判定的具體 check。目標：把離開裝置的
 user-derived 資料壓到「達成已記錄 outcome 所需的最小」；拒絕「之後可能有用」的蒐集。
-`privacy-reviewer` sub agent 對 **diff + 商店宣告**逐軸 → 逐 check 對照 `index.md`
+`security-privacy-reviewer` sub agent 對 **diff + 商店宣告**逐軸 → 逐 check 對照 `index.md`
 旁觀審查（player ≠ referee，禁實作者自審）。**計畫不審**——每條 check 都錨在
 collection-site `file:line` 或 log 樣板上；「該不該收」是計畫期的 PM 規則 `P8`。
 
@@ -42,5 +42,5 @@ meta，不硬湊。
    刪除的洞不回填）。
 5. 過時 check（平台 / 法規變更）可直接刪除該節內對應項目。
 
-> GDPR 原則在此當 *rubric*、非合規認證目標（同 privacy-reviewer 既有立場）。rule 以
+> GDPR 原則在此當 *rubric*、非合規認證目標（同 security-privacy-reviewer 既有立場）。rule 以
 > 「當前一致的 minimization checklist」為目標，歷史軌跡在 git。

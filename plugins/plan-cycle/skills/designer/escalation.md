@@ -19,7 +19,7 @@ finding that surfaces a UX question.
    role has no checklist gate — no agent walks a checklist over a design
    spec): re-run `design-lint` on every widget the amendment
    touches and fix to all-green; when the amendment changes visible
-   surface, re-render and spawn `ux-reviewer` against the renders
+   surface, re-render and spawn `design-plan-reviewer` against the renders
    (player ≠ referee; no self-audit — escalations are exactly when
    anti-patterns surface; loop to all-passed, cap 3). A copy-only or
    decision-memo ruling with no widget delta records
@@ -29,7 +29,7 @@ finding that surfaces a UX question.
    An amendment that lives only in chat or a local note has not landed.
 6. Hand back to the parent flow with: `(a)` the Notion **Design Plan
    row** URL (re-uploaded via the `archivist`), `(b)` the verbatim
-   ruling, `(c)` the gate results (`design-lint` · `ux-reviewer`, or
+   ruling, `(c)` the gate results (`design-lint` · `design-plan-reviewer`, or
    their `n/a` lines). Do not paraphrase.
 
 The parent flow expects the ruling forwarded **verbatim**, not

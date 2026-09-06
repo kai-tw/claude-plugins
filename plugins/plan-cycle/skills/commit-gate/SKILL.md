@@ -86,7 +86,7 @@ plan-lint <engineering-plan> --diff
 Every file and class the staged diff **adds** must map to a §Classes NEW row.
 This is the reverse direction of the plan-stage lint (which verifies what the
 plan names exists) and the one mechanical net against a subsystem quietly
-invented mid-implementation — `conformance-reviewer` walks spec→code and only
+invented mid-implementation — `post-qa-reviewer` walks spec→code and only
 finds what is *missing*, and `code-reviewer` grades the diff's quality, not its
 inventory.
 

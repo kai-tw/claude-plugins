@@ -1,7 +1,7 @@
 # Consistency rules — cross-feature mechanism baseline
 
 目標：**同一個 cross-cutting 機制（驗證、紀錄、資訊傳遞、錯誤處置）在整個 codebase
-只有一種做法**。`consistency-reviewer` 對審查對象（**diff + engineering plan 的
+只有一種做法**。`post-qa-reviewer` 對審查對象（**diff + engineering plan 的
 §Classes / §Conformance 同儕 row + 同儕 feature 的實作**）**逐母規則 → 逐 sub-check**
 對照本清單旁觀審查（player ≠ referee，禁實作者自審）：每項問「這條新路徑與既有做法
 一致嗎？」→ 標 **passed / warning / critical** → 所有 warning / critical 回報
@@ -24,7 +24,7 @@ entry point 在哪、各自的檢查點清單長什麼樣——那是專案的�
 |---|---|---|
 | <驗證 / 紀錄 / 傳遞 / …> | `<file:line 或 Class.method>` | <逐項列出> |
 
-`consistency-reviewer` **兩份都用**：基線的通則 + 疊加層的事實。判斷一條該放哪，
+`post-qa-reviewer` **兩份都用**：基線的通則 + 疊加層的事實。判斷一條該放哪，
 只問一個問題：
 
 > **換一個專案，這條還成立嗎？**
@@ -63,7 +63,7 @@ entry point 在哪、各自的檢查點清單長什麼樣——那是專案的�
 **維護是消化的副作用，不是獨立作業**：`recurring-bug` entry 消化到這張表時，
 落點就是某一列的檢查點欄加一項（或「待收斂」清單少一行）。表跟著傷口長，
 不開會不腦補。首列的驗收：拿最近一次「同一流程檢查不一」的 bug 回測——如果
-當時有這張表、`consistency-reviewer` 拿著它，那個 bug 會不會在 review 被抓到？
+當時有這張表、`post-qa-reviewer` 拿著它，那個 bug 會不會在 review 被抓到？
 不會，表就還沒寫對。
 
 ## C1 — 同一 datum 只有一個 canonical home，讀寫只走一條路
@@ -137,4 +137,4 @@ entry point 在哪、各自的檢查點清單長什麼樣——那是專案的�
 多數 diff 只觸發一兩個母規則；**diff 同時觸及兩個以上 feature、或新增任何機制表
 所列機制的呼叫端**時，三個母規則逐項重判。與其他 pack 的分工：該不該存在（plan）
 → `engineer-plan-reviewer` c10｜計畫沒寫的新 class → `plan-lint --diff`｜spec 有沒有
-做出來 → `conformance-reviewer`｜這裡只管**一致**。
+做出來 → `post-qa-reviewer`｜這裡只管**一致**。

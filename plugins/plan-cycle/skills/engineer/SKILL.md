@@ -249,7 +249,7 @@ should go to the designer role; product-scope questions that should go to
 the PM role; bug investigation that should go to `/bug-investigate`;
 authoring **spec-derived** tests — the ones pinning the shipped flow to the
 approved plan are `/qa`'s (`testing.md` Rule 1); MASVS L2 hardening demands (route
-to the `security-reviewer` for the risk-based call); ghostwriting product or
+to the `security-privacy-reviewer` for the risk-based call); ghostwriting product or
 design content; engineer-plan-review skip / 自審 (Phase 8.5); plans missing
 the audit pass (Iron Law 3); plans with Notion-row / TaskCreate drift (Iron Law 4);
 "ship without review" or "skip the review, looks fine" requests
@@ -259,7 +259,7 @@ that bypass Phase 12 (Iron Law 7).
 product plan's success metric is missing or unmeasurable
 (→ the PM role), the design spec is missing a state the implementation
 needs to render (→ the designer role), the requested change creates a
-new attack surface the threat model doesn't cover (→ the `security-reviewer`),
+new attack surface the threat model doesn't cover (→ the `security-privacy-reviewer`),
 or a "small" change actually requires a new background system,
 new platform plugin, or new schema migration that the upstream
 artifacts didn't acknowledge.
@@ -563,7 +563,7 @@ to print the full section questionnaire with descriptions and hints):
   incomplete plan. A **cross-cutting flow** (validation, recording, data-passing —
   anything a sibling feature already does) additionally carries a
   `同儕：<feature> <file:line>` row naming the existing mechanism it mirrors:
-  `plan-lint` checks the anchor's format, and `consistency-reviewer` walks it
+  `plan-lint` checks the anchor's format, and `post-qa-reviewer` walks it
   checkpoint-by-checkpoint after QA — every check the sibling performs that this
   flow lacks needs a reason written here, at plan time, not discovered at PR
   review. First implementation of a mechanism, with no sibling to name → note
@@ -573,7 +573,7 @@ to print the full section questionnaire with descriptions and hints):
   like a §Error-handling handling decision); `Test` points at the QA acceptance
   test. This is the **inverse** of §Classes' "source-from-spec, never invent":
   §Classes stops you adding what the spec didn't ask for; §Conformance stops you
-  dropping what it did. Verified post-code by `conformance-reviewer` + QA
+  dropping what it did. Verified post-code by `post-qa-reviewer` + QA
   (Iron Law 7 / 10).
 
 The sketch is the single most load-bearing section of the plan —
@@ -895,7 +895,7 @@ none of it auto-loads while you are drafting a Notion plan row.
 | Platform channels, embedded views | the owning folder's `CLAUDE.md` |
 | Platform divergence | `lib/features/reader/CLAUDE.md §Page-turn platform divergence` |
 | Cloud sync / three-storage | `lib/features/cloud_sync/CLAUDE.md §Conflict model`, `lib/features/book_storage/CLAUDE.md §Three-Storage SRP Contract` |
-| Security, privacy | the `security-reviewer` / `privacy-reviewer` gates own these — don't self-grade; just make sure the plan gives them something to review |
+| Security, privacy | the `security-privacy-reviewer` gates own these — don't self-grade; just make sure the plan gives them something to review |
 | Lint compliance | the project's lint command (the commit gate, not this phase) |
 
 No downstream gate walks a checklist for this plan — `engineer-plan-reviewer`
@@ -982,7 +982,7 @@ The loop, in brief — full protocol in
 Authoring-against-the-dimensions (Phase 3) is what makes step 1 return
 `proceed` on the first pass; the reviewer stays the independent gate
 regardless. This phase does **not** re-run Phase 8's rule audit, edit
-upstream artefacts, invoke the `security-reviewer`, or write tests — route those
+upstream artefacts, invoke the `security-privacy-reviewer`, or write tests — route those
 out per the review-loop reference.
 
 ## Phase 9 — 每次修訂都重審（audit-first）
@@ -1197,7 +1197,7 @@ reach implementation, not while drafting.
   history`, re-run `plan_lint.sh` and `engineer-plan-reviewer` on the rev'd
   plan (Phase 9), re-request approval, resume.
   Route scope divergence to the PM role, UI divergence to the designer
-  role, security divergence to the `security-reviewer`. Never silently
+  role, security divergence to the `security-privacy-reviewer`. Never silently
   choose a different architecture mid-diff.
 - **Phase 11.5 — Exception discovery.** An exception not in the §Error
   handling matrix is **enumeration drift**, not divergence — don't stop

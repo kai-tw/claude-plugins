@@ -2,10 +2,10 @@
 
 `Read` 本檔只在新增 / 修改 / 合併 / 刪除 security rule 時。
 
-**這是什麼.** `security-reviewer` 的威脅模型規則庫，組織成**母規則（threat-model
+**這是什麼.** `security-privacy-reviewer` 的威脅模型規則庫，組織成**母規則（threat-model
 category）+ threat sub-check** 兩層 —— 母規則是一個攻擊面 / STRIDE 類別、sub-check
 是該類別下一個可逐項判定的具體 threat。目標 **OWASP MASVS L1**（消費級 reader app）；
-拒絕 L2 resilience 要求當 security theater。`security-reviewer` sub agent 對 **diff**
+拒絕 L2 resilience 要求當 security theater。`security-privacy-reviewer` sub agent 對 **diff**
 **逐母規則 → 逐 threat** 對照 `index.md` 旁觀審查（player ≠ referee，禁實作者自審）。
 **計畫不審**——每條 threat 都錨在 sink 上，計畫沒有 sink，只有對 sink 的宣稱。
 

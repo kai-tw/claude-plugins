@@ -297,12 +297,10 @@ Open a phase only when its criterion is met:
 | **designer** | the change produces or alters any user-visible surface | `designer` |
 | **translator** | the change adds or changes user-facing copy needing i18n | `translator` |
 | **engineer** | any non-trivial implementation (always, for code work) | `engineer` |
-| **security** (cross-cutting gate) | **the code only** — boundary-gated on the diff's own sink signals. Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `security-reviewer` |
-| **privacy** (cross-cutting gate) | **the code only** — boundary-gated on the diff's own sink signals. Whether a field should be collected **at all** is PM rule `P8`, walked at ① by `pm-plan-reviewer`. Default to spawn when unsure — fail-closed | `privacy-reviewer` |
+| **security + privacy** (one cross-cutting gate, two lenses) | **the code only** — boundary-gated on the diff's own sink signals. Whether a field should be collected **at all** is PM rule `P8`, walked at ① by `pm-plan-reviewer`. Default to spawn when unsure — fail-closed. Runs *inside* the phases, not a standalone phase you open/skip; see the audit matrix | `security-privacy-reviewer` |
 | **QA test** | any code lands | `qa` |
 | **code review** | after code is written | `code-reviewer` |
-| **conformance** | after code + after QA's spec tests, when an approved product / design plan exists — **residual only**: §Non-goals violations, token-level drift, doc the change made false, and the `spec-should-change` judgment | `conformance-reviewer` |
-| **test design** | after QA, whenever the diff adds or changes any test — grades **both** halves of the partition against one standard | `test-reviewer` |
+| **post-QA** | after code + after QA's spec tests, when an approved plan exists — the spec residue (§Non-goals violations, a seam wired to the wrong source, doc the change made false, the `spec-should-change` judgment), parity with the siblings the plan names, **and** the design of every test the diff touches | `post-qa-reviewer` |
 
 Non-UI work skips the designer + translator phases but **not** the engineer
 phase. Security / privacy are **not** standalone steps — they are gates that run
@@ -397,14 +395,20 @@ Authoring main sequence (fixed order, non-overlapping):
   screen layer rarely adds collection or attack surface). If a design introduces
   a new data display / collection interaction, route back to the **PM role** to
   add the mechanism decision, then let security / privacy review it.
-- **UX is the designer plan's usability gate.** The design spec runs `ux-reviewer`
-  (a cognitive-walkthrough + heuristic pass, graded `passed` / `warning` /
-  `critical`) in the Adversarial tier — because a spec can pass the
-  designer *rules* (M3 tokens, breakpoints, four states) and still confuse a
-  first-time user, and that gap is what this gate catches. A `critical` (an
-  objective usability defect — a dead-end state, an unreachable primary control,
-  an unconfirmed destructive action, a silent action) **blocks until resolved**;
-  a `warning` (a friction / confusion trade-off) goes to the founder to weigh.
+- **`design-plan-reviewer` is the designer plan's whole judgment gate**, and it
+  walks two lenses in one pass: **usability** (a cognitive walkthrough +
+  heuristic sweep — a spec can pass the designer *rules* of M3 tokens,
+  breakpoints and four states and still confuse a first-time user) and
+  **deliverability** (can the project's UI stack actually build these layouts,
+  motions and interactions — the downstream engineer's lens, which used to be a
+  second `feasibility-reviewer` spawn on the same artefact). They merged because
+  the defect that matters most sits between them: a control the user cannot reach
+  *because* the stack cannot render it there is one finding, and split across two
+  reviewers each filed half. A `critical` from either lens **blocks until
+  resolved** — an objective usability defect (a dead-end state, an unreachable
+  primary control, an unconfirmed destructive action, a silent action), or
+  infeasible-as-drafted with a cited source; a `warning` (a friction trade-off,
+  or deliverable-but-risky) goes to the founder to weigh.
   Neither re-runs the whole judgment (§Gate loop policy). It right-sizes itself to the design's scope
   — you needn't set a tier: a net-new navigation model / multi-step flow triggers
   its `deep` multi-persona fan-out (first-time / a11y / locale / power), a localized
@@ -421,10 +425,10 @@ it never grades a draft that is about to change.
 | Stage produced | ① Sanity (cheap, before Resolve) | ② Adversarial (opus, judgment, after Resolve) |
 |---|---|---|
 | **PM plan** | `pm-plan-reviewer` (pm rules `P1`–`P8` + plan integrity) | `feasibility-reviewer`(designer + engineer lens) |
-| **designer plan** | `design-lint` (script, not an agent — the shipped widgets) | `ux-reviewer`(usability, against the renders + widget source) ∥ `feasibility-reviewer`(engineer lens) |
+| **designer plan** | `design-lint` (script, not an agent — the shipped widgets) | `design-plan-reviewer` — usability **and** deliverability, against the renders + widget source |
 | **engineer plan** | `plan_lint.sh` (script, not an agent) | `engineer-plan-reviewer` |
-| **code (after implementation)** | `code-reviewer` | `security-reviewer`(code) — *boundary-gated on the diff* ∥ `privacy-reviewer`(code sinks) — *boundary-gated on the diff* |
-| **after QA** | — | `conformance-reviewer` — the residue QA's spec tests can't pin ∥ `test-reviewer` — test design, both halves ∥ `consistency-reviewer` — cross-feature mechanism parity, *boundary-gated*: runs when the plan carries §Conformance `同儕：` rows, or the diff touches a mechanism the project's `.claude/rules/consistency.md` table names, or spans ≥ 2 features |
+| **code (after implementation)** | `code-reviewer` | `security-privacy-reviewer` (threat model + data minimization) — *boundary-gated on the diff's sink signals* |
+| **after QA** | — | `post-qa-reviewer` — the spec residue QA's tests can't pin, cross-feature mechanism parity against the plan's §Conformance `同儕：` rows and the project's `.claude/rules/consistency.md` table, and the design of every test the diff touches |
 
 Because PM and designer share one round (§Step 4), their two Sanity cells run as
 one batch and their two Adversarial cells as one battery — one Resolve between
@@ -439,7 +443,7 @@ The ① cell is a different agent per stage, with the checks rehomed **by kind**
   is never a self-check.
 - **Engineering judgment → the dimensions**, inside `engineer-plan-reviewer`'s walked
   dimensions and cross-cutting checks.
-- **Design judgment → `ux-reviewer`.** The designer rules also live inside the
+- **Design judgment → `design-plan-reviewer`.** The designer rules also live inside the
   ② usability sweep, so a spec that lies about state, hides a distinction in one
   perceptual channel, or pollutes a shared component surfaces as the usability
   defect it is — with severity attached — rather than only as a rule number.
@@ -520,7 +524,7 @@ declares all nine in its `coverage:` line; the split is recorded once in
 **Security / privacy are gated at the code, and only there.** Decide the two
 reviewers **independently** (one may be in scope while the other is not); when in
 doubt, spawn (fail-closed). Gate on the **actual diff, NOT the plan's claim** —
-the code is where real sinks live. Spawn `security-reviewer` / `privacy-reviewer`
+the code is where real sinks live. Spawn `security-privacy-reviewer`
 only when the diff **introduces** one of these mechanical sink signals: a new
 network / HTTP call, a new non-`debug` `LogSystem` interpolation, a new
 persistent-storage or file write, a new platform-channel call, a new dependency,
@@ -551,12 +555,16 @@ The code-stage spawn survives but stays boundary-gated: a no-new-sink or removal
 diff skips it, while security and privacy each earn a spawn independently when
 their boundary *is* touched.
 
-**`feasibility-reviewer` is the downstream consumer's lens on an upstream
-plan** — the early-bounce gate that catches at the boundary what would
-otherwise surface as a mid-flow divergence rev one or two phases later. Its
-direction is deliberately asymmetric: downstream reviews upstream only (the
+**`feasibility-reviewer` is the downstream consumer's lens on the PM plan** —
+the early-bounce gate that catches at the boundary what would otherwise surface
+as a mid-flow divergence rev one or two phases later. **The PM plan is now its
+only artefact**, and it runs both downstream lenses there (designer: can the
+design system express this scope; engineer: are the mechanisms buildable). The
+**design spec** gets the same deliverability question from
+`design-plan-reviewer`, beside the usability walk on the same renders. The
 engineer plan gets none — upstream coverage is `engineer-plan-reviewer` +
-§Conformance + QA's spec tests + `conformance-reviewer` on their residue). A `critical`
+§Conformance + QA's spec tests + `post-qa-reviewer` on their
+residue. A `critical`
 (infeasible as drafted, evidence-cited) blocks until resolved; a `warning`
 (deliverable but risky) goes to the founder to weigh (§Gate loop policy — neither
 re-runs the whole judgment). It institutionalises the PM role's optional
@@ -705,7 +713,7 @@ of as a copy in each role's checklist. They are **drafting constraints
 first**: honour them while writing. `engineer-plan-reviewer` grades them by id on
 every plan — inside the checklist walk for pm / designer, as a
 cross-cutting check on the engineer plan — and `plan_lint.sh` catches their
-mechanical tells. `ux-reviewer` catches the provenance half again at ②.
+mechanical tells. `design-plan-reviewer` catches the provenance half again at ②.
 
 - **I1 — A rev edits the body; it never stacks a layer on top of it.** After any
   revision the body must state only what is true *now*: no two places may give
@@ -874,14 +882,14 @@ the working tree and report the diff"). Full protocol: `git-ops` skill
 Three **ordered** steps, not one batch:
 
 1. **The code-stage row of the matrix** — `code-reviewer`, plus
-   `security-reviewer` ∥ `privacy-reviewer` when the diff's own sink signals fire.
+   `security-privacy-reviewer` when the diff's own sink signals fire.
 2. **The QA phase** — spawn the `qa` agent; it authors the spec-derived tests,
    the engineer role already wrote the contract-derived ones.
-3. **Only then the after-QA row** — `conformance-reviewer` ∥ `test-reviewer`,
-   plus `consistency-reviewer` when its boundary fires.
+3. **Only then the after-QA row** — `post-qa-reviewer`, once, walking all three
+   of its lenses.
 
-**That order is load-bearing.** `conformance-reviewer` is now the *residual*
-gate: it opens by listing `test/spec/` and skips every item those tests already
+**That order is load-bearing.** `post-qa-reviewer`'s conformance lens is
+*residual*: it opens by listing `test/spec/` and skips every item those tests already
 pin, because a permanently-failing test is stronger than a point-in-time verdict. Run it before QA and it has nothing to subtract, so it
 re-derives the whole spec walk and duplicates the ratchet it was narrowed to
 complement. Apply the `/review`
@@ -889,6 +897,12 @@ verdict-per-finding protocol (FIX / DISMISS-with-rationale / ESCALATE / DEFER);
 every security / privacy `critical` blocks until resolved, and a `warning` goes
 to the founder — neither re-runs the whole judgment (§Gate loop policy). No
 silent skips.
+
+**Every one of these six posts to the PR** — the three code-stage reviewers and
+the three after-QA ones alike, findings before the fixes and dispositions after
+(`review/SKILL.md §Posting findings to the PR`). A zero-finding pass posts too;
+otherwise a gate that never ran and a gate that found nothing look identical from
+the PR.
 
 **Not finished until both measured gates are green.** They are the QA phase's
 output rather than an opinion about it, and `qa/SKILL.md` §Iron Law 1 owns the bar:
@@ -903,7 +917,7 @@ output rather than an opinion about it, and `qa/SKILL.md` §Iron Law 1 owns the 
 
 They **stack rather than substitute** — a line no test executes produces no
 mutant, so it never survives and never appears; mutation grades what was reached,
-coverage grades the reach. And neither retires `test-reviewer`, which catches the
+coverage grades the reach. And neither retires `post-qa-reviewer`, which catches the
 opposite error: a change-detector scores perfectly on both.
 
 **During authoring, tests belong to the `qa` agent and you run none.** The agent
@@ -1003,14 +1017,38 @@ reconciling it is the **next** action — ahead of advancing the work.
 
 When the task is complete, the cycle is **not done until these run** (Iron Law 7):
 
-0. **Open the PR (from the worktree).** Push the branch and open the PR:
-   `git push -u origin <branch>` then `gh pr create --base "$BASE"
-   --title "<conventional-commit title>" --body "Fixes #<issue>
+0. **Open the PR (from the worktree).** Push the branch, then open the PR with a
+   heredoc body (never `--body` — embedded newlines and CJK mangle):
 
-   Implements <Notion task URL> (→ Product + Design + Engineering Plan rows)"` —
-   the `Fixes #<issue>` line is what closes the cycle's GitHub issue (§Step 2) on
+   ```bash
+   git push -u origin <branch>
+   gh pr create --base "$BASE" --title "<conventional-commit title>" --body-file - <<'EOF'
+   Fixes #<issue>
+
+   Implements <Notion task URL> (→ Product + Design + Engineering Plan rows)
+
+   ## Plan-stage gates
+   | Gate | Verdict | Findings |
+   |---|---|---|
+   | pm-plan-reviewer | passed / n-a | 0 |
+   | engineer-plan-reviewer | passed | 2 critical resolved, 1 warning accepted |
+   | feasibility-reviewer | passed | 0 |
+   | design-plan-reviewer | n-a — no design phase | — |
+   EOF
+   ```
+
+   The `Fixes #<issue>` line is what closes the cycle's GitHub issue (§Step 2) on
    merge, and the Notion URL is the planning trail (Iron Law 4). Omit the `Fixes`
    line only when the cycle genuinely has no issue.
+
+   **The gate table is one row per plan-stage gate, and `n-a` needs its reason.**
+   These four run before a PR exists, so a comment cannot carry them (the
+   diff-stage reviewers post their own — `review/SKILL.md §Posting findings to
+   the PR`). Without the table the founder is merging code whose plan-stage
+   verdicts are visible only inside a session that is about to end, and a gate
+   that was silently skipped looks exactly like one that passed. Report the
+   verdict and the finding counts, not the reports — those live in the Notion
+   rows.
 
    **`Fixes` fires only on a MERGE into the DEFAULT branch.** With
    `worktree.baseRef: head`, `$BASE` is whatever branch the session sat on — so a
@@ -1241,14 +1279,11 @@ Two execution mechanisms:
 | `qa` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` (+ `agents/qa.md`) | Agent / sonnet |
 | `pm-plan-reviewer` | the PM plan (`pm/references/rules.md` + plan integrity) | Agent / sonnet |
 | `engineer-plan-reviewer` | the engineering plan (scope-gated dimensions) | Agent / opus |
-| `security-reviewer` | `review/rules/security/` | Agent / opus |
-| `privacy-reviewer` | `review/rules/privacy/` | Agent / opus |
+| `security-privacy-reviewer` | `review/rules/security/` + `review/rules/privacy/` | Agent / opus |
 | `code-reviewer` | the diff | Agent / opus |
-| `conformance-reviewer` | the plan's residue after QA's spec tests | Agent / opus |
-| `consistency-reviewer` | `review/rules/consistency/` + the plan's 同儕 rows | Agent / sonnet |
-| `test-reviewer` | `${CLAUDE_PLUGIN_ROOT}/skills/qa/SKILL.md` vs every test in the diff | Agent / sonnet |
-| `feasibility-reviewer` | the upstream plan vs downstream deliverability | Agent / opus |
-| `ux-reviewer` | `review/rules/ux/` (the design spec's usability) | Agent / opus |
+| `post-qa-reviewer` | the approved plans + the siblings + `/qa`'s contract, on the diff | Agent / opus |
+| `feasibility-reviewer` | the PM plan vs downstream deliverability | Agent / opus |
+| `design-plan-reviewer` | the design spec: `review/rules/ux/` + the UI stack | Agent / opus |
 | `archivist` | `${CLAUDE_PLUGIN_ROOT}/skills/archivist/SKILL.md` | Skill (in-thread) / session |
 
 ### Model tiering

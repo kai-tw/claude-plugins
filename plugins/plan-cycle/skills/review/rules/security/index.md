@@ -1,6 +1,6 @@
 # Security rules — threat-model baseline
 
-目標 **OWASP MASVS L1**（消費級 app）。`security-reviewer` 對 **diff** 逐母規則 →
+目標 **OWASP MASVS L1**（消費級 app）。`security-privacy-reviewer` 對 **diff** 逐母規則 →
 逐 threat 對照本清單旁觀審查（player ≠ referee，禁實作者自審）：每個 threat 逐項問
 「目前是否已防禦?」→ 標 **passed / warning / critical**。
 
@@ -17,7 +17,7 @@
 不在這裡。
 
 **專案在 `.claude/rules/security.md` 疊加自己的目錄**，格式與本檔相同（母規則 → threat
-sub-check → 三級判定）。`security-reviewer` **兩份都 grade**：先基線、再疊加層。
+sub-check → 三級判定）。`security-privacy-reviewer` **兩份都 grade**：先基線、再疊加層。
 
 判斷一條 threat 該放哪，只問一個問題：
 

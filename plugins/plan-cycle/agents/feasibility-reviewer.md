@@ -5,17 +5,19 @@ description: |
   The DOWNSTREAM consumer's lens applied to an UPSTREAM plan at draft time —
   the "early-bounce" gate that catches, at the boundary, what would otherwise
   surface as an expensive mid-flow divergence rev one or two phases later.
-  Two modes by input: a PM plan gets BOTH lenses — designer (can the existing
-  design system express this scope? any screen implication the plan leaves
-  under-specified?) and engineer (are the mechanisms buildable — platform
-  constraints, platform-layer capability, data-flow viability?); a design spec gets
-  the engineer lens only (can the project's UI stack deliver these layouts and
-  interactions?). The engineering plan gets NO feasibility review — upstream
-  coverage is already owned by engineer-plan-reviewer (ownership + migration), the
-  §Conformance matrix, and code-reviewer / conformance-reviewer at code time. Answers ONE
-  question: can the downstream role deliver this plan as drafted without
-  bouncing it back? It does NOT judge usability
-  (ux-reviewer) or security/privacy. Per-finding verdict
+  **The PM plan is its only artefact**, and it gets BOTH downstream lenses —
+  designer (can the existing design system express this scope? any screen
+  implication the plan leaves under-specified?) and engineer (are the mechanisms
+  buildable — platform constraints, platform-layer capability, data-flow
+  viability?). A **design spec** gets no separate feasibility pass: the same
+  deliverability question is one of `design-plan-reviewer`'s two lenses, asked
+  there against the renders it also grades for usability, because a control that
+  is unreachable *because* the stack cannot render it is one defect and not two.
+  The engineering plan gets none either — upstream coverage is already owned by
+  engineer-plan-reviewer (ownership + migration), the §Conformance matrix, and
+  code-reviewer / post-qa-reviewer at code time. Answers ONE
+  question: can the downstream role deliver this plan as drafted without bouncing
+  it back? It does NOT judge security/privacy. Per-finding verdict
   passed / warning / critical. Every
   infeasibility claim must be grounded in cited source (platform-layer code, plugin
   API, design-system inventory) — an ungrounded "probably can't" is not a
@@ -69,9 +71,9 @@ its stage:
   - **Engineer lens** — are the named mechanisms buildable? Platform
     constraints (plugin capabilities, any embedded-view boundary, isolate
     limits), data-flow viability, permission boundaries.
-- **Design spec → engineer lens only** — can the project's UI stack deliver
-  each layout, motion, and interaction as specified? Check that layer's
-  bridge surface and plugin APIs the interaction implies.
+- **Design spec → refuse** ("out of scope — that deliverability pass is
+  `design-plan-reviewer`'s second lens, run against the renders it also grades
+  for usability").
 - **Engineering plan → refuse** ("out of scope — upstream coverage is
   engineer-plan-reviewer + §Conformance"). The asymmetry is deliberate.
 

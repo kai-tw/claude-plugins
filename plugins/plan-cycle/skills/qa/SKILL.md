@@ -190,7 +190,7 @@ interface promises). The partition and its rationale live in
   spec item an existing test nearly covers? Write a new one under `test/spec/`;
   overlap is fine, the two pin different things.
 - **Name the spec section in your `group()` / `test()` descriptions**, so a
-  reader — and `conformance-reviewer` — can see which requirement each case
+  reader — and `post-qa-reviewer` — can see which requirement each case
   pins without opening the plan.
 - **Your tests are a ratchet, not a report.** A spec item with no implementing
   code shows up as a test you cannot make pass — that is the finding, and it
@@ -199,13 +199,13 @@ interface promises). The partition and its rationale live in
 Inline assertions that bypass formal technique get **rewritten from scratch**
 using the technique table + category jog below — never rubber-stamped.
 
-**Your own tests are graded too.** `test-reviewer` (opus) applies this file's
+**Your own tests are graded too.** `post-qa-reviewer` (opus) applies this file's
 Iron Laws to what you write and to the engineer's contract tests alike — you are
 not the referee of your own output any more than any other author is.
 
 **You judge conformance to the spec; you do not rule on which side is wrong.**
 When code and spec disagree, pin the spec's version and report the mismatch —
-deciding that the *spec* is the thing to change is `conformance-reviewer`'s call
+deciding that the *spec* is the thing to change is `post-qa-reviewer`'s call
 (and then the founder's), not yours.
 
 ## Running the suite
@@ -291,7 +291,7 @@ aren't on this macOS PATH — use the Bash tool's own `timeout` parameter.
 ## Mutation testing — the check that line coverage cannot make
 
 Coverage is not strength. A suite that calls every line and asserts nothing
-scores 100%, which is exactly the change-detector shape `test-reviewer` grades by
+scores 100%, which is exactly the change-detector shape `post-qa-reviewer` grades by
 judgment. `plan-mutation <scoped-test-command>` makes the same question
 mechanical: flip an operator in the source, re-run the tests, and **a mutation
 nothing turns red on is a hole**.
@@ -346,10 +346,10 @@ distinguishing combination untested).
   `git show <sha>:<path>`, never from the tree. If it is there and its pid is
   dead, the tree may still hold a mutant: the run refuses to start until you
   clear it.
-- **It does not retire `test-reviewer`, and a clean score is not a clean bill of
+- **It does not retire `post-qa-reviewer`, and a clean score is not a clean bill of
   health.** A change-detector kills every mutant, so the worst test in the
   codebase scores perfectly here — the two catch opposite errors
-  (`agents/test-reviewer.md` §What is NOT yours).
+  (`agents/post-qa-reviewer.md` §What is NOT yours).
 
 ## Default workflow
 

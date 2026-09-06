@@ -109,7 +109,7 @@ export const body = [
     required: true,
     criteria: [],
     description: '變更記錄（audit trail）',
-    hint: '首行固定：YYYY-MM-DD: Created.\n每次修訂加一行說明 what changed and why：co-creation 決議落地 / founder 回饋 / ux-reviewer 的修正 / 下游 role 退回。\n一行一次修訂，不展開理由——裁示本身寫在 spec 被裁定處的決策註記裡（`plan/SKILL.md §Plan integrity` 的 `I4`）。\n不要省略；這是 spec 演進的 audit trail，月後回溯仍需讀懂。',
+    hint: '首行固定：YYYY-MM-DD: Created.\n每次修訂加一行說明 what changed and why：co-creation 決議落地 / founder 回饋 / design-plan-reviewer 的修正 / 下游 role 退回。\n一行一次修訂，不展開理由——裁示本身寫在 spec 被裁定處的決策註記裡（`plan/SKILL.md §Plan integrity` 的 `I4`）。\n不要省略；這是 spec 演進的 audit trail，月後回溯仍需讀懂。',
     template: '- YYYY-MM-DD: Created.',
   },
   {

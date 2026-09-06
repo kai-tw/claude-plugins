@@ -259,7 +259,7 @@ against the rubric.
   When a reviewer finding needs upstream scope, route
   via `## Open questions` — the engineer role is not authorised to
   amend the PM role or the designer role artefacts.
-- Does **not** invoke the `security-reviewer` — and neither does any other part
+- Does **not** invoke the `security-privacy-reviewer` — and neither does any other part
   of the engineer phase. Security and privacy read the **diff's** real sinks,
   not a plan's claim about them, so their spawn is at the code stage
   (`plan/SKILL.md` §audit matrix). A security-flavoured concern that surfaces

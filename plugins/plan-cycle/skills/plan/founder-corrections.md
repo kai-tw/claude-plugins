@@ -152,7 +152,7 @@ phrasing as a parallel-marker tell. Founder's minimal-mechanism instinct
 optimization instinct. The code-time and mechanical halves are enforced elsewhere
 (`.claude/rules/architecture.md §Adding New Abstractions`, `plan-lint`'s
 `為何要新增` / `既有方法夠嗎` hard checks, `plan-lint --diff`,
-`consistency-reviewer`); what this entry owns is the **judgment** half — a check
+`post-qa-reviewer`); what this entry owns is the **judgment** half — a check
 can verify the question was answered with evidence, whether the answer holds is
 still yours to doubt.
 

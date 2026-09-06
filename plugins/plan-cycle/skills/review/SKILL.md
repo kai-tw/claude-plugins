@@ -5,14 +5,11 @@ description: >-
   sub-agent against the relevant artifact (an uncommitted diff, or a plan):
   code-reviewer · engineer-plan-reviewer (engineering-plan design quality) ·
   pm-plan-reviewer (the PM plan's rules walk) ·
-  security-reviewer (threat
-  model, the diff) · privacy-reviewer (data minimization, the diff) · conformance-reviewer (the residue
-  of "code embodies the approved plan" that /qa's spec tests can't pin) ·
-  test-reviewer (test DESIGN, both halves of the test/** partition) ·
-  ux-reviewer (design-spec usability) · feasibility-reviewer (downstream
-  deliverability of an upstream plan) · consistency-reviewer (cross-feature
-  mechanism parity — second sources of truth, sibling check-set divergence,
-  duplicate capability). All are report-only — the caller acts on the findings.
+  security-privacy-reviewer (threat model AND data minimization, on the diff —
+  one pass, two lenses) · post-qa-reviewer (conformance residue + cross-feature
+  consistency + test design — one pass, three lenses) ·
+  design-plan-reviewer (design-spec usability AND deliverability — one pass, two
+  lenses) · feasibility-reviewer (downstream deliverability of a PM plan). All are report-only — the caller acts on the findings.
   TRIGGER: code review · review the code · review my changes · review this ·
   review the tests · test review · are these tests any good · 審一下測試 ·
   check my code · review before commit · security review · threat model X ·
@@ -62,20 +59,94 @@ and the threshold). Treat the block as late, not as the schedule.
 | Code review (semantic, architectural, lint-uncatchable) | `code-reviewer` | the uncommitted diff | **return to caller** (no file) |
 | Engineering-plan **should-this-exist** (2 scope-gated dimensions; the other 9 are graded on the diff by `code-reviewer`) | `engineer-plan-reviewer` | an engineering plan | **return to caller** (no file) |
 | **PM-plan rules compliance** (`P1`–`P8` + plan integrity, sub-check by sub-check) | `pm-plan-reviewer` | a pm plan | **return to caller** (no file) |
-| **Security** (threat model, attack surface) | `security-reviewer` | the diff — never a plan | **return to caller** (no file) |
-| **Privacy** (data-minimization) | `privacy-reviewer` | the diff + store declarations — never a plan; "should this be collected at all" is PM rule `P8` | **return to caller** (no file) |
-| **Conformance** (the residue /qa's spec tests can't pin — §Non-goals, token drift, stale docs, `spec-should-change`) | `conformance-reviewer` | approved product / design plan vs the diff, after QA | **return to caller** (no file) |
-| **Test design** (change-detectors, untagged cases, illegal fakes, partition breaches) — **not** replaced by `plan-mutation`, which grades the opposite error and scores a change-detector perfectly | `test-reviewer` | every test the diff adds / changes — engineer-owned and `/qa`-owned alike | **return to caller** (no file) |
-| **UX** (usability, first-time-user confusion) | `ux-reviewer` | a design spec (at design time; it right-sizes itself — say "go deep" / "light pass" to override) | **return to caller** (no file) |
-| **Feasibility** (downstream deliverability, early-bounce) | `feasibility-reviewer` | a PM plan (designer + engineer lens) or a design spec (engineer lens) — never the engineering plan | **return to caller** (no file) |
-| **Consistency** (cross-feature mechanism parity — second truth sources, sibling check-set divergence, duplicate capability) | `consistency-reviewer` | the diff + the plan's §Conformance 同儕 rows, vs the sibling implementations + `.claude/rules/consistency.md` mechanism table | **return to caller** (no file) |
+| **Security and/or privacy** (threat model + attack surface · data-minimization) — asking for one spawns the agent, which walks **both** lenses | `security-privacy-reviewer` | the diff + store declarations — never a plan; "should this be collected at all" is PM rule `P8` | **return to caller** (no file) |
+| **Post-QA** (did we build what was approved · is it built the way this codebase already does it · will these tests still catch the bug next year) — asking for one spawns the agent, which walks **all three** lenses | `post-qa-reviewer` | the diff + the approved product / design plan + the engineering plan (§Conformance matrix and its `同儕：` rows) + the siblings it names + every test the diff touches, graded against `/qa`'s contract | **return to caller** (no file) |
+| **Design spec — usability + deliverability** (first-time-user confusion · can the stack build it) — asking for one spawns the agent, which walks **both** lenses | `design-plan-reviewer` | a design spec + its renders (it right-sizes the usability walk itself — say "go deep" / "light pass" to override) | **return to caller** (no file) |
+| **Feasibility** (downstream deliverability of a PM plan, early-bounce) | `feasibility-reviewer` | a **PM plan** only, designer + engineer lens — never a design spec (that is `design-plan-reviewer`) and never the engineering plan | **return to caller** (no file) |
 
 Pick by trigger phrase. If the user asks for "review my changes" without
 specifying, ask once which dimension(s) they mean — don't guess. If they ask for
 several, spawn them in parallel.
 
-**"Does this design meet the design rules"** is the `ux-reviewer`;
-mockup-fidelity is a manual founder check. The `conformance-reviewer` checks
+## Why this many reviewers — the merge criterion
+
+**Dimension count is never the argument, in either direction.** One capable model
+walks many dimensions in one context perfectly well — that is already the house
+pattern: `code-reviewer` grades **nine** dimensions in a single pass,
+`engineer-plan-reviewer` walks two, and `plan_converge.sh` records that its
+per-dimension fan-out was deleted. So "this reviewer covers a lot" is never a
+reason to split it, and "we have several reviewers" is never by itself a reason
+to merge them.
+
+**Two reviewers merge when they would run at the same moment on the same
+artefact.** Four tests, all four required:
+
+1. **Same trigger.** They fire on the same condition. A reviewer that runs on
+   every diff and one that is boundary-gated do not merge: the merged agent
+   either runs the gated walk unconditionally (undoing the gating) or gates
+   internally (the same two gates, now behind one dispatch and one bigger
+   context).
+2. **Same stage.** Same cell of the audit matrix — a ① cheap-tier walk and a ②
+   adversarial pass are answering at different costs for different reasons.
+3. **Isomorphic contracts.** The phases line up, so the merged agent is one
+   spine with two lenses rather than two agents stapled together.
+4. **A cross-reference that disappears.** The strongest signal: they currently
+   tell each other to file half a finding. That protocol is the seam, and it is
+   pure loss.
+
+A **different rule corpus is not a reason to stay apart** — security and privacy
+read different rule packs and still merged, because all four tests passed. What
+keeps reviewers apart is loading a corpus you do not need to answer the other's
+question *at a moment you would not otherwise be running*.
+
+| Reviewer | Trigger | Stage | Also loads |
+|---|---|---|---|
+| `code-reviewer` (9 dims) | **every** code change | code ① | `.claude/rules/` — no plan |
+| `security-privacy-reviewer` | the diff's own **sink signals** (a pure-removal diff skips it) | code ② | sink rule packs + store declarations — no plan |
+| `post-qa-reviewer` | after QA, when an approved plan exists | after-QA | the approved plans + the siblings they name + `/qa`'s contract; it splits the diff by tree (conformance and consistency on `lib/**`, test design on `test/**`) |
+| `pm-plan-reviewer` · `engineer-plan-reviewer` · `feasibility-reviewer` · `design-plan-reviewer` | a plan or spec is drafted | ① / ② | no diff exists yet |
+
+Read the table down the **Trigger** column: that is where the merges live and
+where they die. Every merged agent shares a trigger with its partner exactly;
+every remaining pair differs in it.
+
+*Worked positive, and the reason test 4 outranks the others:* conformance,
+consistency and test design merged into `post-qa-reviewer` on a seam that was a
+**live hole**, not a tidiness argument. The conformance lens opens by subtracting
+every spec item a `test/spec/` test already pins — but whether that test pins
+anything is the test-design lens's question, and a change-detector answers "no"
+while looking complete. Split, an item was skipped as protected by a test the
+other reviewer would have called empty, and no report joined those two facts.
+When you find a cross-reference like that, look for the finding it is dropping.
+
+*Worked negative:* `consistency` looked mergeable into `code-reviewer` because
+both grep the siblings — but its C2.1 and C3.1 **cannot run without §Conformance
+and §Classes**, a plan input `code-reviewer` never loads, and its trigger is the
+after-QA row rather than every diff. It merged the other way instead.
+
+The security + privacy merge is the worked example. Their spawn triggers were
+written identically ("boundary-gated on the diff's own sink signals"), they read
+one shared signal list, their agent files were structurally isomorphic phase for
+phase, and the security agent carried a whole `## Data protection & privacy`
+section — privacy content living in the security reviewer. They were one gate
+wearing two names, and the finding that is *both* a leak and an over-collection
+is now one finding with two verdicts rather than two reports cross-citing each
+other.
+
+**Before proposing another merge, walk the four tests and say which ones pass.**
+Fewer than four, the answer is no — the merge is a dispatch-count optimisation
+and it buys a bigger context loaded more often.
+
+*Worked negative:* `code-reviewer` + `security-privacy-reviewer` looks obvious —
+both grade the diff, neither loads a plan. It fails test 1 and test 2:
+`code-reviewer` runs on **every** code change while `security-privacy-reviewer`
+is boundary-gated on the diff's own sink signals (a pure-removal diff skips it
+entirely), and they sit in different tiers of the matrix's code row. Merging
+them either re-arms the always-on spawn that five consecutive cycles nominated as
+pure latency, or hides the same gate inside a heavier agent.
+
+**"Does this design meet the design rules"** is the `design-plan-reviewer`;
+mockup-fidelity is a manual founder check. The `post-qa-reviewer` checks
 **shipped code vs the approved spec** (is a required state / motion / interaction
 actually implemented), not mockup-vs-design-rules.
 
@@ -184,18 +255,30 @@ When the review target is a **plan row** (a PM / Design / Engineering Plan under
 founder-visible collaboration trail on the plan itself, consistent with the 不落檔
 stance — a comment annotation, **not** a file.
 
-### Posting findings to the PR (code / security / privacy reviews)
+### Posting findings to the PR (every reviewer whose artefact is the diff)
+
+**Which reviewers this covers is decided by what they read, not by which stage
+they run in.** Every reviewer graded against the **diff** posts here:
+`code-reviewer`, `security-privacy-reviewer`, `security-privacy-reviewer` at the code stage, and
+`post-qa-reviewer` after QA. Their
+findings are about the code the founder is being asked to merge, so the PR is
+where they belong. The plan-stage reviewers (`pm-plan-reviewer`,
+`engineer-plan-reviewer`, `feasibility-reviewer`, `design-plan-reviewer`) read a plan or a
+spec, not the diff — their record is the Notion row plus the gate summary in the
+PR body (`plan/SKILL.md` Step 6.0).
 
 When the branch under review **has an open PR**, the report is posted to that PR
 as a comment — **twice**, and the order is the rule:
 
-1. **Before any fix lands** — post the reviewer's findings as returned. Covers
-   `code-reviewer`, `security-reviewer` and `privacy-reviewer` alike. Open the
+1. **Before any fix lands** — post the reviewer's findings as returned. Open the
    comment with the sha that was reviewed — `Reviewed at <git rev-parse HEAD>` —
    then record it: `plan-cycle reviewed <that sha>`.
 2. **After the fixes land** — post the disposition: every finding from comment 1
    with its verdict (FIX / DISMISS-with-rationale / ESCALATE / DEFER) and what
    actually changed, one line each.
+
+A reviewer that returned **zero findings still posts** comment 1, saying so with
+its sha. "No comment from `post-qa-reviewer`" and "it found nothing" are indistinguishable otherwise, and only one of them means the gate ran.
 
 **Why post first rather than once at the end.** Once fixing starts, the finding
 list can only be reconstructed from memory, and a report written afterwards

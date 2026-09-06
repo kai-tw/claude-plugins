@@ -1,6 +1,6 @@
 # UX rules — usability heuristic checklist
 
-`ux-reviewer` 對審查對象（**drafted design spec 的每個 flow + 每個畫面的四狀態**，配合
+`design-plan-reviewer` 對審查對象（**drafted design spec 的每個 flow + 每個畫面的四狀態**，配合
 core task 來自核准的 product plan）**逐軸 → 逐 check** 對照本清單旁觀審查（player ≠
 referee，禁 designer 自審）：每個 check 逐項判 **passed / warning / critical** → 所有
 critical（＋未接受的 warning）回報 designer 修正 → 迴圈重審，**直到全 passed 或 warning

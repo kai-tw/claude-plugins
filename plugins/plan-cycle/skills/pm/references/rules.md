@@ -10,7 +10,7 @@ dismiss，迴圈至全 passed，上限 3 輪（見 SKILL.md Phase 6）。SKILL.m
 
 後果另有三處接住：**`feasibility-reviewer`**（對既有事物的斷言有沒有 grep 過〔P1.2〕、
 universal rule 有沒有 inventory〔P2.2〕、機制交不交得出來〔P2.3／P4.2〕、最危險假設是不是
-把工程難度冒充成不確定性〔P7.3〕）；**`ux-reviewer`**（P2.1／P2.4／P3.x／P4.1／P6 的後果會在
+把工程難度冒充成不確定性〔P7.3〕）；**`design-plan-reviewer`**（P2.1／P2.4／P3.x／P4.1／P6 的後果會在
 design spec 上顯形，含它橫切的 PM-scope adherence 檢查）；P1.1 的 baseline 還有
 `plan/SKILL.md §Step 3` 在開 PM phase 前先擋一次。
 
@@ -157,7 +157,7 @@ risk，但**必為第一條且形態不同**：最危險假設帶驗證法，殘
 
 **Principle:** 每個離開裝置的 user-derived 欄位，在 plan 裡就要決定**為什麼收、能不能不收、
 以多低的識別度收、留多久**。這些是產品決策，不是實作細節——等到 diff，那個欄位已經在傳了、
-傳得也對、sink 也處理得好，沒有人會再問它該不該存在。`privacy-reviewer` 與 `security-reviewer`
+傳得也對、sink 也處理得好，沒有人會再問它該不該存在。`security-privacy-reviewer`
 審的是 diff 的真實 sink（collection-site `file:line`、log 樣板、parser、權限實作），
 **不審 plan**；plan 這一端就是本條。
 

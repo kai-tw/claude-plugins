@@ -11,8 +11,8 @@ description: |
   the list is bounded, so green is a real state and the caller loops to it
   (cap 3 rounds). **P8 is where privacy lives at plan stage** — purpose,
   necessity, sensitivity tier, retention bound, permission justification, store
-  declaration — because those are product decisions, while `privacy-reviewer`'s
-  and `security-reviewer`'s own rule sets are anchored to collection sites, log
+  declaration — because those are product decisions, while `security-privacy-reviewer`'s
+  and `security-privacy-reviewer`'s own rule sets are anchored to collection sites, log
   templates and parser sinks and so are graded on the **diff**. Every violation
   names the failure scenario the rule exists to prevent **plus the fix it would
   make**. **Report-only — proposes, but does NOT edit the plan.** Returns its
@@ -162,13 +162,13 @@ settle it.
 - **Do not** edit the plan, the source, or any project file.
 - **Do not** review the design spec — the designer ships the widgets, so its
   cheap gate is `design-lint` (read off the source) and its judgment gate is
-  `ux-reviewer` against the renders. A checklist walk over a spec that no longer
+  `design-plan-reviewer` against the renders. A checklist walk over a spec that no longer
   describes the pixels grades the wrong artefact.
 - **Do not** review the engineering plan — that is `engineer-plan-reviewer`'s two
   scope-gated dimensions plus `plan_lint.sh`.
 - **Do not** grade the diff's sinks. `P8` asks whether a field should be
   collected at all, which only the plan can answer; whether the code collects it
-  safely is `privacy-reviewer` / `security-reviewer` on the **diff**, where the
+  safely is `security-privacy-reviewer` on the **diff**, where the
   sinks actually live.
 - **Do not** invent a sub-check. The rules file is the bar; a concern it does not
   cover goes in one `## Observations` line, never as a violation.

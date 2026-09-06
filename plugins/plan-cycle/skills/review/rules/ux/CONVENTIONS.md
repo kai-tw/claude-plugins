@@ -2,11 +2,11 @@
 
 `Read` 本檔只在新增 / 修改 / 合併 / 刪除 UX rule 時。
 
-**這是什麼.** `ux-reviewer` 的 usability 規則庫，組織成**母規則（usability axis）+
+**這是什麼.** `design-plan-reviewer` 的 usability 規則庫，組織成**母規則（usability axis）+
 sub-check** 兩層 —— 母規則是一個可用性面向（收斂並對映 Nielsen heuristics + cognitive
 walkthrough，加上本專案 reading-first 的取向）、sub-check 是該軸下一個可逐項判定的具體
 check。目標：一個 first-time 使用者能**看懂、完成、逃離**每個 flow，而不困惑、不卡死、不被
-突襲。`ux-reviewer` sub agent 對審查對象（**drafted design spec 的每個 flow + 每個畫面
+突襲。`design-plan-reviewer` sub agent 對審查對象（**drafted design spec 的每個 flow + 每個畫面
 的四狀態**，core task 來自核准 product plan）**逐軸 → 逐 check** 對照 `index.md` 旁觀審查
 （player ≠ referee，禁 designer 自審）。
 
@@ -20,12 +20,12 @@ check。目標：一個 first-time 使用者能**看懂、完成、逃離**每�
 或 warning 經寫明理由接受** 才放行。
 
 **與鄰居 reviewer 的界線（不重疊）.**
-- `design-lint` 對著 widget 原始碼查 layer 邊界與 token；`ux-reviewer`
+- `design-lint` 對著 widget 原始碼查 layer 邊界與 token；`design-plan-reviewer`
   問「就算全合規，使用者會不會困惑、有多嚴重」。designer 規則折進本檔六軸，所以同一個
   缺陷會被問兩次不同的問題——「守了沒」與「多痛」——那不是重複，是兩種 finding。
   **spec 沒有 checklist walk**：designer 出的是 widget，一份不再描述像素的 spec 走清單
   只會審錯東西。
-- `conformance-reviewer` 查出貨 **code** 有沒有實作 approved spec（實作期）；`ux-reviewer`
+- `post-qa-reviewer` 查出貨 **code** 有沒有實作 approved spec（實作期）；`design-plan-reviewer`
   查 **spec 本身** 可不可用（設計期）。
 - 視覺 / mockup 保真度是 founder 手動檢查，不在此。
 

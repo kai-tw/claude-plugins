@@ -1,6 +1,6 @@
 # Privacy rules — minimization checklist
 
-`privacy-reviewer` 對 **diff + 商店宣告**逐軸 → 逐 check 對照本清單旁觀審查
+`security-privacy-reviewer` 對 **diff + 商店宣告**逐軸 → 逐 check 對照本清單旁觀審查
 （player ≠ referee）：每個 check 逐項判 **passed / warning / critical**。
 
 **計畫不審。** 下面每一條 check 都錨在 collection-site `file:line` 或 log 樣板上，計畫沒有
