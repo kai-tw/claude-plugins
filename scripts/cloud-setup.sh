@@ -55,7 +55,10 @@ install_flutter() {
       | tar -xJ -C "$(dirname "$FLUTTER_HOME")"; then
     log "flutter $FLUTTER_VERSION installed"
   else
-    log "WARNING: install failed — no flutter/dart in this environment"
+    report "The Flutter $FLUTTER_VERSION SDK would not install, so there is no \`flutter\`
+and no \`dart\` in this container: nothing builds, no test runs, the analyzer
+cannot run and the commit gate cannot be satisfied. Say so before changing Dart
+code; do not report a change as verified when nothing could run."
     return 1
   fi
 }
@@ -149,7 +152,7 @@ SEED_DIR="/opt/claude-plugin-seed"
 # to install is the tooling itself. Appended under a marker and removed by it,
 # so this never eats a CLAUDE.md the environment put there for its own reasons.
 REPORT="$HOME/.claude/CLAUDE.md"
-REPORT_HEAD="## Claude plugins are MISSING from this environment"
+REPORT_HEAD="## This environment is INCOMPLETE"
 
 clear_report() {
   [ -f "$REPORT" ] || return 0
@@ -159,11 +162,16 @@ clear_report() {
     && mv "$REPORT.keep" "$REPORT"
 }
 
+# APPENDS under the heading; it does not replace. Every provisioning step can
+# fail independently, and an earlier failure erased by a later one is the exact
+# silence this channel exists to break. `clear_report` runs ONCE, before the
+# first step, so a healthy rebuild starts from nothing.
 report() {
   mkdir -p "$(dirname "$REPORT")"
-  clear_report
-  printf '%s\n\n%s\n' "$REPORT_HEAD" "$1" >> "$REPORT"
-  log "!! PLUGINS UNAVAILABLE — recorded in $REPORT"
+  grep -qxF "$REPORT_HEAD" "$REPORT" 2>/dev/null \
+    || printf '\n%s\n' "$REPORT_HEAD" >> "$REPORT"
+  printf '\n%s\n' "$1" >> "$REPORT"
+  log "!! recorded in $REPORT"
 }
 
 # Register the marketplace. A checkout the session cloned is the only path that
@@ -244,7 +252,6 @@ seed_plugins() {
 }
 
 install_plugins() {
-  clear_report
   if ! command -v claude >/dev/null 2>&1; then
     report "The \`claude\` CLI was not on PATH while this environment was provisioned, so
 nothing could be installed and every \`@$MARKETPLACE_NAME\` plugin is absent.
@@ -314,21 +321,33 @@ install_ntn() {
   # which this script cannot do. npm's global bin is already on PATH — the last
   # place notion-payload's own resolver looks.
   if ! npm install --global ntn >/dev/null 2>&1; then
-    log "WARNING: ntn install failed — the archivist cannot reach Notion"
+    report "\`ntn\` would not install, so the archivist has no transport to Notion — no
+TaskList, no plan rows, no Feature Archive, no close-out. Say so rather than
+working around it; do not hand-write into the repo what belongs in the KB."
     return 0
   fi
-  # Advisory, like every other step — a bad token must never cost the session.
-  # Checked here rather than left to discovery because the first `ntn` call of a
-  # cycle is usually the close-out archive: the most expensive moment to learn
-  # the token was never set.
+  # Advisory, like every other step — a bad token must never cost the session —
+  # but REPORTED, because a session that starts with a mute archivist and does
+  # not know it is worse than one that fails loudly. Checked here rather than
+  # left to discovery: the first `ntn` call of a cycle is usually the close-out
+  # archive, the most expensive moment to learn the token was never set.
   if ntn whoami >/dev/null 2>&1; then
     log "ntn authenticated"
-  else
-    log "WARNING: ntn installed but NOT authenticated — set NOTION_API_TOKEN and"
-    log "         NOTION_WORKSPACE_ID in the environment's Environment variables"
+    return 0
   fi
+  report "\`ntn\` is installed but NOT authenticated, so the archivist cannot read or
+write Notion — no TaskList, no plan rows, no Feature Archive, no close-out.
+Say so rather than working around it; do not hand-write into the repo what
+belongs in the KB.
+
+Fix: set both in the environment's Environment variables (claude.ai → Settings
+→ Claude Code → the environment), not in the setup script — every later \`ntn\`
+call needs them and the script's exports do not outlive it:
+  NOTION_API_TOKEN=<integration token>
+  NOTION_WORKSPACE_ID=<workspace uuid>"
 }
 
+clear_report
 install_flutter && persist_env && bootstrap_projects
 install_plugins
 install_ntn
