@@ -2,10 +2,12 @@
 # Cloud-environment setup for a Claude Code session — project-agnostic.
 #
 # Paste into the environment's "Setup script" field (claude.ai → Settings →
-# Claude Code → the environment). It provisions the two things a fresh container
-# lacks: the Flutter toolchain, and the Claude plugins the project declares.
-# One file rather than two, because that field takes exactly one script and a
-# two-paste instruction is how half of it silently never gets pasted.
+# Claude Code → the environment). It provisions the three things a fresh
+# container lacks: the Flutter toolchain, this marketplace's Claude plugins
+# (seeded for every session — see the plugin block for why a seed and not an
+# install), and the `ntn` CLI the archivist reaches Notion through.
+# One file rather than several, because that field takes exactly one script and
+# a two-paste instruction is how half of it silently never gets pasted.
 #
 # Reusable across every project because it bootstraps whatever the environment
 # actually cloned and whatever that project's settings declare, instead of
@@ -106,16 +108,40 @@ bootstrap_projects() {
   done < <(find "$WORKSPACE" -maxdepth 2 -name pubspec.yaml -not -path '*/packages/*' -print 2>/dev/null)
 }
 
-# Install the plugins the cloned projects declare, so the plan cycle is actually
-# there. A container starts with no marketplace REGISTERED and no plugin cache.
-# A project CAN declare the source in its own settings — `--scope project`
-# writes `extraKnownMarketplaces` and the CLI honours it — but declaring a
-# source installs nothing, and an unregistered `@marketplace` makes every plugin
-# id under it resolve to nothing. Silently: a skill that never loaded has no way
-# to announce its own absence. Both the registration and the plugin cache live
-# under $HOME, so this snapshots like everything else.
+# Install this marketplace's plugins and SEED them for every session in the
+# environment. Three facts, each measured in a cloud container, shape the block:
+#   * The snapshot is built by whichever repo's session first runs this script,
+#     then reused for every repo. Reading the plugin list from the cloned
+#     project installed nothing when the cache was rebuilt from a session on the
+#     marketplace repo itself, and every NovelGlide session inherited that empty
+#     snapshot. So: every plugin the marketplace lists, whatever was cloned.
+#     The reverse trap remains, and the snapshot FOLLOWS THE REPOSITORY (a
+#     seed built by a session on the marketplace repo never reached NovelGlide):
+#     while this script runs, GitHub answers only for repositories attached to
+#     the session, so the consuming repo's rebuild must run in a session that
+#     has the marketplace repo attached as a second repository. Any other
+#     rebuild reports UNREACHABLE (below) with that fix spelled out.
+#   * A project's own `extraKnownMarketplaces` + `enabledPlugins` installs
+#     NOTHING at session start. The CLI registers the marketplace and copies the
+#     plugins into cache, then refuses to load them ("not cached — run /plugin to
+#     refresh") because no install record exists; only `claude plugin install`
+#     writes one. Silently: a skill that never loaded cannot announce itself.
+#   * A plugin seed dir (CLAUDE_CODE_PLUGIN_SEED_DIR) needs no install record
+#     and no workspace trust: the CLI resolves the project's `enabledPlugins`
+#     against the seed's cache and puts their bin/ on PATH. It lives outside
+#     $HOME, so it survives whatever the launcher does to ~/.claude.
+#
+# The seed variable must reach the CLI PROCESS. Measured: the environment's
+# Environment variables field works, `env` in user settings works, `env` in the
+# repo's .claude/settings.json does not (trusted or not). This script writes the
+# user-settings copy; ALSO add it to the environment dialog (claude.ai →
+# Settings → Claude Code → the environment → Environment variables), the copy
+# that does not depend on ~/.claude surviving the snapshot:
+#   CLAUDE_CODE_PLUGIN_SEED_DIR=/opt/claude-plugin-seed
+# A session that loaded the seed resolves `type -a plan-lint` under $SEED_DIR.
 MARKETPLACE_NAME="kai-tw"
 MARKETPLACE_REPO="kai-tw/claude-plugins"
+SEED_DIR="/opt/claude-plugin-seed"
 
 # Where a failed bootstrap gets to speak. The setup log is written once, into a
 # settings pane nobody reopens; user-scope CLAUDE.md is loaded into EVERY
@@ -140,16 +166,12 @@ report() {
   log "!! PLUGINS UNAVAILABLE — recorded in $REPORT"
 }
 
-# Register the marketplace. A checkout the environment already cloned beats
-# github: a directory source needs no credential, and this marketplace is
-# private, so the network path is the one that 401s on an environment whose
-# github.com credential does not cover it.
-#
-# Two shapes qualify, and the VENDORED one is why the github path is now the
-# rare case: a consumer repo carries `.claude/vendor/<marketplace>/`, so a
-# session that mounted only that repo already has the marketplace on disk. The
-# two globs are stated separately rather than as one deeper `-maxdepth`, which
-# would walk `node_modules/` and `build/` in every cloned project to find them.
+# Register the marketplace. A checkout the session cloned is the only path that
+# works in an Anthropic-hosted environment: while the setup script runs, GitHub
+# answers only for repositories attached to the session (documented under the
+# GitHub proxy's repository scope, and measured as a failed ls-remote), so this
+# private repo is reachable only when it is attached, which also clones it. The
+# github path stays for environments that do carry a credential.
 register_marketplace() {
   local mp dir
   while IFS= read -r mp; do
@@ -159,94 +181,157 @@ register_marketplace() {
       log "marketplace $MARKETPLACE_NAME registered from $dir"
       return 0
     fi
-  done < <(
-    find "$WORKSPACE" -maxdepth 3 -path '*/.claude-plugin/marketplace.json' 2>/dev/null
-    find "$WORKSPACE" -maxdepth 6 -path '*/.claude/vendor/*/.claude-plugin/marketplace.json' 2>/dev/null
-  )
+  done < <(find "$WORKSPACE" -maxdepth 8 -path '*/.claude-plugin/marketplace.json' 2>/dev/null)
 
   # Probe before adding, because `marketplace add` failing and `marketplace add`
   # having nothing to do look identical from here — and a 401 on a private repo
   # is the exact failure this block exists to make visible.
   if ! git ls-remote "https://github.com/$MARKETPLACE_REPO" HEAD >/dev/null 2>&1; then
-    report "No \`$MARKETPLACE_NAME\` marketplace was found on disk, and
-\`https://github.com/$MARKETPLACE_REPO\` is UNREACHABLE from this container, so
-every \`@$MARKETPLACE_NAME\` plugin this project enables is absent — the plan cycle,
-its gates and every \`plan-*\` command included. Work without them and say so;
-do not improvise a substitute for a gate.
+    report "\`https://github.com/$MARKETPLACE_REPO\` is UNREACHABLE from this container, so
+every \`@$MARKETPLACE_NAME\` plugin is absent — the plan cycle, its gates and
+every \`plan-*\` command included. Work without them and say so; do not
+improvise a substitute for a gate.
 
-The normal path is the VENDORED copy each consumer repo carries at
-\`.claude/vendor/$MARKETPLACE_NAME/\`, which needs no credential because it is
-already part of the checkout. Not finding one means either this project has not
-been given a copy yet, or its copy was deleted — open a PR against
-\`$MARKETPLACE_REPO\` to add the repo to \`.github/vendor-consumers.yml\`, then run its
-\`vendor-sync\` workflow by hand to populate it.
-
-Failing that, add \`$MARKETPLACE_REPO\` to the environment's cloned repositories
-(a local checkout needs no credential either), then edit the Setup script (any
-edit) to force a snapshot rebuild."
+Expected whenever the snapshot was rebuilt by a session that did not have
+\`$MARKETPLACE_REPO\` attached: while the setup script runs, GitHub is reachable
+only for the repositories attached to the session, so this private repo is
+reachable only as a local checkout. The snapshot follows the repository, so a
+rebuild from the marketplace repo's own session does not help here. To fix: edit
+the Setup script (any edit forces a rebuild), then start the next session on
+THIS repository with \`$MARKETPLACE_REPO\` added as a second repository
+(claude.ai/code?repositories=<this owner/repo>,$MARKETPLACE_REPO). That
+session's clone gets installed and seeded."
     return 1
   fi
 
   claude plugin marketplace add "$MARKETPLACE_REPO" >/dev/null 2>&1 && return 0
   report "\`$MARKETPLACE_REPO\` is reachable but would not register as a marketplace, so
-every \`@$MARKETPLACE_NAME\` plugin this project enables is absent. Work without
+every \`@$MARKETPLACE_NAME\` plugin is absent. Work without
 them and say so; do not improvise a substitute for a gate."
   return 1
+}
+
+# Copy what `claude plugin install` produced into the seed. The seed mirrors
+# ~/.claude/plugins (known_marketplaces.json, marketplaces/, cache/) and is read
+# by every session whose process carries CLAUDE_CODE_PLUGIN_SEED_DIR. Built
+# beside the target and swapped in, so a failed copy leaves the old seed intact.
+seed_plugins() {
+  local src="$HOME/.claude/plugins" new="$SEED_DIR.new" loc
+  loc="$(jq -r --arg n "$MARKETPLACE_NAME" '.[$n].installLocation // empty' \
+    "$src/known_marketplaces.json" 2>/dev/null)"
+  rm -rf "$new"
+  if [ -z "$loc" ] || ! mkdir -p "$new/marketplaces" "$new/cache" \
+     || ! cp -a "$loc" "$new/marketplaces/$MARKETPLACE_NAME" \
+     || ! cp -a "$src/cache/$MARKETPLACE_NAME" "$new/cache/" \
+     || ! jq -n --arg n "$MARKETPLACE_NAME" --arg repo "$MARKETPLACE_REPO" \
+            --arg loc "$SEED_DIR/marketplaces/$MARKETPLACE_NAME" \
+            '{($n): {source: {source: "github", repo: $repo}, installLocation: $loc,
+                     lastUpdated: (now | todate)}}' > "$new/known_marketplaces.json"; then
+    rm -rf "$new"
+    log "WARNING: seed not built at $SEED_DIR"
+    return 1
+  fi
+  rm -rf "$SEED_DIR" && mv "$new" "$SEED_DIR" || return 1
+
+  # The user-settings copy of the variable (the environment dialog carries the
+  # other). Merged, not overwritten: `claude plugin install` writes this file.
+  local us="$HOME/.claude/settings.json"
+  mkdir -p "$(dirname "$us")"
+  [ -s "$us" ] || printf '{}\n' > "$us"
+  jq --arg d "$SEED_DIR" '.env = ((.env // {}) + {CLAUDE_CODE_PLUGIN_SEED_DIR: $d})' \
+    "$us" > "$us.new" && mv "$us.new" "$us"
+  log "seeded $SEED_DIR"
 }
 
 install_plugins() {
   clear_report
   if ! command -v claude >/dev/null 2>&1; then
     report "The \`claude\` CLI was not on PATH while this environment was provisioned, so
-nothing could be installed and every \`@$MARKETPLACE_NAME\` plugin this project
-enables is absent. Work without them and say so; do not improvise a substitute
-for a gate."
-    return 0
-  fi
-
-  # Take the list from what each project ENABLES rather than hardcoding one:
-  # a hardcoded list is a second copy of the project's own declaration, and the
-  # copy is what goes stale. `select(.value == true)` so a plugin somebody
-  # deliberately switched off does not come back.
-  local wanted
-  wanted="$(find "$WORKSPACE" -maxdepth 3 -path '*/.claude/settings.json' -print0 2>/dev/null \
-    | xargs -0 -r jq -r '(.enabledPlugins // {}) | to_entries[] | select(.value == true) | .key' 2>/dev/null \
-    | grep -- "@${MARKETPLACE_NAME}\$" | sort -u)"
-  if [ -z "$wanted" ]; then
-    log "no @${MARKETPLACE_NAME} plugins declared by any cloned project"
+nothing could be installed and every \`@$MARKETPLACE_NAME\` plugin is absent.
+Work without them and say so; do not improvise a substitute for a gate."
     return 0
   fi
 
   register_marketplace || return 0
+
+  # Every plugin the marketplace lists. What a project ENABLES is still its own
+  # `enabledPlugins`; this only decides what is on disk for it to enable.
+  local wanted
+  wanted="$(jq -r --arg n "$MARKETPLACE_NAME" '.[$n].installLocation // empty' \
+      "$HOME/.claude/plugins/known_marketplaces.json" 2>/dev/null \
+    | xargs -r -I{} jq -r '.plugins[].name' {}/.claude-plugin/marketplace.json 2>/dev/null)"
+  if [ -z "$wanted" ]; then
+    report "\`$MARKETPLACE_REPO\` registered but its marketplace.json lists no plugins, so
+every \`@$MARKETPLACE_NAME\` plugin is absent. Work without them and say so; do
+not improvise a substitute for a gate."
+    return 0
+  fi
 
   # --scope user, never project: project scope writes enabledPlugins back into
   # the repo's tracked .claude/settings.json, so every session would open on a
   # modified file it did not touch.
   local p missing=""
   for p in $wanted; do
-    claude plugin install "$p" --scope user -y >/dev/null 2>&1
+    claude plugin install "$p@$MARKETPLACE_NAME" --scope user -y >/dev/null 2>&1
     # Ask the registry, not the exit status: `install` prints `already
     # installed` and exits 0 having done nothing, so its status cannot tell an
     # install from a no-op — and an install that reported success while leaving
     # nothing loadable is the whole reason this script exists.
-    if jq -e --arg p "$p" '(.plugins // {}) | has($p)' \
+    if jq -e --arg p "$p@$MARKETPLACE_NAME" '(.plugins // {}) | has($p)' \
          "$HOME/.claude/plugins/installed_plugins.json" >/dev/null 2>&1; then
-      log "installed $p"
+      log "installed $p@$MARKETPLACE_NAME"
     else
-      log "WARNING: not installed: $p"
-      missing="${missing} $p"
+      log "WARNING: not installed: $p@$MARKETPLACE_NAME"
+      missing="${missing} $p@$MARKETPLACE_NAME"
     fi
   done
 
+  seed_plugins || report "The plugins installed but the seed at \`$SEED_DIR\` was not built, so a
+session whose ~/.claude did not survive the snapshot has no \`@$MARKETPLACE_NAME\`
+plugin. Check with \`type -a plan-lint\`; if absent, work without them and say so."
+
   [ -z "$missing" ] && return 0
-  report "These plugins are enabled by the project but did NOT install:$missing
+  report "These plugins did NOT install:$missing
 
 Their skills, hooks and commands are absent. Work without them and say so; do
 not improvise a substitute for a gate."
 }
 
+# The archivist's transport to Notion. A fresh container has neither the binary
+# nor the ~/.config/notion that `ntn login` writes — and login is interactive
+# OAuth, so it cannot run here. Both halves come from the environment's
+# Environment variables field instead:
+#   NOTION_API_TOKEN=<integration token>  — takes precedence over the keychain.
+#   NOTION_WORKSPACE_ID=<workspace uuid>  — locally this lives in
+#     ~/.config/notion/config.json (`defaultWorkspaceIds`), which the container
+#     has not got; without it ntn stops at `No workspace selected` even when
+#     the token is perfectly good.
+# ENVIRONMENT variables, not exports here: every later `ntn` call in the session
+# needs them, and this script's exports do not outlive it.
+install_ntn() {
+  # npm, not the ntn.dev installer: that one lands the binary wherever
+  # NTN_INSTALL_DIR says and needs that variable exported to be found again,
+  # which this script cannot do. npm's global bin is already on PATH — the last
+  # place notion-payload's own resolver looks.
+  if ! npm install --global ntn >/dev/null 2>&1; then
+    log "WARNING: ntn install failed — the archivist cannot reach Notion"
+    return 0
+  fi
+  # Advisory, like every other step — a bad token must never cost the session.
+  # Checked here rather than left to discovery because the first `ntn` call of a
+  # cycle is usually the close-out archive: the most expensive moment to learn
+  # the token was never set.
+  if ntn whoami >/dev/null 2>&1; then
+    log "ntn authenticated"
+  else
+    log "WARNING: ntn installed but NOT authenticated — set NOTION_API_TOKEN and"
+    log "         NOTION_WORKSPACE_ID in the environment's Environment variables"
+  fi
+}
+
 install_flutter && persist_env && bootstrap_projects
 install_plugins
+install_ntn
 
 # Deliberately NOT here: `flutter gen-l10n`, `build_runner`, and any asset
 # bundle build. Their output is gitignored, so the snapshot would restore
