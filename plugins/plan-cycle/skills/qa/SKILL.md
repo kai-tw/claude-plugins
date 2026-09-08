@@ -211,9 +211,10 @@ deciding that the *spec* is the thing to change is `post-qa-reviewer`'s call
 ## Running the suite
 
 **Run the change's blast radius.** Authoring never runs the bare
-`flutter test` — ~5 min per iteration, and it is the run a background-poll
-stalls on. The full suite happens exactly twice per PR, on the **main thread**,
-before the founder merges (`plan/SKILL.md §After code`); this loop is scoped.
+`flutter test`, and never backgrounded-and-polled either
+(`.claude/agents/qa.md` §Test-run discipline). The full suite happens exactly
+twice per PR, on the **main thread**, before the founder merges
+(`plan/SKILL.md §After code`); this loop is scoped.
 
 ```bash
 plan-test test/features/<feature>/                # the normal scope
@@ -375,10 +376,8 @@ distinguishing combination untested).
    ```bash
    flutter test test/features/<feature>/
    ```
-   The bare `flutter test` is not part of this loop. It costs minutes
-   every iteration, and it is the run a background-poll stalls on — the
-   recurring failure where the `qa` agent returned "waiting for the run"
-   with no tally.
+   The bare `flutter test` is not part of this loop — never backgrounded-and-
+   polled either (`.claude/agents/qa.md` §Test-run discipline).
 
    If a full-suite run's peak RSS runs well past the ~1.5 GB baseline
    (§Running the suite), suspect a freshly introduced `Mock implements`
@@ -387,42 +386,50 @@ distinguishing combination untested).
    trusting `ps`, which double-counts shared memory — read
    `${CLAUDE_PLUGIN_ROOT}/skills/qa/testing-forensics.md` (the pgid sampler + the
    known cold-start non-issues not worth chasing).
-5. **Gate on test STRENGTH — this is the pass criterion, not green.**
-   Green only says the tests ran. Run, scoped the same way step 4 was:
-   ```bash
-   plan-qa-report -- flutter test test/features/<feature>/
-   ```
-   It runs both gates, posts one report to the PR, and records `qa-green` so the
-   ledger's Gate 6 stops blocking. The thresholds and verdicts live in the
-   scripts, which print them — do not restate a number here that can drift from
-   the one being enforced.
-
-   **The two stack, they do not substitute.** Coverage asks whether the changed
-   lines RAN; mutation asks whether anything would notice if they were wrong. A
-   line no test executes produces no mutant to survive, so it is invisible to
-   mutation entirely — reach has to come first. A suite that calls every line
-   and asserts nothing passes coverage, fails mutation, and passes lint and
-   review too; that gap is what these two exist to close.
-
-   Under either gate you are not done. A mutation survivor names a case that
-   does not exist or an assertion that does not assert — add the case that kills
-   it. An unexecuted line is either a missing test or a genuine impossibility,
-   and the impossibility is written **at the site** (`// coverage-ignore: only a
-   real device enters this branch`), never left as a bare gap. Both tools refuse
-   a run they could not measure rather than reporting it as clean.
-
-   **A survivor outside your tree is a hand-back, never a reach-across.** Rule 1
-   holds here exactly as everywhere else: if killing a mutant needs a *contract*
-   test, that is the engineer role's file, and it goes in (b) below as a named
-   finding — mutation pressure is not the exemption testing.md warns every
-   previous exemption became.
-6. **Hand back to caller.** Return: (a) test files created or
+5. **Hand back to caller.** Return: (a) test files created or
    modified, (b) any bugs found while authoring (one-line + minimal
    repro + severity per the **Bug-note format** below), (c) any
-   failure-class gaps the catalog should grow to cover, (d) the
-   **per-file table** — reach (uncovered lines, each with its reason) and
-   strength (mutation score, mutant count, any survivor kept with its written
-   reason), plus any file that came back unmeasured.
+   failure-class gaps the catalog should grow to cover.
+
+## Test-strength grading — the caller's job, not this agent's
+
+Green only says the tests ran; grading is the actual pass criterion, and it
+runs **once, at the PR boundary** (`plan/SKILL.md` §Step 6), never inside
+this agent:
+
+```bash
+plan-qa-report -- flutter test test/features/<feature>/
+```
+
+It runs both gates, posts one report to the PR, and records `qa-green` so the
+ledger's Gate 6 stops blocking. The thresholds and verdicts live in the
+scripts, which print them — do not restate a number here that can drift from
+the one being enforced. It stays out of this agent's own steps because
+coverage alone measures ~20 min and mutation carries no time bound at all —
+long enough to need backgrounding, which this throwaway dispatch has no way
+to do (no `Monitor` tool, dies the moment it hands back —
+`.claude/agents/qa.md` §Test-run discipline).
+
+**The two stack, they do not substitute.** Coverage asks whether the changed
+lines RAN; mutation asks whether anything would notice if they were wrong. A
+line no test executes produces no mutant to survive, so it is invisible to
+mutation entirely — reach has to come first. A suite that calls every line
+and asserts nothing passes coverage, fails mutation, and passes lint and
+review too; that gap is what these two exist to close.
+
+**Either gap comes back to this agent as a re-dispatch, not a hand-wave.** A
+mutation survivor names a case that does not exist or an assertion that does
+not assert — add the case that kills it. An unexecuted line is either a
+missing test or a genuine impossibility, and the impossibility is written
+**at the site** (`// coverage-ignore: only a real device enters this
+branch`), never left as a bare gap. Both tools refuse a run they could not
+measure rather than reporting it as clean.
+
+**A survivor outside your tree is a hand-back, never a reach-across.** Rule 1
+holds here exactly as everywhere else: if killing a mutant needs a *contract*
+test, that is the engineer role's file, and it goes back as a named finding
+in the **Bug-note format** — mutation pressure is not the exemption
+testing.md warns every previous exemption became.
 
 ## Test design techniques (name the technique)
 

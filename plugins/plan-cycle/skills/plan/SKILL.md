@@ -921,10 +921,9 @@ coverage grades the reach. And neither retires `post-qa-reviewer`, which catches
 opposite error: a change-detector scores perfectly on both.
 
 **During authoring, tests belong to the `qa` agent and you run none.** The agent
-runs **only the change's blast radius**, never the bare suite
-(`.claude/agents/qa.md` §Test-run discipline), and you don't re-run on top — a
-bare `flutter test` backgrounded-and-polled is how it hands back "waiting for the
-run" with no result.
+runs **only the change's blast radius**, never the bare suite, never
+backgrounded-and-polled (`.claude/agents/qa.md` §Test-run discipline), and you
+don't re-run on top.
 
 Your job is to read the hand-back: the tally **and the paths it ran**. That path
 list is your only view of what went uncovered — if it looks narrower than the
@@ -1067,7 +1066,14 @@ When the task is complete, the cycle is **not done until these run** (Iron Law 7
    which is where it reads the branch name that Step 6.6's teardown is verified
    against (`pr-opened <PR#> <base> <branch>` if you must call it from elsewhere).
 
-   **Then grade the tests and post the report** — scoped the way the change is:
+   **Then grade the tests and post the report** — scoped the way the change is.
+   Coverage alone measures ~20 min (`bin/plan-coverage`) and mutation carries no
+   time bound at all (`mutation.sh` has no dry-count mode) — long enough to hit
+   the Bash tool's own cap if run as a blocking call. Run it with
+   `run_in_background: true` and wait for the completion notification
+   (`founder-corrections.md`'s harness-auto-notify rule — this is the main
+   thread, not a dispatched sub-agent, so it applies here); `Monitor` if you
+   want to watch it live:
    ```bash
    plan-qa-report -- flutter test test/features/<feature>/
    ```

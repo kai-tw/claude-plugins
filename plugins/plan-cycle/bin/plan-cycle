@@ -299,6 +299,36 @@ frozen_test_edits() {
   printf '%s' "$out"
 }
 
+# Gate 6's "already running" probe. `.mutation-in-progress` is mutation.sh's
+# own guard (a live pid means a run holds this tree right now); a live
+# plan-test slot naming one of the three test-strength launchers covers
+# coverage.sh, which writes no marker of its own. Either one means Gate 6 must
+# not repeat "run it" — mutation alone can run long past a single Stop-hook
+# check, and re-issuing the same instruction while it is still running reads
+# as "your run did not count", which is what turned the gate into a restart
+# loop instead of a wait.
+qa_run_in_progress() {
+  local top marker mpid name slot pid cmd
+  top=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+  marker="$top/.mutation-in-progress"
+  if [ -f "$marker" ]; then
+    mpid=$(sed -n 's/^pid:[[:space:]]*//p' "$marker" | head -1)
+    [ -n "$mpid" ] && kill -0 "$mpid" 2>/dev/null && return 0
+  fi
+  name=$(basename "$top")
+  for slot in "$HOME/.claude/.plan-cycle/slots"/slot-*; do
+    [ -f "$slot/meta" ] || continue
+    [ "$(sed -n 's/^name=//p' "$slot/meta")" = "$name" ] || continue
+    pid=$(sed -n 's/^pid=//p' "$slot/meta")
+    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || continue
+    cmd=$(sed -n 's/^cmd=//p' "$slot/meta")
+    # The slot records the launcher's --exec argv (e.g. `bash …/mutation.sh …`),
+    # never the bin/ command name — plan-test never sees "plan-mutation" itself.
+    case "$cmd" in *qa_report.sh*|*coverage.sh*|*mutation.sh*) return 0 ;; esac
+  done
+  return 1
+}
+
 # Branches and worktrees that outlived their merged PR.
 #
 # `clear`'s teardown gate already checks all three (worktree, local branch,
@@ -1065,7 +1095,7 @@ EOF
     # already see when it was taken.
     pr_opened=$(jq -r '.pr_opened // false' "$LEDGER" 2>/dev/null)
     qsha=$(jq -r '.qa_green_sha // ""' "$LEDGER" 2>/dev/null)
-    if [ "$pr_opened" = "true" ] && [ -z "$qsha" ]; then
+    if [ "$pr_opened" = "true" ] && [ -z "$qsha" ] && ! qa_run_in_progress; then
       pr=$(jq -r '.pr // ""' "$LEDGER" 2>/dev/null)
       cat <<EOF
 PLAN-CYCLE TEST-STRENGTH GATE — the PR is open and the tests were never graded.

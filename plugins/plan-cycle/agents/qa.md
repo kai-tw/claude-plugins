@@ -62,10 +62,12 @@ The full `flutter test` log is the single biggest transient — keep the full
 suite out of the inner loop, and keep the log out of your hand-back:
 
 - **Every run you make is scoped — never the bare `flutter test`.** It takes
-  ~5 min, and it is the run a background-poll stalls on: the recurring failure
-  where this agent returned "waiting for the run" with no result. Not launching
-  it is what makes the hand-back reliable. Run the change's **blast radius**,
-  which is not the same as the files you edited.
+  ~5 min. **Never call `Bash` on it with `run_in_background: true` and check
+  back** — this agent has no `Monitor` tool (see `allowed-tools` above) and
+  dies in this throwaway context the moment it hands back, so nothing here can
+  wait on or be woken by a backgrounded run: the recurring failure where this
+  agent returned "waiting for the run" with no result. Run the change's
+  **blast radius**, which is not the same as the files you edited.
 - **Widen for a signature / required-field change** (the skill spells it out: a
   run scoped to the edited files compiles green and hides sibling breakage) —
   `grep -rl '<TypeName>' test/` and run every hit. The caller's full run would
