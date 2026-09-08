@@ -7,7 +7,9 @@
 #                  Per-project, re-created by the next build.
 #   GLOBAL  tier — machine-wide developer caches shared by every project:
 #                  Xcode derived data, the Dart analysis server cache,
-#                  simulator scratch, and superseded Gradle version caches.
+#                  simulator scratch, superseded Gradle version caches, and
+#                  orphaned flutter_tools.* build scratch left in TMPDIR by a
+#                  killed or crashed flutter build/run/test/pub.
 #
 # Everything here regenerates. It never touches source, git, Xcode Archives,
 # signing assets, or a project's generated code (`*.freezed.dart`, `*.g.dart`,
@@ -58,6 +60,14 @@ done
 [ -n "${HOME:-}" ] && [ "$HOME" != "/" ] || { echo "HOME is unsafe: '${HOME:-}'" >&2; exit 1; }
 
 SCAN_ROOT="${RECLAIM_SCAN_ROOT:-$HOME/GitHub}"
+
+# Same guard, for the flutter_tools.* tier: every delete there is gated on a
+# "$FLUTTER_TMP/"-prefix match, so an unresolved TMPDIR must skip that tier
+# rather than run unguarded. getconf is the fallback for a shell that never
+# exported TMPDIR (e.g. some non-interactive/cron contexts).
+FLUTTER_TMP="${TMPDIR:-$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || true)}"
+FLUTTER_TMP="${FLUTTER_TMP%/}"
+[ -n "$FLUTTER_TMP" ] && [ "$FLUTTER_TMP" != "/" ] && [ -d "$FLUTTER_TMP" ] || FLUTTER_TMP=""
 
 # ---------------------------------------------------------------- measurement
 
@@ -173,6 +183,37 @@ if [ $DO_GLOBAL -eq 1 ]; then
       fi
     fi
   done
+
+  # Flutter's own build scratch in TMPDIR (flutter_tools.<rand> — kernel
+  # snapshot / asset-bundle work for build, run, test, pub). A clean exit
+  # deletes it; a killed or crashed flutter process leaves it behind, and
+  # nothing else in this flow ever revisits TMPDIR to notice. Measured
+  # 2026-09-08: 641 orphaned dirs held 57G on one machine, none of them still
+  # open. TMPDIR is shared with everything else on the box, so liveness is
+  # checked with `lsof` on the exact directory, not a flutter-process-name
+  # guess — a live build under a process name this script doesn't already
+  # pattern-match (pub, attach, analyze, ...) would otherwise be corrupted.
+  if [ -n "$FLUTTER_TMP" ]; then
+    FT_DIRS=()
+    while IFS= read -r d; do FT_DIRS+=("$d"); done < <(find "$FLUTTER_TMP" -mindepth 1 -maxdepth 1 -name 'flutter_tools.*' 2>/dev/null)
+    if [ ${#FT_DIRS[@]} -gt 0 ]; then
+      size=$( { du -sm "${FT_DIRS[@]}" 2>/dev/null || true; } | awk '{s+=$1} END {print s+0}')
+      printf '  %-42s %7s\n' "orphaned flutter_tools.* (TMPDIR)" "$(as_gb "$size")G"
+      if [ $DRY -eq 0 ]; then
+        OPEN=$(lsof +D "$FLUTTER_TMP" 2>/dev/null | awk '{print $NF}')
+        skipped=0
+        for d in "${FT_DIRS[@]}"; do
+          case "$d" in "$FLUTTER_TMP/"*) : ;; *) continue ;; esac
+          if printf '%s\n' "$OPEN" | grep -qF "$d/"; then
+            skipped=$((skipped + 1))
+            continue
+          fi
+          rm -rf "$d"
+        done
+        [ "$skipped" -gt 0 ] && echo "      skipped $skipped still open (live flutter process)"
+      fi
+    fi
+  fi
 
   # Superseded Gradle version caches. Which versions are live is DERIVED from
   # the wrapper of every project found, never hardcoded — a hardcoded version
