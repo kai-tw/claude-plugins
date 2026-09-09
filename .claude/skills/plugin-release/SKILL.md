@@ -64,7 +64,12 @@ unrelated edits. Commit or stash those first.
    tree, and the check would compare the still-unbumped `HEAD` and fail every
    release by construction.
 5. **Push.**
-6. **Update the local install.**
+6. **Update the local install** — but only when this machine installs *from this
+   repo*. The marketplace can be a `directory` source pointing at a **vendored
+   copy** inside a consumer repo; that copy is what the installer reads, and
+   vendor-sync's PR is what moves it. The script detects this, says so, and
+   stops at a clean success — steps 6–7 cannot pass at release time there, and
+   calling that a failure would train you to ignore the check.
 7. **Verify** the installed cache contains every file that exists in source.
 
 Step 4 is downstream of the commit because anything that inspects committed
@@ -76,15 +81,31 @@ history has to wait for the commit.
 workflow, so it would find nothing to do and the consumers would never hear
 about the release.
 
-Step 7 is the one that matters. Every earlier step succeeded during the dart-lsp
-incident; the failure was visible only by looking inside the cache. If it
-reports missing files, the release did not land — do not report success.
+Step 7 is the one that matters **when it runs**. Every earlier step succeeded
+during the dart-lsp incident; the failure was visible only by looking inside the
+cache. If it reports missing files, the release did not land — do not report
+success. If step 6 reported that the marketplace serves a vendored copy, steps
+6–7 did not run: the release is pushed and installed nowhere yet, so report that
+and not "installed and verified".
 
 ## After a release
 
-Nothing else is required by hand. On the push, CI creates `<plugin>--v<version>`
-and opens a vendored-copy PR on every consumer repo; those PRs are Kai's to
-merge.
+On the push, CI creates `<plugin>--v<version>` and opens a vendored-copy PR on
+every consumer repo; those PRs are Kai's to merge.
+
+**A pushed release has reached nobody yet.** Where the marketplace is a vendored
+directory, the version only becomes installable once that PR lands, and each
+consumer then needs its own update — `release.mjs` never touches more than the
+one it can see:
+
+```bash
+cd <consumer> && claude plugin update <plugin>@<marketplace> --scope project
+```
+
+`--scope project` is not optional (omitted, it looks in user scope and fails),
+and `install` on an already-installed plugin prints `already installed` and does
+nothing. Confirm by reading each `projectPath`'s `version` in
+`~/.claude/plugins/installed_plugins.json`.
 
 LSP servers and hooks from the updated plugin take effect on the **next
 session**, not this one — if the user expects to see the change immediately,

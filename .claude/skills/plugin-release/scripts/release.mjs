@@ -111,6 +111,32 @@ step(5, 'push');
 run('git', ['push', 'origin', 'HEAD']);
 
 step(6, 'update the locally installed copy');
+// FIRST: does this machine install FROM this repo at all? The marketplace can be
+// a `directory` source pointing at a VENDORED copy in a consumer repo, in which
+// case that copy — not this tree — is what the installer reads, and it stays at
+// the old version until vendor-sync's PR is merged there. Steps 6–7 then cannot
+// pass at release time by construction, and reporting that as a failure trains
+// the reader to ignore the one check that catches a real stale install.
+// A github-source marketplace is the same story with a different mirror.
+const marketplacesPath = join(process.env.HOME, '.claude/plugins/known_marketplaces.json');
+const known = existsSync(marketplacesPath)
+  ? JSON.parse(readFileSync(marketplacesPath, 'utf8'))[marketplace.name]
+  : null;
+const src = known?.source ?? {};
+const servesThisTree =
+  src.source === 'directory' && !relative(root, resolve(src.path)).startsWith('..');
+
+if (known && !servesThisTree) {
+  const where = src.source === 'directory' ? resolve(src.path) : `${src.source}:${src.repo ?? '?'}`;
+  console.log(`  ⚠ "${marketplace.name}" installs from ${where}, not from this repo.`);
+  console.log(`    That copy is updated by vendor-sync's PR, so nothing here can show`);
+  console.log(`    ${next} yet and there is nothing local to verify.`);
+  console.log(`\n✔ ${plugin} ${next} pushed — NOT yet installed anywhere.`);
+  console.log(`  Next: merge the vendor-sync PR on each consumer, then in that repo run`);
+  console.log(`    claude plugin update ${plugin}@${marketplace.name} --scope project`);
+  process.exit(0);
+}
+
 // `claude plugin update` defaults to user scope and errors out if the plugin
 // lives anywhere else, so read the scope back rather than assuming it. A plugin
 // may also be released without being installed here at all — that is a normal
