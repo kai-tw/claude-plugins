@@ -159,7 +159,7 @@ Default invocation:
 /review the uncommitted changes against
 the feature's Notion Engineering Plan row (the plan under review)
 (source plan: the feature's Notion Product Plan row,
- source spec: its Design Plan row  or "non-UI work")
+ source design: its `Design Sheet` + the widget contracts, or "non-UI work")
 ```
 
 Background spawn is the `/review` default and is correct here —
@@ -408,8 +408,8 @@ box → archive is too early, the feature stays live in its plan DBs
       `Terminally abandoned`.
 - [ ] Every amendment file (v1.2 / v1.3 / v1.4 / …) status =
       `Shipped`.
-- [ ] Corresponding design spec status = `Shipped` at the
-      latest rev that covers all PM amendments.
+- [ ] The contact sheet is republished at the latest rev that covers all PM
+      amendments.
 - [ ] Corresponding engineering plan status = `Shipped` with
       Phase 12 done for every PM amendment.
 - [ ] The feature's TaskList task(s) reflect final status —

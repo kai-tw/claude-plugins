@@ -40,17 +40,17 @@ allowed-tools:
   - Agent
 ---
 
-# Design Plan Review — usability + deliverability
+# Design Review — usability + deliverability
 
 **Read `${CLAUDE_PLUGIN_ROOT}/skills/review/references/evidence.md` before you
 file anything.** It binds every verdict you return.
 
 ## Two lenses, one pass
 
-You judge the **drafted design spec**, never code (that is
-`post-qa-reviewer`, at implementation time). Both lenses read the
-same renders, the same widget source and the same spec, at the same moment, so
-they are one pass.
+You judge the **design as shipped by the designer** — the contact sheet and the
+widgets with their contracts — never wired code (that is `post-qa-reviewer`, at
+implementation time). Both lenses read the same renders and the same source at
+the same moment, so they are one pass.
 
 | Lens | You play | Asks | A `critical` is |
 |---|---|---|---|
@@ -85,9 +85,10 @@ rule was followed, and you ask what it costs the reader.
 
 ## Inputs (the caller passes these)
 
-1. **The rendered PNGs and the widget source** the designer shipped — the primary
-   artefact — plus the design spec's §States (which condition enters each of the
-   four), §Seam, and the motion / a11y intent. The renders cover the WindowSize
+1. **The render contact sheet and the widget source** the designer shipped — the
+   primary artefact — including each widget's own `§States` (which condition
+   enters each of the four), `§Seam`, `§Reuse` and its motion / a11y intent,
+   which live in its class doc comment. The sheet covers the WindowSize
    breakpoints × states × light/dark; a state with no render is a state nobody
    looked at, and that itself is a finding.
 2. **The approved (or drafted) product plan** — the task / outcome each flow
@@ -100,11 +101,12 @@ rule was followed, and you ask what it costs the reader.
    boundary, and the shared-component inventory (`lib/app/widgets/`,
    `lib/features/shared_components/`, the `WindowSize → View` pattern).
 
-If the caller did not supply (1)–(2), ask for the Notion task URL and fetch the
-design spec + product plan (Notion reads via the `archivist`) before reviewing —
+If the caller did not supply (1)–(2), ask for the Notion task URL, then read its
+`Design Sheet` for the contact sheet and fetch the product plan (Notion reads via
+the `archivist`) before reviewing —
 you cannot grade usability without the flow the user is walking and the goal they
-are walking toward, and you cannot grade deliverability without the spec's actual
-claims.
+are walking toward, and you cannot grade deliverability without the widgets and
+the contracts on them.
 
 ## Review intensity — right-size the USABILITY walk
 
@@ -174,7 +176,7 @@ per-walk method is the same three steps:
    against every screen **and each of its four states**. P6 is cross-cutting — run it once
    for the whole spec, not per screen.
 3. **Ground + severity.** Anchor each finding to the artefact (cite the render
-   filename, the widget file:line, or the §States / §Seam row) and state the
+   filename, the widget file:line, or the widget’s §States ／ §Seam line) and state the
    **failure scenario** (the concrete moment a user is confused / stuck /
    surprised). Read the real renders and source — do not invent screens they do not
    have; work explicitly scoped to a future phase is not a finding, say so.
@@ -233,8 +235,8 @@ the cited capability source) + failure scenario, and **the fix you would make**
 `warning` is explicitly accepted with a written rationale. Return inline:
 
 ```
-## Design Plan Review: <project>
-**Against:** <design spec + product plan, Notion task URL>
+## Design Review: <project>
+**Against:** <contact sheet + widget source + product plan, Notion task URL>
 **Usability intensity:** <light | standard | deep> · **Axes swept:** P1–P6 · **Flows walked:** N
 **Deliverability claims checked:** M
 <Deep only: **Personas:** first-time · a11y · locale · power — <who surfaced what>>

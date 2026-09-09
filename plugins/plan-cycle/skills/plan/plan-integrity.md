@@ -88,8 +88,8 @@ the answers.
   gets re-authored on the way in.
 - **A role boundary that moved does not move the work already done.** The
   worked example is the designer-ships-widgets hand-off: a cycle whose design
-  plan predates it has no
-  `§Widgets`, no renders, and nothing for `design-lint` to read. That cycle keeps
+  predates it has no widgets, no renders, and nothing for `design-lint` to
+  read. That cycle keeps
   the boundary it was approved under: the engineer builds the presentation as
   before, and those three are `n/a` with the reason stated. Re-running the
   designer phase to produce artefacts the approved plan never promised is new

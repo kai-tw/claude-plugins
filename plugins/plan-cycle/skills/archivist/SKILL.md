@@ -53,11 +53,11 @@ improvise structure:
   it drives `ntn` to create/update + write the Markdown body + verify — validating
   every option against the DB's vocabulary. NEVER hand-encode a Notion property —
   run the builder. `notion-payload schema [db]`
-  prints the exact fields per DB; it covers all eight DBs, split by body shape —
-  run `schema <db>` to confirm. FIVE take a **section-keyed body** (the builder assembles
+  prints the exact fields per DB; it covers all seven DBs, split by body shape —
+  run `schema <db>` to confirm. FOUR take a **section-keyed body** (the builder assembles
   each `## section` field and rejects a raw `content` string): `feature-archive`,
-  `decision-log`, `product-plan`, `design-plan`, `engineering-plan`. Of those, the
-  **three plan DBs carry `freeformBody`** — their section arrays are ADVISORY
+  `decision-log`, `product-plan`, `engineering-plan`. Of those, the
+  **two plan DBs carry `freeformBody`** — their section arrays are ADVISORY
   (they drive `hints`; any `## heading` is legal and none is mandatory), so the
   author owns the plan's shape. `feature-archive` and `decision-log` are still
   **validated and rejected** on an unknown or missing section — their
@@ -290,7 +290,7 @@ rather than continuing as if the write were mirrored.
 |---|---|
 | Created the TaskList task (the `/plan` Step 2 anchor) | `plan-cycle start "<task-slug>" "<Task Name>"` |
 | Flipped the task's **`Stage`** property | `plan-cycle enter "<Stage>"` (exact label: Product Plan / Design Plan / Translation / Engineering Plan / Security / Privacy / Implementation / Review / QA / Archived) |
-| Created/updated a **Product / Design / Engineering Plan** row (after the Iron-Law-2 verify confirms it) | `plan-cycle uploaded <pm\|designer\|engineer> <plan-row-url>` — **the URL is required**: it is the proof Gate 1 trusts, and you already have it from the fetch-back. No URL means the write didn't land, so redo the write instead of marking it done. |
+| Created/updated a **Product / Engineering Plan** row (after the Iron-Law-2 verify confirms it), or published the design phase's contact sheet | `plan-cycle uploaded <pm\|designer\|engineer> <url>` — **the URL is required**: it is the proof Gate 1 trusts, and you already have it from the fetch-back (for `designer`, from the publish, and it is also what goes into the task's `Design Sheet`). No URL means the write didn't land, so redo the write instead of marking it done. |
 | Closed out (Feature Archive verified + task row trashed) | `plan-cycle clear` |
 
 Mark `uploaded` only **after** the verify (Iron Law 2) — a conservative

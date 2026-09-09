@@ -61,8 +61,19 @@ something unenforced:
   `Consumer*Widget` base).
 - Receives lifecycle controllers as parameters; never constructs one.
 - No hardcoded colour.
+- A class doc comment carrying **§States** (each state and what enters it),
+  **§Seam** (each parameter / callback and the behaviour expected of it) and
+  **§Reuse** (查過 `<既有元件>` → `<為何不重用>`); **§Interaction** and **§A11y**
+  are advisory, since a static widget may have no intent to record.
 
 State arrives as constructor parameters; actions leave as callbacks.
+
+## Why the contract is in the file and not in a plan
+
+These are the three things the source cannot say. In the file they sit where the
+engineer wiring the widget already reads, a diff shows them changing next to the
+change, and `design_lint.sh` can enforce them — which is what lets them be a
+contract rather than a description.
 
 ## Two findings a reviewer must NOT file against these files
 

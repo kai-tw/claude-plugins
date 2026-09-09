@@ -14,6 +14,13 @@
 #   cubit and arrive as parameters; constructing one here would put a disposable
 #   resource in a layer that has no business releasing it.
 #
+# THE CONTRACT IT ENFORCES (check 6).
+#   The widget's source says what renders; it cannot say when each state is
+#   entered, what the engineer must supply, or why this widget exists rather than
+#   a shared one. Those three live in the class doc comment, so this script is
+#   what keeps the marker's promise that nothing in the contract goes unenforced
+#   (../ownership.md §The contract a `.design.dart` file is under).
+#
 # Usage: design-lint [widget.dart | dir] ...   (no argument = sweep *.design.dart)
 # Exit: 0 = no hard failures, 1 = hard failure printed above, 2 = bad usage.
 set -uo pipefail
@@ -134,6 +141,41 @@ for f in $files; do
     echo "        vsync (TickerProvider / AnimationController) is the only reason a designer widget holds State."
     fail=1
   fi
+
+  # 6. HARD — the design contract, in the file it governs. The widget shows WHAT
+  #    renders; these are the three things its source cannot say — when each state
+  #    is entered, what the engineer must supply and what behaviour is expected of
+  #    it, and why this widget exists instead of an existing one. They used to
+  #    live in a Notion row; a doc comment puts them where the engineer reads them
+  #    and where a diff shows them changing. Only `.design.dart` carries the
+  #    contract — an explicit path may name an engineer-owned widget.
+  case "$f" in
+    *.design.dart)
+      doc="$(grep -E '^[[:space:]]*///' "$f" || true)"
+      for sec in '§States' '§Seam' '§Reuse'; do
+        printf '%s\n' "$doc" | grep -qF -- "$sec" || {
+          echo "FAIL  $f — no $sec in the class doc comment; the design contract lives here now (designer/ownership.md)"
+          fail=1
+        }
+      done
+      # §States earns its keep only if each state names what ENTERS it. A bare
+      # state list is the render's own information, restated.
+      conditionless="$(awk '
+        /^[[:space:]]*\/\/\/.*§States/ { inblk = 1; next }
+        inblk && /^[[:space:]]*\/\/\/.*§/ { inblk = 0 }
+        inblk && /^[[:space:]]*\/\/\/[[:space:]]*-/ && $0 !~ /:/ { print }
+      ' "$f" || true)"
+      if [ -n "$conditionless" ]; then
+        echo "FAIL  $f — §States bullet with no entry condition (write \`- <state>: <when it is shown>\`):"
+        printf '%s\n' "$conditionless" | cut -c1-140 | sed 's/^/        /'
+        fail=1
+      fi
+      for sec in '§Interaction' '§A11y'; do
+        printf '%s\n' "$doc" | grep -qF -- "$sec" \
+          || echo "ADVISORY  $f — no $sec in the class doc comment; say so explicitly if there is genuinely no intent to record"
+      done
+      ;;
+  esac
 done
 
 if [ "$fail" -eq 0 ]; then

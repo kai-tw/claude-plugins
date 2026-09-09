@@ -70,8 +70,8 @@ deferred:
 
 When a backlog item is selected for active work, the TaskList
 task's **Status** moves `Deferred` → `In Progress` / `Next`, and
-`/plan` links its plan rows (Product Plan / Design Plan /
-Engineering Plan) to the task as they're authored.
+`/plan` links its plan rows (Product Plan / Engineering Plan) to the
+task as they're authored and sets its `Design Sheet`.
 
 This preserves the lineage — the same task carries its Trigger
 history and its plan relations, so the backlog → plan transition

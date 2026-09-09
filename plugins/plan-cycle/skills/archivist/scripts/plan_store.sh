@@ -65,9 +65,11 @@ EOF
   esac
 }
 
+# The design phase has no plan body in either store: its output is the widgets
+# (each carrying its own contract) plus the published contact sheet.
 role_ok() {
-  case "$1" in pm|designer|engineer) return 0 ;; esac
-  echo "plan-store: role must be pm, designer or engineer (got \"$1\")" >&2; exit 2
+  case "$1" in pm|engineer) return 0 ;; esac
+  echo "plan-store: role must be pm or engineer (got \"$1\")" >&2; exit 2
 }
 
 case "${1:-}" in

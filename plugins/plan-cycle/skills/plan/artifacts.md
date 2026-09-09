@@ -3,8 +3,9 @@
 Read when the location for a plan / spec / engineering plan is
 ambiguous, or when writing the PR / commit citation block.
 
-Planning artifacts live in the project's **Notion KB**, linked to one
-**TaskList task** per feature. Each project names its own workspace and owns
+The product and engineering plans live in the project's **Notion KB**, linked to
+one **TaskList task** per feature; the design phase's artefacts live in the repo
+and one published sheet (§Designs). Each project names its own workspace and owns
 its DB ids + schema — they live in that project's `archivist` reference, the
 single source of truth. The skills write Notion by invoking the `archivist`
 skill; they never hard-code a workspace or DB id.
@@ -25,18 +26,17 @@ TaskList task via the **Task** relation. the PM role authors it.
   `notion-payload hints product-plan <type>`
   for the section questionnaire.
 
-## Design specs — Notion **Design Plan DB**
+## Designs — in the repo, plus one published sheet
 
-A design spec is a row in the Design Plan DB, related to the same
-TaskList task. the designer role authors it.
+**The design phase has no Notion row.** Its artefacts are the `*.design.dart`
+widgets (each carrying its `§States` / `§Seam` / `§Reuse` contract — see
+`designer/ownership.md`) and the render contact sheet, published as an Artifact
+at a stable url. the designer role authors both.
 
-- **Name** — "<Feature> — Design Plan". **Mode** — `full` / `delta` /
-  `single-breakpoint`.
-- One row per feature, linked to the same task as the product plan;
-  revisions update the same row.
-- The **row body** is structured as the `design-plan` body sections — run
-  `notion-payload hints design-plan`
-  for the section questionnaire (descriptions, hints per section).
+- The task's **`Design Sheet`** url property points at that sheet; close-out
+  copies it onto the Feature Archive row before the task is trashed.
+- Revisions edit the widget, its contract and the sheet **in place** — the same
+  url, and the diff is the revision history.
 
 ## Engineering plans — Notion **Engineering Plan DB**
 
@@ -44,8 +44,8 @@ An engineering plan is a row in the Engineering Plan DB, related to the
 same TaskList task via the **Task** relation (back-ref "Engineering
 Plans"). the engineer role authors it.
 
-- One row per feature, linked to the same task as the product + design
-  plans; revisions update the same row.
+- One row per feature, linked to the same task as the product plan;
+  revisions update the same row.
 - The **row body** is structured as the `engineering-plan` body sections
   defined in `notion-payload` — run
   `notion-payload hints engineering-plan`
@@ -56,12 +56,11 @@ Plans"). the engineer role authors it.
 ## Citation in the diff
 
 The PR description or the initial feature commit message cites the
-**Notion task URL**, which reaches all three linked plan rows (Product
-Plan + Design Plan + Engineering Plan). Skip the design leg for non-UI
-work:
+**Notion task URL**, which reaches both linked plan rows (Product Plan +
+Engineering Plan) and, via its `Design Sheet` property, the contact sheet:
 
 ```
-Implements <Notion task URL>   (Product Plan + Design Plan + Engineering Plan rows)
+Implements <Notion task URL>   (Product Plan + Engineering Plan rows, Design Sheet)
 ```
 
 Each subsequent commit landing a slice may cite only the Notion task URL —
@@ -71,7 +70,7 @@ task.
 
 ## Plan-spec language
 
-Product plan, design plan, and engineering plan **row bodies** default
+Product plan and engineering plan **row bodies** default
 to 繁體中文 (Taiwan terminology) for prose, with English reserved for
 technical acronyms, product / technology names, cross-reference
 anchors, verbatim quoted data, CLI / code
@@ -85,11 +84,11 @@ Per the "No repo pointers" convention in
 bodies entirely** — they are not "kept in English", they are removed.
 **The Engineering Plan DB is exempt** (see that section's carve-out): its
 schema mandates the pointers, so scrubbing them would delete the content
-rather than the navigation. Product and design plans are not exempt.
+rather than the navigation. Product plans are not exempt.
 
 ## Notion properties, not body fields
 
-Date, Status, Type / Mode, the Task + Feature Archive relations, and
+Date, Status, Type, the Task + Feature Archive relations, and
 Author are **Notion DB properties + relations** on the plan row — never
 repeated in the row body. The body starts at the actual content (e.g.
 `## Problem` / `## Engineering review`). Do not
@@ -102,9 +101,9 @@ A product plan is **not** a vehicle for unrelated cleanup. A one-pager
 about search does not authorize refactoring the library. Out-of-scope
 cleanup needs its own plan or a separate refactor PR.
 
-Likewise, a design spec is not a vehicle for unrelated visual rework. A
-spec for a new settings screen does not authorize restyling the library.
-Visual debt cleanup needs its own spec or a dedicated visual-polish PR.
+Likewise, a design is not a vehicle for unrelated visual rework. A
+design for a new settings screen does not authorize restyling the library.
+Visual debt cleanup needs its own cycle or a dedicated visual-polish PR.
 
 If a follow-up surfaces during plan / spec authoring that is explicitly
 out of scope, route it to the feature's **TaskList task** (Status

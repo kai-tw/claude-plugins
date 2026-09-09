@@ -335,8 +335,9 @@ become binding the moment a plan cites them.
 ## Phase 1 — Restate
 
 Before any tool call, read the upstream artifacts and write back.
-The source product plan + design spec come from the **feature's Notion
-task** — its linked Product Plan row and Design Plan row. Invoke the
+The source product plan comes from the **feature's Notion task** — its linked
+Product Plan row; the design comes from the same task's `Design Sheet` plus the
+widgets in the repo. Invoke the
 `archivist` skill to read them (it has the DB ids + MCP — references
 the DBs by name, ids live in
 `${CLAUDE_PLUGIN_ROOT}/skills/archivist/references/notion-kb.md`).
@@ -345,9 +346,9 @@ the DBs by name, ids live in
   the feature's Notion task — and the problem, target user, success
   metric, scope, non-goals in your own words. If you cannot restate, the
   plan is ambiguous — push back to the PM role for a rev.
-- **Source design spec** (when UI is involved) — the Design Plan row on
-  the feature's Notion task — and the surfaces, breakpoints, states, and
-  tokens it commits to. If
+- **Source design** (when UI is involved) — the contact sheet at the task's
+  `Design Sheet` and the `*.design.dart` widgets with their contracts — and the
+  surfaces, breakpoints, states and tokens they commit to. If
   the implementation requires a state the spec doesn't cover,
   push back to the designer role.
 - **Engineering brief** — what gets handed to engineering: which
@@ -485,9 +486,9 @@ to print the full section questionnaire with descriptions and hints):
   pseudo-code** — with the ctor collaborators (test seams) named. Each
   block is produced by walking its SOP when the project keeps one (each SOP's
   **Output** names what drops in here; leave the column `—` when it does not).
-  **Presentation is already built** — the designer's §Widgets are the files;
-  your row is the mapper that feeds their parameters, citing the design spec's
-  §Seam (what each parameter means) and §States (which condition enters each
+  **Presentation is already built** — the `*.design.dart` files are the designer's;
+  your row is the mapper that feeds their parameters, citing each widget's
+  `§Seam` (what each parameter means) and `§States` (which condition enters each
   state). Push back to the designer role if either is missing, and never edit a
   delivered widget yourself (Iron Law 8). A layer with no
   changes is named ("domain: no change") so the implementer knows it was
@@ -982,7 +983,7 @@ revision they ask for is folded in and **re-uploaded** (Iron Law 6) before
 approval, so what is approved is what is in Notion.
 
 Author the engineering plan as a **row in the Notion Engineering Plan
-DB** — exactly like the Product Plan / Design Plan rows. Invoke the
+DB** — exactly like the Product Plan row. Invoke the
 `archivist` skill to write the row (it has the
 DB ids + MCP — reference the DB and the TaskList task **by name**; ids
 live in `${CLAUDE_PLUGIN_ROOT}/skills/archivist/references/notion-kb.md`). The row:
@@ -1009,9 +1010,9 @@ The slug still matches the feature across all three planning legs.
 ### Feature folder rules
 
 - **Reuse existing row names.** Match the upstream plan /
-  spec's `<feature-slug>` — derived from the feature's Notion task (its
-  Product Plan + Design Plan rows). Same slug across all three
-  legs (the Engineering Plan row's `Task` relation ties them together).
+  design's `<feature-slug>` — derived from the feature's Notion task (its
+  Product Plan row). Same slug across every
+  leg (the Engineering Plan row's `Task` relation ties them together).
 - **Create new only for genuinely new features.** Kebab-case slug, no
   date, no `-v1` suffix; the row Name is the Title Case form.
 - **Subsequent revisions** — amend the row body in place with a
@@ -1110,7 +1111,7 @@ Once the user approves the task list as enumerated (and only then):
 
 ```
 Engineering plan: <Engineering Plan DB row url> (Task: <task url>)
-Source: the feature's Notion task (Product Plan + Design Plan rows)
+Source: the feature's Notion task (Product Plan row + Design Sheet)
         (spec = "non-UI work" when no UI)
 Mode: <full / phased (phases authored: <n>/<N>) / delta (parent: <Engineering
       Plan DB row>) / single-slice>
@@ -1135,7 +1136,7 @@ backlog) naming the deferred stages and a trigger condition. An
 engineering plan saved without the TaskList task updated rots: the
 next session won't know which tasks are mid-flight, and the plan looks
 "done" to anyone scanning the repo. The feature's TaskList task is the
-same anchor the Product Plan + Design Plan rows link to; just add a
+same anchor the Product Plan row links to; just add a
 line noting the engineering plan is in. Skip only when the cycle ends
 with all seeded tasks completed end-to-end (rare for the engineer role —
 usually the plan is the seed, code is the next user-approved phase).

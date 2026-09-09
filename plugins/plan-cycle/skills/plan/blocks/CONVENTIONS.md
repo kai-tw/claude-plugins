@@ -68,7 +68,7 @@ artifact 是 block 之間唯一的介面。沿用既有詞彙才接得上既有 
 | `triage` | 判級結果（豁免 / 要走 cycle，以及要開哪些 phase） |
 | `task-anchor` | TaskList task ＋ GitHub issue，所有計畫掛在它上面 |
 | `product-plan` | 核准過的 Product Plan row |
-| `design-spec` | 核准過的 Design Plan row ＋ renders ＋ widgets ＋ ARB |
+| `design-spec` | 核准過的聯絡表 ＋ widgets（含 §States ／ §Seam ／ §Reuse 合約）＋ ARB |
 | `engineering-plan` | 核准過的 Engineering Plan row |
 | `code-changes` | working tree / worktree 裡的源碼改動 |
 | `spec-tests` | `/qa` 的 `test/spec/**` |

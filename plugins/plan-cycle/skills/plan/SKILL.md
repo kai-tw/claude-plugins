@@ -32,6 +32,7 @@ allowed-tools:
   - Agent
   - AskUserQuestion
   - SendUserFile
+  - Artifact
   - EnterWorktree
   - ExitWorktree
   - TaskCreate
@@ -86,10 +87,12 @@ in that order.
 >    **Product Plan DB row linked to the feature's TaskList task**. The plan
 >    defines the problem, target user, success metric, scope, and non-goals.
 >    Code must not invent product scope.
-> 2. **Every UI-producing implementation traces to an approved design spec** — a
->    **Design Plan DB row linked to the task**. The spec defines the layout per
->    `WindowSize` breakpoint, the components, the tokens, and the four states
->    (default, empty, loading, error). Code must not invent UI.
+> 2. **Every UI-producing implementation traces to an approved design** — the
+>    shipped `*.design.dart` widgets plus the **contact sheet the task's
+>    `Design Sheet` points at**. The widgets define the layout per `WindowSize`
+>    breakpoint, the components and the tokens; each one's contract defines the
+>    four states (default, empty, loading, error) and what enters them. Code must
+>    not invent UI.
 > 3. **Every non-trivial implementation has an engineering plan** approved before
 >    the first line of code. It converts product/design artifacts into concrete
 >    affected layers, class / interface sketches, data flow, migration impact,
@@ -542,8 +545,9 @@ in-context to author the phase):
 principle with its sub-checks and examples inline, walked by `pm-plan-reviewer`
 (`skills/pm/rules/CONVENTIONS.md` is its maintenance contract).
 **The designer and engineer roles have no rules file**: their drafting
-constraints are their questionnaire's own cells (`schemas/design-plan.mjs`,
-`schemas/engineering-plan.mjs`), which apply at the moment of writing rather than
+constraints are their own artefact's cells (the widget contract in
+`designer/ownership.md`, `schemas/engineering-plan.mjs`), which apply at the
+moment of writing rather than
 relying on the author to recall a separate document, and their cheap gate is a
 script over the artefact (`design-lint`, `plan-lint`) rather than a checklist
 over a description of it.

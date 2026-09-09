@@ -8,10 +8,10 @@ description: >-
   which dispatches design-spec work here — do not invoke this skill directly.
   **Ships the presentation widgets** (StatelessWidget by default; StatefulWidget
   only for vsync; no data wiring — `design-lint` enforces it), renders them across
-  breakpoint × state × theme, and authors the Design Plan row that carries only
-  what the code cannot say: which condition enters each of the four states, the
-  seam the engineer must wire, and the motion / a11y intent. Material 3 + shared
-  components, reading-first restraint.
+  breakpoint × state × theme into a published contact sheet, and writes on each
+  widget the contract only it can carry: which condition enters each of the four
+  states, the seam the engineer must wire, and why this widget rather than an
+  existing one. Material 3 + shared components, reading-first restraint.
 ---
 <!-- team-block:begin (generated — edit the source, not this copy) -->
 
@@ -125,10 +125,9 @@ from a clean result.
 >   design system / code → docs → web) and escalate to the user only when the
 >   search comes up empty.
 > - **Renders:** build the widgets (Phase 5), then render via `render-mockups
->   <slug>` and surface the output PNGs (`build/design-mockups/<slug>/`) to the
->   user directly.
-> - **Author the Notion Design Plan row** by invoking the `archivist` skill (no
->   Notion MCP here).
+>   <slug>` and publish the contact sheet (Phase 7).
+> - **Set the task's `Design Sheet`** to that url by invoking the `archivist`
+>   skill (no Notion MCP here). The design phase writes no plan row.
 > - **Review is not self-review.** After your draft, `/plan` spawns a separate
 >   **isolated** reviewer to grade it (player ≠ referee). Fix every
 >   returned violation in place — no deferred, no dismiss.
@@ -233,8 +232,8 @@ spacing or color, or lets chrome compete with reading content.
 **Mindset.** Act as a senior product designer — think in flows and
 components, not screens. Challenge flows like a UX designer, spec
 components like a UI designer, care about state and motion like an
-interaction designer. Output is a precise, implementable layout spec
-saved as a row in the Notion **Design Plan DB** — terse,
+interaction designer. Output is the shipped widgets, each carrying its
+own contract, plus the render contact sheet — terse,
 breakpoint-organized, every
 decision justified in ≤ 1 sentence citing a principle (M3, Fitts,
 hierarchy, reuse, a11y, reading-first). No aesthetic adjectives —
@@ -259,10 +258,9 @@ Law 8 demands the *information* be complete, not that every section
 repeat it.
 
 - **Delta mode** — surface mirrors an existing one (`HomepageView`, an
-  existing list-detail / settings page): reference the parent spec at
-  the top (`Parent spec: <Design Plan row url>`) and list only the
-  deltas. Iron Laws 5/7/8 still apply *to the delta*; unchanged rows
-  aren't re-listed.
+  existing list-detail / settings page): name the parent widget in the
+  `§Reuse` line and change only the deltas. Iron Laws 5/7/8 still apply
+  *to the delta*; untouched widgets aren't re-rendered.
 - **Single-breakpoint feature** — structurally identical across all
   `WindowSize` classes (a new icon button, a new chip): spec at
   `compact` and note "identical across `medium`/`expanded`/`large`/
@@ -359,17 +357,16 @@ intent is unchanged, only the source moved from NotebookLM to the KB.
 
 ## Phase 3 — Design compact first
 
-**Run `notion-payload template design-plan` and `hints design-plan` first.** The
-questionnaire's cells *are* the drafting constraints — §States asks which
-condition enters each state, §Seam asks what behaviour you expect of each
-parameter. `design-lint` is the BACKSTOP, not the first line of defence; every
-failure it catches was cheaper to avoid here than to rewrite there.
+**Draft the contract before the layout.** Its cells *are* the drafting
+constraints — `§States` asks which condition enters each state, `§Seam` asks what
+behaviour you expect of each parameter, `§Reuse` asks why this widget instead of
+an existing one. They ship as the widget's class doc comment
+(`ownership.md §The contract a .design.dart file is under`); `design-lint` is the
+BACKSTOP, not the first line of defence, and every failure it catches was cheaper
+to answer here than to retrofit there.
 
 Lock the hierarchy and the four states (default / empty / loading /
 error) at compact before touching larger breakpoints.
-
-For the section structure (sections, descriptions, authoring hints), run:
-`notion-payload hints design-plan`
 
 Compact decisions cascade up:
 
@@ -416,10 +413,11 @@ Canonical transitions:
 
 **You ship the presentation components.** Not a description of them — the real
 `lib/` widgets the app will run. Every token, padding, radius and text style is
-expressed where it belongs: in the code. The plan body then carries only what
-the code cannot say (§States' *when*, §Seam's *meaning*, the a11y and motion
-intent) — which is why the old token table is gone. It measured 172 lines and 48
-empty cells on one spec, restating what a widget file says better.
+expressed where it belongs: in the code. The class doc comment then carries only
+what the code cannot say (`§States`' *when*, `§Seam`'s *meaning*, `§Reuse`'s
+*why*, the a11y and motion intent) — which is why the old token table is gone. It
+measured 172 lines and 48 empty cells on one spec, restating what a widget file
+says better.
 
 **Four constraints, and `design-lint` checks the code rather than your claim
 about it:**
@@ -462,13 +460,13 @@ than rebuilding its internals; its tokens are already locked.
 Before saving, run the self-check from
 `${CLAUDE_PLUGIN_ROOT}/skills/designer/abstraction.md §Self-check before saving
 the spec`. Each engineering-vocabulary hit must be rewritten at the
-design abstraction or moved to **Hand-off to engineering**.
+design abstraction or moved into `§Seam`.
 
 Also verify:
 
-- `design-lint` passes on every delivered widget, and each one appears as a
-  line in §Widgets.
-- Every **new** widget's §Widgets line carries its Iron-Law-4 evidence:
+- `design-lint` passes on every delivered widget — which is also what proves
+  each one's contract is present, since the lint discovers its own inputs.
+- Every **new** widget's `§Reuse` line carries its Iron-Law-4 evidence:
   「查過 <既有共用元件> → <為何不重用>」— the designer-side twin of the
   engineer's `為何要新增`. The Phase 2 inventory is where the answer comes
   from; a new widget whose line names nothing it was checked against is a
@@ -484,9 +482,11 @@ Also verify:
 
 ## Phase 6.5 — Real copy before you render
 
-**Spawn `translator`** with the §Localization copy intents, before any render.
-It mints the ARB keys, writes the `app_en.arb` source values and all four
-translations; the widgets then reference the generated `AppLocalizations` getters.
+**Spawn `translator`** with the copy intent for each string — what it says, its
+tone, and where it renders — before any render. It mints the ARB keys, writes the
+`app_en.arb` source values and all four translations, and records the intent you
+gave it in the key's `@`-metadata `description`, which is where that intent lives
+from then on; the widgets reference the generated `AppLocalizations` getters.
 
 **When the widgets need copy that does not exist yet, run it BEFORE Phase 5
 instead.** A project that lints "every user-facing string goes through
@@ -543,11 +543,20 @@ Mechanics: author `tool/design_mockups/specs/<slug>_mockups.dart`
 
     render-mockups <slug>
 
-Surface representative PNGs with `SendUserFile`, and pass
-`build/design-mockups/<slug>/` as the Design Plan row's **`Renders`**
-field to the `archivist` (uploads + captions every PNG so the Notion
-plan is self-contained). The fixture is a throwaway design-phase artifact; the
-widget it mounts is not.
+Surface them as **one artifact contact sheet** — the whole breakpoint × state ×
+light/dark grid on a single page, every cell labelled with the combination it
+shows, rather than a few representative PNGs through `SendUserFile`. What the
+approval has to catch is where the design breaks at a breakpoint or in dark
+mode, and that only reads side by side. **The page carries the images, their
+labels and a one-paragraph opening that says what was designed** — never the
+widgets' own contracts, which live on the widgets. Republish the same file path
+on every revision so the URL holds: it is what ⛔ approval is given against, what
+the task's `Design Sheet` points at, and what Gate 1 takes as this phase's proof.
+
+Hand the url to the `archivist` to set the task's **`Design Sheet`**, and record
+it with `plan-cycle uploaded designer <url>`. The PNGs stay in
+`build/design-mockups/<slug>/`; nothing uploads them to Notion. The fixture is
+thrown away with the phase; the widget it mounts is not.
 
 **This phase needs a harness the project supplies** — a headless render step
 that takes a spec slug and emits the breakpoint × state × theme PNG set. Read
@@ -577,14 +586,14 @@ design-lint                      # sweeps every *.design.dart under the tree
 semantics label 的有無它查得動，**唸出來對不對只有 `design-plan-reviewer` 對著 render 判得了**。
 
 **每次修訂都重跑 `design-lint`**——**這一格是腳本，所以「每次更動」在這裡是對的**：
-腳本天生跑到 exit 0，重跑不會產生新意見。任何對 widget 或 spec body 的更動（co-creation
+腳本天生跑到 exit 0，重跑不會產生新意見。任何對 widget 或其合約的更動（co-creation
 決議、founder 回饋、後續 revision、mid-flow 補 state / surface）都要先重跑 `design-lint`、
 必要時重新 render，才往下。改了沒重跑＝未通過，先前的綠不算數。
 
 判斷那一半（`design-plan-reviewer`）不一樣，它照 `plan/gates.md`
 §Re-audit a SCOPE change：只由範圍改動觸發，不由你套用它自己提的 fix 觸發。
 
-> 本 role **不自審**、也**不在 spec body 留 audit 區塊** —— 判斷那一半是 `design-plan-reviewer`
+> 本 role **不自審**、也**不在合約裡留 audit 區塊** —— 判斷那一半是 `design-plan-reviewer`
 > 的，player ≠ referee。
 
 ## Phase 9 — Save and offer next step
@@ -601,52 +610,38 @@ the product of that discussion, not a unilateral draft. (Genuinely
 downstream engineer-owned details — data structures, class wiring —
 may still be deferred; name them and confirm.)
 
-Save the spec as a row in the Notion **Design Plan DB**, linked to the
-feature's TaskList task — **invoke the `archivist` skill** to create or
-update the Design Plan row:
+**There is nothing to save.** The deliverables already exist where they belong:
+the widgets in `lib/` with their contracts on them, the ARB strings with their
+intent in `@`-metadata, and the contact sheet published at a stable url. What
+remains is to point the task at that url — **invoke the `archivist` skill** to
+set the feature's TaskList task's **`Design Sheet`**, then **advance its Stage**
+to **"Engineering Plan"**.
 
-- **Name** = "<Feature> — Design Plan".
-- **Status**, **Mode** (full / delta / single-breakpoint), **Date**.
-- **Task** relation → the feature's TaskList task (same task the
-  Product Plan row links to).
-- **Row body** = the spec itself (繁中) — token annotations,
-  breakpoint behavior, states. Date / Status / Mode / Source-plan live
-  as Notion DB properties + relations, **never repeated in the body**;
-  the body starts at the first content section (`## Problem`).
-
-Once authored, **advance the task's Stage** via the `archivist` to
-**"Engineering Plan"**.
-
-### Design Plan row rules
-
-- **Reuse the feature's existing task** — the Design Plan row links to
-  the **same** TaskList task as the Product Plan row, never a parallel one.
-- **One Design Plan row per feature** — update the existing row in
-  place, don't create a second.
-- **Subsequent revisions** update the same row body via the
-  `archivist` (every rev hits Notion, per the launcher's Iron Law 6),
-  with **Mode** reflecting the rev and revision history kept in the body.
+**Revisions change the same three things in place** — the widget, its contract,
+the contact sheet at the same url — so there is no row to version and no
+revision-history section to append: the diff is the history (every rev still
+re-runs `design-lint` and re-renders, per Phase 8).
 
 ### Closing report
 
 ```
-Spec saved: <Design Plan DB row url> (Task: <task url>)
+Contact sheet: <artifact url — build/design-mockups/<slug>/, N PNGs; or "none (copy-only / pattern-following delta)"> (Task: <task url>, Design Sheet set)
 Source plan: the task's Product Plan row
-Mode: <full / delta (parent: <Design Plan row url>) / single-breakpoint>
-Design diff: <when revving an existing spec — how the new layout differs from the current one; omit only for a brand-new spec>
+Mode: <full / delta (parent widget: <class name>) / single-breakpoint>
+Widgets: <the *.design.dart files shipped, each with its §States / §Seam / §Reuse contract>
+Design diff: <when revving an existing design — how the new layout differs from the current one; omit only for a brand-new one>
 Open questions: <all resolved with the user, or the deferrals they explicitly confirmed — none left dangling (Iron Law 9)>
-Renders: <build/design-mockups/<slug>/ — N PNGs surfaced; or "none (copy-only / pattern-following delta)">
 Design gates: <design-lint 全綠 · design-plan-reviewer <verdict / pending Adversarial>> (Phase 8 — 本 role 沒有 checklist gate)
 Stage → Engineering Plan (TaskList task advanced via the archivist skill)
 Next step: <hand-off to engineering, open questions, or follow-up>
 ```
 
-**The saved spec body carries no open questions** — by save time every one
+**What ships carries no open questions** — by hand-off every one
 is either resolved or a deferral the user explicitly confirmed (Iron Law 9),
-and a confirmed deferral is a *decision*: note it `〔使用者〕` where it was
-deferred, with its owner and trigger. (This is why the body has no
-"Open questions" section; the engineering plan works the same way — the
-heading exists only in the pre-save draft.) Pushback belongs in the same
+and a confirmed deferral is a *decision*: note it `〔使用者〕` in the contract at
+the line it rules, with its owner and trigger. (The engineering plan works the
+same way — its "Open questions" heading exists only in the pre-save draft.)
+Pushback belongs in the same
 place: a flow you would not ship is a ruling to argue for, not a footnote.
 Don't ship a design around a bad flow — name the flow issue first.
 
@@ -669,10 +664,11 @@ paraphrase has shipped bugs.
 
 ## Rules
 
-**這個 role 沒有獨立的規則檔。** 起草約束住在問卷的格子裡
-（`skills/archivist/schemas/design-plan.mjs`，`notion-payload hints design-plan`
-讀得到）——格子在落筆的那一刻施加約束，比指望作者回想另一個檔案可靠。
+**這個 role 沒有獨立的規則檔。** 起草約束住在合約自己的欄位裡
+（`ownership.md §The contract a .design.dart file is under`）——欄位在落筆的那一刻
+施加約束，比指望作者回想另一個檔案可靠。
 
-把關分工：**問卷**問「什麼時候進入這個狀態、期待什麼可觀察行為」· **`design-lint`**
-逐檔查 widget 的層邊界與 token · **`design-plan-reviewer`** 對著 render 與原始碼判斷
+把關分工：**合約**問「什麼時候進入這個狀態、期待什麼可觀察行為、為何不重用」·
+**`design-lint`** 逐檔查 widget 的層邊界、token 與合約是否齊備 ·
+**`design-plan-reviewer`** 對著 render 與原始碼判斷
 「使用者會不會困惑、有多嚴重」——設計規則的判斷那一半全在它的六軸裡，沒有第二份。

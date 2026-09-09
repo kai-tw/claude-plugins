@@ -36,8 +36,8 @@ Phase 6 self-check.
   condition instead: "when the system has a confident detection result";
   "when the user has overridden the source language".
 - **File paths and line numbers** — `lib/features/.../...`,
-  `notifier.dart:348`. Even when citing prior specs, use the spec's section
-  number (`§4.8.3`), never line numbers.
+  `notifier.dart:348`. When citing another widget's contract, name the widget
+  class and the `§` block, never a line number.
 - **Layer-wiring vocabulary** — "data source", "repository", "use case",
   "platform channel", "JNI bridge". Engineering's vocabulary belongs in
   the engineering plan, not the design spec.
@@ -48,13 +48,18 @@ Phase 6 self-check.
   `UITextInteraction`. The implementer picks whichever API produces the
   user experience you specified.
 
-## Self-check before saving the spec
+## Self-check before hand-off
 
-Search your draft for: `Cubit`, `Bloc`, `Notifier`, `Provider`, `Repository`, `DataSource`, `UseCase`,
-`Exception`, `.dart`, line-number colons, native framework names,
-`state.<fieldName>`. Each hit is engineering vocabulary leaking. Rewrite
-at the design abstraction or move to the **Hand-off to engineering**
-section.
+Search the contract's prose for: `Cubit`, `Bloc`, `Notifier`, `Provider`,
+`Repository`, `DataSource`, `UseCase`, `Exception`, `.dart`, line-number colons,
+native framework names, `state.<fieldName>`. Each hit is engineering vocabulary
+leaking. Rewrite at the design abstraction.
+
+**Two identifiers the contract is supposed to name**, and the check must not
+flag them: `§Seam`'s own parameter and callback names (they are the seam), and
+`§Reuse`'s existing-component names (naming what you checked against is the
+evidence). The ban is on describing *behaviour* in engineering vocabulary, not
+on the identifiers the contract exists to hand over.
 
 A class suffix `State` referring to the four-state UI concept (default /
 empty / loading / error) is **fine** — that's design vocabulary. A class
@@ -65,9 +70,7 @@ in the codebase were renamed tomorrow.
 
 ## When you depend on a system fact
 
-State the semantic condition in plain language. If engineering needs an
-unambiguous hand-off, end the spec with a short **Hand-off to
-engineering** section: a one-line product contract per fact ("the design
-depends on a per-sheet detection result the implementer captures however
-fits the architecture"). The hand-off is the boundary; the engineering
-plan does the class sketch on the other side.
+State the semantic condition in plain language, in `§Seam`: one line per fact
+("the design depends on a per-sheet detection result the implementer captures
+however fits the architecture"). `§Seam` is the boundary; the engineering plan
+does the class sketch on the other side.

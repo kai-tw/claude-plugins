@@ -44,13 +44,12 @@
 //   (headless/cron). The binary is resolved from $NTN_BIN / $NTN_INSTALL_DIR /
 //   ~/development/ntn, else $PATH.
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, resolve, isAbsolute, dirname } from 'node:path';
 
 import { CRITERIA } from '../schemas/criteria.mjs';
 import { types as productPlanTypes } from '../schemas/product-plan.mjs';
-import { body as designPlanBody } from '../schemas/design-plan.mjs';
 import { body as engineeringPlanBody } from '../schemas/engineering-plan.mjs';
 
 // ── DB registry ────────────────────────────────────────────────────────────────
@@ -80,6 +79,9 @@ const DB = {
       'Feature Area': MULTI(),
       'Shipped Date': { type: 'date' },
       'Security Review': { type: 'checkbox' },
+      // Copied from the task at close-out — the task row is trashed there, and
+      // the design trail would die with it. Empty for non-UI cycles.
+      'Design Sheet': { type: 'url' },
     },
     body: [
       { key: 'Overview', kind: 'para', required: true },
@@ -124,6 +126,10 @@ const DB = {
       // whenever the cycle will produce a PR, and the PR closes it (`Fixes #N`).
       // Empty for plan-only and Tracing rows — nothing to link.
       'GitHub Issue': { type: 'url' },
+      // The design phase's render contact sheet. That phase has no plan row, so
+      // this is the whole of the task's design trail; close-out copies it onto
+      // the Feature Archive row before trashing the task. Empty for non-UI work.
+      'Design Sheet': { type: 'url' },
     },
     // The Product/Design/Engineering Plans relations are Notion-auto-populated
     // reverse relations (the plan DBs own the Task relation) — not builder-written.
@@ -143,21 +149,6 @@ const DB = {
     // Section definitions per Type live in schemas/product-plan.mjs — ADVISORY:
     // they drive `hints`, they do not gate `create`/`update` (see freeformBody).
     bodyByType: productPlanTypes,
-    freeformBody: true,
-  },
-
-  'design-plan': {
-    title: 'Name',
-    props: {
-      Name: { type: 'title' },
-      Status: SEL('Draft', 'Approved', 'Superseded'),
-      Mode: SEL('full', 'delta', 'single-breakpoint'),
-      Date: { type: 'date' },
-      Task: { type: 'relation', dsRef: 'tasklist' },
-      'Feature Archive': { type: 'relation', dsRef: 'feature-archive' },
-    },
-    // Section definitions (description + hint) in schemas/design-plan.mjs — ADVISORY.
-    body: designPlanBody,
     freeformBody: true,
   },
 
@@ -313,9 +304,7 @@ function assembleBody(dbKey, body, row, rowLabel, freeform = false) {
       if (sec.required && !freeform) fail(`${dbKey}.${sec.key} (row ${rowLabel}): required body section is empty`);
       continue;
     }
-    if (sec.kind === 'images') {
-      parts.push(`## ${sec.key}`); // heading only; images are uploaded + appended after the body
-    } else if (sec.kind === 'bullets') {
+    if (sec.kind === 'bullets') {
       const items = (Array.isArray(v) ? v : [v]).filter((x) => String(x).trim() !== '');
       parts.push(`## ${sec.key}\n\n${items.map((x) => `- ${String(x).trim()}`).join('\n')}`);
     } else {
@@ -369,17 +358,16 @@ function bodyFromFile(dbKey, resolvedBody, filePath, rowLabel, freeform = false)
   // section arrays stay as `hints` guidance only. The H1 guard above still holds
   // (the title lives in the property).
   if (resolvedBody && !freeform) {
-    const textKeys = new Set(resolvedBody.filter((s) => s.kind !== 'images').map((s) => s.key));
-    const imgKeys = new Set(resolvedBody.filter((s) => s.kind === 'images').map((s) => s.key));
+    const textKeys = new Set(resolvedBody.map((s) => s.key));
     const seen = new Set();
     for (const m of raw.matchAll(/^##\s+(.+?)\s*$/gm)) {
       const key = m[1].trim();
-      if (!textKeys.has(key) && !imgKeys.has(key))
-        fail(`${dbKey}: bodyFile has unknown section "## ${key}" (row ${rowLabel}). Known: ${[...textKeys, ...imgKeys].join(', ')}`);
+      if (!textKeys.has(key))
+        fail(`${dbKey}: bodyFile has unknown section "## ${key}" (row ${rowLabel}). Known: ${[...textKeys].join(', ')}`);
       seen.add(key);
     }
     for (const s of resolvedBody)
-      if (s.required && s.kind !== 'images' && !seen.has(s.key))
+      if (s.required && !seen.has(s.key))
         fail(`${dbKey}: bodyFile missing required section "## ${s.key}" (row ${rowLabel})`);
   }
   warnHalfWidth(raw, `${dbKey} row ${rowLabel}`);
@@ -450,7 +438,7 @@ function warnHalfWidth(raw, label) {
 }
 
 // ── per-row build ────────────────────────────────────────────────────────────
-// create → { title, apiBody: {parent, properties, icon?, cover?}, markdown?, images }
+// create → { title, apiBody: {parent, properties, icon?, cover?}, markdown? }
 // update → { page_id, properties, markdown? }  (markdown only when bodyFile given)
 function buildRow(dbKey, def, row, mode) {
   const rowLabel = row[def.title] ?? row.page_id ?? '?';
@@ -482,12 +470,9 @@ function buildRow(dbKey, def, row, mode) {
     fail(`${dbKey}: missing required title "${def.title}" (row ${rowLabel})`);
 
   // Body source: inline section fields, an opaque `content` string, OR a
-  // `bodyFile` (the CJK-safe path — author once, upload byte-exact). Image-kind
-  // sections (design-plan ## Mockups) may still ride alongside a bodyFile.
-  const imgSec = (resolvedBody || []).find((s) => s.kind === 'images');
-  const imgKey = imgSec?.key;
+  // `bodyFile` (the CJK-safe path — author once, upload byte-exact).
   const hasBodyFile = row.bodyFile != null && String(row.bodyFile).trim() !== '';
-  const hasInlineSections = !!resolvedBody && [...bodyKeys].some((k) => k !== imgKey && k in row);
+  const hasInlineSections = !!resolvedBody && [...bodyKeys].some((k) => k in row);
   const hasOpaqueContent = !resolvedBody && 'content' in row;
 
   if (resolvedBody && 'content' in row)
@@ -515,23 +500,16 @@ function buildRow(dbKey, def, row, mode) {
     if (!markdown.startsWith('<!--')) markdown = `${MARKER}\n\n${markdown}`;
   }
 
-  // Images section (e.g. design-plan ## Mockups): uploaded + embedded at commit.
-  let images = [];
-  if (imgSec && row[imgKey] != null && String(row[imgKey]).trim() !== '')
-    images = resolveImagePaths(row[imgKey], `${dbKey}.${imgKey} (row ${rowLabel})`);
-
   if (mode === 'update') {
     if (!row.page_id) fail(`${dbKey}: update rows need a "page_id" (row ${rowLabel})`);
     // (inline-body-on-update already rejected above, before assembly)
-    if (images.length)
-      fail(`${dbKey}: image sections (${imgKey}) can't be (re)embedded on update (row ${rowLabel}) — a full-body edit drops existing image blocks; handle mockups on create.`);
     return { page_id: row.page_id, properties, markdown: hasBodyFile ? markdown : undefined };
   }
 
   const apiBody = { parent: { type: 'data_source_id', data_source_id: def.ds }, properties };
   if (row.icon) apiBody.icon = row.icon;
   if (row.cover) apiBody.cover = row.cover;
-  return { title: String(rowLabel), apiBody, markdown, images };
+  return { title: String(rowLabel), apiBody, markdown };
 }
 
 // ── manifest → payload ─────────────────────────────────────────────────────────
@@ -593,18 +571,17 @@ function verifyBody(markdown, got) {
 function commitCreate(dbKey, built) {
   const results = [];
   let bad = 0;
-  for (const { title, apiBody, markdown, images } of built) {
+  for (const { title, apiBody, markdown } of built) {
     const created = JSON.parse(ntn(['api', 'v1/pages', '-X', 'POST'], JSON.stringify(apiBody)));
     const id = created.id;
     const url = created.url || created.public_url || '';
     if (!id) fail(`create "${title}": response had no page id`);
     if (markdown) ntn(['pages', 'edit', id], markdown);
-    if (images && images.length) embedImages(id, images);
     // Verify (Iron Law 2): confirm the row exists and (if a body was written) landed whole.
     const got = ntn(['pages', 'get', id]);
     const state = markdown ? verifyBody(markdown, got) : '(none)';
     if (state !== 'ok' && state !== '(none)') bad++;
-    results.push({ title, id, url, body: state, images: images?.length || 0 });
+    results.push({ title, id, url, body: state });
     console.error(`✓ ${dbKey}: ${title} → ${url}${state === 'ok' || state === '(none)' ? '' : `  ⚠ ${state}`}`);
   }
   console.log(JSON.stringify(results, null, 2));
@@ -763,53 +740,6 @@ function appendBlocks(pageId, blocks, commit) {
   }
   console.error(`✓ appended ${appended} block(s) to ${pageId}`);
   console.log(JSON.stringify({ appended, page: pageId }, null, 2));
-}
-
-// ── image upload + embed (mockups into a Design Plan body) ────────────────────
-const IMG_EXT = /\.(png|jpe?g|gif|webp|svg)$/i;
-const MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml' };
-const contentType = (p) => MIME[(p.split('.').pop() || '').toLowerCase()] || 'application/octet-stream';
-// build/design-mockups/<slug>/<screen>__<size>__<state>__<theme>__<locale>.png → readable caption
-const captionFromFilename = (p) => p.split('/').pop().replace(/\.[^.]+$/, '').split('__').join(' · ');
-
-// Resolve a Mockups value (a directory → sorted *.png|jpg|… glob, or an explicit
-// array, or a single file path) into a list of existing image paths.
-function resolveImagePaths(value, where) {
-  let paths;
-  if (Array.isArray(value)) paths = value.map(String);
-  else {
-    const s = String(value);
-    if (!existsSync(s)) fail(`${where}: path not found: ${s}`);
-    paths = statSync(s).isDirectory()
-      ? readdirSync(s).filter((f) => IMG_EXT.test(f)).sort().map((f) => join(s, f))
-      : [s];
-  }
-  if (!paths.length) fail(`${where}: no image files found`);
-  for (const p of paths) if (!existsSync(p)) fail(`${where}: image not found: ${p}`);
-  return paths;
-}
-
-// Single-part upload (the workspace's plan rejects multi-part / `ntn files create`):
-// POST /v1/file_uploads → /send the bytes (--file) → returns the file_upload id.
-function uploadFile(p) {
-  const created = JSON.parse(ntn(['api', 'v1/file_uploads', '-X', 'POST'],
-    JSON.stringify({ filename: p.split('/').pop(), content_type: contentType(p) })));
-  if (!created.id) fail(`file_uploads create returned no id for ${p}`);
-  const sent = JSON.parse(ntn(['api', `v1/file_uploads/${created.id}/send`, '-X', 'POST', '--file', p]));
-  if (sent.status !== 'uploaded') fail(`upload of ${p} did not complete (status ${sent.status})`);
-  return created.id;
-}
-
-// Upload each image and append it as an image block (caption from filename),
-// chunked ≤100 blocks/call. Called after the text body is written.
-function embedImages(pageId, paths) {
-  const blocks = paths.map((p) => ({
-    object: 'block', type: 'image',
-    image: { type: 'file_upload', file_upload: { id: uploadFile(p) }, caption: richText(captionFromFilename(p)) },
-  }));
-  for (let k = 0; k < blocks.length; k += 100)
-    ntn(['api', `v1/blocks/${pageId}/children`, '-X', 'PATCH'], JSON.stringify({ children: blocks.slice(k, k + 100) }));
-  console.error(`  ↳ embedded ${blocks.length} image(s)`);
 }
 
 // ── comment on a page (e.g. review findings) ──────────────────────────────────
@@ -1116,7 +1046,7 @@ const HELP = `notion-payload — Archivist Notion request builder + writer (via 
   notion-payload --help
 
 DBs: ${Object.keys(DB).join(', ')}
-Plan body schemas: schemas/product-plan.mjs (by Type), schemas/design-plan.mjs, schemas/engineering-plan.mjs
+Plan body schemas: schemas/product-plan.mjs (by Type), schemas/engineering-plan.mjs
 Criteria registry: schemas/criteria.mjs
 
 create/update without --commit print the plan only (no writes). --commit drives ntn:
@@ -1163,7 +1093,6 @@ const DB_TITLE = {
   'decision-log': 'Decision Log',
   'tasklist': 'TaskList',
   'product-plan': 'Product Plan',
-  'design-plan': 'Design Plan',
   'engineering-plan': 'Engineering Plan',
   'release-log': 'Release Log',
   'analytics-catalog': 'Analytics Event Catalog',

@@ -355,8 +355,9 @@ distinguishing combination untested).
 ## Default workflow
 
 1. **Read the brief and source artefacts.** The feature's Notion
-   Product Plan and Design Plan DB rows (reached via the `archivist`
-   skill) when they exist; otherwise the code under test. Extract the
+   Product Plan row (reached via the `archivist` skill) and, for UI work, the
+   contact sheet at its `Design Sheet` plus the widget contracts, when they
+   exist; otherwise the code under test. Extract the
    behavior contract. If the plan / spec is missing for non-trivial
    work, flag it once and proceed against the code's observable
    behavior.

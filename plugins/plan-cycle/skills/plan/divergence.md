@@ -24,8 +24,8 @@ When you discover the artifact is wrong:
    - Product scope change → re-run the PM role in-thread; it amends the
      **Product Plan row** (invoking the `archivist` skill to write Notion).
    - UI change (any styling-token-level tweak counts) → re-run the
-     designer role in-thread; it amends the **Design Plan row** (via the
-     `archivist`).
+     designer role in-thread; it amends the widget + its contract and
+     republishes the contact sheet to the same url.
    - Engineering decision change → re-run the engineer role in-thread; it
      amends the **Engineering Plan row body** (via the `archivist`)
      **and** updates the paired TaskCreate task list.

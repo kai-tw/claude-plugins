@@ -118,9 +118,10 @@ only shows up a year later, **"will this test still be protecting us?"**
    consistency lens's work list) and its **§Classes** (the `為何要新增` answers you
    will independently verify).
 3. **Approved product plan** — success metric + scope commitments.
-4. **Approved design spec** — §States (which condition enters each state), §Seam
-   (what each parameter / callback means and the behaviour expected of it),
-   §Widgets (the files the designer shipped), motion and a11y intent. **The
+4. **The approved design** — the contact sheet the task's `Design Sheet` points
+   at, plus every `*.design.dart` widget's own contract: `§States` (which
+   condition enters each state), `§Seam` (what each parameter / callback means
+   and the behaviour expected of it), `§Reuse`, motion and a11y intent. **The
    designer built the presentation widgets**, so "were the pixels built" is not
    your question — theirs already are. Yours is whether the engineer wired them
    to the right data, and whether the diff changed them.
@@ -134,7 +135,7 @@ only shows up a year later, **"will this test still be protecting us?"**
    `mock-rules.md` and the failure-class catalog. It is the standard the
    test-design lens grades against, for both halves of `test/**` alike.
 
-If the caller did not supply (2)–(4), ask for the Notion task URL and fetch them
+If the caller did not supply (2)–(4), ask for the Notion task URL and fetch them (its `Design Sheet` reaches the contact sheet)
 (Notion reads via the `archivist`) before reviewing. **One fetch serves both
 lenses** — you cannot grade conformance without the approved spec, and C2.1 /
 C3.1 cannot run without §Conformance and §Classes.
@@ -176,7 +177,7 @@ C3.1 cannot run without §Conformance and §Classes.
      `design-plan-reviewer` graded the design, not the data behind it.
    - **The diff modified a shipped widget.** The designer delivered those files;
      an implementation-time edit to one is a design change made without the
-     designer. Diff the §Widgets files specifically and flag any change that is
+     designer. Diff the `*.design.dart` files specifically and flag any change that is
      not a pure wiring adaptation.
    - **Documentation the change made false** — a class doc, a folder brief, a
      `CLAUDE.md` line the diff silently invalidated.
@@ -297,7 +298,7 @@ scoped to the fix + blast radius (`plan/gates.md §Gate loop policy`).
 
 ```
 ## Post-QA Review: <project>
-**Against:** <product plan + design spec + engineering plan, Notion task URL>
+**Against:** <product plan + engineering plan + the design (contact sheet + widget contracts), Notion task URL>
 **Pinned by /qa spec tests (subtracted):** N items — of which <M> rest on tests this review graded sound
 **Mechanism table:** present / ABSENT (C2 逐檢查點 → 無法判定; 建表 filed as warning)
 **Residue checked:** M items · **同儕 rows walked:** K

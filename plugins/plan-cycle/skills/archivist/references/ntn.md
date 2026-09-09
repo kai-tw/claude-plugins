@@ -82,7 +82,7 @@ These are the things that don't fail loudly — each one cost a debugging cycle.
   builder loops per row. (The old claude.ai MCP's ≤100-row batch is gone; this is
   why archive runs are per-row, not one payload.)
 - **Reverse-relations are not builder-written.** A DB's synced back-reference
-  relations (e.g. TaskList's `Product Plans` / `Design Plans` / `Engineering
+  relations (e.g. TaskList's `Product Plans` / `Engineering
   Plans`) are Notion-managed; the builder never sets them and `schema --live`
   ignores them when reporting drift.
 - **Block-append children take block JSON, not Markdown.** `ntn pages edit`

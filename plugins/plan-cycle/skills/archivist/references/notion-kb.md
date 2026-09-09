@@ -45,9 +45,8 @@ project's workspace.
 | Feature Archive | One row per **shipped / abandoned / superseded** feature **cycle** (immutable history) |
 | Feature KB | One **living** row per feature — its current mechanism; the synthesis counterpart to Feature Archive |
 | Decision Log | One row per notable cross-feature / likely-to-resurface **decision** (ADR) |
-| TaskList | One row per **in-flight / deferred** task; each task page carries its own Product Plan + Design Plan + Engineering Plan |
+| TaskList | One row per **in-flight / deferred** task; each task page carries its own Product Plan + Engineering Plan |
 | Product Plan | One row per product plan doc; relates to TaskList via **Task** property (back-ref on TaskList: **Product Plans**) |
-| Design Plan | One row per design spec doc; relates to TaskList via **Task** property (back-ref on TaskList: **Design Plans**) |
 | Engineering Plan | One row per engineering plan doc; relates to TaskList via **Task** property (back-ref on TaskList: **Engineering Plans**) |
 | Release Log | One row per app release (Version · Type · Status · Platform · Release Date · Highlights) |
 | Analytics Event Catalog | One row per analytics event emitted by the app (Event · Feature · Status · Kind · Weekly Review · Payload · Rationale) |
@@ -89,7 +88,7 @@ the pointers — §Classes is a file inventory (`File (NEW/MOD/DEL)` is a
 column), §Data flow's graph nodes are `Class.method`, §Error policy's evidence
 is `file:symbol`. Scrubbing them there would delete the section's content,
 not its navigation. The exemption covers **that DB only** — Feature
-Archive, Decision Log, TaskList, Product Plan, and Design Plan rows are
+Archive, Decision Log, TaskList and Product Plan rows are
 bound by the list above, because their reader is the founder browsing
 intent, not an engineer following a trail.
 
@@ -137,8 +136,10 @@ value-add.
 - **Product plans → Product Decisions / Problem / Final Approach.** Feature
   motivation (why, one sentence); scope decisions (in vs out); key product
   calls (pivots, trade-offs, rulings); items deferred to future cycles.
-- **Design specs → Design Decisions.** UX / visual patterns introduced or
-  changed; accessibility / i18n choices; deferred design items + rationale.
+- **The design phase → Design Decisions.** Read the render contact sheet and the
+  widgets' own §States / §Seam / §Reuse contracts: UX / visual patterns
+  introduced or changed; accessibility / i18n choices; deferred design items +
+  rationale.
 - **Security reviews → Security Notes.** Gate decision (approved / approved
   with conditions / blocked); findings (title, severity, status); key
   remediations; accepted open risk. Set the row's Security Review checkbox.
@@ -165,8 +166,8 @@ plan (api body + body Markdown) for review; with `--commit` it creates each page
 (`ntn api v1/pages` POST) + writes the body (`ntn pages edit`) + verifies, or in
 `update` mode PATCHes properties (`ntn api v1/pages/<id>`), one row at a time.
 `notion-payload schema [db]` prints the
-field contract for any DB; the eight keys are `feature-archive`, `decision-log`,
-`tasklist`, `product-plan`, `design-plan`, `engineering-plan`, `release-log`,
+field contract for any DB; the seven keys are `feature-archive`, `decision-log`,
+`tasklist`, `product-plan`, `engineering-plan`, `release-log`,
 `analytics-catalog`. **Feature KB is not among them** — it has no builder schema;
 its row + hand-synthesized body are created directly (`ntn pages create --parent
 data-source:<id>` for the Markdown body, `ntn api v1/pages` for properties), and
@@ -177,7 +178,9 @@ its two live views via `ntn api v1/views` (see §Feature KB; run `ntn api v1/vie
 
 Properties: **Name** (title — Title Case) · **Status** (Shipped / Abandoned /
 Superseded) · **Feature Area** (multi-select, Title Case labels mirroring
-`lib/features/`) · **Shipped Date** (date) · **Security Review** (checkbox). The
+`lib/features/`) · **Shipped Date** (date) · **Security Review** (checkbox) ·
+**Design Sheet** (url — copied from the task at close-out, before the task is
+trashed; empty for non-UI cycles). The
 exact, current Feature Area vocabulary is whatever `node
 notion-payload schema feature-archive` prints — and it is *narrower*
 than TaskList's Area (no "Preference"), which is exactly why the
@@ -222,6 +225,9 @@ for Deferred items, the condition that should fire them) · **Linked Archive**
 **GitHub Issue** (url type — the cycle's git-side anchor, opened alongside the
 task by `/plan` Step 2 whenever the cycle will produce a PR, and closed by that
 PR's `Fixes #N`; empty for plan-only and Tracing rows) ·
+**Design Sheet** (url type — the design phase's render contact sheet; the design
+phase has no plan row, so this property is the whole of the task's design trail.
+Empty for non-UI cycles) ·
 **Check Date** (date —
 檢核日, for Tracing items: the next date to observe/review the task) ·
 **Check Target** (text — 檢核目標, for Tracing items: the goal or metric to
@@ -243,17 +249,21 @@ push the Check Date forward (still tracking) or graduate the task into the norma
 Check Date is due.
 
 **Each task links to its plans via relation — not inline sections.** A task's
-product plan, design plan, and engineering plan each live as a row in the
-**Product Plan DB** / **Design Plan DB** / **Engineering Plan DB** (see below),
+product plan and engineering plan each live as a row in the
+**Product Plan DB** / **Engineering Plan DB** (see below),
 related to the task via the **Task** relation. The synced back-references on
-TaskList — **Product Plans** / **Design Plans** / **Engineering Plans** —
-surface a task's full plan trail on the task page.
+TaskList — **Product Plans** / **Engineering Plans** —
+surface a task's plan trail on the task page.
+
+**The design phase has no row.** Its output is the widgets (each carrying its own
+contract — `designer/ownership.md`) plus the render contact sheet, and the task's
+**Design Sheet** url property is what reaches it. Close-out copies that url onto
+the Feature Archive row before the task is trashed, or the link dies with it.
 
 The planning flow: **`/plan` creates the task** → the PM role adds the Product Plan
-row (linked) → the designer role adds the Design Plan row (linked) → the engineer role adds
-the Engineering Plan row (linked) → `/plan` gates on all three. All three plan
-types are Notion rows related to the one task — including in-flight / in-progress
-work; there are no local plan files.
+row (linked) → the designer role publishes the contact sheet and sets **Design
+Sheet** → the engineer role adds the Engineering Plan row (linked) → `/plan` gates
+on all three.
 
 ### Progress tracking — Stage + Implementation checklist
 
@@ -361,24 +371,6 @@ is **Product Plans**. One row per product plan document. Title convention:
 "`<Feature / Initiative> — Product Plan`", e.g. "Conflict Resolution — Product Plan".
 The **row body** is the product plan, structured by Type — run
 `notion-payload hints product-plan <type>` for the questionnaire.
-
-## Design Plan DB — schema + format
-
-Properties: **Name** (title — Title Case, e.g. "App Typography — Design Plan") ·
-**Status** (select: Draft · Approved · Superseded) · **Mode** (select: full ·
-delta · single-breakpoint) · **Task** (relation → TaskList, back-ref "Design Plans") ·
-**Date** (date).
-
-Relation property on this DB is **Task**; the synced back-reference on TaskList
-is **Design Plans**. One row per design spec document. Title convention:
-"`<Feature / Initiative> — Design Plan`", e.g. "Conflict Resolution — Design Plan".
-The **row body** is the design spec, structured as the `design-plan` body sections — run
-`notion-payload hints design-plan` for the questionnaire.
-Its last section, **`## Renders`** (kind `images`), embeds the Phase-7 renders of
-the shipped widgets: set the row's `Renders` field to the `build/design-mockups/<slug>/`
-directory (or an explicit path array); on `… create … --commit` the builder uploads
-every PNG (single-part file upload) and appends them as captioned image blocks
-(caption derived from the `screen__size__state__theme__locale` filename).
 
 ## Engineering Plan DB — schema + format
 

@@ -528,7 +528,7 @@ EOF
       cat >&2 <<EOF
 plan-cycle: uploaded REFUSED — no plan-row URL.
 
-  usage: plan-cycle.sh uploaded <pm|designer|engineer> <plan-row-url>
+  usage: plan-cycle.sh uploaded <pm|designer|engineer> <url>   (plan row, or the designer contact sheet)
 
 Iron Law 6 — a plan not in Notion does not exist. The mark is what Gate 1
 trusts, so it has to carry proof the row is really there: pass the URL (or page
@@ -958,23 +958,32 @@ EOF
       names=""; actions=""
       for ph in $pending; do
         lbl=$(phase_label "$ph")
-        names="$names, the ${lbl} plan"
-        actions="$actions
+        if [ "$ph" = designer ]; then
+          names="$names, the design phase"
+          actions="$actions
+  • design phase → publish the render contact sheet, then invoke \`archivist\` to
+    set the task's \`Design Sheet\` to its url; archivist then runs
+    \`plan-cycle uploaded designer <contact-sheet-url>\`
+    (the design phase writes no plan row — the widgets carry their own contracts)"
+        else
+          names="$names, the ${lbl} plan"
+          actions="$actions
   • ${lbl} plan → invoke \`archivist\` to write its Notion DB row (linked to the
     task) and fetch it back to confirm; archivist then runs
     \`plan-cycle uploaded ${ph} <plan-row-url>\`"
+        fi
       done
       names=${names#, }
 
       cat <<EOF
-PLAN-CYCLE UPLOAD GATE — a plan you advanced past is NOT in Notion.
+PLAN-CYCLE UPLOAD GATE — a phase you advanced past has no recorded address.
 
   Cycle:  ${slug}${title:+ (${title})}
   Stage:  ${stage}
   Missing: ${names}.
 
-Iron Law 6 — a plan not in Notion does not exist. The cycle has moved past these
-phase(s) but their plan rows were never uploaded. Do this NOW, before any other
+Iron Law 6 — work with no address does not exist. The cycle has moved past these
+phase(s) but nothing was ever recorded for them. Do this NOW, before any other
 work:
 ${actions}
 

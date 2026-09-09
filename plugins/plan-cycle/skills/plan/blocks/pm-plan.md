@@ -23,7 +23,7 @@ skill: pm
 
 ## 拼裝注意
 
-- **與 `design-spec` 共用一輪。** 兩份產物各自獨立（兩個 DB row、兩套規則），
+- **與 `design-spec` 共用一輪。** 兩份產物各自獨立（一個 DB row 一份聯絡表、兩套規則），
   合併的是**輪次**：背對背草擬、一批 ① Sanity、**一次** Resolve、一次 ② Adversarial、
   一起 finalize。分開跑會讓第二輪的 battery 去審一份第一輪答案即將作廢的草稿。
 - 非 UI 的 cycle 就沒有 designer 那半，這一輪退化成只有 PM 計畫。

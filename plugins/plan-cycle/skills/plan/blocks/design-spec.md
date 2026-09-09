@@ -11,7 +11,7 @@ skill: designer
 ---
 # Block: design-spec
 
-> 進 `product-plan` · 出 `design-spec`（Design Plan row ＋ renders ＋ widgets ＋ ARB）
+> 進 `product-plan` · 出 `design-spec`（聯絡表 ＋ widgets（含合約）＋ ARB）
 > · **⛔ STOP**：使用者核准前不得推進下游。
 
 任務書在 `${CLAUDE_PLUGIN_ROOT}/skills/designer/SKILL.md`。本塊只講拼裝面。
@@ -37,4 +37,5 @@ copy → widgets → render 是**同一塊內的迴圈**：翻譯在 render **�
 
 ## 驗收
 
-`design-lint` 全綠（腳本，對著出貨的 widgets 跑）＋ renders 存在 ＋ Notion row 落地。
+`design-lint` 全綠（腳本，對著出貨的 widgets 跑）＋ renders 已發成聯絡表（designer
+Phase 7——⛔ 核准看的就是它）＋ Notion row 落地。
