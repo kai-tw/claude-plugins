@@ -70,6 +70,15 @@ The ① cell is a different agent per stage, with the checks rehomed **by kind**
     dropped is re-deriving the whole judgment each round, not the blocking.
   - **`warning` never triggers a loop** — it goes to the founder to weigh, or is
     noted at the affected line as an accepted trade-off.
+  - **A finding that cannot be reduced is dropped, not escalated.** Before a
+    finding becomes a change, name what makes it true — the existing test it
+    turns red, or the source line that proves it (§Green is not proof). Neither
+    can be named, and the failing test cannot be written? **The finding is what
+    is wrong**: drop it and log the drop. This is the tier's mechanical exit
+    condition, and it is the only one it has — every other gate in the cycle
+    terminates on a script (`plan_lint.sh` exit 0, coverage per line, mutation
+    per file), while this one would otherwise terminate on somebody inside the
+    loop deciding it had converged.
   - **Escalate the moment a finding changes kind.** Any round budget is a
     ceiling, not a quota. Once a finding stops being a *verifiable error* (a wrong
     number, a missing section, a claim the source contradicts) and becomes a
@@ -161,23 +170,38 @@ re-runs the whole judgment). It institutionalises the PM role's optional
 riskiest-assumption consult — systematic, every plan, fresh context.
 
 
-#### Re-audit every plan change (audit-first, always)
+#### Re-audit a SCOPE change — not a fix
 
-Re-auditing is the **default, on every change** — never a one-time
-initial-draft check. Any time a plan body changes — a co-creation
-decision, founder feedback folded in, a finalize-round expansion, or a mid-flow
-divergence rev (§Mid-flow divergence) — **re-run the matrix gates for that
-stage on the changed plan BEFORE any implementation or next-stage work
-proceeds**: the ① cell to clean (`pm-plan-reviewer` loop-to-green cap 3, or
-`plan_lint.sh` exit 0), the Adversarial tier one pass
-+ one verification, per §Gate loop policy. Audit first, then implement. A revised plan that has not been
-re-audited is **not** approved, regardless of an earlier green pass — the change
-is exactly where a new defect (e.g. a parallel-marker second source of truth the
-prior pass never saw) enters. The author never self-audits the rev (player ≠
-referee), and the audit runs *before* the user re-approves the delta, not
-after. **And sweep the whole body when you rev** — that is check `I1` in
-§Plan integrity, which a gate grades rather than leaving to the
-author's diligence.
+A revised plan that has not been re-audited is **not** approved, regardless of
+an earlier green pass: the change is exactly where a new defect enters (a
+parallel-marker second source of truth the prior pass never saw), and the
+author never self-audits the rev (player ≠ referee).
+
+**But only a scope change triggers it.** The distinction is what stops this
+rule from reinstating the loop §Gate loop policy just banned:
+
+| the body changed because… | re-audit? |
+|---|---|
+| the founder ruled something that changes **what is being built** | **yes** — a new judgment is owed, because the subject is new |
+| a mid-flow divergence rev (§Mid-flow divergence) | **yes** — same reason |
+| a finalize-round expansion adding scope | **yes** |
+| **you applied a fix this gate itself raised** | **no** — that is what ②'s single verification round is for, and it is capped there |
+
+**A gate re-judging its own fix is the loop.** ② produces a *new* judgment on
+every run, so feeding it the fix it asked for manufactures the next round's
+findings — the cost is superlinear in the number of findings and none of it
+measures the plan. The verification round exists precisely to disposition
+those fixes once; running the full gate instead is not extra rigour, it is the
+same gate spending an Opus round to re-derive what it already said.
+
+When it does fire: the ① cell to clean (`pm-plan-reviewer` loop-to-green cap 3,
+or `plan_lint.sh` exit 0), then the Adversarial tier one pass + one
+verification, per §Gate loop policy. Audit first, then implement, and the audit
+runs *before* the user re-approves the delta, not after.
+
+**And sweep the whole body when you rev** — that is check `I1` in
+§Plan integrity, which a gate grades rather than leaving to the author's
+diligence.
 
 **The re-run is a conservative cache, not a cold replay — never a launcher
 skip.** Each re-spawned gate gets its prior verdict + the diff since it; if the

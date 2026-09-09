@@ -339,11 +339,10 @@ Authoring main sequence (fixed order, non-overlapping):
   heuristic sweep — a spec can pass the designer *rules* of M3 tokens,
   breakpoints and four states and still confuse a first-time user) and
   **deliverability** (can the project's UI stack actually build these layouts,
-  motions and interactions — the downstream engineer's lens, which used to be a
-  second `feasibility-reviewer` spawn on the same artefact). They merged because
-  the defect that matters most sits between them: a control the user cannot reach
-  *because* the stack cannot render it there is one finding, and split across two
-  reviewers each filed half. A `critical` from either lens **blocks until
+  motions and interactions — the downstream engineer's lens). One gate walks
+  both because the defect that matters most sits between them: a control the
+  user cannot reach *because* the stack cannot render it there is one finding,
+  not half a finding in each of two reports. A `critical` from either lens **blocks until
   resolved** — an objective usability defect (a dead-end state, an unreachable
   primary control, an unconfirmed destructive action, a silent action), or
   infeasible-as-drafted with a cited source; a `warning` (a friction trade-off,
@@ -461,8 +460,7 @@ re-author through the right role (per the three approval principles): product
 scope → re-run `pm`; UI → re-run `designer`; engineering decision →
 re-run `engineer` (its Phase 11 handles divergence). **Re-run the matrix gates on
 the rev'd plan *before* implementation resumes** — per §Gate loop policy
-(§Re-audit every plan change — a divergence rev is a plan change like any other;
-audit-first). Re-request user approval for the
+(`plan/gates.md` §Re-audit a SCOPE change — a divergence rev is one). Re-request user approval for the
 delta, and re-upload to Notion (Iron Law 6). Read
 `${CLAUDE_PLUGIN_ROOT}/skills/plan/divergence.md` for the exact procedure.
 

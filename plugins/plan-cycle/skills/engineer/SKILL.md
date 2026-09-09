@@ -946,10 +946,14 @@ out per the review-loop reference.
 `engineer-plan-reviewer`（維度 + 三條橫切檢查），機械比對歸 Phase 8 的 `plan_lint.sh`。
 留在這一格的是唯一無法外包的紀律：**重審的時機**。
 
-任何對 plan body 的更動——co-creation 決議、founder 回饋、Phase 11 divergence rev、後續
-revision——都要**先重跑 Phase 8 的 `plan_lint.sh`、再把 `engineer-plan-reviewer` 對改動處
-＋其波及範圍重跑一次，才往下（task-list approval / 實作 / resume）**。改了沒重審＝未通過，
-先前的 green 不算數——改動處正是新缺陷進來的地方，而上游那一輪從來沒看過它。
+**觸發條件是 `plan/gates.md` §Re-audit a SCOPE change 的單一事實，不在這裡複述**——
+關鍵是它只由**範圍**改動觸發（founder 改了要建什麼、divergence rev），**不由你套用
+gate 自己提的 fix 觸發**。後者是 ② 那一次 verification round 的事，而且在那裡就封頂了；
+拿整道 gate 去重判它自己的 fix，就是 §Gate loop policy 剛禁掉的那個迴圈。
+
+本階段落在 engineer 身上的是**順序**：先 `plan_lint.sh`（Phase 8），再把
+`engineer-plan-reviewer` 對改動處＋其波及範圍重跑，才往下（task-list approval / 實作 /
+resume）。改了沒重審＝未通過，先前的 green 不算數。
 （範例：一次 rev 把兩個語意不同的 user action 折成同一個 terminal value，悄悄觸發原本被
 其中一 arm 擋掉的導航——這正是 `engineer-plan-reviewer` 的 PM-scope 橫切檢查在抓的東西。）
 

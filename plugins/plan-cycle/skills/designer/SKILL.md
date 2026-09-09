@@ -576,9 +576,13 @@ design-lint                      # sweeps every *.design.dart under the tree
 **每一條 FAIL 當場修，禁 deferred & dismiss**，全綠才往下。ADVISORY 逐條過目：
 semantics label 的有無它查得動，**唸出來對不對只有 `design-plan-reviewer` 對著 render 判得了**。
 
-**每次修訂都重跑（audit-first）**：任何對 widget 或 spec body 的更動（co-creation 決議、
-founder 回饋、後續 revision、mid-flow 補 state / surface）都要**先重跑 `design-lint`、
-必要時重新 render，才往下**。改了沒重跑＝未通過，先前的綠不算數。
+**每次修訂都重跑 `design-lint`**——**這一格是腳本，所以「每次更動」在這裡是對的**：
+腳本天生跑到 exit 0，重跑不會產生新意見。任何對 widget 或 spec body 的更動（co-creation
+決議、founder 回饋、後續 revision、mid-flow 補 state / surface）都要先重跑 `design-lint`、
+必要時重新 render，才往下。改了沒重跑＝未通過，先前的綠不算數。
+
+判斷那一半（`design-plan-reviewer`）不一樣，它照 `plan/gates.md`
+§Re-audit a SCOPE change：只由範圍改動觸發，不由你套用它自己提的 fix 觸發。
 
 > 本 role **不自審**、也**不在 spec body 留 audit 區塊** —— 判斷那一半是 `design-plan-reviewer`
 > 的，player ≠ referee。

@@ -484,10 +484,11 @@ plan 期沒有另一道 security / privacy gate，那兩個 reviewer 讀的是 d
   末行 `gate: <V> violations · <P> passed · <N> na` —— 三個數字對不上清單長度，就是它沒走完。
 - 審查中若浮現現有 rules 未涵蓋的新 learning：依 `rules/CONVENTIONS.md` 的 learning
   更新法處理（先查相似 → 合併；無則加 sub-check 或新增母規則 `P<N+1>`；過時可刪）。
-- **每次修訂都重審（audit-first）**：任何對 plan body 的更動（co-creation 決議、founder
-  回饋、後續 memo / revision）都要**先重跑至全數 passed，才往下（save / 下一階段 / 實作）**。
-  改了沒重審＝未通過，先前的 green 不算數 —— 改動處正是新違規進來的地方，而它上一次被審時
-  往往還不存在。（實測：兩次 P4.2 違規都出現在 founder 的裁決把一整個新機制納入範圍**之後**。）
+- **修訂後重審——觸發條件見 `plan/gates.md` §Re-audit a SCOPE change**（只由**範圍**
+  改動觸發，不由你套用 gate 自己提的 fix 觸發）。落在 PM 身上的是這一格會**重跑至全數
+  passed 才往下**（save / 下一階段 / 實作）：改動處正是新違規進來的地方，而它上一次被審時
+  往往還不存在。（實測：兩次 P4.2 違規都出現在 founder 的裁決把一整個新機制納入範圍**之後**
+  ——那是範圍改動，正是會觸發的那一類。）
 
 > 機制：`/plan` launcher 在 PM phase 撰寫後 spawn `pm-plan-reviewer`。
 > 本 role **不自審**、也**不在 plan body 留 `## Memory Audit` 區塊** —— audit 是一道 gate，

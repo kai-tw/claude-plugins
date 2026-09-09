@@ -44,7 +44,7 @@ directly. A round has five steps, and **the founder appears exactly once**:
 5. **Finalize + confirm.** Fold everything in, write the final plan, **invoke the
    `archivist` skill to upload it** (Iron Law 6), and **confirm the upload
    landed** before advancing — a plan not in Notion does not exist. Re-run the
-   gates per §Re-audit every plan change (the audit is per-change, not
+   gates per `plan/gates.md` §Re-audit a SCOPE change (per scope change, not
    per-draft).
 
 Never fabricate a user answer inside a sub-agent. If a `learning` surfaces that
@@ -107,7 +107,7 @@ accumulates in-thread and reaches Notion only at the existing upload milestones
   restructured) → a **full-body replace** via `bodyFile` (`update` treats the
   file as the source of truth). Re-emitting the whole body is the *point* here —
   it is what forces the stale occurrences elsewhere in the body to be swept
-  (§Re-audit every plan change), which an append can never do.
+  (`plan/gates.md` §Re-audit a SCOPE change), which an append can never do.
 
 A body kept honest stays small, so full-replace stays bounded.
 

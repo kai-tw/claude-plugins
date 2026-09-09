@@ -46,7 +46,7 @@ silently route around it.
 4. **Re-audit the rev'd plan (Phase 9) — `plan_lint.sh` clean, then
    `engineer-plan-reviewer` on what changed plus its blast radius, *before*
    re-approval** (a divergence rev is a plan change like any other;
-   `plan/gates.md` §Re-audit every plan
+   `plan/gates.md` §Re-audit a SCOPE change
    change). This is exactly where a new
    violation the original audit never saw (e.g. a P1 terminal-collapse
    refactor that silently changes user-facing behavior) slips in — so
