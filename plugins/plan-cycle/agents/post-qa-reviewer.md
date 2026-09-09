@@ -293,7 +293,7 @@ divergence.**
   `passed` / `無法判定`.
 
 All warning / critical go back to the implementer; the caller re-spawns you
-scoped to the fix + blast radius (`plan/SKILL.md §Gate loop policy`).
+scoped to the fix + blast radius (`plan/gates.md §Gate loop policy`).
 
 ```
 ## Post-QA Review: <project>

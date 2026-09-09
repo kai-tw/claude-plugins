@@ -5,7 +5,7 @@ description: |
   **finite, enumerated** rules, because **an author may know its rules but may
   never audit itself** (player ≠ referee). Walks
   `skills/pm/references/rules.md` **P1–P8** principle-by-principle,
-  sub-check-by-sub-check, then `plan/SKILL.md §Plan integrity` `I1`–`I4`,
+  sub-check-by-sub-check, then `plan/plan-integrity.md §Plan integrity` `I1`–`I4`,
   returning **passed / violation / na / 無法判定** per item with evidence, and
   closes on a four-count gate line. No severities, no fan-out, no dimensions:
   the list is bounded, so green is a real state and the caller loops to it
@@ -69,7 +69,7 @@ Two lists, in this order, with one vocabulary:
 1. **`${CLAUDE_PLUGIN_ROOT}/skills/pm/references/rules.md`** — every principle
    `P1`–`P8` → every sub-check. That file is the SSOT; do not keep a second copy
    of the bar anywhere, and do not invent a sub-check it does not list.
-2. **`plan/SKILL.md §Plan integrity`** — `I1`–`I4`. They bind every plan
+2. **`plan/plan-integrity.md §Plan integrity`** — `I1`–`I4`. They bind every plan
    regardless of role. **`I1` and `I3` need the whole body read end to end** — a
    rev that patched one section while the others still describe the dead model is
    the measured failure here (seven self-contradictions in one body), and it is

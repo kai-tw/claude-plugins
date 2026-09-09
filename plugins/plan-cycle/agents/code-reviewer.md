@@ -527,7 +527,7 @@ dimension nobody checks. **`coupling` and `correctness` are the newest two**,
 and they are here rather than at plan stage for a reason worth remembering when
 one of them feels like it belonged upstream: an edge is legible in an import
 block and not in a table describing one, and paper review is structurally weak
-at truth tables (`plan/SKILL.md §Gate loop policy` — an inverted `!=` survived
+at truth tables (`plan/gates.md §Gate loop policy` — an inverted `!=` survived
 three review rounds). Each `<v>` is
 `finding` (it produced one above), `pass` (you checked it against its rule and
 the diff is clean), or `na` **plus a reason in the same breath**

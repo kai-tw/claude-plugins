@@ -107,7 +107,7 @@ from a clean result.
 >   open question and get the approval the three principles require. Write the
 >   living draft with everything already settled; never bank a unilateral pick or
 >   fabricate an answer.
-> - **Decisions ask; problems search-first** (`/plan` §Two interaction rules —
+> - **Decisions ask; problems search-first** (`plan/co-creation.md` §Two interaction rules —
 >   decisions ask, problems search-first). On any genuine decision, ask via
 >   `ask`(§Working in a team) the moment it surfaces, with the option you'd pick **first**
 >   and labeled `(Recommended)` — never bank a unilateral pick. **When the user
@@ -280,7 +280,7 @@ that into one plan or one task.
 
 - **`ask`(§Working in a team) once**: propose the split — name each slice
   with its own problem/user/outcome, and the order between them — your
-  recommendation first (`/plan` §Two interaction rules).
+  recommendation first (`plan/co-creation.md` §Two interaction rules).
 - Author the **Roadmap** product plan (Phase 3) on the task `/plan` already
   created — Now/Next/Later, each item one slice.
 - **Invoke the `archivist` skill once per slice** to open a new TaskList
@@ -479,7 +479,7 @@ plan 期沒有另一道 security / privacy gate，那兩個 reviewer 讀的是 d
 但審的人不能是你。
 
 - **任何違規當場修正、禁止 deferred & dismiss**，迴圈至全數 passed 才往下，**上限 3 輪**。
-  3 輪仍未全 passed → 停止迴圈，依 `plan/SKILL.md §Gate loop policy` 把未解項目白話交回 founder。
+  3 輪仍未全 passed → 停止迴圈，依 `plan/gates.md §Gate loop policy` 把未解項目白話交回 founder。
 - 它回報**每一條** sub-check（`P#.k` ＋ `I1`–`I4`）的 passed / violation / na 與證據，
   末行 `gate: <V> violations · <P> passed · <N> na` —— 三個數字對不上清單長度，就是它沒走完。
 - 審查中若浮現現有 rules 未涵蓋的新 learning：依 `rules/CONVENTIONS.md` 的 learning

@@ -199,7 +199,7 @@ the criticals just have to be resolved before the re-spawn.
 
 After Step 3's fixes land, re-spawn `engineer-plan-reviewer` **once**, as a
 verification of round 1 — not a fresh review. Re-running a judgment gate
-produces a new judgment (`plan/SKILL.md §Gate loop policy`): a dimension
+produces a new judgment (`plan/gates.md §Gate loop policy`): a dimension
 re-derived from scratch always finds one more thing to say, and
 a plan reviewed that way never closes, it just grows new findings every
 fix. The brief therefore carries, in addition to Step 1's elements:

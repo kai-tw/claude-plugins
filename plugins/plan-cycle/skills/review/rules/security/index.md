@@ -8,7 +8,7 @@
 計畫沒有這些東西，它寫的是對 sink 的**宣稱**，而 diff **就是** sink。
 
 `critical` 擋到解決為止；`warning` 不觸發下一輪，套用 fix 或記一行 accepted debt
-（`plan/SKILL.md §Gate loop policy` —— 這道 gate 在 ② 層，一次 + 一次驗證，禁 loop-to-green）。
+（`plan/gates.md §Gate loop policy` —— 這道 gate 在 ② 層，一次 + 一次驗證，禁 loop-to-green）。
 
 ## 這份是基線，不是全部 —— 專案要疊加自己的
 

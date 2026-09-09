@@ -40,7 +40,7 @@ badge-polish task the founder said 「metadata syncing 不應該隱形」; the o
 framed an `AskUserQuestion` with 「全組 badge polish（建議）」 as the recommended
 option, the founder picked it, then corrected — 「我只是想換 metadata syncing 的
 icon 樣式」. The `(Recommended)`-first convention
-(`${CLAUDE_PLUGIN_ROOT}/skills/plan/SKILL.md §Two interaction rules`, the `(Recommended)`
+(`${CLAUDE_PLUGIN_ROOT}/skills/plan/co-creation.md §Two interaction rules`, the `(Recommended)`
 label) actively pulls toward the big build here — this is its **counter-rule**:
 on a detail adjustment the narrow option is the default pick. HOW: proceed on the
 one item; surface the broader option only as a **non-recommended** aside ("the

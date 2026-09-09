@@ -242,7 +242,7 @@ For **security / privacy / ux**, a `critical` blocks: hand it back to the
 implementer / authoring role (ux → the designer role), then re-spawn the reviewer
 **once, scoped to the fix + its blast radius, with the prior findings in the brief**
 so it verifies them rather than re-deriving the whole judgment
-(`plan/SKILL.md §Gate loop policy`). A `critical` still standing after that, or a
+(`plan/gates.md §Gate loop policy`). A `critical` still standing after that, or a
 `warning` you don't FIX, goes to the user — `critical` is never DISMISSed without a
 landed class-eliminating rationale (for ux, a written design rationale).
 

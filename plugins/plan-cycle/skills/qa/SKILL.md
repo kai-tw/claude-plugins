@@ -214,7 +214,7 @@ deciding that the *spec* is the thing to change is `post-qa-reviewer`'s call
 `flutter test`, and never backgrounded-and-polled either
 (`.claude/agents/qa.md` §Test-run discipline). The full suite happens exactly
 twice per PR, on the **main thread**, before the founder merges
-(`plan/SKILL.md §After code`); this loop is scoped.
+(`plan/gates.md §After code`); this loop is scoped.
 
 ```bash
 plan-test test/features/<feature>/                # the normal scope

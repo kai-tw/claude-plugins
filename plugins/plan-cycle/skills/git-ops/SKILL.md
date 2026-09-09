@@ -19,7 +19,7 @@ description: >-
   NOT for: the commit-gate DISCIPLINE, i.e. which legs run before a commit →
   the `commit-gate` skill (cited in the body, never restated)
   · worktree CREATION mechanics and the /plan cycle →
-  `plan/SKILL.md §Worktree isolation` · "which worktree am I in" thread state →
+  `plan/worktree.md §Worktree isolation` · "which worktree am I in" thread state →
   /session-journal · Notion flips or archiving → /archivist · release tagging or
   store upload → /release, /ship-beta · reviewing the code itself → /review
 ---
@@ -159,7 +159,7 @@ review/audit) during git-adjacent work:
 
 Worktree **creation** mechanics (precondition ff, base capture, `EnterWorktree`,
 `tool/worktree-init.sh`, reading the branch name) are owned by
-`plan/SKILL.md §Worktree isolation` — follow that, don't duplicate it. That
+`plan/worktree.md §Worktree isolation` — follow that, don't duplicate it. That
 section's Step 1 already **summarizes** this base-ahead preflight (the
 `git rev-list --count origin/main..main` check, incl. the PR #59 incident) and
 defers **here** for the full reconcile protocol — this skill is its SSOT.
@@ -390,7 +390,7 @@ Diff against that tag to see what a change adds over the release; something on
   covers the mechanical traps around those operations.
 - **Not worktree creation / the /plan cycle.** Precondition, base capture,
   `EnterWorktree`, `tool/worktree-init.sh`, the full teardown Step 6 →
-  `plan/SKILL.md §Worktree isolation`. This skill adds the base-ahead preflight
+  `plan/worktree.md §Worktree isolation`. This skill adds the base-ahead preflight
   (§4) and the content-diff verify (§5) that section leaves implicit.
 - **Not thread/where-was-I state.** "Which worktree am I in, what PR, what's in
   flight" → the `session-journal` skill (its journal is the continuity surface).

@@ -8,7 +8,7 @@
 「收了之後有沒有收得安全」才是這裡。
 
 `critical` 擋到解決為止；`warning` 不觸發下一輪，套用 fix 或記一行 accepted debt
-（`plan/SKILL.md §Gate loop policy` —— 這道 gate 在 ② 層，一次 + 一次驗證，禁 loop-to-green）。
+（`plan/gates.md §Gate loop policy` —— 這道 gate 在 ② 層，一次 + 一次驗證，禁 loop-to-green）。
 本檔即完整基線（母規則 + sub-check + Example 同檔），沒有另外的細節檔；維護慣例 + 三級判定見 `CONVENTIONS.md`。
 
 每個 finding 錨定 collection-site `file:line` + 明列欄位（無「user context」籠統詞）。

@@ -113,7 +113,7 @@ from a clean result.
 >   surface it to the user as you reach it; seed TaskCreate only after the user
 >   approves the enumerated task list. Never bank a unilateral pick, fabricate an
 >   answer, or assume approval.
-> - **Decisions ask; problems search-first** (`/plan` §Two interaction rules —
+> - **Decisions ask; problems search-first** (`plan/co-creation.md` §Two interaction rules —
 >   decisions ask, problems search-first). On any load-bearing engineering
 >   decision / fork / trade-off, `ask`(§Working in a team) the moment it surfaces,
 >   with the option you'd pick **first** and labeled `(Recommended)` — never bank
@@ -806,62 +806,17 @@ page-body checklist (seeded at Phase 10's approval gate) — so the task reads
 "Phase A ✓ · Phase B in progress". Keep this at **phase granularity** (per
 commit / slice), not per micro-edit.
 
-### Per-phase gate for Phased plans
+### Per-phase gate — the implement block owns it
 
-A Phased plan's whole point is atomic, independently-shippable phases —
-so the safety net (tests) and the gate that catches bugs (`/review`)
-belong at **phase** granularity, not saved for the end. Each phase runs
-**stubs → tests → implementation → gates**, in that order:
+**Read `${CLAUDE_PLUGIN_ROOT}/skills/plan/blocks/implement.md` before writing
+code.** It owns the four steps and their order — stubs → tests → freeze →
+implement → gates — the single-slice collapse, the `/qa` carve-out, and the
+divergence route. Nothing about them is restated here.
 
-1. **Stubs.** Emit that phase's public surface from the approved §Classes as
-   compilable stubs — `throw UnimplementedError()`. This is mechanical, and
-   `plan-lint <plan> --diff` already checks the reverse direction (every added
-   file/class maps to a §Classes NEW row). A stub is not a guess: the interface
-   was approved at Phase 10.
-2. **Tests, before any implementation.** The contract-derived tests for that
-   phase's surface are authored here, and the `/qa` task authors the
-   spec-derived ones (`testing.md` Rule 1). The suite is now RED by
-   construction, and that is the point — the tests state the requirement while
-   nothing yet satisfies it, so they cannot be shaped by an implementation that
-   does not exist. Commit-gate leg 2 accepts this stage through
-   `plan-test-first` (`commit-gate` leg 2), which passes only when every
-   failure is an `UnimplementedError`.
-3. **Freeze, then implement.** Run `plan-cycle tests-frozen` — from here a test
-   edit needs `// test-change: <why the TEST was wrong>` at the site (Gate 5).
-   Then implement until green. **Green is reachable from both sides and the test
-   side is cheaper**; the freeze is what keeps the loop honest.
-4. **Gates.** Run Phase 12's Steps 0–5.5 — exception-log check, `/review`,
-   verdict loop, the four-leg commit gate — **scoped to that phase's diff**,
-   before starting the next phase.
-
-**Why stubs rather than tests against nothing.** Dart is statically typed, so a
-test naming an API that does not exist is a *compile* error, and a compile error
-takes the whole file down — including unrelated tests — and is indistinguishable
-from a real break. A stub turns "not built yet" into a clean, attributable red.
-
-Phase 12's Step 6 (close-out: Status flip, Notion revision entry) fires
-**once**, after the final phase's own Step 5.5 passes — it's administrative
-wrap-up, not a second review pass. A **Single-slice plan has one phase**, so the
-four steps above run once over the whole slice rather than per phase; the
-ordering is identical, and only the gates collapse to the single end-of-cycle
-Phase 12.
-
-**`/qa` carve-out — skip only when a phase adds no new observable
-behavior.** `/review` still runs every phase unconditionally — a
-schema / DI / preference change can violate a rule with zero behavior
-change. `/qa` is different: a pure-groundwork phase (Phase 7's own
-"Phase A — schema / preference / DI groundwork, no UI delta" example)
-often has nothing new to observe yet, so spawning a full `/qa` pass for
-it pays a fresh sub-agent's context-load cost for close to zero test
-output. Decide this at Phase 7 authoring time, per phase, not by
-guessing mid-implementation: a phase with no new observable behavior
-skips its `/qa` task and states in the task list which later phase
-absorbs its tests (the first phase that actually exercises the new
-shape) — its behavior isn't tested in isolation until something
-observes it. A phase that changes existing observable behavior (even
-subtly) keeps its `/qa` task; when unsure, keep it — a skipped `/qa`
-pass that turns out to be wrong is a silent gap, not a cheap mistake to
-undo.
+What Phase 7 still decides, at authoring time and per phase, is the one input
+that block cannot infer: **which phases have no new observable behaviour**, so
+they skip their `/qa` task and name the later phase that absorbs their tests.
+Guessing that mid-implementation is how a skipped pass becomes a silent gap.
 
 ## Phase 8 — Audit self-check
 

@@ -18,7 +18,7 @@ design spec 上顯形，含它橫切的 PM-scope adherence 檢查）；P1.1 的 
 
 另有一組**跨 role 的計畫完整性規則**——`I1`（rev 改內文、不疊層）、`I3`（重點式、每行都承載
 裁定或事實，答不出來就刪）、`I4`（決策註記寫在被裁定處，不另闢 section）與 `I2`（下游引用上游、不重推、
-不把上游的例子當裁定）——定義在 `plan/SKILL.md §Plan integrity`，起草時一併適用。
+不把上游的例子當裁定）——定義在 `plan/plan-integrity.md §Plan integrity`，起草時一併適用。
 
 ## P1 — 依據可驗證、不捏造
 

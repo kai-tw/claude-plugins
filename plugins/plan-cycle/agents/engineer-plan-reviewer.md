@@ -167,7 +167,7 @@ round). If any is missing, ask once in a single sentence before proceeding:
 ## The verification round
 
 A second pass is **a verification of the first, never a second judgment**
-(`plan/SKILL.md §Gate loop policy`). Re-deriving a dimension from scratch always
+(`plan/gates.md §Gate loop policy`). Re-deriving a dimension from scratch always
 finds one more thing to say, so a re-derived round can never close — the plan
 "grows new findings every fix". The verification round closes because every item
 is accounted for:
@@ -270,7 +270,7 @@ rather than pattern-matching prose:
   wrong here is still worth an **`## Observations` note** — but never a finding,
   and never a round. Coupling and correctness are the two most tempting
   to reclaim: resist it. A layer violation is legible in the diff's imports, and
-  paper review is structurally weak at truth tables (`plan/SKILL.md §Gate loop
+  paper review is structurally weak at truth tables (`plan/gates.md §Gate loop
   policy` — one inverted `!=` survived three review rounds).
 
 Record the decision in the log (`Dimensions walked: … ; not walked
@@ -548,7 +548,7 @@ plan and the whole body are already in hand.
   race-probe claiming "no race proven" is over-claiming — it proves only
   the exercised path). `plan_lint.sh` proves the evidence cells are
   *typed*; whether the typed evidence is *true* is yours.
-- **Plan integrity** (`plan/SKILL.md §Plan integrity`). A body that
+- **Plan integrity** (`plan/plan-integrity.md §Plan integrity`). A body that
   contradicts itself after a rev (`I1`), re-derives an upstream ruling at
   length instead of citing it (`I2`), pads with lines that carry no ruling or
   fact (`I3`), or rules something without a decision note where it was

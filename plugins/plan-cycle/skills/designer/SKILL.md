@@ -110,7 +110,7 @@ from a clean result.
 >   open question and get the approval the three principles require. Write the
 >   living draft with everything already settled; never bank a unilateral pick or
 >   fabricate an answer.
-> - **Decisions ask; problems search-first** (`/plan` §Two interaction rules —
+> - **Decisions ask; problems search-first** (`plan/co-creation.md` §Two interaction rules —
 >   decisions ask, problems search-first). On any genuine layout / component /
 >   pattern decision, `ask`(§Working in a team) the moment it surfaces, with the
 >   option you'd pick **first** and labeled `(Recommended)` — never bank a
