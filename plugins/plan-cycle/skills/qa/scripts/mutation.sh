@@ -659,9 +659,14 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
     printf '%s\n' "$timed" | sed 's|^  • |- `|; s|  \([a-z_]*\) — |` — `\1` — |'
     printf '\n</details>\n'
   fi
-  printf '\nRaw engine report: `%s`\n' "$REPORT_KEEP"
 } > "$REPORT"
+# The raw-report path goes to STDOUT, never into $REPORT. `plan-qa-report` posts
+# $REPORT verbatim as a PR comment, and a local TMPDIR path is a pointer to
+# nothing for everyone who reads it there — wrong machine, and cleared on reboot
+# even on this one. Same reason `archivist/references/notion-kb.md §No repo
+# pointers` keeps navigation out of the KB: the artefact has to stand alone.
 echo "plan-mutation: report section — $REPORT"
+echo "plan-mutation: raw engine report — $REPORT_KEEP"
 
 # LOW-SIGNAL BLOCKS. It always meant "not measured", and qa/SKILL.md always said
 # such a row is not a pass — but the script exited 0 on it, so the discipline

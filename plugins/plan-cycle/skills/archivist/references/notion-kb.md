@@ -55,6 +55,13 @@ A project needs only the databases it uses. Any absent from the root are dropped
 from the registry, so `unknown db "x". Valid: …` lists exactly what that project
 has — an accurate error rather than a promise the workspace cannot keep.
 
+**A workspace may also hold a `Design Plan` database that is not in this table.**
+It is read-only history: the design phase stopped producing rows, and the ones
+there record what shipped for features built before that. Nothing writes to it —
+the builder does not know the key, and `TaskList`'s `Design Plans` back-reference
+is how those rows are still reached. Read it when a pre-existing feature's design
+is the question; never add a row, and do not delete it to tidy the sidebar.
+
 **Which vocabularies are yours.** `Status` and `Stage` are the plan cycle's own
 contract and stay fixed in the builder's registry — a typo fails locally, before
 any network call. `Area` / `Feature Area` / `Feature` mirror each project's
