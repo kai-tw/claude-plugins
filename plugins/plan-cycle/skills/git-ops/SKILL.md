@@ -4,12 +4,15 @@ description: >-
   Git lifecycle guardrails for THIS repo — the push / merge / worktree / codegen
   traps where the obvious idiom silently does the wrong thing. Body covers:
   which remote (origin canonical, a gitlab mirror lurks), verifying a
-  squash-merged PR really landed (ancestry checks lie here), the worktree base
-  preflight, regenerating gitignored codegen after a merge, sub-agent dispatch
-  hygiene, CI runs on `main` push ONLY, and `rm` denied → `trash`.
+  squash-merged PR really landed (ancestry checks lie here), where work lives
+  (worktree locally, branch in the cloud — never switch the main tree's branch),
+  the worktree base preflight, regenerating gitignored codegen after a merge,
+  sub-agent dispatch hygiene, the test suite as a POST-merge backstop (only
+  coverage runs on PRs), and `rm` denied → `trash`.
   TRIGGER: push my changes · push to origin · which remote do I push · is this
   branch merged · did the PR merge · verify the merge · tear down the worktree ·
-  clean up the worktree · safe to delete the branch · build fails after merge ·
+  clean up the worktree · safe to delete the branch · can I make a branch ·
+  should I use a worktree here · build fails after merge ·
   undefined getter after merge · regen after merge · how do I stage these ·
   git add is blocked · commit these files · delete this file · spawn a sub-agent
   to write code · will CI catch this · 推到 origin · 推上去 · 推到哪個 remote ·
@@ -104,7 +107,7 @@ git commit -- <file> [<file>...]     # or stage first, then commit
 A project may define an escape-hatch env var for broad staging; it is almost
 never right — reach for explicit pathspecs first. Separately, force-pushing or
 deleting `main` / `master` is refused by `guardrails`' `push-gate` (force onto
-any other branch is fine); §4 explains why `reset --hard` is banned even to
+any other branch is fine); §Worktree base preflight explains why `reset --hard` is banned even to
 "fix" a diverged local `main`.
 
 ---
@@ -155,7 +158,28 @@ review/audit) during git-adjacent work:
 
 ---
 
-## 4. Worktree base preflight — stop foreign WIP riding into your PR
+## 4. Where your work lives — worktree locally, branch in the cloud
+
+**The two are opposite, and picking the wrong one breaks something.**
+
+**Local: NEVER switch the main tree's branch.** `git checkout -b` / `git switch
+-c` in `~/GitHub/<project>` is banned. That checkout is shared — other sessions
+read it, and moving its HEAD moves the ground under every one of them. Work goes
+in a worktree (`plan/worktree.md §Worktree isolation`), which is what the
+`.claude/worktrees/wt+<base>+<area>+<feature>` naming is already telling you.
+Measured: a session branched the main tree of a consumer repo to open a routine
+PR and had to be told it had disrupted other sessions' work.
+
+**Cloud: use a branch, not a worktree.** The container holds one checkout that
+nobody else is in, so the isolation a worktree buys is already there — and
+`.worktreeinclude` copying gitignored codegen is pure cost when nothing is being
+protected from anything. Branch, push, open the PR.
+
+The question is not "which is cleaner"; it is **who else is standing in this
+checkout**. Locally the answer is "other sessions". In a cloud container it is
+"nobody".
+
+## 4a. Worktree base preflight — stop foreign WIP riding into your PR
 
 Worktree **creation** mechanics (precondition ff, base capture, `EnterWorktree`,
 `tool/worktree-init.sh`, reading the branch name) are owned by
@@ -274,7 +298,7 @@ that step's `state,mergeCommit` spot-check does not spell out; run it first.
   tree — a spurious duplicate the l10n PostToolUse hook wrote, a distinct blob
   from the worktree's committed ARB — which blocks the ff checkout and aborts
   `git merge --ff-only`. This is a different cause from a diverged local `main`
-  (§4). Confirm the content is already on `origin/<base>` (it merged), then
+  (§Worktree base preflight). Confirm the content is already on `origin/<base>` (it merged), then
   `git restore lib/i18n/app_*.arb` and re-run the ff; the authoritative copy is on
   origin, the main-tree copy is a hook artifact — don't hand-keep it.
 
@@ -331,20 +355,22 @@ an existing tree**, which copies nothing.)
 
 ---
 
-## 7. CI reality: `main` push only — PRs get NO automatic CI
+## 7. CI reality: the test suite is a POST-merge backstop
 
 `.github/workflows/test.yml` triggers on **`push` to `main` only** — **not**
-`pull_request` (a deliberate CI-minutes choice; coverage is split into a manual
-`.github/workflows/coverage.yml`, `workflow_dispatch`). `main` is the single
-long-lived branch — there is no `dev`. So a **PR into `main` runs no CI at all**;
-`main`'s push CI fires only **after** the merge, as a post-merge backstop.
+`pull_request` (a deliberate CI-minutes choice). `main` is the single long-lived
+branch — there is no `dev` — so the suite fires only **after** the merge.
 
-The consequence: **the local gate stack is the only quality wall BEFORE a merge**
-— the project's linter, its test suite, and its own Stop hook (whatever
-formatter and build that hook enforces). If a plan or a
-sub-agent says "CI will catch it," that is **wrong pre-merge** — nothing gates the
-PR. Run the gates yourself before you push / merge (legs: the
-`commit-gate` skill).
+**One exception, and it is not general cover.** `coverage.yml` runs on
+`pull_request`: one `flutter test --coverage` feeding the per-line gate over the
+files that PR changed. It answers *did the changed lines run*, nothing else — a
+green Coverage check says nothing about lint, about the tests passing on a file
+this PR did not touch, or about anything the commit gate asks.
+
+So: **the local gate stack is still the only quality wall before a merge** — the
+project's linter, its test suite, and its own Stop hook. If a plan or a sub-agent
+says "CI will catch it," that is wrong for everything except coverage. Run the
+gates yourself before you push / merge (legs: the `commit-gate` skill).
 
 ---
 
@@ -391,7 +417,7 @@ Diff against that tag to see what a change adds over the release; something on
 - **Not worktree creation / the /plan cycle.** Precondition, base capture,
   `EnterWorktree`, `tool/worktree-init.sh`, the full teardown Step 6 →
   `plan/worktree.md §Worktree isolation`. This skill adds the base-ahead preflight
-  (§4) and the content-diff verify (§5) that section leaves implicit.
+  (§Worktree base preflight) and the content-diff verify (§Verify a squash-merge) that section leaves implicit.
 - **Not thread/where-was-I state.** "Which worktree am I in, what PR, what's in
   flight" → the `session-journal` skill (its journal is the continuity surface).
 - **Not Notion status / archiving.** Flipping a plan Stage, trashing a task row,
