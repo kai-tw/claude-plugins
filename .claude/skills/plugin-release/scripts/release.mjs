@@ -126,14 +126,19 @@ const known = existsSync(marketplacesPath)
   ? JSON.parse(readFileSync(marketplacesPath, 'utf8'))[marketplace.name]
   : null;
 const src = known?.source ?? {};
-const originUrl = run('git', ['remote', 'get-url', 'origin']);
-const originSlug = originUrl.replace(/^.*github\.com[/:]/, '').replace(/\.git$/, '');
+// The recorded shape differs per source kind — `{source:'git', url}` for a
+// clone, `{source:'github', repo}` for the shorthand, `{source:'directory',
+// path}` for a local tree. Compare on the slug, which all three can produce.
+const slug = (s) => String(s ?? '').replace(/^.*github\.com[/:]/, '').replace(/\.git$/, '');
+const originSlug = slug(run('git', ['remote', 'get-url', 'origin']));
 const servesThisTree =
-  (src.source === 'github' && src.repo === originSlug) ||
+  ((src.source === 'git' || src.source === 'github') &&
+    slug(src.url ?? src.repo) === originSlug) ||
   (src.source === 'directory' && !relative(root, resolve(src.path)).startsWith('..'));
 
 if (known && !servesThisTree) {
-  const where = src.source === 'directory' ? resolve(src.path) : `${src.source}:${src.repo ?? '?'}`;
+  const where =
+    src.source === 'directory' ? resolve(src.path) : `${src.source}:${src.url ?? src.repo ?? '?'}`;
   console.log(`  ⚠ "${marketplace.name}" installs from ${where}, not from this repo (${originSlug}).`);
   console.log(`    Nothing here can show ${next}, and there is nothing local to verify.`);
   console.log(`\n✔ ${plugin} ${next} pushed — NOT installed anywhere from this run.`);

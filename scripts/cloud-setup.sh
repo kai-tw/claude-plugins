@@ -118,12 +118,10 @@ bootstrap_projects() {
 #     project installed nothing when the cache was rebuilt from a session on the
 #     marketplace repo itself, and every NovelGlide session inherited that empty
 #     snapshot. So: every plugin the marketplace lists, whatever was cloned.
-#     The reverse trap remains, and the snapshot FOLLOWS THE REPOSITORY (a
-#     seed built by a session on the marketplace repo never reached NovelGlide):
-#     while this script runs, GitHub answers only for repositories attached to
-#     the session, so the consuming repo's rebuild must run in a session that
-#     has the marketplace repo attached as a second repository. Any other
-#     rebuild reports UNREACHABLE (below) with that fix spelled out.
+#     The snapshot still FOLLOWS THE REPOSITORY — a seed built by one repo's
+#     session does not reach another — but rebuilding is now unconditional:
+#     the marketplace is public, so any container can clone it with no
+#     credential and no second repository attached.
 #   * A project's own `extraKnownMarketplaces` + `enabledPlugins` installs
 #     NOTHING at session start. The CLI registers the marketplace and copies the
 #     plugins into cache, then refuses to load them ("not cached — run /plugin to
@@ -174,12 +172,11 @@ report() {
   log "!! recorded in $REPORT"
 }
 
-# Register the marketplace. A checkout the session cloned is the only path that
-# works in an Anthropic-hosted environment: while the setup script runs, GitHub
-# answers only for repositories attached to the session (documented under the
-# GitHub proxy's repository scope, and measured as a failed ls-remote), so this
-# private repo is reachable only when it is attached, which also clones it. The
-# github path stays for environments that do carry a credential.
+# Register the marketplace. The repo is public, so cloning it needs no
+# credential and no attachment — the github path below works from any container.
+# A checkout the session already cloned is still tried FIRST, and only for one
+# reason: a session working ON the marketplace repo should register the tree it
+# is editing, not the last published one.
 register_marketplace() {
   local mp dir
   while IFS= read -r mp; do
@@ -192,23 +189,17 @@ register_marketplace() {
   done < <(find "$WORKSPACE" -maxdepth 8 -path '*/.claude-plugin/marketplace.json' 2>/dev/null)
 
   # Probe before adding, because `marketplace add` failing and `marketplace add`
-  # having nothing to do look identical from here — and a 401 on a private repo
-  # is the exact failure this block exists to make visible.
+  # having nothing to do look identical from here.
   if ! git ls-remote "https://github.com/$MARKETPLACE_REPO" HEAD >/dev/null 2>&1; then
     report "\`https://github.com/$MARKETPLACE_REPO\` is UNREACHABLE from this container, so
 every \`@$MARKETPLACE_NAME\` plugin is absent — the plan cycle, its gates and
 every \`plan-*\` command included. Work without them and say so; do not
 improvise a substitute for a gate.
 
-Expected whenever the snapshot was rebuilt by a session that did not have
-\`$MARKETPLACE_REPO\` attached: while the setup script runs, GitHub is reachable
-only for the repositories attached to the session, so this private repo is
-reachable only as a local checkout. The snapshot follows the repository, so a
-rebuild from the marketplace repo's own session does not help here. To fix: edit
-the Setup script (any edit forces a rebuild), then start the next session on
-THIS repository with \`$MARKETPLACE_REPO\` added as a second repository
-(claude.ai/code?repositories=<this owner/repo>,$MARKETPLACE_REPO). That
-session's clone gets installed and seeded."
+The repo is PUBLIC, so this is not the expected privacy failure it used to be —
+an anonymous clone needs no credential and no attachment. Something else is
+wrong: no egress from this container, a proxy that blocks github.com, or the
+repo moved. Report what \`git ls-remote\` prints rather than guessing."
     return 1
   fi
 

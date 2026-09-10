@@ -2,11 +2,13 @@
 
 Kai's [Claude Code](https://claude.com/claude-code) plugins.
 
-**This marketplace is private.** Several plugins here carry process specific to
-how Kai works — the house rules and the incidents behind them, Notion KB
-conventions, review judgment, and a ledger of founder corrections. That is not
-shareable material, and keeping the marketplace private is what lets a plugin
-record an incident honestly instead of sanitising it.
+**Written for one person's workflow, published as-is.** Several plugins here
+carry process specific to how Kai works — the house rules and the incidents
+behind them, Notion KB conventions, review judgment, and a ledger of founder
+corrections. Nothing is sanitised for an audience: a rule that exists because
+something broke says so, with what broke. Read them as worked examples of
+mechanisms, not as a framework to adopt — most are worth forking and cutting
+down rather than installing whole.
 
 ## Usage
 
