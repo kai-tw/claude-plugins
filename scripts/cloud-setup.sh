@@ -93,7 +93,7 @@ bootstrap_projects() {
     log "bootstrapping ${proj#"$WORKSPACE"/}"
 
     # Submodules first: a JS side-build resolving imports out of one (foliate-js
-    # in NovelGlide's renderer/) fails with a wall of resolver noise otherwise.
+    # in a submodule) fails with a wall of resolver noise otherwise.
     ( cd "$proj" && git submodule update --init --recursive ) >/dev/null 2>&1 \
       || log "WARNING: submodule checkout failed in $proj"
 
@@ -116,7 +116,7 @@ bootstrap_projects() {
 #   * The snapshot is built by whichever repo's session first runs this script,
 #     then reused for every repo. Reading the plugin list from the cloned
 #     project installed nothing when the cache was rebuilt from a session on the
-#     marketplace repo itself, and every NovelGlide session inherited that empty
+#     marketplace repo itself, and every consuming repo's session inherited that empty
 #     snapshot. So: every plugin the marketplace lists, whatever was cloned.
 #     The snapshot still FOLLOWS THE REPOSITORY — a seed built by one repo's
 #     session does not reach another — but rebuilding is now unconditional:

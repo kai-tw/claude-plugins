@@ -89,7 +89,7 @@ ceiling 之後才完成的 late result。
 - **P4.1 UI 鎖定生命週期綁 user-perceived 事件** — Check: 此 critical section / loading /
   阻擋 UI 的解除點對應哪個 user-perceived 事件（OAuth 完成 / 寫檔完成 / 首次全量同步完成 /
   某 pipeline 全跑完）？未寫進 §scope / §outcome → 工程會綁最長 internal step。
-  Example: sign-in 鎖綁「首次全量同步」→ 18 本書帳號實測鎖 91.8 秒，應綁「OAuth + 偏好寫入」。
+  Example: sign-in 鎖綁「首次全量同步」→ 實測鎖住超過一分鐘，應綁「OAuth + 偏好寫入」。
 - **P4.2 ceiling ≠ result termination** — Check: loading ceiling 是「reader 停止等待」還是
   「work 結束」？work 可能在 ceiling 之後才完成（慢網路 / 慢 device）→ late result 怎麼
   抵達使用者（swap-in / 其他 channel），或**顯式 own「丟棄」**並確認可接受？

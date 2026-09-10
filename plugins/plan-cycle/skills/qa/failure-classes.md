@@ -113,7 +113,7 @@ race between two writes (§3: ordering). It's a state-**seeding**
 gap — the consumer never sees the value at all, because the
 event happened in the past.
 
-### Production-side rule (post-2026-05-10 — STRUCTURAL FIX)
+### Production-side rule (STRUCTURAL FIX)
 
 **Every observable seam that an external producer pushes through
 to consumer state holders / services must be `ValueStream<T>`-shaped
@@ -298,12 +298,13 @@ class FakeXxxObserveUseCase implements XxxObserveUseCase {
 
 ### Repository incidents
 
-Two 2026-05-10 incidents drove this class — `CloudSpaceTileCubit` (fix: dropped
-the auth subscription; the per-tile holder is mount-gated by `effectiveSignedIn`
-at the page level) and `CloudSyncSettingsCubit` (fix: the auth seam was rewritten
-to `ValueStream<bool>` per the structural rule above, retiring the eager-seed
-dance). The full dual-fix history lives in git + the decision log, not here — the
-test-relevant takeaway is the COLDOPEN-A pattern + mutation pin above.
+Two incidents on one day drove this class, and the two fixes differ: a per-tile
+holder dropped its auth subscription entirely (the page above it already
+mount-gates on signed-in state), while a settings holder kept its subscription
+and had the seam rewritten to `ValueStream<bool>` per the structural rule above,
+retiring the eager-seed dance. Which fix applies depends on whether the holder
+needs the value or only needs to exist. The test-relevant takeaway is the
+COLDOPEN-A pattern + mutation pin above.
 
 ## 8. DI bootstrap eagerly touches a live backend
 

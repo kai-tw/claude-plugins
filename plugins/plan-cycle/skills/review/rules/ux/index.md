@@ -60,8 +60,8 @@ passed / warning / critical、迴圈至全 passed。
   連線恢復的 reconcile 契約），不是永遠轉下去的 spinner。一頁多區域時**逐區域**寫死觀察哪個來源、
   以及來源不一致的 gap 窗口渲染什麼 —— 沒寫死，各區會挑最方便的源、真機上差 100ms–1s 就互相
   矛盾。說謊的等待視覺 → critical（使用者據此走錯下一步）。
-  Example: 開書時白畫面數秒無指示；離線點 Sign-in 先閃 loading 再彈錯；critical section 綁
-  「首次全量 sync」實測鎖 91.8 秒；cloud-only 封面在離線下無限 shimmer。
+  Example: 開啟內容時白畫面數秒無指示；離線點 Sign-in 先閃 loading 再彈錯；critical section 綁
+  「首次全量 sync」實測鎖住超過一分鐘；只存在雲端的縮圖在離線下無限 shimmer。
 - **P2.2 empty 有指引** — Check: empty 狀態解釋「為什麼空」＋ 指引「怎麼開始」，非只有空白 /
   一句「沒有資料」？空白無指引 → critical（first-run 迷路）。
   Example: 全新使用者開書櫃只見空白，不知道要去哪匯入第一本書。

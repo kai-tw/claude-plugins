@@ -140,9 +140,9 @@ accepted.
 WHY: both gates preferred a NEW operator method + lock extraction over reusing an
 existing `syncMetadata` that already no-ops — to save one probe the codebase
 already tolerates; the founder invoked minimal-mechanism and the minimal option
-came back *cleaner* on re-review. Separately, a plan added `Book.language`
-"projected from `BookMetadata.language`" — a second source of truth that drifted
-— and it **passed both gates** (they judge a field as well-formed, never ask if
+came back *cleaner* on re-review. Separately, a plan added a field described as
+"projected from" the same datum's existing home on another entity — a second
+source of truth that drifted — and it **passed both gates** (they judge a field as well-formed, never ask if
 it should exist). HOW: before accepting a gate-preferred abstraction, ask "is
 there a minimal option that reuses an existing method and deletes the whole
 sub-decision?"; for every new field/entity/marker, **grep for an existing

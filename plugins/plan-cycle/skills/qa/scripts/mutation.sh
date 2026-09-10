@@ -325,7 +325,7 @@ REPORT_KEEP="${TMPDIR:-/tmp}/plan-mutation-report.json"
 # real binary. This snapshot is the second belt: a run killed by SIGKILL, an OOM,
 # or a crash has no chance to clean up, and whichever mutant was live is then
 # sitting in the working tree. Measured on the predecessor: a harness timeout
-# left an argument-swap mutation in NovelGlide's `http_client_repository_impl`.
+# left an argument-swap mutation in a repository implementation.
 # That one did not compile, which is luck — most mutants do, and a valid-looking
 # one is exactly the edit that gets committed.
 restore_sources() {
@@ -497,8 +497,8 @@ fi
 
 # --- score, per file --------------------------------------------------------
 # Per-file, not aggregate: an aggregate lets a well-tested file carry a badly
-# tested one. Measured on NovelGlide's http_client — 100% and 67% averaged to
-# 68%, which names neither.
+# tested one. Measured on one HTTP client — 100% and 67%
+# averaged to 68%, which names neither.
 #
 # `total` already excludes invalid and timedOut, so the percentage is over
 # mutants that actually ran. Both counts are still REPORTED, because a file whose
@@ -516,7 +516,7 @@ rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MI
   # A timeout is not a slow kill and not a survivor — it is a candidate that was
   # never answered, exactly like an `invalid` one. `total` already excludes it,
   # so the SCORE is honest; what was not honest is the row, which read as a
-  # finished measurement. Measured in CherishCRM: 6 scored against 16 timed out
+  # finished measurement. Measured on a real suite: 6 scored against 16 timed out
   # printed as a plain `FAIL 0%`, with 16 of 22 candidates silently unasked.
   # The flag is not a ratio but the only question that matters: COULD the
   # unmeasured candidates change this verdict? Score them both ways — every
@@ -526,7 +526,7 @@ rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MI
   # mutants would have done, and the row is honest.
   #
   # This invents no constant, and it catches what a ratio misses. Measured on
-  # the CherishCRM file `google_session.dart`: 4 detected of 5, one timed out.
+  # one auth-session file: 4 detected of 5, one timed out.
   # Only
   # 17% unmeasured and the pool clears the floor, so both a ratio test and the
   # mutant floor wave it through as a plain `PASS 80%` — but 4/6 and 5/6 are
@@ -670,9 +670,9 @@ echo "plan-mutation: raw engine report — $REPORT_KEEP"
 
 # LOW-SIGNAL BLOCKS. It always meant "not measured", and qa/SKILL.md always said
 # such a row is not a pass — but the script exited 0 on it, so the discipline
-# lived only in prose. Measured twice on CherishCRM: `google_sign_in_button.dart`
+# lived only in prose. Measured twice on one real suite: a sign-in widget
 # printed PASS LOW-SIGNAL 100% off ONE mutant with two timed out, and was 33%
-# once all three ran; `google_session.dart` printed PASS 80% and was 66%. Both
+# once all three ran; an auth-session file printed PASS 80% and was 66%. Both
 # rows were labelled correctly and shipped anyway. No improvement to the label
 # reaches that — only the exit code does.
 #
