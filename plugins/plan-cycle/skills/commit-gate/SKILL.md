@@ -146,3 +146,10 @@ This gate is Phase 12's Step 5.5. It lands the commit; it does **not** close the
 cycle. A `/plan` cycle still owes Step 6 — the PR, the Feature Archive row, and
 trashing the task row (`/plan` Iron Law 7). A `/bug-investigate` fix owes none
 of those, and stops here.
+
+**Outside a cycle, a hook delivers this file.** `hooks/commit-gate.sh` refuses
+the FIRST `git commit` of a session that has no plan-cycle ledger, names this
+skill, and lets every later commit through. It exists because the Stop gate is
+ledger-keyed and therefore invisible to the fix path — the one that most needs
+telling. The hook carries no legs of its own: it delivers, this file decides,
+and the right-sizing above is why that split has to hold.
