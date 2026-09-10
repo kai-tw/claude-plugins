@@ -4,8 +4,8 @@
 // THE ONLY THING THAT TAGS. Nothing tags by hand — `release.mjs` deliberately
 // does not, and a cloud session cannot (the GitHub authorization there refuses
 // a tag push with a 403). An untagged version is not a cosmetic gap: the tag is
-// what `vendor-sync` ships from, so the consumers keep serving the previous
-// release and nothing anywhere says so.
+// what a consumer installs from, so it keeps serving the previous release and
+// nothing anywhere says so.
 //
 // It only ever ADDS a tag, never moves one: a moved tag would let one version
 // number mean two different trees, which is the failure `.claude/rules/

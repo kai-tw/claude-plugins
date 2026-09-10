@@ -106,35 +106,46 @@ try {
 
 step(5, 'push');
 // No tag from here. `.github/workflows/plugin-tag.yml` tags whatever version
-// arrives on main and then calls vendor-sync; tagging locally would satisfy it,
-// so it would find nothing to do and the consumers would never be told.
+// arrives on main; tagging locally would satisfy it, so it would find nothing
+// to do and the version would ship untagged.
 run('git', ['push', 'origin', 'HEAD']);
 
 step(6, 'update the locally installed copy');
-// FIRST: does this machine install FROM this repo at all? The marketplace can be
-// a `directory` source pointing at a VENDORED copy in a consumer repo, in which
-// case that copy — not this tree — is what the installer reads, and it stays at
-// the old version until vendor-sync's PR is merged there. Steps 6–7 then cannot
-// pass at release time by construction, and reporting that as a failure trains
-// the reader to ignore the one check that catches a real stale install.
-// A github-source marketplace is the same story with a different mirror.
+// FIRST: does this machine install FROM this repo at all? The marketplace is a
+// `github` source pointing here, so the installer reads what step 5 just pushed
+// — but only after the marketplace index is refreshed. `claude plugin update`
+// compares against the index it already has, so without this it truthfully
+// answers "already at the latest version" with the OLD number, and step 7 then
+// dies on a cache directory that was never going to exist. That reads as a
+// failed release when nothing failed, which trains the reader to ignore the one
+// check that catches a real stale install.
+// A marketplace pointing somewhere else entirely (another checkout, a mirror)
+// cannot show this release at all; say so and stop rather than failing.
 const marketplacesPath = join(process.env.HOME, '.claude/plugins/known_marketplaces.json');
 const known = existsSync(marketplacesPath)
   ? JSON.parse(readFileSync(marketplacesPath, 'utf8'))[marketplace.name]
   : null;
 const src = known?.source ?? {};
+const originUrl = run('git', ['remote', 'get-url', 'origin']);
+const originSlug = originUrl.replace(/^.*github\.com[/:]/, '').replace(/\.git$/, '');
 const servesThisTree =
-  src.source === 'directory' && !relative(root, resolve(src.path)).startsWith('..');
+  (src.source === 'github' && src.repo === originSlug) ||
+  (src.source === 'directory' && !relative(root, resolve(src.path)).startsWith('..'));
 
 if (known && !servesThisTree) {
   const where = src.source === 'directory' ? resolve(src.path) : `${src.source}:${src.repo ?? '?'}`;
-  console.log(`  ⚠ "${marketplace.name}" installs from ${where}, not from this repo.`);
-  console.log(`    That copy is updated by vendor-sync's PR, so nothing here can show`);
-  console.log(`    ${next} yet and there is nothing local to verify.`);
-  console.log(`\n✔ ${plugin} ${next} pushed — NOT yet installed anywhere.`);
-  console.log(`  Next: merge the vendor-sync PR on each consumer, then in that repo run`);
-  console.log(`    claude plugin update ${plugin}@${marketplace.name} --scope project`);
+  console.log(`  ⚠ "${marketplace.name}" installs from ${where}, not from this repo (${originSlug}).`);
+  console.log(`    Nothing here can show ${next}, and there is nothing local to verify.`);
+  console.log(`\n✔ ${plugin} ${next} pushed — NOT installed anywhere from this run.`);
   process.exit(0);
+}
+
+// Refresh the index before asking for the update — see the note above.
+try {
+  run('claude', ['plugin', 'marketplace', 'update', marketplace.name]);
+} catch (e) {
+  die(`marketplace refresh failed — the release is pushed, but this machine\n` +
+      `    cannot see it yet:\n    ${(e.stderr ?? e.message).trim()}`);
 }
 
 // `claude plugin update` defaults to user scope and errors out if the plugin

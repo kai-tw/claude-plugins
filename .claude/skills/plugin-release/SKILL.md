@@ -64,12 +64,12 @@ unrelated edits. Commit or stash those first.
    tree, and the check would compare the still-unbumped `HEAD` and fail every
    release by construction.
 5. **Push.**
-6. **Update the local install** — but only when this machine installs *from this
-   repo*. The marketplace can be a `directory` source pointing at a **vendored
-   copy** inside a consumer repo; that copy is what the installer reads, and
-   vendor-sync's PR is what moves it. The script detects this, says so, and
-   stops at a clean success — steps 6–7 cannot pass at release time there, and
-   calling that a failure would train you to ignore the check.
+6. **Refresh the marketplace index, then update the local install.** The refresh
+   is not optional: `claude plugin update` compares against the index it already
+   holds, so without it the update truthfully reports "already at the latest
+   version" with the OLD number. If the marketplace points somewhere other than
+   this repo, the script says so and stops at a clean success rather than
+   failing a check that could not have passed.
 7. **Verify** the installed cache contains every file that exists in source.
 
 Step 4 is downstream of the commit because anything that inspects committed
@@ -77,26 +77,21 @@ history has to wait for the commit.
 
 **This script does not tag.** The tag belongs to
 `.github/workflows/plugin-tag.yml`, which tags whatever version arrives on
-`main` and then ships it to the consumers. Tagging here would satisfy that
-workflow, so it would find nothing to do and the consumers would never hear
-about the release.
+`main`. Tagging here would satisfy that workflow, so it would find nothing to do
+and the version would ship untagged.
 
 Step 7 is the one that matters **when it runs**. Every earlier step succeeded
 during the dart-lsp incident; the failure was visible only by looking inside the
 cache. If it reports missing files, the release did not land — do not report
-success. If step 6 reported that the marketplace serves a vendored copy, steps
-6–7 did not run: the release is pushed and installed nowhere yet, so report that
-and not "installed and verified".
+success. If step 6 reported that the marketplace points elsewhere, steps 6–7 did
+not run: the release is pushed and installed nowhere from this run, so report
+that and not "installed and verified".
 
 ## After a release
 
-On the push, CI creates `<plugin>--v<version>` and opens a vendored-copy PR on
-every consumer repo; those PRs are Kai's to merge.
-
-**A pushed release has reached nobody yet.** Where the marketplace is a vendored
-directory, the version only becomes installable once that PR lands, and each
-consumer then needs its own update — `release.mjs` never touches more than the
-one it can see:
+The marketplace reads this repo directly, so a pushed release is installable as
+soon as the index is refreshed. `release.mjs` does that for **this machine's own
+install only** — every other project that has the plugin needs its own update:
 
 ```bash
 cd <consumer> && claude plugin update <plugin>@<marketplace> --scope project

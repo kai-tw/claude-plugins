@@ -4,9 +4,11 @@
   `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`——**以版本號命名的實體
   目錄**。同一個版本號裝著兩份不同的內容時，更新有沒有落地無法從外部分辨，而使用者拿到
   的回饋是「已是最新」。修 bug 用 patch（0.4.0 → 0.4.1），加或改行為用 minor。
-- **push 完不等於生效，而且「更新完」也不等於生效.** marketplace 是 directory source，
-  讀的是本機工作目錄，所以要消費端跑 `/plugin`（或下一條的 `claude plugin update`）把
-  內容複製進 cache。但 **PATH 指向哪個版本無法從外部預測**：它在 session 存續期間會變，
+- **push 完不等於生效，而且「更新完」也不等於生效.** marketplace 讀的是 GitHub 上的
+  `kai-tw/claude-plugins`，所以 push 之後要先 `claude plugin marketplace update kai-tw`
+  刷新索引（不刷新，`claude plugin update` 會拿舊索引比對然後誠實地回報「已是最新」，
+  版號還是舊的），再讓消費端跑 `claude plugin update` 把內容複製進 cache。但 **PATH
+  指向哪個版本無法從外部預測**：它在 session 存續期間會變，
   而且不追蹤安裝——同一個 session 的 transcript 裡依序出現 `0.15.1` → `0.17.0` →
   `0.19.0`（沒重開、沒跑 `update`，而且跳過了 `0.18.0`），且 `0.19.1` 已進 cache 後它
   仍解析到 `0.19.0`。刷新的觸發條件不明，從 session 內部看不到。
@@ -35,9 +37,9 @@
   相對位置推得、且每次 bump 都會變。寫 `plan-lint`，不要寫 `bash .claude/hooks/…`——
   後者失敗時只印一行 `No such file or directory`，和「這次沒事做」長得一樣。
 - **Tag 不是人打的，也不要試.** 版本一進 `main`，`plugin-tag` workflow 就照 `plugin.json`
-  建 `<plugin>--v<version>`、push，然後呼叫 `vendor-sync` 開消費端的 bump PR。雲端 session
-  的 GitHub 授權本來就拒絕 push tag（403），而**本機先打 tag 更糟**：workflow 看到 tag
-  已存在就無事可做，消費端永遠收不到這一版。
+  建 `<plugin>--v<version>` 並 push。雲端 session 的 GitHub 授權本來就拒絕 push tag
+  （403），而**本機先打 tag 更糟**：workflow 看到 tag 已存在就無事可做，這一版等於沒被
+  標記過。
 - **一個 PR 全程只 bump 一次版號，收尾前才跑.** Tag 只在進 `main` 那一刻打（上一條）
   ——PR 存續期間中途 bump 幾次都不會被 tag、不會被任何消費端看到，只會在 `git log`
   裡留下一串從未真正存在過的版本。改動確定收斂、真的要送出這個 PR 時才跑一次

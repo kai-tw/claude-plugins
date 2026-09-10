@@ -1,23 +1,14 @@
 name: plugin-tag
 
-# Tag every plugin version that reached `main` untagged, then ship it.
+# Tag every plugin version that reached `main` untagged.
 #
 # WHY A WORKFLOW AND NOT ONLY THE LOCAL RELEASE SCRIPT
-#   The tag is what `vendor-sync` ships from, so a version that lands on `main`
+#   The tag is what a consumer installs from, so a version that lands on `main`
 #   without one leaves every consumer on the previous release with nothing
 #   saying so. Two ordinary routes produce exactly that: a bump merged through
 #   a pull request, and a cloud session — where the GitHub authorization
 #   refuses a tag push outright (403), so the release simply cannot be finished
 #   by hand from there.
-#
-# WHY IT CALLS vendor-sync INSTEAD OF LETTING THE TAG TRIGGER IT
-#   Events raised by `GITHUB_TOKEN` do not start workflow runs — GitHub's
-#   recursion guard, documented for every event except `workflow_dispatch` and
-#   `repository_dispatch`. A tag pushed from here is created and pushed
-#   successfully and triggers nothing, with no error anywhere. Calling the
-#   workflow directly is the only version of this that cannot fail silently,
-#   and it is why `vendor-sync` no longer listens for tags at all: one entry
-#   point, so a release cannot behave differently depending on who tagged it.
 
 on:
   push:
@@ -37,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # the tags themselves, and vendor-sync records the sha
+          fetch-depth: 0 # the tags themselves
 
       - uses: actions/setup-node@v4
         with:
@@ -70,11 +61,3 @@ jobs:
         # partial push cannot leave the sync below shipping under a tag that
         # does not exist.
         run: git push --atomic origin $TAGS
-
-  sync:
-    needs: tag
-    if: needs.tag.outputs.tags != ''
-    uses: ./.github/workflows/vendor-sync.yml
-    with:
-      tags: ${{ needs.tag.outputs.tags }}
-    secrets: inherit
