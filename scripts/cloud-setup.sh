@@ -174,6 +174,12 @@ report() {
 
 # Register the marketplace. The repo is public, so cloning it needs no
 # credential and no attachment — the github path below works from any container.
+# VERIFIED from a cloud session that had only a consuming repo attached, once the
+# snapshot was rebuilt. The predecessor's "GitHub answers only for attached
+# repositories" was measured against this repo while it was PRIVATE; the proxy's
+# repository scope gates private repos, not every unattached one. A stale
+# snapshot looks identical to that old failure, so rebuild before concluding
+# anything about reachability.
 # A checkout the session already cloned is still tried FIRST, and only for one
 # reason: a session working ON the marketplace repo should register the tree it
 # is editing, not the last published one.
