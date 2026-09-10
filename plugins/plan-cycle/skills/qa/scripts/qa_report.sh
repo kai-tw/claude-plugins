@@ -20,6 +20,16 @@
 #   round of work invisible — you fix the coverage gaps, re-run, and only then
 #   discover the mutation debt. One pass, both answers.
 #
+# COVERAGE MAY COME FROM CI
+#   Where the project runs `coverage.sh` on pull requests, the ~20 minutes are
+#   already spent before this script starts. It checks for a `coverage` check-run
+#   that succeeded on THIS HEAD sha and skips the local leg when it finds one,
+#   saying so in the posted report. Verified, never asserted, and matched on the
+#   sha for the same reason the `sha=` guard exists: a verdict about another
+#   tree is not this tree's. Anything missing or ambiguous → run it locally.
+#   Mutation never moves: `mutation.sh` has no dry-count mode, so a run has no
+#   time bound, and in CI an unbounded job cannot be told from a hung one.
+#
 # USAGE
 #   plan-qa-report [--pr <N>] [--dry-run] [--files a.dart …] -- <test-command…>
 #
@@ -59,8 +69,29 @@ T="${TMPDIR:-/tmp}"
 # Directly, not via the bin/ launchers: this script is already inside a slot
 # (its own launcher took one), and going through them would make each gate
 # queue for a second one behind itself.
-echo "=== plan-qa-report: coverage ==="
-bash "$here/coverage.sh" "${PASSTHRU[@]}" -- "$@"; cov_rc=$?
+# COVERAGE MAY ALREADY HAVE RUN, ON CI, ON THIS EXACT COMMIT.
+#   A project whose PR workflow runs `coverage.sh` has paid the ~20 minutes
+#   before this script starts, and re-running it locally buys nothing. But the
+#   skip has to be VERIFIED, never asserted: the check is matched on THIS HEAD
+#   sha, so a green run against an earlier push does not count. Same standard as
+#   the `sha=` guard below — a verdict about another tree is not this tree's.
+#   No `gh`, no PR, no check, wrong sha, or any conclusion other than success →
+#   run it locally. Fail-closed: the expensive path is the safe one.
+ci_coverage_green() {
+  command -v gh >/dev/null 2>&1 || return 1
+  gh api "repos/{owner}/{repo}/commits/$(git rev-parse HEAD)/check-runs" \
+    --jq '.check_runs[] | select(.name == "coverage") | .conclusion' 2>/dev/null \
+    | grep -qx success
+}
+
+cov_from_ci=0
+if ci_coverage_green; then
+  cov_from_ci=1; cov_rc=0
+  echo "=== plan-qa-report: coverage — GREEN ON CI for $sha, not re-run ==="
+else
+  echo "=== plan-qa-report: coverage ==="
+  bash "$here/coverage.sh" "${PASSTHRU[@]}" -- "$@"; cov_rc=$?
+fi
 echo
 echo "=== plan-qa-report: mutation ==="
 bash "$here/mutation.sh" "${PASSTHRU[@]}" -- "$@"; mut_rc=$?
@@ -69,7 +100,7 @@ bash "$here/mutation.sh" "${PASSTHRU[@]}" -- "$@"; mut_rc=$?
 # engine, no coverage written. There is no report to post about a run that did
 # not happen, and posting one would put a green-looking table on a PR that was
 # never graded.
-if [ "$cov_rc" -eq 2 ] || [ "$mut_rc" -eq 2 ]; then
+if [ "$mut_rc" -eq 2 ] || { [ "$cov_from_ci" -eq 0 ] && [ "$cov_rc" -eq 2 ]; }; then
   echo >&2
   echo "plan-qa-report: NOTHING WAS MEASURED (coverage exit ${cov_rc}, mutation exit ${mut_rc}) — no report posted." >&2
   echo "plan-qa-report: fix what the failing gate printed above and run this again. A missing report is not a passing one." >&2
@@ -77,6 +108,17 @@ if [ "$cov_rc" -eq 2 ] || [ "$mut_rc" -eq 2 ]; then
 fi
 
 cov_md="$T/plan-qa-coverage.md"; mut_md="$T/plan-qa-mutation.md"
+
+# A CI-sourced coverage verdict has no local section to check or quote. Write
+# the section here instead, saying plainly where the answer came from — a report
+# that reads as though it measured what it did not is the failure this whole
+# script exists to prevent.
+if [ "$cov_from_ci" -eq 1 ]; then
+  { printf '### Coverage — from CI\n\n'
+    printf 'The `coverage` check passed on this commit (`sha=%s`); the per-line gate over the changed files ran there and was not repeated locally. Open the check for the line list.\n' "$sha"
+  } > "$cov_md"
+fi
+
 for f in "$cov_md" "$mut_md"; do
   [ -s "$f" ] || { echo "plan-qa-report: $f is missing — the gate ran but wrote no section." >&2; exit 2; }
   # Both sections must be about THIS tree. A mutation pass is long enough for a

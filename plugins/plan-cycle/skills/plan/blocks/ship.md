@@ -67,21 +67,34 @@ which is where it reads the branch name that Step 6.6's teardown is verified
 against (`pr-opened <PR#> <base> <branch>` if you must call it from elsewhere).
 
 **Then grade the tests and post the report** — scoped the way the change is.
-Coverage alone measures ~20 min (`bin/plan-coverage`) and mutation carries no
-time bound at all (`mutation.sh` has no dry-count mode) — long enough to hit
-the Bash tool's own cap if run as a blocking call. Run it with
-`run_in_background: true` and wait for the completion notification
-(`founder-corrections.md`'s harness-auto-notify rule — this is the main
-thread, not a dispatched sub-agent, so it applies here); `Monitor` if you
-want to watch it live:
+The two halves now run in different places, because only one of them has an end:
+
+**Coverage is CI's**, when the project runs it on PRs (NovelGlide's
+`coverage.yml` does — one `flutter test --coverage` feeding `plan-coverage`'s
+per-line gate over the changed files plus a global floor). **Read the check;
+do not re-run it locally.** It is ~20 minutes you already paid.
+
+**Mutation is still local**, and that is not an oversight: `mutation.sh` has no
+dry-count mode, so a run has no time bound — in CI that is a job you cannot
+distinguish from a hung one. Run it with `run_in_background: true` and wait for
+the completion notification (`founder-corrections.md`'s harness-auto-notify rule
+— this is the main thread, not a dispatched sub-agent, so it applies here);
+`Monitor` if you want to watch it live:
 ```bash
-plan-qa-report -- flutter test test/features/<feature>/
+plan-mutation -- flutter test test/features/<feature>/
 ```
-Coverage and mutation, one comment on the PR, and the `qa-green` mark that
-stops the ledger's test-strength gate blocking turn-end. `/review` and lint
-already ran because gates stop the turn without them; this is the gate for the
-two that ask whether the tests are worth anything, and it is the reason
-`pr-opened` is not the last thing this step does.
+
+One comment on the PR carrying **both** — CI's coverage verdict and the local
+mutation score — and the `qa-green` mark that stops the ledger's test-strength
+gate blocking turn-end. `/review` and lint already ran because gates stop the
+turn without them; this is the gate for the two that ask whether the tests are
+worth anything, and it is the reason `pr-opened` is not the last thing this step
+does.
+
+> **A project with no coverage workflow pays it here**, with
+> `plan-qa-report -- flutter test test/features/<feature>/` (both halves, the
+> old way). Check for the workflow rather than assuming — a missing CI check and
+> a passing one are not distinguishable from the absence of a comment.
 
 **Then stop — the rest of Step 6 waits for the merge.**
 
