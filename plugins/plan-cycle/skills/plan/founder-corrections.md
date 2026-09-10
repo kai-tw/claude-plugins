@@ -65,7 +65,7 @@ a `bool stopIfSignedIn` parameter was rejected for putting the caller's
 condition inside the use case; the next proposal made it a `bool Function()?
 shouldStop` predicate — different type, identical defect — and drew the heaviest
 correction of that cycle:「禁止使用 function parameter 做控制，你應該做的是把邏輯
-搬到 use case 裡面處理……權責邊界也搞不清楚胡亂加 param，這是在敷衍我」。HOW: on
+搬到 use case 裡面處理」，並指出真正的問題是權責邊界沒分清楚就加參數。HOW: on
 the second correction, do not propose a third shape. Restate in one sentence
 **which layer owns this capability and who decides**, get that confirmed, then
 design. The shape that was finally accepted — the use case exposes `cancel()`,

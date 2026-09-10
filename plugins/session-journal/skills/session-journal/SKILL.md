@@ -167,7 +167,7 @@ tight:
   boundary), verbatim. WHY: said once and in passing, they read to the summarizer
   as chat rather than as contract, so this is the class it reliably drops — one
   three-compaction session had 「請用中文解釋」 re-issued twice and a scope
-  boundary told three times, the last as 「完全沒照我說的改嘛」. Hearing a
+  boundary told three times, the third time visibly out of patience. Hearing a
   directive a second time is proof the last compaction dropped it — write it in
   then, not later.
 - **User corrections / direction** — steers on the work itself, near-verbatim.

@@ -17,16 +17,16 @@ To develop against a local checkout instead:
 claude --plugin-dir ~/GitHub/claude-plugins/plugins/plan-cycle
 ```
 
-## Why this marketplace is private
+## What this is, and is not
 
-This plugin carries process that is specific to how Kai works: the house
-rules and the incidents behind them, the Notion KB conventions, the review
-judgment. That is not shareable material, which is why the whole
-`kai-tw/claude-plugins` marketplace is private.
+This plugin carries process specific to how one person works: the house rules
+and the incidents behind them, the Notion KB conventions, the review judgment.
+It is published as a worked example of those mechanisms, not as a framework —
+the parts worth taking are the shapes (a gate that terminates on a script, a
+rule that cites what it was measured against), not the contents.
 
-Generally useful tooling still lives here — `dart-lsp`, `session-journal` —
-it simply is not published. If any of it ever becomes worth sharing, moving
-it out is a per-plugin decision, not a reason to loosen this one.
+Generally useful tooling lives here too — `dart-lsp`, `session-journal` — and
+those stand alone.
 
 **`plan-cycle` assumes `session-journal@kai-tw` is installed.** The cycle records
 which threads are in flight and where each one lives, and that journal is the sibling

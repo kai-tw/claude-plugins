@@ -544,8 +544,10 @@ function ntn(args, input) {
 // ── Iron Law 2 verify: did the body we just wrote land IN FULL? ──────────────
 // The marker alone cannot answer that. It is PREPENDED, so a write that lands the
 // head and drops the tail keeps it and reports ✓ — which is exactly the shape of
-// the 2026-08-07 incident (~94 blocks sent, 36 landed, cut after "## Error
-// handling"). The body goes through ONE `ntn pages edit`, so there is no chunk
+// a truncated write we hit once: a long body went out, roughly a third of its
+// blocks arrived, and it stopped mid-document. Cause never established, which is
+// the point — the check has to catch the shape, not the cause. The body goes
+// through ONE `ntn pages edit`, so there is no chunk
 // loop to bound the damage either. So check that every `## ` section arrived,
 // which catches a head, middle, or tail loss alike. A body with no headings falls
 // back to the marker-only check — no regression, and comparing prose Notion is
