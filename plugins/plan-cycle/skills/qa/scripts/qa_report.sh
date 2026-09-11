@@ -31,10 +31,21 @@
 #   time bound, and in CI an unbounded job cannot be told from a hung one.
 #
 # USAGE
-#   plan-qa-report [--pr <N>] [--dry-run] [--files a.dart …] -- <test-command…>
+#   plan-qa-report [--pr <N>] [--dry-run] [--files a.dart …]
+#                  [--timeout <s>] [--min <pct>] -- <test-command…>
 #
 #     --pr       the PR to comment on; inferred from the current branch if absent
 #     --dry-run  compose and print, post nothing
+#     --timeout  per-mutant budget, forwarded to plan-mutation (default 30s)
+#     --min      mutation threshold, forwarded to plan-mutation (default 80%)
+#
+# WHY --timeout IS FORWARDED
+#   30s is one project's number, not a universal one. Measured on a project
+#   whose cold compile alone is ~6s and whose suite is shared with other
+#   sessions: a normal mutant round is 9-15s solo but 23-27s under load, so the
+#   default aborted EVERY run of a fully green suite, and the wrapper offered no
+#   way past it — the report was written by hand. A wrapper that narrows its
+#   children's flags decides for projects it has never measured.
 #
 # EXIT
 #   0  both gates green (and, when a PR was resolved, the comment is posted)
@@ -43,15 +54,19 @@
 
 set -uo pipefail
 
-PR=""; DRY=0; PASSTHRU=()
+# PASSTHRU goes to BOTH gates; MUT_ONLY only to mutation.sh, because coverage.sh
+# refuses a flag it does not know (rightly — see its own note).
+PR=""; DRY=0; PASSTHRU=(); MUT_ONLY=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --pr)      PR="${2:-}"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
+    --timeout) MUT_ONLY+=("--timeout" "${2:-30}"); shift 2 ;;
+    --min)     MUT_ONLY+=("--min" "${2:-80}"); shift 2 ;;
     --files)   PASSTHRU+=("--files"); shift
                while [ $# -gt 0 ] && [ "$1" != "--" ]; do PASSTHRU+=("$1"); shift; done ;;
     --)        shift; break ;;
-    -h|--help) sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,53p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*)        echo "plan-qa-report: unknown flag '$1'. The test command goes after \`--\`." >&2; exit 2 ;;
     *)         break ;;
   esac
@@ -63,9 +78,24 @@ cd "$root" || exit 2
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 sha=$(git rev-parse --short HEAD)
-T="${TMPDIR:-/tmp}"
+
+# A PRIVATE directory for this run's three files. The gates' default is a shared
+# TMPDIR path, and on a machine running several sessions another repo's run
+# overwrote the coverage section between the two halves here — twice: once the
+# `sha=` guard below caught it and the whole pass was discarded, once it did not
+# and a PR comment briefly carried another repo's table.
+T=$(mktemp -d "${TMPDIR:-/tmp}/plan-qa.XXXXXX") || { echo "plan-qa-report: could not create a run directory" >&2; exit 2; }
+export PLAN_QA_REPORT_DIR="$T"
+echo "plan-qa-report: run directory — $T"
 
 # --- run both ---------------------------------------------------------------
+# EVERY array expansion below carries `${a[@]+"${a[@]}"}`. macOS ships bash 3.2,
+# where an EMPTY array under `set -u` is an unbound variable: plain
+# `"${PASSTHRU[@]}"` killed this script on line 1 of the run whenever `--files`
+# was omitted. Worth the noise because of how it failed, not that it failed —
+# piped into `tail`, the death is one line of stderr and the exit code is the
+# pipe's, so it read as a completed run.
+#
 # Directly, not via the bin/ launchers: this script is already inside a slot
 # (its own launcher took one), and going through them would make each gate
 # queue for a second one behind itself.
@@ -90,11 +120,11 @@ if ci_coverage_green; then
   echo "=== plan-qa-report: coverage — GREEN ON CI for $sha, not re-run ==="
 else
   echo "=== plan-qa-report: coverage ==="
-  bash "$here/coverage.sh" "${PASSTHRU[@]}" -- "$@"; cov_rc=$?
+  bash "$here/coverage.sh" ${PASSTHRU[@]+"${PASSTHRU[@]}"} -- "$@"; cov_rc=$?
 fi
 echo
 echo "=== plan-qa-report: mutation ==="
-bash "$here/mutation.sh" "${PASSTHRU[@]}" -- "$@"; mut_rc=$?
+bash "$here/mutation.sh" ${PASSTHRU[@]+"${PASSTHRU[@]}"} ${MUT_ONLY[@]+"${MUT_ONLY[@]}"} -- "$@"; mut_rc=$?
 
 # exit 2 from either means the tool never measured — a red suite, a missing
 # engine, no coverage written. There is no report to post about a run that did

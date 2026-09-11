@@ -231,7 +231,12 @@ fi
 # is a report nobody can use to see what is still open. `plan-qa-report` reads
 # this; it is keyed to HEAD so a stale section cannot be posted against a
 # different tree.
-REPORT="${TMPDIR:-/tmp}/plan-qa-coverage.md"
+# Into the caller's per-run directory when there is one (`plan-qa-report` makes
+# one), a shared TMPDIR otherwise. Measured twice on one machine: another repo's
+# run overwrote this file between `plan-qa-report`'s two halves — once caught by
+# the `sha=` guard (the whole pass discarded), once not (a PR comment briefly
+# carried another repo's table).
+REPORT="${PLAN_QA_REPORT_DIR:-${TMPDIR:-/tmp}}/plan-qa-coverage.md"
 head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:coverage sha=%s -->\n' "$head_sha"

@@ -454,6 +454,13 @@ report already on it; pressing the button stays theirs.
 The cycle is **not done** until `close-out` has cited the Feature Archive row
 and the verified-trashed task row (Iron Law 7).
 
+**A phased feature merges more than once.** When a merged PR shipped one phase
+and the task is genuinely still `In Progress`, close-out is not owed yet —
+archiving a non-terminal cycle is forbidden (`archivist` Iron Law 1). Run
+`plan-cycle phase-done` instead: it records the shipped PR, re-arms the per-PR
+gates for the next phase, and leaves the task row alone. Close out on the last
+phase.
+
 
 ## Mid-flow divergence
 

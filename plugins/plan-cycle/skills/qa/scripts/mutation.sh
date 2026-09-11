@@ -637,7 +637,7 @@ fi
 # is one nobody can use to see what is still open. `plan-qa-report` reads this
 # and its coverage sibling; the sha in the marker is what stops a section from
 # an earlier tree being posted against this one.
-REPORT="${TMPDIR:-/tmp}/plan-qa-mutation.md"
+REPORT="${PLAN_QA_REPORT_DIR:-${TMPDIR:-/tmp}}/plan-qa-mutation.md"
 head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:mutation sha=%s -->\n' "$head_short"

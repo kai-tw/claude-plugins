@@ -633,6 +633,57 @@ EOF
       .qa_green_sha = $sha | .qa_green_at = $now | .updated = $now'
     ;;
 
+  phase-done)   # this PR shipped a PHASE of a phased feature; the cycle continues
+    # Gate 2 reads "PR merged" as "cycle done" and demands the Notion close-out.
+    # For a feature shipped in phases that is wrong and there was no honest exit:
+    # the close-out wants a Feature Archive row and the task row trashed, while
+    # the cycle is genuinely still In Progress — and `archivist` Iron Law 1
+    # forbids archiving a non-terminal cycle. The only remaining door was
+    # `clear`, whose own text describes a different situation ("if this was
+    # intentionally not a /plan cycle"), so taking it meant lying about the run.
+    #
+    # This is that exit. It records the merged PR on the cycle and re-arms every
+    # per-PR gate for the next phase's PR. It deliberately does NOT touch the
+    # Notion task row, the Stage, or the plan rows: the feature has not shipped,
+    # and nothing about it should read as though it has.
+    [ -f "$LEDGER" ] || exit 0
+    pr=$(jq -r '.pr // ""' "$LEDGER" 2>/dev/null)
+    base=$(jq -r '.base // "main"' "$LEDGER" 2>/dev/null)
+    branch=$(jq -r '.branch // ""' "$LEDGER" 2>/dev/null)
+    slug=$(jq -r '.slug // "?"' "$LEDGER" 2>/dev/null)
+    if [ -z "$pr" ]; then
+      echo "plan-cycle: phase-done REFUSED — this cycle has no recorded PR (run \`plan-cycle pr-opened <PR#>\` when one opens)." >&2
+      exit 2
+    fi
+    # Verified against git, never asserted — same standard as Gate 2, which this
+    # disarms. A manual command may fetch first; the Stop hook may not.
+    git -C "$ROOT" fetch --quiet origin "$base" 2>/dev/null || true
+    if ! merged_on_base "$pr" "$base"; then
+      echo "plan-cycle: phase-done REFUSED — PR #${pr} is not merged on origin/${base} as far as this tree can see." >&2
+      echo "plan-cycle: phase-done marks a SHIPPED phase. If it did just merge, fetch and run this again." >&2
+      exit 1
+    fi
+    write_ledger --arg pr "$pr" --arg now "$(now)" '
+      .phases_shipped = ((.phases_shipped // []) + [{ pr: $pr, at: $now }])
+      | .pr_opened = false | .updated = $now
+      | del(.pr, .branch, .qa_green_sha, .qa_green_at, .reviewed_sha, .reviewed_at)
+      | .tests_frozen = false'
+    cat <<EOF
+plan-cycle: phase — PR #${pr} recorded as shipped; the cycle stays open.
+
+  Cycle:  ${slug}
+  Re-armed for the next phase: pr-opened · reviewed · tests-frozen · qa-green.
+  Untouched: the Notion task row, its Stage, and the plan rows — this feature
+  has not shipped, and the close-out is owed only when the last phase does.
+EOF
+    # The merged branch and its worktree are NOT torn down here: the next phase
+    # usually continues in the same worktree off an updated base. `sweep` lists
+    # merged branches still standing, so a phase branch nobody comes back to is
+    # still surfaced.
+    [ -n "$branch" ] && echo "plan-cycle: '${branch}' has merged — reuse the worktree for the next phase, or tear it down."
+    exit 0
+    ;;
+
   clear)   # close-out (Feature Archive verified + task row trashed) or a reset
     # Two gates guard `clear`, both armed only on a FULL cycle (pr_opened) and
     # both verified against the ARTIFACT rather than a flag: the teardown
@@ -1028,6 +1079,11 @@ Do this NOW, before any other work:
     \`plan-feedback\` — --cycle '${slug}'
   • then clear the ledger: \`plan-cycle clear\`
 
+If this PR shipped ONE PHASE of a feature still being built, the close-out is
+not owed yet — record the phase and keep the cycle open (the task row is not
+touched):
+  plan-cycle phase-done
+
 If this was intentionally not a /plan cycle, reset the ledger:
   plan-cycle clear
 EOF
@@ -1237,6 +1293,7 @@ usage: plan-cycle <command>
   uploaded <pm|designer|engineer> <address>   record a landed plan
   pr-opened <PR#> [base] [branch]      record the PR
   tests-frozen | reviewed <sha> | qa-green <sha> | clear
+  phase-done                           this PR shipped one phase; re-arm for the next
   status | check | sweep
 
 A session that has joined no cycle is never gated.
