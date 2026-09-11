@@ -459,7 +459,36 @@ EOF
 abort=$(jq -r '.abortReason // empty' "$out/report.json")
 if [ -n "$abort" ]; then
   echo "plan-mutation: ABORTED — ${abort}" >&2
-  echo "plan-mutation: a mutation score off a red suite is meaningless (every mutant looks detected). Fix the suite first." >&2
+  # The engine aborts for two different reasons and they need OPPOSITE actions.
+  # This printed the red-suite line for both, so the timeout abort — whose suite
+  # is green — sent a reader looking for a slow test that does not exist. Three
+  # rounds were spent that way before someone read the engine's source.
+  #
+  # The timeout abort is the BASELINE: dart_mutants runs the unmodified suite
+  # once before any mutant, and bounds it with --mutant-timeout, a budget
+  # calibrated for warm runs. The baseline is the cold one, so it is the longest
+  # single run of the session — measured on one project, 9-15s warm against a
+  # 23-27s cold compile, aborting every run of a fully green suite.
+  case "$abort" in
+    *"within the timeout"*|*"did not finish"*)
+      cat >&2 <<EOF
+plan-mutation: that was the BASELINE — the unmodified suite, run once before any
+mutant — and it is the COLD run, normally the longest of the session. Your tests
+are not necessarily slow, and the suite is not red.
+
+  The budget it hit was --timeout (${MUTANT_TIMEOUT}s), which bounds each MUTANT.
+  Warm the build (run the suite once yourself), or raise it:
+
+    plan-mutation --timeout <s> --files … -- $TEST_CMD
+
+  A machine running other test sessions needs more: the same suite measured
+  9-15s idle and 23-27s under load.
+EOF
+      ;;
+    *)
+      echo "plan-mutation: a mutation score off a red suite is meaningless (every mutant looks detected). Fix the suite first." >&2
+      ;;
+  esac
   exit 1
 fi
 
