@@ -383,34 +383,9 @@ the one sentence to attack.
 The reason is capped at one line by design: a dismissal that cannot be
 stated in one line was never substantive enough to survive a challenge.
 
-**Severity overrides — always CRITICAL (not WARNING):**
-
-- **Missing chunk-header comments / phase blank lines** in any
-  multi-phase function body, per `.claude/rules/code-style.md`
-  §Formatting. Visual chunking is the project's first line of
-  readability defense — a multi-phase method without
-  blank-line-separated chunks AND a leading one-line `//`
-  comment naming each phase is treated with the same severity
-  as an architecture-rule violation. Every multi-phase function
-  body must (a) separate phases with blank lines, and (b) lead
-  each chunk with a `// Phase name.` one-liner. Trivial
-  one-liners, pure passthrough wrappers, and expression-body
-  methods (`=>`) are not multi-phase and not flagged.
-
-- **Command method with non-void return type**, per
-  `.claude/rules/code-style.md` §Command / Query Separation —
-  Return Type. A method that writes to storage / network / file
-  system / stream / controller must return `Future<void>` (or
-  `void` if synchronous). Returning `bool` / enum / identifier
-  / any "what just happened" payload from a command is a CQS
-  violation — the call site is invited to trust the parallel
-  channel instead of re-querying state, which drifts as the
-  implementation grows. The state machine is the single source
-  of truth; a command's outcome is observed by re-reading
-  state. Flag with the same severity as a layer-direction
-  violation. Allowed exceptions: constructors / factories,
-  pure derivations, boolean predicates / probes
-  (`exists` / `isX` queries), DTO ↔ domain mappers.
+**Severity floors live in the rule that carries them**, never here — a
+rule needing one states it in its own `Check:`, where the author reaches
+it at edit time and where it cannot drift from the rule it grades.
 
 Example CRITICAL findings (shape only — not an exhaustive list):
 
