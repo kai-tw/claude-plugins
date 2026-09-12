@@ -412,18 +412,6 @@ stated in one line was never substantive enough to survive a challenge.
   pure derivations, boolean predicates / probes
   (`exists` / `isX` queries), DTO ↔ domain mappers.
 
-- **Naming contract violations**, per `naming.md` and `presentation.md`
-  (§Naming — Widget Suffixes). The method: take every newly-introduced
-  identifier and read it **in isolation** — no imports, no surrounding
-  context, as it would appear in a grep hit or a stack trace — then ask
-  whether the name alone announces what those rules require of it
-  (a class: scope, role, honest runtime shape; a member: its type).
-  What each must announce is in the rule files; lint covers only a
-  narrow subset (naming rules the project's linter owns)
-  and the rest is judgment. Flag at the same severity as a
-  layer-direction violation — one rename is far cheaper than a
-  cross-feature collision or a runtime `ProviderNotFoundException`.
-
 Example CRITICAL findings (shape only — not an exhaustive list):
 
 - `lib/features/X/data/repositories/x_repository_impl.dart:42` —
