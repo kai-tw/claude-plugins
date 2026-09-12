@@ -147,7 +147,8 @@ Mark the seeded "`/review`" task (that phase's, for a Phased plan)
 `in_progress` via `TaskUpdate`, then invoke `/review` against
 the uncommitted diff — **that phase's diff** for a Phased plan, the
 whole uncommitted diff for a Single-slice plan. The `/review` skill is
-the project dispatcher and will spawn the `code-reviewer` sub-agent
+the project dispatcher and will run code review (`code-reviewer` →
+`code-review-verifier`)
 (report-only). Pass the engineering plan (the feature's
 Engineering Plan DB row) and the source product plan + design
 spec rows so the reviewer can ground findings against intended

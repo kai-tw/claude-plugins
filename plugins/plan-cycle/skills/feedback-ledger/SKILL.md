@@ -39,7 +39,7 @@ is one markdown file in it.
 | Category | What lands here |
 |---|---|
 | `process` | Friction in the `/plan` cycle — a gate that misfired, a step that duplicated another, the per-cycle retro (gate `R/H/L` + the measurement row + the mandatory subtraction candidate) |
-| `code-review` | How `code-reviewer` performed — a finding that was over-reach, a real defect it missed, a pattern worth teaching it |
+| `code-review` | How code review performed — a finding that was over-reach (`code-review-verifier` let it through), a real defect missed (`code-reviewer` never raised it), a pattern worth teaching either |
 | `security-review` | Same, for `security-privacy-reviewer`'s **security** lens (threat model, leak paths) |
 | `privacy-review` | Same, for its **privacy** lens (minimization, attestation) — one agent, but keep the lenses as separate categories: a consume batch needs to see which lens is misfiring |
 | `recurring-bug` | **A defect class this codebase fixed before, back again** — caught by the founder at PR review, hit by `/qa` while authoring, or counted in the retro's measurement row. The entry must anchor **both ends**: the prior fix (commit / incident / test id) and the new sighting (file:line or minimal repro). 「又來了」 without anchors cannot be consumed into a check — the anchors are what become the mutation pin or the mechanism-table checkpoint. |
@@ -92,7 +92,7 @@ is a sort, not a debate about where things go:
 | Category | Lands in |
 |---|---|
 | `process` | the owning skill file / a deleted step (the subtraction channel) |
-| `code-review` | `code-reviewer.md`'s checks, or a `.claude/rules/` line |
+| `code-review` | `code-reviewer.md`'s rubric, `code-review-verifier.md`'s rulings, or a `.claude/rules/` line |
 | `security-review` / `privacy-review` | the matching rule pack, via its `CONVENTIONS.md` learning 更新法 |
 | `recurring-bug` | **one of two, both checks**: the qa failure-class index (a new bucket, or a mutation pin / case template on an existing one — `qa/failure-classes.md`) or the project's `.claude/rules/consistency.md` mechanism table (a checkpoint the mechanism's canonical helper must now enforce). A recurring bug consumed into prose has not been consumed. |
 

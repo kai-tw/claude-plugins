@@ -517,7 +517,8 @@ Two execution mechanisms:
 | `pm-plan-reviewer` | the PM plan (`pm/references/rules.md` + plan integrity) | Agent / sonnet |
 | `engineer-plan-reviewer` | the engineering plan (scope-gated dimensions) | Agent / opus |
 | `security-privacy-reviewer` | `review/rules/security/` + `review/rules/privacy/` | Agent / opus |
-| `code-reviewer` | the diff | Agent / opus |
+| `code-reviewer` | the diff — raises challenges | Agent / opus |
+| `code-review-verifier` | `code-reviewer`'s challenges, ruled against its rubric | Agent / opus |
 | `post-qa-reviewer` | the approved plans + the siblings + `/qa`'s contract, on the diff | Agent / opus |
 | `feasibility-reviewer` | the PM plan vs downstream deliverability | Agent / opus |
 | `design-plan-reviewer` | the design spec: `review/rules/ux/` + the UI stack | Agent / opus |
