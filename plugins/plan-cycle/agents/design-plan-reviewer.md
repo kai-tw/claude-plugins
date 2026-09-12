@@ -132,8 +132,7 @@ by default. Classify **before spawning anything**:
   consolidate in one pass (you stall "still awaiting" with nothing to wake you). Split by
   **persona lens, not severity** — each walks every flow independently (its own §Method
   run), then you **consolidate**: dedup by spec-anchor, keep the highest severity per
-  anchor — **reconcile, never average**. (Same shape as `code-reviewer` spawning
-  sub-sub-agents only for a Structural diff.)
+  anchor — **reconcile, never average**.
 
 If the spec mixes scopes (a copy tweak riding a new navigation model), classify by the
 **largest constituent** — a one-line change riding along does not downgrade a novel flow.

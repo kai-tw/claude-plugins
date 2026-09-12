@@ -57,7 +57,7 @@ The migration policy does **not** require:
 
 ## How this interacts with code review
 
-Reviewers (the `/review` skill's `code-reviewer` sub-agent, the
+Reviewers (the `/review` skill's code review, the
 `security-privacy-reviewer` sub-agent) are
 expected to flag rule violations in touched files. "Silent skip" —
 acknowledging a violation in chat but neither fixing nor logging it

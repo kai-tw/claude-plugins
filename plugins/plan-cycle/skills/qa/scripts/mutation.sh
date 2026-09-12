@@ -457,20 +457,32 @@ EOF
 }
 
 abort=$(jq -r '.abortReason // empty' "$out/report.json")
-if [ -n "$abort" ]; then
-  echo "plan-mutation: ABORTED — ${abort}" >&2
-  # The engine aborts for two different reasons and they need OPPOSITE actions.
-  # This printed the red-suite line for both, so the timeout abort — whose suite
-  # is green — sent a reader looking for a slow test that does not exist. Three
-  # rounds were spent that way before someone read the engine's source.
+kind=$(jq -r '.abortKind // empty' "$out/report.json")
+if [ -n "$abort" ] || [ -n "$kind" ]; then
+  echo "plan-mutation: ABORTED${kind:+ ($kind)} — ${abort:-the engine gave no reason}" >&2
+  # Each abort kind needs a DIFFERENT action, and printing one diagnosis for all
+  # of them is how this went wrong: the timeout abort — whose suite is green —
+  # was told "fix the suite first", and three rounds went hunting a slow test
+  # that did not exist before someone read the engine's source.
   #
-  # The timeout abort is the BASELINE: dart_mutants runs the unmodified suite
-  # once before any mutant, and bounds it with --mutant-timeout, a budget
-  # calibrated for warm runs. The baseline is the cold one, so it is the longest
-  # single run of the session — measured on one project, 9-15s warm against a
-  # 23-27s cold compile, aborting every run of a fully green suite.
-  case "$abort" in
-    *"within the timeout"*|*"did not finish"*)
+  # `abortKind` is the engine's wire name for the cause, test-pinned upstream and
+  # only ever added to. Engines that predate it carry prose alone, so the two
+  # prose shapes they are known to emit are mapped onto the same names; nothing
+  # else is guessed. An unrecognised kind gets NO diagnosis rather than the
+  # graver one — a default of "red suite" is exactly the confident wrong answer
+  # a new abort kind would otherwise receive, silently.
+  if [ -z "$kind" ]; then
+    case "$abort" in
+      *"within the timeout"*|*"did not finish"*) kind=baseline-timeout ;;
+      *"failed against unmodified"*)             kind=baseline-failed ;;
+    esac
+  fi
+  case "$kind" in
+    # The BASELINE is the unmodified suite, run once before any mutant, and it is
+    # bounded by --mutant-timeout — a budget calibrated for warm runs, while the
+    # baseline is the cold one and so the longest run of the session. Measured on
+    # one project: 9-15s warm, 23-27s cold, aborting every run of a green suite.
+    baseline-timeout)
       cat >&2 <<EOF
 plan-mutation: that was the BASELINE — the unmodified suite, run once before any
 mutant — and it is the COLD run, normally the longest of the session. Your tests
@@ -485,8 +497,19 @@ are not necessarily slow, and the suite is not red.
   9-15s idle and 23-27s under load.
 EOF
       ;;
-    *)
+    baseline-failed)
       echo "plan-mutation: a mutation score off a red suite is meaningless (every mutant looks detected). Fix the suite first." >&2
+      ;;
+    gate-rejects-unmodified)
+      cat >&2 <<EOF
+plan-mutation: the engine's compile-safety gate rejected a file BEFORE mutating
+it — the file as it stands does not pass the gate. Neither the budget nor the
+tests are the problem, so raising --timeout or editing tests will not move this.
+The engine's reason above names the file.
+EOF
+      ;;
+    *)
+      echo "plan-mutation: this abort is not one plan-mutation recognises, so it offers no diagnosis — the engine's own words above are the whole of what is known." >&2
       ;;
   esac
   exit 1
