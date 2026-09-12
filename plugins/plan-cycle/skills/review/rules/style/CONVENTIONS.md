@@ -36,6 +36,13 @@ Kind 3「taste or style with no rule behind it」即被要求放行，故**立�
   立母規則，再掛。語言檔不得自立母規則。
 - **用詞一律台灣用語、法律用詞.** 禁止用「不得」，義務用「應」，容許用「得」；條件句
   用「…者，…」，排除用「不在本條之列」；主體稱「本條」。
+- **技術術語有限度地保留英文.** 已是工作語彙者直接用原文，不另造中譯——`catch` /
+  `throw` / `rethrow` / `propagate` / `predicate` / `callback` / `timeout` / `mutex` /
+  `cache` / `eviction policy` / `stack trace` / `hot path` / `log level` / `null` /
+  `enum` / `sealed` / `domain` / `repository` 皆屬之。**自創中譯與冷僻行話同為違規**：
+  前者（「述詞」「淘汰策略」「最上層處理器」）令讀者須反推原文，後者（`arm`）令讀者無從
+  反推。行話應改用日常詞（`arm` → 分支），中譯則應還原為原文。判準只有一個：**讀者能否
+  一眼認出所指之物**。
 - **何以不採單一檔**（與 security / ux 諸包不同）：語言層係二份**按 diff 副檔名擇一
   載入**之檔，非同一份規則之第二份拷貝——無須同步之重複內容並不存在。
 
