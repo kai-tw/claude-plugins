@@ -28,7 +28,15 @@
 #   `timedOut` rather than waited on forever. Neither counts toward total.
 #
 # USAGE
-#   plan-mutation [--min <pct>] [--timeout <s>] [--files a.dart …] -- <test-command…>
+#   plan-mutation [--min <pct>] [--timeout <s>] [--baseline-timeout <s>]
+#                 [--baseline-factor <n>] [--select-by-coverage]
+#                 [--files a.dart …] -- <test-command…>
+#
+#   --timeout is the FLOOR on a mutant's budget; the engine raises it to
+#   --baseline-factor × the measured baseline, and the report prints what it
+#   actually used. --baseline-timeout bounds the cold baseline itself (default
+#   10× --timeout). --select-by-coverage runs each mutant only against the test
+#   files that reach it, and scores a mutant no test reaches as undetected.
 #
 #   Pass a SCOPED test command — `flutter test test/features/trash`, not a bare
 #   `flutter test`. The scope is what makes this affordable.
@@ -48,20 +56,30 @@ set -uo pipefail
 
 MIN_SCORE=80        # every changed file must kill this share of its own mutants
 MIN_MUTANTS=5       # below this a percentage is arithmetic, not evidence
-MUTANT_TIMEOUT=30   # passed through; bounds a single hanging mutant
+# The FLOOR on a mutant's budget, not the budget: since engine 0.2.7 each mutant
+# gets the larger of this and --baseline-factor × the baseline's own wall time,
+# so the number the run actually used is read back out of the report rather than
+# printed from here.
+MUTANT_TIMEOUT=30
 EXPLICIT_FILES=""
+ENGINE_EXTRA=()      # 0.2.7 flags, forwarded only when the caller asks for them
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --min)      MIN_SCORE="${2:-80}"; shift 2 ;;
     --timeout)  MUTANT_TIMEOUT="${2:-30}"; shift 2 ;;
+    # The baseline is the COLD run and had no budget of its own until 0.2.7;
+    # it now defaults to 10× --timeout. Forwarded, not re-derived here.
+    --baseline-timeout) ENGINE_EXTRA+=("--baseline-timeout" "${2:?--baseline-timeout needs seconds}"); shift 2 ;;
+    --baseline-factor)  ENGINE_EXTRA+=("--baseline-factor" "${2:?--baseline-factor needs a number}"); shift 2 ;;
+    --select-by-coverage) ENGINE_EXTRA+=("--select-by-coverage"); shift ;;
     --files)    shift
                 while [ $# -gt 0 ] && [ "$1" != "--" ]; do
                   EXPLICIT_FILES="${EXPLICIT_FILES}${1}"$'\n'; shift
                 done
                 [ "${1:-}" = "--" ] && shift ;;
     --)         shift; break ;;
-    -h|--help)  sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)  sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # An unrecognised FLAG is refused, never treated as the start of the test
     # command. Measured: `--yes --budget 60 --files x -- flutter test …` (two
     # flags this script had dropped) fell through the old catch-all, so the
@@ -425,12 +443,13 @@ mv -f "$MARKER.tmp" "$MARKER"
 # seconds" figure would be invented rather than measured. What bounds the run
 # instead is --mutant-timeout per mutant plus the diff-sized scope. Elapsed time
 # is reported at the end so the next caller can size the scope from real data.
-echo "plan-mutation: ${count_files} changed file(s), threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s per mutant."
+echo "plan-mutation: ${count_files} changed file(s), threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s floor per mutant (the engine raises it to a multiple of the measured baseline; the report prints what it used)."
 echo "plan-mutation: no up-front estimate is possible (the engine has no dry-count mode) — watch the elapsed line below."
 echo "plan-mutation: WHILE THIS RUNS the source on disk may be a live mutant. Read those files with \`git show ${head_sha}:<path>\`, not from the working tree — anyone sharing this worktree included. Marker: .mutation-in-progress"
 started=$(date +%s)
 # shellcheck disable=SC2086
-dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" --json $files > "$out/report.json" 2>"$out/err"
+dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" \
+  ${ENGINE_EXTRA[@]+"${ENGINE_EXTRA[@]}"} --json $files > "$out/report.json" 2>"$out/err"
 elapsed=$(( $(date +%s) - started ))
 
 # Preserved BEFORE the parse check, not after: a report this script cannot read
@@ -479,19 +498,21 @@ if [ -n "$abort" ] || [ -n "$kind" ]; then
   fi
   case "$kind" in
     # The BASELINE is the unmodified suite, run once before any mutant, and it is
-    # bounded by --mutant-timeout — a budget calibrated for warm runs, while the
-    # baseline is the cold one and so the longest run of the session. Measured on
-    # one project: 9-15s warm, 23-27s cold, aborting every run of a green suite.
+    # the COLD run — the longest of the session. Engine 0.2.7 gave it a budget of
+    # its own (10× --timeout by default); before that it was bounded by the
+    # per-mutant budget, which is calibrated for warm runs and aborted every run
+    # of one project's green suite (9-15s warm against a 23-27s cold compile).
     baseline-timeout)
       cat >&2 <<EOF
 plan-mutation: that was the BASELINE — the unmodified suite, run once before any
 mutant — and it is the COLD run, normally the longest of the session. Your tests
 are not necessarily slow, and the suite is not red.
 
-  The budget it hit was --timeout (${MUTANT_TIMEOUT}s), which bounds each MUTANT.
-  Warm the build (run the suite once yourself), or raise it:
+  Its budget is --baseline-timeout, which defaults to 10× --timeout
+  (--timeout is ${MUTANT_TIMEOUT}s here, so the baseline had about $(( MUTANT_TIMEOUT * 10 ))s).
+  Warm the build (run the suite once yourself), or give the baseline more:
 
-    plan-mutation --timeout <s> --files … -- $TEST_CMD
+    plan-mutation --baseline-timeout <s> --files … -- $TEST_CMD
 
   A machine running other test sessions needs more: the same suite measured
   9-15s idle and 23-27s under load.
@@ -561,6 +582,24 @@ fi
 # has returned absolute ones — so strip a leading repo root rather than assuming
 # either. Without the strip, an absolute path makes every row fail to match the
 # file it is about.
+# WHAT THE RUN ACTUALLY USED, read back rather than restated.
+#
+# Since engine 0.2.7 the per-mutant budget is derived — the larger of --timeout
+# and a multiple of the baseline's measured wall time — so the flag value is a
+# floor, and a report printing it would name a number the run may never have
+# used. The engine reports the derived budget and the baseline it came from;
+# print those. An older engine omits both fields, and then the flag IS the
+# budget, which is what the fallback says.
+eff_timeout=$(jq -r '.mutantTimeoutSeconds // empty' "$out/report.json")
+baseline_s=$(jq -r '.baselineSeconds // empty' "$out/report.json")
+selected=$(jq -r 'if .selectedByCoverage == true then "yes" else empty end' "$out/report.json")
+if [ -n "$eff_timeout" ]; then
+  budget_line="${eff_timeout}s per mutant (floor ${MUTANT_TIMEOUT}s${baseline_s:+, baseline ${baseline_s}s})"
+else
+  budget_line="${MUTANT_TIMEOUT}s per mutant"
+fi
+[ -n "$selected" ] && budget_line="${budget_line}, tests selected by coverage"
+
 rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MIN_MUTANTS" '
   .files | to_entries[] | .value as $v
   | ($v.filePath | sub("^" + $root; "")) as $rel
@@ -661,7 +700,7 @@ score, and the rows above under-report how much of each file was actually asked.
 $( [ -n "$timed" ] && printf '\nTimed-out mutants:\n%s' "$timed" )
 
 A timeout has two causes and this tool cannot tell them apart:
-  · the budget is too tight — ${MUTANT_TIMEOUT}s must cover a FULL run of your test
+  · the budget is too tight — ${budget_line} must cover a FULL run of your test
     command, so a command that already takes most of that leaves no headroom;
   · the mutant genuinely hangs the code, which is a real finding.
 
@@ -694,8 +733,8 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:mutation sha=%s -->\n' "$head_short"
   printf '### Mutation — is the effect asserted?\n\n'
-  printf 'Threshold %s%%%s per file, %ss per mutant, %s changed file(s). A LOW-SIGNAL row was **not measured**, whatever percentage it shows.\n\n' \
-    "$MIN_SCORE" '' "$MUTANT_TIMEOUT" "$count_files"
+  printf 'Threshold %s%% per file, %s, %s changed file(s). A LOW-SIGNAL row was **not measured**, whatever percentage it shows.\n\n' \
+    "$MIN_SCORE" "$budget_line" "$count_files"
   printf '| Verdict | Score | Mutants | Invalid | Timed out | File |\n|---|---:|---:|---:|---:|---|\n'
   printf '%s\n' "$rows" | awk -F'\t' 'NF>=6 {
     s = ($2 == "-") ? "–" : $2 "%"

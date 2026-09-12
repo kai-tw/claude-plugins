@@ -32,12 +32,17 @@
 #
 # USAGE
 #   plan-qa-report [--pr <N>] [--dry-run] [--files a.dart …]
-#                  [--timeout <s>] [--min <pct>] -- <test-command…>
+#                  [--timeout <s>] [--min <pct>] [--baseline-timeout <s>]
+#                  [--baseline-factor <n>] [--select-by-coverage]
+#                  -- <test-command…>
 #
 #     --pr       the PR to comment on; inferred from the current branch if absent
 #     --dry-run  compose and print, post nothing
-#     --timeout  per-mutant budget, forwarded to plan-mutation (default 30s)
-#     --min      mutation threshold, forwarded to plan-mutation (default 80%)
+#
+#   Everything else is forwarded to plan-mutation, which owns their meaning:
+#   --timeout (the FLOOR on a mutant's budget, default 30s) · --min (threshold,
+#   default 80%) · --baseline-timeout (the cold baseline's own budget) ·
+#   --baseline-factor · --select-by-coverage.
 #
 # WHY --timeout IS FORWARDED
 #   30s is one project's number, not a universal one. Measured on a project
@@ -63,10 +68,13 @@ while [ $# -gt 0 ]; do
     --dry-run) DRY=1; shift ;;
     --timeout) MUT_ONLY+=("--timeout" "${2:-30}"); shift 2 ;;
     --min)     MUT_ONLY+=("--min" "${2:-80}"); shift 2 ;;
+    --baseline-timeout) MUT_ONLY+=("--baseline-timeout" "${2:?needs seconds}"); shift 2 ;;
+    --baseline-factor)  MUT_ONLY+=("--baseline-factor" "${2:?needs a number}"); shift 2 ;;
+    --select-by-coverage) MUT_ONLY+=("--select-by-coverage"); shift ;;
     --files)   PASSTHRU+=("--files"); shift
                while [ $# -gt 0 ] && [ "$1" != "--" ]; do PASSTHRU+=("$1"); shift; done ;;
     --)        shift; break ;;
-    -h|--help) sed -n '2,53p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,59p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*)        echo "plan-qa-report: unknown flag '$1'. The test command goes after \`--\`." >&2; exit 2 ;;
     *)         break ;;
   esac
