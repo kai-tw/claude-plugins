@@ -164,6 +164,14 @@ path-scoped and auto-load on the files you read, so what you receive is
 already what binds — read each in full, do not pre-select sections
 (`ls .claude/rules/` if you need the inventory).
 
+**Plus the style pack** — the founder's cross-project 撰寫法, which no project's
+rules carry: `${CLAUDE_PLUGIN_ROOT}/skills/review/rules/style/index.md` always,
+plus **one** language file selected by the changed paths' extensions —
+`.dart` → `style/dart.md`; `.js` `.mjs` `.cjs` `.jsx` `.ts` `.tsx` →
+`style/js.md`. A diff spanning both loads both. Its `§位階` is the one version of
+how it and `.claude/rules/` rank, and of what to do when they conflict — read it
+there, never re-derive it here.
+
 The rule files are the source of truth, and **this definition never
 restates their content** — it says how to review, not what the rules
 say. A rule worth adding is added there, where it also reaches the
