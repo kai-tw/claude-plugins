@@ -340,6 +340,22 @@ distinguishing combination untested).
   reads as "detected" when the command was already failing.
 - **A survivor you keep needs a written reason at the site.** Genuinely
   equivalent mutants exist; one with no note is indistinguishable from a hole.
+- **N identical survivors across N sibling positions is a DUPLICATED WRITE, not
+  N equivalent mutants.** Measured: five `on` branches each called `_failed(current)`
+  and the enclosing `finally` called it again, so the same survivor appeared five
+  times. The fix is deleting the redundant calls, not five test cases — and
+  calling them equivalent preserves the defect with a note certifying it is fine.
+  Before writing that note, check whether the mutated effect happens twice.
+- **A mutant that HANGS is scored `timedOut` and dropped from the denominator,
+  so it silently leaves the score.** Which way the score then moves depends on
+  which mutant was dropped — both directions are measured upstream, so never
+  assume a timeout flatters or punishes you. What IS certain: a genuinely
+  surviving mutant disappears out of the undetected list, and the gap it marks
+  disappears with it. The fix is a **short deadline in the test itself** so a
+  hang becomes a failure the run can see; raising the budget only buys a longer
+  wait for the same silence. Measured: a mutex release loop that locked
+  permanently (identical at 150s and 400s), and 28 mutants leaving a `Completer`
+  never completed, which read as 25% until the deadlines went in.
 - **While a run is in flight, the source on disk is mutated** — it compiles,
   carries no marker, and reads as authored code. Anyone sharing the worktree can
   read it, so a `.mutation-in-progress` file at the repo root names the pid and

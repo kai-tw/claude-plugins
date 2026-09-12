@@ -83,10 +83,30 @@ as_gb()    { awk -v m="$1" 'BEGIN {printf "%.1f", m/1024}'; }
 # Deleting a Gradle cache under a live daemon corrupts the build; deleting
 # derived data under a running xcodebuild does the same. Both are cheap to
 # check and catastrophic to miss, so this refuses rather than races.
+#
+# A `pgrep -f` pattern matches any process whose ARGV CONTAINS it — including a
+# process that merely names the tool: a script polling with
+# `pgrep -f 'flutter_tools.snapshot test'` carries that text in its own command
+# line and matches itself. Measured 2026-09-12: a peer session waiting for the
+# machine to go quiet did exactly that, so this refused while nothing was
+# building — and the waiter was waiting on a condition it was itself preventing.
+# So a match counts only when the EXECUTABLE is the tool.
+tool_running() {   # $1 = argv pattern, $2… = executable names that make it real
+  local pat="$1"; shift
+  local pid comm want
+  for pid in $(pgrep -f "$pat" 2>/dev/null); do
+    [ "$pid" = "$$" ] && continue
+    comm=$(ps -o comm= -p "$pid" 2>/dev/null) || continue
+    comm=${comm##*/}
+    for want in "$@"; do [ "$comm" = "$want" ] && return 0; done
+  done
+  return 1
+}
+
 busy_reason=""
-pgrep -f 'GradleDaemon'    >/dev/null 2>&1 && busy_reason="a Gradle daemon is running"
-pgrep -f 'xcodebuild'      >/dev/null 2>&1 && busy_reason="xcodebuild is running"
-pgrep -f 'flutter_tools.snapshot (build|run|test)' >/dev/null 2>&1 && busy_reason="a flutter build or test run is in progress"
+tool_running 'GradleDaemon' java >/dev/null 2>&1 && busy_reason="a Gradle daemon is running"
+tool_running 'xcodebuild' xcodebuild >/dev/null 2>&1 && busy_reason="xcodebuild is running"
+tool_running 'flutter_tools\.snapshot (build|run|test)' dart dartvm dartaotruntime >/dev/null 2>&1 && busy_reason="a flutter build or test run is in progress"
 # `flutter clean` deletes .dart_tool/ and build/ — the tree a running suite is
 # reading from. `test` belongs in the pattern above for the same reason `build`
 # does; it was missing while several sessions ran suites concurrently, so a

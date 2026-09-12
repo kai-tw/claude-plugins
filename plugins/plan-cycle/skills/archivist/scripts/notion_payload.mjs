@@ -534,8 +534,31 @@ function resolveNtn() {
 }
 const NTN = resolveNtn();
 
+// A write that HANGS is the worst shape this script has: measured, an
+// `ntn pages edit` sat for 26 minutes at 0% CPU with no socket open, and a
+// caller waiting on a call that never returns eventually marks the row
+// uploaded from memory — a ledger fact asserting a write that never landed.
+// So every call is bounded. A bound that fires is an error, never a silent
+// partial success: the row may be half-written, which is exactly what the
+// Iron-Law-2 verify exists to catch on the next run.
+const NTN_TIMEOUT_MS = Number(process.env.NTN_TIMEOUT_MS || 180_000);
+
 function ntn(args, input) {
-  const r = spawnSync(NTN, args, { input, encoding: 'utf8', maxBuffer: 1 << 26 });
+  const r = spawnSync(NTN, args, {
+    input,
+    encoding: 'utf8',
+    maxBuffer: 1 << 26,
+    timeout: NTN_TIMEOUT_MS,
+    killSignal: 'SIGKILL',
+  });
+  if (r.error && r.error.code === 'ETIMEDOUT') {
+    fail(
+      `ntn ${args.join(' ')} did not return within ${NTN_TIMEOUT_MS / 1000}s and was killed.`
+        + ` NOTHING about this row is confirmed — it may be unwritten, or written in part.`
+        + ` Re-run and let the verify decide; do NOT mark it uploaded off this call.`
+        + ` Raise $NTN_TIMEOUT_MS if the body is genuinely this large.`,
+    );
+  }
   if (r.error) fail(`ntn ${args.join(' ')}: ${r.error.code === 'ENOENT' ? `binary not found (set $NTN_BIN or add ~/development/ntn to PATH)` : r.error.message}`);
   if (r.status !== 0) fail(`ntn ${args.join(' ')} exited ${r.status}: ${(r.stderr || '').trim()}`);
   return r.stdout;

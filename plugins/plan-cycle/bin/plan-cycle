@@ -545,13 +545,30 @@ EOF
   pr-opened)   # launcher opened the PR (Step 6.0) → RECORD it; Gate 2 arms on merge
     [ -f "$LEDGER" ] || exit 0
     pr="${1:-}"; base="${2:-main}"
+    # `gh pr create` prints a URL, so a URL is what a caller has in hand — and
+    # pasting it used to take the fail-open path below, disarming Gate 2 for the
+    # whole cycle on one line of stderr. Accept the shapes a caller actually
+    # holds: a bare number, `#123`, or the PR URL.
+    pr="${pr#\#}"
     case "$pr" in
-      ''|*[!0-9]*)
-        # Degrade in the fail-open direction: `clear` still owes a retro, but
-        # Gate 2 has no PR to watch, so a dropped close-out won't be caught.
+      *"/pull/"*) pr="${pr##*/pull/}"; pr="${pr%%[!0-9]*}" ;;
+    esac
+    case "$pr" in
+      '')
+        # No PR at all is a real state (a cycle that never opened one), and it
+        # degrades fail-open: `clear` still owes a retro, but Gate 2 has no PR
+        # to watch, so a dropped close-out won't be caught.
         echo "plan-cycle: pr-opened without a PR number — close-out gate disabled for this cycle (use: pr-opened <PR#> [base])" >&2
         write_ledger --arg now "$(now)" '.pr_opened = true | .updated = $now'
         exit 0
+        ;;
+      *[!0-9]*)
+        # Something WAS passed and it is not a PR. Refuse instead of degrading:
+        # a typo must not silently buy the same disarmed gate that having no PR
+        # legitimately buys.
+        echo "plan-cycle: pr-opened REFUSED — '${1}' is not a PR number or URL." >&2
+        echo "plan-cycle: pass 123, #123, or https://github.com/<owner>/<repo>/pull/123." >&2
+        exit 2
         ;;
     esac
     # Capture the branch so `clear` can verify the Step 6.6 teardown against git
