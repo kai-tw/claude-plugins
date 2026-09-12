@@ -32,7 +32,21 @@
 
 ## 母規則
 
-目前 **0 條**。
+**語言檔為空不代表該語言沒規則**——母規則照樣適用。反之，本檔沒立法的撰寫偏好，
+`code-reviewer` **不得自行發明成 style finding**：沒有條文不等於交由自由心證。
 
-**空包時 `code-reviewer` 的行為**：Kind 1 只走專案 `.claude/rules/`，**不得自行發明
-style finding**——本包空著代表這類規則尚未立法，不代表交由 reviewer 自由心證。
+## S1 — 層級歸屬
+
+**Principle:** 一段邏輯屬於哪一層，由它依賴什麼知識決定，不由它放在哪個目錄決定——
+linter 查得到 import 方向，查不到歸屬。
+
+- **S1.1 目錄不等於歸屬** — Check: diff 新增 / 移動的檔案，其內容依賴的知識與所在層
+  一致（`domain/` 內不出現傳輸格式、HTTP 狀態碼、DB 欄位名、UI 語彙）；不一致 →
+  搬層或改寫，不是加註解。Example: 放在 `domain/` 的 use case 在做 HTTP 狀態碼轉譯。
+- **S1.2 穿越邊界的是 domain 型別** — Check: repository / use case 的簽章回傳 domain
+  型別，而非「以 domain 命名的傳輸結構」（欄位與外部 payload 一對一，或帶 raw / json /
+  code 之類欄位即是）。型別合法，所以 linter 全綠。Example: `XRepository.fetch()` 的
+  回傳物件欄位對得上 API response。
+- **S1.3 orchestration 只在組裝點** — Check: 跨 repository 的順序 / 重試 / fallback
+  只出現在專案宣告的組裝點（**組裝點放哪是專案事實**，屬命令層）；use case 內只有一個
+  domain 決策。Example: use case 依序呼叫兩個 repository，失敗時改走另一條。

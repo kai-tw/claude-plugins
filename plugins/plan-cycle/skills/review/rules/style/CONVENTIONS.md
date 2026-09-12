@@ -19,12 +19,18 @@
   花在機械題上。
 - **寫不出 `Check:` 的不收.** 旁觀者查不動的那條是偏好不是規則
   （`.claude/rules/writing-rules.md`）。
+- **可機械判定但尚無規則的，去寫 lint 規則，不要寫成散文.** 去處是專案的 lint 規則庫
+  （Dart：`dart_lints` 的對應 bundle），那裡是確定性的、而且在編輯時就到得了作者。
+  推論：`dart.md` / `js.md` 長期會接近空的——語言層的可判定項幾乎都該是 lint 規則，
+  這不是漏收，是分工。
 
 **檔案格式.**
-- 母規則：`index.md` 一節一條 —— `## S<N> — <title>` + `**Principle:**` 通則 1–2 句。
-  母規則本身**不帶語言**：出現語言關鍵字、framework 名或副檔名即屬語言層。
-- 語言層：`dart.md` / `js.md` 一條一 bullet ——
+- 母規則：`index.md` 一節一條 —— `## S<N> — <title>` + `**Principle:**` 通則 1–2 句，
+  後接該母規則**跨語言成立**的 sub-check，一條一 bullet：
   `- **S<N>.k <名>** — Check: <一行判準>. Example: <≤1 句>`。
+  母規則與其 sub-check 都**不帶語言**：出現語言關鍵字、framework 名或副檔名即屬語言層。
+- 語言層：`dart.md` / `js.md` 同格式，編號帶後綴 `S<N>.k-dart`，只放**該語言才有**的
+  具體化。
 - **每條語言 sub-check 必須掛在一個既有 `S<N>` 底下.** 掛不上就是要修憲：先在
   `index.md` 立母規則，再掛。語言檔不得自立母規則。
 - **為何不是單一檔**（與 security / ux 那幾包不同）：語言層是兩份**按 diff 副檔名擇一
