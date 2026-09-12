@@ -92,7 +92,7 @@ is a sort, not a debate about where things go:
 | Category | Lands in |
 |---|---|
 | `process` | the owning skill file / a deleted step (the subtraction channel) |
-| `code-review` | `code-reviewer.md`'s rubric, `code-review-verifier.md`'s rulings, or a `.claude/rules/` line |
+| `code-review` | `code-reviewer.md`'s rubric, `code-review-verifier.md`'s rulings, the `review/rules/style/` pack (a 撰寫法 the review keeps missing — via its `CONVENTIONS.md` learning 更新法), or a `.claude/rules/` line |
 | `security-review` / `privacy-review` | the matching rule pack, via its `CONVENTIONS.md` learning 更新法 |
 | `recurring-bug` | **one of two, both checks**: the qa failure-class index (a new bucket, or a mutation pin / case template on an existing one — `qa/failure-classes.md`) or the project's `.claude/rules/consistency.md` mechanism table (a checkpoint the mechanism's canonical helper must now enforce). A recurring bug consumed into prose has not been consumed. |
 

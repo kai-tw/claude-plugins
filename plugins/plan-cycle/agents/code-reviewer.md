@@ -164,6 +164,14 @@ path-scoped and auto-load on the files you read, so what you receive is
 already what binds — read each in full, do not pre-select sections
 (`ls .claude/rules/` if you need the inventory).
 
+**Plus the style pack** — the founder's cross-project 撰寫法, which no project's
+rules carry: `${CLAUDE_PLUGIN_ROOT}/skills/review/rules/style/index.md` always,
+plus **one** language file selected by the changed paths' extensions —
+`.dart` → `style/dart.md`; `.js` `.mjs` `.cjs` `.jsx` `.ts` `.tsx` →
+`style/js.md`. A diff spanning both loads both. Its `§位階` is the one version of
+how it and `.claude/rules/` rank, and of what to do when they conflict — read it
+there, never re-derive it here.
+
 The rule files are the source of truth, and **this definition never
 restates their content** — it says how to review, not what the rules
 say. A rule worth adding is added there, where it also reaches the
@@ -375,46 +383,9 @@ the one sentence to attack.
 The reason is capped at one line by design: a dismissal that cannot be
 stated in one line was never substantive enough to survive a challenge.
 
-**Severity overrides — always CRITICAL (not WARNING):**
-
-- **Missing chunk-header comments / phase blank lines** in any
-  multi-phase function body, per `.claude/rules/code-style.md`
-  §Formatting. Visual chunking is the project's first line of
-  readability defense — a multi-phase method without
-  blank-line-separated chunks AND a leading one-line `//`
-  comment naming each phase is treated with the same severity
-  as an architecture-rule violation. Every multi-phase function
-  body must (a) separate phases with blank lines, and (b) lead
-  each chunk with a `// Phase name.` one-liner. Trivial
-  one-liners, pure passthrough wrappers, and expression-body
-  methods (`=>`) are not multi-phase and not flagged.
-
-- **Command method with non-void return type**, per
-  `.claude/rules/code-style.md` §Command / Query Separation —
-  Return Type. A method that writes to storage / network / file
-  system / stream / controller must return `Future<void>` (or
-  `void` if synchronous). Returning `bool` / enum / identifier
-  / any "what just happened" payload from a command is a CQS
-  violation — the call site is invited to trust the parallel
-  channel instead of re-querying state, which drifts as the
-  implementation grows. The state machine is the single source
-  of truth; a command's outcome is observed by re-reading
-  state. Flag with the same severity as a layer-direction
-  violation. Allowed exceptions: constructors / factories,
-  pure derivations, boolean predicates / probes
-  (`exists` / `isX` queries), DTO ↔ domain mappers.
-
-- **Naming contract violations**, per `naming.md` and `presentation.md`
-  (§Naming — Widget Suffixes). The method: take every newly-introduced
-  identifier and read it **in isolation** — no imports, no surrounding
-  context, as it would appear in a grep hit or a stack trace — then ask
-  whether the name alone announces what those rules require of it
-  (a class: scope, role, honest runtime shape; a member: its type).
-  What each must announce is in the rule files; lint covers only a
-  narrow subset (naming rules the project's linter owns)
-  and the rest is judgment. Flag at the same severity as a
-  layer-direction violation — one rename is far cheaper than a
-  cross-feature collision or a runtime `ProviderNotFoundException`.
+**Severity floors live in the rule that carries them**, never here — a
+rule needing one states it in its own `Check:`, where the author reaches
+it at edit time and where it cannot drift from the rule it grades.
 
 Example CRITICAL findings (shape only — not an exhaustive list):
 
