@@ -383,6 +383,9 @@ the one sentence to attack.
 - **Reason still holds** → no challenge; list the site in §Detail coverage
   with the dismissal's reason. Re-raising a settled point every cycle is
   how a review stops being read.
+- **The point it settles is a written rule** → the marker settles nothing,
+  because no such finding was ever the caller's to dismiss (§Ruling). Grade
+  the site against the rule as though the line were absent.
 - **Reason is wrong, stale (the surrounding code has since changed so it
   no longer describes reality), or precedent-only** ("the sibling does
   it" is 推託, not a reason) → raise it at its real severity, and in the
@@ -488,6 +491,14 @@ whether a dismissal's reason still holds; the minimal-mechanism test in
 `architecture.md`. Set the **final** severity — raise or lower the one you
 proposed, with the reason in the same line. Not reasonable → **成立但不處理**,
 one line saying why.
+
+**A 有效 Kind 1 is filed. 有理 sets its severity and nothing else** — 成立但不處理
+and the SUGGESTION cap are both closed to it. A written rule weighed against your
+own sense of whether it is worth the trouble here is the 自授例外 that
+`style/index.md §位階` rules dead on arrival, and the rule not being worth it is a
+case for narrowing or repealing the rule: file the finding, propose the amendment
+beside it, and until that lands the finding stands. Kind 2 and Kind 3 keep both
+exits.
 
 Rule each challenge on its own merits. The same premise raised twice is ruled
 once and the duplicates merged under the first id. Apply the SUGGESTION cap from

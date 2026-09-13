@@ -245,6 +245,14 @@ For each finding the reviewer filed, report a verdict from this set:
   allowed **only** as a TaskList task (Status `Deferred` + a Trigger) via the
   `archivist` skill. A verbal "we'll fix it later" is a silent skip.
 
+**A Kind 1 finding cannot be DISMISSed** — its exits are FIX and ESCALATE, and
+the SUGGESTION carve-out below does not reach it. The reviewer is already barred
+from waiving a written rule it finds not worth the trouble
+(`code-reviewer.md §Ruling`), and that bar does not lift when the finding changes
+hands: "the rule is wrong here" is an amendment, argued where the rule lives, and
+until it lands the verdict is FIX. A marker at the site would make the exception
+the rule could not grant itself.
+
 `code-reviewer`'s **SUGGESTION** tier is the single carve-out from the
 written-into-the-codebase requirement: nothing is wrong, so declining one leaves no
 defect behind and there is nothing for a future reader to be warned about. It still
