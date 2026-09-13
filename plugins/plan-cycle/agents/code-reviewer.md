@@ -538,6 +538,7 @@ the question was asked at all, and you are the one who asked it.
 coverage: time=<v> · space=<v> · scalability=<v> · extendability=<v> ·
 coupling=<v> · correctness=<v> · error-handling=<v> · testability=<v> ·
 startup=<v>
+style: S1=<v> · S2=<v> · … · S<last>=<v>
 ```
 
 Number challenges `[C<n>]` sequentially in Stage 1 and keep those ids through
@@ -562,23 +563,15 @@ Number `[E<n>]` sequentially across the whole list. Reuse `[E1]` if a
 later challenge needs the same fact — never re-run the search or retype the
 list for a fact already shown.
 
-**The `coverage:` line is mandatory and never omitted.** Those nine
-dimensions are the `diff` rows of `notion-payload criteria engineering-plan` —
-none of them is graded before code, and a dimension nobody must answer for is a
-dimension nobody checks. **`coupling` and `correctness` are the newest two**,
-and they are here rather than at plan stage for a reason worth remembering when
-one of them feels like it belonged upstream: an edge is legible in an import
-block and not in a table describing one, and paper review is structurally weak
-at truth tables (`plan/gates.md §Gate loop policy` — an inverted `!=` survived
-three review rounds). Each `<v>` is
-`finding` (it produced a challenge above), `pass` (you questioned it against its
-rule and raised nothing), or `na` **plus a reason in the same breath**
-(`testability=na（diff 無新 seam）`). Silence and "clean" look identical in a
-findings list, which is exactly what this line exists to separate — the same
-reason `pm-plan-reviewer` closes on four counts rather than a violation count.
-The rules themselves stay where they are (`code-style.md §Performance &
-Complexity`, `error-handling.md`, `testing.md`, …); this line says only whether
-you looked.
+**Both lines are mandatory and never omitted**, because a rule surface nobody
+must answer for is a rule surface nobody checks. `coverage:` carries the nine
+`diff` rows of `notion-payload criteria engineering-plan`. `style:` carries one
+row per `## S<N>` in the style pack's `index.md` — an article added there grows
+this line by one, and a language-tier article shares the row of the 母法 it
+concretises. Each `<v>` is `finding` (it produced a challenge above), `pass`
+(you questioned it against its rule and raised nothing), or `na` **plus a reason
+in the same breath** (`testability=na（diff 無新 seam）`). Silence and "clean"
+look identical in a findings list; these lines say only whether you looked.
 
 ## Stage 3: Return to the dispatcher (不落檔)
 
