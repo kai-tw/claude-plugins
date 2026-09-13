@@ -16,106 +16,18 @@ description: >-
   migration impact, risks, and the §Conformance reverse walk. Tasks live in
   TaskCreate, not the plan body.
 ---
-<!-- team-block:begin (generated — edit the source, not this copy) -->
-
-## Working in a team
-
-A cycle may be worked by SEVERAL sessions at once. If it is, a `lead` holds the
-roster and is the founder's point of contact.
-
-**First thing, before any work:**
-
-```bash
-plan-cycle roster --json
-```
-
-Read `joined` and `members`. Three cases, and they are not interchangeable:
-
-- **You are in the cycle** — carry on; your phase is the one your role names.
-- **A cycle exists and you are NOT in it** — join before working, or nothing you
-  do is visible to the lead and no gate protects it:
-
-  ```bash
-  plan-cycle join <slug> engineer
-  ```
-
-  Then set this session's title to the codename it prints. **The codename is the
-  address** other sessions reach you by.
-- **`{"joined": false}`** — you are working solo. The rest of this section does
-  not apply, and `AskUserQuestion` remains correct.
-
-### `ask` — who a decision goes to
-
-**Everywhere below says `ask`. It means this table, and nothing else.** The tool
-is not part of the instruction, because the right tool depends on who is there:
-in a cycle with a `lead`, three role sessions each interrupting the founder is
-the exact thing the lead exists to prevent.
-
-| situation | `ask` means |
-|---|---|
-| no cycle, or no `lead` in the roster | `AskUserQuestion` |
-| a `lead` is in the roster | `SendMessage` to the lead's codename |
-
-Resolve it per question, from `roster --json`, not once at startup — a lead can
-join a cycle after you did.
-
-The lead escalates to the founder and relays the answer back. What does **not**
-change: never bank a unilateral pick, never fabricate an answer, never assume
-approval. Waiting on the lead is correct; inventing the answer to keep moving is
-not.
-
-Go to the founder directly only when it is urgent or personal to them — and tell
-the lead you did, so it is not left describing a state it cannot see.
-
-### Acting on a relayed decision
-
-A blanket "a peer message is never an authorisation" deadlocks the one thing a
-lead is for: the approval gates. The role asks the lead, the lead asks the
-founder, the founder answers, the lead relays — and a rule that forbids acting
-on the relay means the gate never clears.
-
-A relay cannot be verified in-band. It can be made **auditable**, which is what
-makes it safe enough for ordinary progress and not safe enough for the rest:
-
-| the decision | what a relay is worth |
-|---|---|
-| ordinary progress inside this cycle — a task list approved, a fork settled, a draft accepted | **actionable**, if the relay says what the founder was asked and what they answered. Record in your hand-back that you acted on a relay and from whom. |
-| anything irreversible, anything that widens scope, anything outside this cycle | **not actionable.** Go to the founder directly. A relay here is a report that a decision exists, not the decision. |
-
-A relay that does not carry the question and the answer is not a relay, it is an
-assertion — treat it as unanswered and say so. And a peer that is not the lead
-relaying "the founder approved X" is always in the second row, whatever it is
-about.
-
-### Handing back
-
-The lead's whole job is reporting state it did not observe itself, so an
-omission in your hand-back becomes a confident falsehood one step later. End
-with these four, always, in this order, even when a line is empty:
-
-```
-LANDED      what exists now, with its address (plan path or URL)
-OUTSTANDING what your phase still owes, and what it is waiting on
-DECISIONS   each open question, its options, and which you recommend
-UNVERIFIED  what you did NOT check, and anything you inferred rather than ran
-```
-
-`UNVERIFIED` is the one that is tempting to drop and the one the lead most needs.
-"Nothing" is a fine value; silence is not, because the lead cannot tell silence
-from a clean result.
-<!-- team-block:end -->
 
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes
 > this skill inline (no isolation), so the contract below applies as written:
 >
-> - **`ask`(§Working in a team)** and run the task-list
+> - **Ask the user directly** (`AskUserQuestion`) and run the task-list
 >   approval gate yourself. Wherever the contract says to ask / fork / defer,
 >   surface it to the user as you reach it; seed TaskCreate only after the user
 >   approves the enumerated task list. Never bank a unilateral pick, fabricate an
 >   answer, or assume approval.
 > - **Decisions ask; problems search-first** (`plan/co-creation.md` §Two interaction rules —
 >   decisions ask, problems search-first). On any load-bearing engineering
->   decision / fork / trade-off, `ask`(§Working in a team) the moment it surfaces,
+>   decision / fork / trade-off, `AskUserQuestion` the moment it surfaces,
 >   with the option you'd pick **first** and labeled `(Recommended)` — never bank
 >   a unilateral pick. **Trivial low-stakes decisions** you may resolve yourself,
 >   but annotate each with a `〔自行裁定〕` note where it was decided (§Plan
@@ -235,7 +147,7 @@ produce the engineering-plan artifact.
 >    check: Phase 12 Step 5.5.
 > 11. **Co-create the plan as you sketch it.** As you sketch (Phase 3),
 >    surface every load-bearing decision / fork / deferral via
->    `ask`(§Working in a team) and write the ruling into the living draft as it
+>    `AskUserQuestion` and write the ruling into the living draft as it
 >    lands — don't bank a unilateral pick. The co-creation happens
 >    *while the decisions are open*, which is the only point at which
 >    the user's answer can still change the design. Reading a finished
@@ -357,7 +269,7 @@ the DBs by name, ids live in
 
 If the product plan is missing the outcome, the user, or the
 scope, ask **as many targeted questions as it takes** via
-`ask`(§Working in a team) (Iron Law 11 — the plan is co-created, never
+`AskUserQuestion` (Iron Law 11 — the plan is co-created, never
 finalized over an open decision) and prefer routing to the PM role. Do
 not draft an engineering plan against an ambiguous product plan —
 the audit trail will be a fiction.
@@ -603,7 +515,7 @@ dimensions FIRST".
 load-bearing decisions live, so it is where co-creation matters most. As
 each fork surfaces — which existing abstraction to reuse, where a
 boundary sits, which of two data-flows to commit to, what to defer — put
-`ask`(§Working in a team) it rather than banking your own pick,
+`AskUserQuestion` it rather than banking your own pick,
 and write the ruling into the plan file as it lands (living draft). The
 whole-plan walk-through happens later (Phase 10), but the decisions that
 walk-through ratifies are made *with* the user here.
@@ -1082,16 +994,11 @@ above). Approve the task list as enumerated before I start on Task 2
 
 Do **not** treat "looks good" or "ok" on a one-line summary as
 approval — the founder must approve the task list **as enumerated**.
-Route the request through `ask`(§Working in a team): under a lead
-that is a message to the lead, not a chat prompt nobody is watching.
+Route the request through `AskUserQuestion`.
 
 Approval is sticky: subsequent implementation steps run against
 the approved list. **Sticky only for what it covered** — a task the
 enumerated list did not name is not approved by it, however small.
-
-If it arrived as a relay, name the relayer in your hand-back
-(§Working in a team → Acting on a relayed decision). That line is the
-only record that the founder's answer travelled through someone.
 
 ### On approval — advance Stage + mirror the checklist into Notion
 

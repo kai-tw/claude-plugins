@@ -148,6 +148,7 @@ knowledge of where the plugin is installed:
 | The Notion write | Mirror it with |
 |---|---|
 | Created the TaskList task | `plan-cycle start "<slug>" "<Task Name>"` |
+| Picked a task back up whose cycle exists | `plan-cycle join "<slug>"` |
 | Flipped the task's `Stage` | `plan-cycle enter "<Stage>"` |
 | Wrote a plan row (after verify) | `plan-cycle uploaded <pm\|designer\|engineer> <url>` |
 | Posted a `/review` report to the PR | `plan-cycle reviewed <the sha reviewed>` |

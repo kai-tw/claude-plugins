@@ -254,36 +254,6 @@ diff's own sink signals.
 Any flow with a repo-writing node runs in an isolated worktree
 (§Worktree isolation, Iron Law 9) — mandatory, not optional.
 
-### Step 3.5 — Single-session or team? Decide per phase, from two reads
-
-This skill was written when one session ran every phase in order. It still does
-that, **unless another session is already holding a phase** — and running a
-phase someone else holds is not a slow path, it is two plans for one feature
-that diverge silently.
-
-Two reads, neither of them a guess:
-
-```bash
-plan-cycle roster --json      # who DECLARED a role, by joining
-```
-…then `ListAgents` for **liveness**. A member is real only if it is in both: the
-roster says who joined, and only the listing says who is still running.
-
-| what the two reads say | this phase |
-|---|---|
-| `{"joined": false}` — no cycle | **run it here.** Single-session mode, everything below unchanged. |
-| a live member holds the role | **do not run it.** It is theirs. Ask them for it and wait for the hand-back. |
-| a member holds it but is NOT in the listing | **unheld** — its session ended. Say so before touching it; a dead member's phase is a founder-facing fact, not a gap to quietly absorb. |
-| the cycle exists and nobody holds the role | **run it here**, and say in the hand-back that you did — the roster does not know, and the lead is reporting from the roster. |
-
-Do this **per phase**, not once for the cycle. A cycle with an engineer session
-and no designer is normal, and its designer phase is yours while its engineer
-phase is not.
-
-**If you are yourself a member** (your session id is in `members`), run only
-your own role's phase regardless of the table above. The other phases are not
-yours to open even when they are unheld — report them to the lead instead.
-
 ### Step 4 — Run each phase along the DAG (author in-thread, spawn the review gates)
 
 Authoring main sequence (fixed order, non-overlapping):

@@ -289,6 +289,7 @@ rather than continuing as if the write were mirrored.
 | The Notion write you just made | Mirror it with |
 |---|---|
 | Created the TaskList task (the `/plan` Step 2 anchor) | `plan-cycle start "<task-slug>" "<Task Name>"` |
+| Picked a task back up whose cycle already exists (a resumed or brand-new session inherits no pointer, so it is silently ungated) | `plan-cycle join "<task-slug>"` |
 | Flipped the task's **`Stage`** property | `plan-cycle enter "<Stage>"` (exact label: Product Plan / Design Plan / Translation / Engineering Plan / Security / Privacy / Implementation / Review / QA / Archived) |
 | Created/updated a **Product / Engineering Plan** row (after the Iron-Law-2 verify confirms it), or published the design phase's contact sheet | `plan-cycle uploaded <pm\|designer\|engineer> <url>` — **the URL is required**: it is the proof Gate 1 trusts, and you already have it from the fetch-back (for `designer`, from the publish, and it is also what goes into the task's `Design Sheet`). No URL means the write didn't land, so redo the write instead of marking it done. |
 | Closed out (Feature Archive verified + task row trashed) | `plan-cycle clear` |
