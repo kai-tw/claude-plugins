@@ -3,8 +3,8 @@ name: review
 description: >-
   The single entry for every review concern — spawns the matching report-only
   sub-agent against the relevant artifact (an uncommitted diff, or a plan):
-  code-reviewer → code-review-verifier (every detail of the diff challenged,
-  every challenge ruled valid and reasonable — two spawns) ·
+  code-reviewer (the 法官: every detail of the diff challenged, every
+  challenge ruled 有效 · 有理, one report) ·
   engineer-plan-reviewer (engineering-plan design quality) ·
   pm-plan-reviewer (the PM plan's rules walk) ·
   security-privacy-reviewer (threat model AND data minimization, on the diff —
@@ -58,7 +58,7 @@ and the threshold). Treat the block as late, not as the schedule.
 
 | User intent | Sub-agent | Reviews | Output |
 |---|---|---|---|
-| Code review (semantic, architectural, lint-uncatchable) | `code-reviewer` → `code-review-verifier`, in sequence (§Code review is two spawns) | the uncommitted diff | **return to caller** — the verifier's report (no file) |
+| Code review (semantic, architectural, lint-uncatchable) | `code-reviewer` (the 法官 — questions and rules in one pass) | the uncommitted diff | **return to caller** — its report (no file) |
 | Engineering-plan **should-this-exist** (2 scope-gated dimensions; the other 9 are graded on the diff by `code-reviewer`) | `engineer-plan-reviewer` | an engineering plan | **return to caller** (no file) |
 | **PM-plan rules compliance** (`P1`–`P8` + plan integrity, sub-check by sub-check) | `pm-plan-reviewer` | a pm plan | **return to caller** (no file) |
 | **Security and/or privacy** (threat model + attack surface · data-minimization) — asking for one spawns the agent, which walks **both** lenses | `security-privacy-reviewer` | the diff + store declarations — never a plan; "should this be collected at all" is PM rule `P8` | **return to caller** (no file) |
@@ -103,7 +103,7 @@ question *at a moment you would not otherwise be running*.
 
 | Reviewer | Trigger | Stage | Also loads |
 |---|---|---|---|
-| `code-reviewer` (9 dims) → `code-review-verifier` | **every** code change | code ① | `.claude/rules/` — no plan |
+| `code-reviewer` (9 dims, 法官) | **every** code change | code ① | `.claude/rules/` + `rules/style/` (母規則 + 該 diff 的語言檔) — no plan |
 | `security-privacy-reviewer` | the diff's own **sink signals** (a pure-removal diff skips it) | code ② | sink rule packs + store declarations — no plan |
 | `post-qa-reviewer` | after QA, when an approved plan exists | after-QA | the approved plans + the siblings they name + `/qa`'s contract; it splits the diff by tree (conformance and consistency on `lib/**`, test design on `test/**`) |
 | `pm-plan-reviewer` · `engineer-plan-reviewer` · `feasibility-reviewer` · `design-plan-reviewer` | a plan or spec is drafted | ① / ② | no diff exists yet |
@@ -155,7 +155,7 @@ actually implemented), not mockup-vs-design-rules.
 **Every reviewer above is 不落檔** — they grade and **return their
 findings to this dispatcher** (security/privacy/ux/feasibility/consistency:
 each item `passed` / `warning` / `critical`, looped until all `passed`;
-code review: the verifier's report; engineer-plan-reviewer: the consolidated
+code review: the 法官's report; engineer-plan-reviewer: the consolidated
 report inline). No file output. (No count here on purpose — the roster grows, and a
 hardcoded number is a staleness bug waiting to print.)
 
@@ -180,22 +180,17 @@ Spawn foreground only when the user explicitly asks ("block on it", "I'll wait")
 Pass the user's request verbatim plus any extra constraints. Do **not** re-run the
 review in this main context.
 
-### Code review is two spawns
+### Code review is one spawn
 
-1. `code-reviewer` questions every detail of the diff and returns a **challenge
-   list**.
-2. When it completes, spawn `code-review-verifier` with that list **verbatim** —
-   add nothing, summarise nothing, and never your own view of which challenges
-   matter. It rules each one 有效 · 有理 and returns the report.
+`code-reviewer` is the 法官: it questions every detail of the diff, rules on its
+own challenges (有效 · 有理), and returns the finished report. One spawn, one
+report — relay and post that.
 
-Relay and post **only the verifier's report**. The challenge list is unruled, so
-presenting it as the review is a silent skip of the verifier stage; a verifier
-that fails or returns nothing means no review happened — say so and re-spawn it.
-
-The verifier is not a second dimension of review, so the merge criterion above
-does not apply to it: it answers whether the first agent's claims are true, which
-the first agent cannot answer about itself. It is also why the pair is exactly
-two spawns — one batch of rulings, never an agent per challenge.
+**Its report must carry the buckets, not only the findings.** 駁回, 成立但不處理,
+無法判定 and §Detail coverage are what a single-agent review has instead of a
+second reader: they are the record that a question was asked and answered
+against. A report that lists only filed findings is indistinguishable from one
+where the rest were dropped — treat that as an incomplete review and say so.
 
 ## After the agent returns
 
@@ -278,7 +273,7 @@ stance — a comment annotation, **not** a file.
 
 **Which reviewers this covers is decided by what they read, not by which stage
 they run in.** Every reviewer graded against the **diff** posts here: code
-review (the verifier's report) and `security-privacy-reviewer` at the code
+review (the 法官's report) and `security-privacy-reviewer` at the code
 stage, and `post-qa-reviewer` after QA. Their
 findings are about the code the founder is being asked to merge, so the PR is
 where they belong. The plan-stage reviewers (`pm-plan-reviewer`,
@@ -344,7 +339,7 @@ These count as silent skipping and must NOT occur:
 
 After every finding has a written verdict and any FIX changes land, **re-invoke
 `/review` to confirm clean** when CRITICALs existed or the diff was non-trivial.
-The re-review diff is small, but code review costs its two spawns again — that
+The re-review diff is small, but it costs a full opus pass again — that
 condition is the budget, not a formality.
 
 **Why report-only:** an agent auto-fixing in the background is fast but

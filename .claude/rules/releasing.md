@@ -23,6 +23,10 @@
   `plan_lint.sh` 不同，所以 `cmp` wrapper 看起來永遠沒事。**所以一律實查、且要驗實作**
   （`type -a <name>` 看解析到哪個版本目錄，或看輸出裡的自報版本）。要確定性就重開
   session。
+- **在 PR 分支上跑 `release.mjs`，第 6、7 步會自己跳過.** marketplace 服務的是預設分支，
+  所以分支上的新版號在合併前裝不進任何地方。腳本偵測到 HEAD 不是預設分支就停在第 5 步，
+  印 `✔ … committed and pushed on <branch> — install after merge` 並列出合併後要補的兩行
+  指令——**那是成功，不是失敗**。合併後才照下一條各補消費端。
 - **`release.mjs` 只更新一個消費端，而它的 `✔ … installed and verified` 只講那一個.**
   第 6、7 步都以 cwd 解析到的專案為對象；其他啟用了這個 plugin 的專案原地不動，收尾那行
   也不會提到它們——一次 plan-cycle 發版印了全綠，NovelGlide 卻還停在兩版前的 0.15.1。
