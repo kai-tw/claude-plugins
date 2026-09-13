@@ -145,6 +145,43 @@ if (known && !servesThisTree) {
   process.exit(0);
 }
 
+// A git/github marketplace serves the repo's DEFAULT branch, so a release
+// pushed on any other branch is invisible to the installer until it merges.
+// Steps 6 and 7 would then fail for the most confusing possible reason: step 6
+// truthfully reports "already at the latest version" with the OLD number
+// (correct — on the default branch it IS the latest), and step 7 dies on a
+// cache directory that was never going to exist. Both reasonable, and together
+// they read as a broken release when nothing is broken.
+//
+// This is not an edge case here. The repo's own release rule requires exactly
+// one bump per PR, run at close-out — i.e. on the PR branch — so the prescribed
+// workflow guarantees this collision. A `directory` marketplace is exempt: it
+// serves the working tree, so the checked-out branch is what it already reads.
+if (src.source === 'git' || src.source === 'github') {
+  let defaultBranch = null;
+  try {
+    // Offline: the remote HEAD symref is set by clone / `git remote set-head`.
+    defaultBranch = run('git', ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD'])
+      .replace(/^origin\//, '');
+  } catch {
+    // No symref recorded — cannot tell, so don't block. Fall through and let
+    // steps 6-7 run exactly as they did before this check existed.
+  }
+  const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
+
+  if (defaultBranch && branch !== defaultBranch) {
+    console.log(`  ⚠ on branch "${branch}", but "${marketplace.name}" serves ${originSlug}@${defaultBranch}.`);
+    console.log(`    ${next} is pushed and cannot be installed until it merges — nothing is wrong.`);
+    console.log(`\n    After the merge, on THIS machine and once per consuming project:`);
+    console.log(`      claude plugin marketplace update ${marketplace.name}`);
+    console.log(`      cd <project> && claude plugin update ${plugin}@${marketplace.name} --scope project`);
+    console.log(`    Then confirm every projectPath's version in`);
+    console.log(`      ~/.claude/plugins/installed_plugins.json`);
+    console.log(`\n✔ ${plugin} ${next} committed and pushed on ${branch} — install after merge.`);
+    process.exit(0);
+  }
+}
+
 // Refresh the index before asking for the update — see the note above.
 try {
   run('claude', ['plugin', 'marketplace', 'update', marketplace.name]);

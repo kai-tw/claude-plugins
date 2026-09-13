@@ -83,9 +83,13 @@ and the version would ship untagged.
 Step 7 is the one that matters **when it runs**. Every earlier step succeeded
 during the dart-lsp incident; the failure was visible only by looking inside the
 cache. If it reports missing files, the release did not land — do not report
-success. If step 6 reported that the marketplace points elsewhere, steps 6–7 did
-not run: the release is pushed and installed nowhere from this run, so report
-that and not "installed and verified".
+success. **Two ways steps 6–7 correctly do not run**, and both end with the
+release pushed and installed nowhere — report that, never "installed and
+verified": the marketplace points somewhere other than this repo, or **HEAD is
+not the repo's default branch**. The second is the ordinary case here, since one
+bump per PR at close-out means the release commit lands on the PR branch while
+the marketplace serves `main`; the script says so and prints the two commands to
+run after the merge.
 
 ## After a release
 
