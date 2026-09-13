@@ -188,7 +188,7 @@ cost a turn, credibility, and forced the user to defend a correct claim. HOW:
 "I remember X does Y", "actually it behaves like Z", "are you sure?" are signals
 to verify, not to reinforce. (The reviewer-agent side of this — verify
 API/version claims against resolved package source — is the 有效 check in
-`agents/code-review-verifier.md`; this is the main-thread conversational half.
+`agents/code-reviewer.md` §Ruling; this is the main-thread conversational half.
 The `code-reviewer` agent has itself both hallucinated a non-existent analyzer
 API as a CRITICAL *and* overstepped its report-only mandate to EDIT the reviewed
 files — so after any code review, verify its API/version claims against the
