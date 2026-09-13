@@ -37,3 +37,15 @@
 - **S9.1-dart `compute()` 之 payload 應小於其所省之運算** — Check: 送進 isolate 之
   payload 有多大？`compute()` 對 payload 作深拷貝，故為省一次廉價運算而運送大型物件圖
   者，違反本條——其拷貝成本即為新的上界，且該成本不出現在被搬走的那段程式碼裡。
+
+## S10 — 編譯期已記錄之集合，不得以執行期查找繞過
+
+- **S10.1-dart 經 portal 算繪者，不繼承其詞法脈絡** — Check: 該經 portal 算繪之 widget
+  （`showDialog`、`showModalBottomSheet`、`Draggable.feedback`、`OverlayEntry`、任何
+  `Overlay.of(context).insert`），有無讀取一個其宿主並未供應之 `InheritedWidget`？有者，
+  違反本條：它掛在 app 根部的 `Overlay`，故呼叫端與宿主之間的每一層——`BlocProvider`、
+  `Theme`、`Material`、`MediaQuery`、`Directionality`——全數不在。其失敗**僅於執行期
+  顯現**，無編譯錯誤亦無 lint。二條出路，依序：該 widget 完全不讀自己的 `context`，
+  資料與 callback 由呼叫端傳入；或逐一顯式重橋接其子樹確實會讀到的每一層。
+  預設答案是「有」——任何非簡單的 widget 至少讀 `Theme` 與 `Material`。
+
