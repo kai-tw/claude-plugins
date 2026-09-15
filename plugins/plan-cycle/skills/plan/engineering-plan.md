@@ -55,7 +55,7 @@ The gate verifies the engineering plan covers, at a minimum:
   套件 <名>@<版>：<contract clause> → <source>) — this column is the
   cycle's only landing spot for "should this exist at all", and the
   gate treats a blank one as an unasked question, not a formality.
-  Per-class contract tables carry `既有方法夠嗎` as typed evidence
+  Contract tables carry `既有方法夠嗎` as typed evidence
   (same vocabulary as §事實帳). `plan-lint` hard-checks all three:
   the file markers against the repo, the NEW-row justifications, and
   the evidence typing. Conformance with `architecture.md` and

@@ -10,8 +10,8 @@ description: >-
   a guided questionnaire: summary, §事實帳 (typed-evidence ledger of every
   load-bearing existing-behavior claim — file:line / 實驗 / 未讀 / 只能實測 /
   今天成立; prose cites F-ids, never restates), §Classes (class inventory plus a
-  per-class public-method contract table — callee, evidence-or-未讀, complexity,
-  errors),
+  contract table per class whose public methods this plan adds, changes or
+  cites — callee, evidence-or-未讀, errors),
   a typed §Data flow graph whose nodes match it, error policy, startup order,
   migration impact, risks, and the §Conformance reverse walk. Tasks live in
   TaskCreate, not the plan body.
@@ -162,7 +162,8 @@ the PM role; bug investigation that should go to `/bug-investigate`;
 authoring **spec-derived** tests — the ones pinning the shipped flow to the
 approved plan are `/qa`'s (`testing.md` Rule 1); MASVS L2 hardening demands (route
 to the `security-privacy-reviewer` for the risk-based call); ghostwriting product or
-design content; engineer-plan-review skip / 自審 (Phase 8.5); plans missing
+design content; engineer-plan-review skip without a `plan-scope-gate`
+`skip-eligible` verdict / 自審 (Phase 8.5); plans missing
 the audit pass (Iron Law 3); plans with Notion-row / TaskCreate drift (Iron Law 4);
 "ship without review" or "skip the review, looks fine" requests
 that bypass Phase 12 (Iron Law 7).
@@ -391,13 +392,13 @@ to print the full section questionnaire with descriptions and hints):
   renders it) showing block→block wiring (widget → state holder → use case →
   repository → data source). This is the reviewer's 30-second shape + the
   modular assembly diagram; nodes are feature-prefixed class names.
-- **§Classes** — the single block inventory: one table row per block,
-  grouped by feature when more than one —
-  `Block | Layer | File (NEW/MOD/DEL) | Interface | SOP`. **Interface =
-  class name + method-signature list only — no method bodies, no logic
-  pseudo-code** — with the ctor collaborators (test seams) named. Each
-  block is produced by walking its SOP when the project keeps one (each SOP's
-  **Output** names what drops in here; leave the column `—` when it does not).
+- **§Classes** — the summary table (one row per NEW / MOD / DEL class) plus a
+  `### <Class>` contract table only for classes whose public methods this plan
+  adds, changes, or cites from §Data flow / §Conformance — a body-only MOD or a
+  DEL stops at its summary row. Columns and cell forms live in the questionnaire
+  hint (`notion-payload hints engineering-plan`); **no method bodies, no logic
+  pseudo-code**. Each block is produced by walking its SOP when the project keeps
+  one (each SOP's **Output** names what drops in here; `SOP: —` when it does not).
   **Presentation is already built** — the `*.design.dart` files are the designer's;
   your row is the mapper that feeds their parameters, citing each widget's
   `§Seam` (what each parameter means) and `§States` (which condition enters each
@@ -500,14 +501,10 @@ classes; named-method-reference rule for stream subscriptions
 8.5 is to converge to a single *confirming* review pass, not to remove
 review — so author the draft against the **same rubric the reviewer
 applies** (`.claude/agents/engineer-plan-reviewer.md` §"Criterion 10 / 11" — the
-SSOT, not re-copied), then **self-check the draft and fix anything you would
-call `critical` yourself before spawning the reviewer**. Run
-`plan-scope-gate <plan-path>` to scope the
-in-scope dimensions, design each plan section for the criterion it earns,
-and judge yourself first. This raises the floor so the reviewer's first
-pass confirms rather than iterates; it does **not** retire the
-independent gate (player ≠ referee — you can't self-catch blind spots).
-Full protocol (the criterion→section routing map + the self-check gate):
+SSOT, not re-copied). Run `plan-scope-gate <plan-path>` to scope the
+in-scope dimensions and design each plan section for the criterion it earns;
+the independent gate stays (player ≠ referee — you can't self-catch blind spots).
+Full protocol (the criterion→section routing map):
 `${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/review-loop.md` §"Author against the
 dimensions FIRST".
 
@@ -584,7 +581,7 @@ behaves as its own interface promises. They live under `test/**` *outside*
 has the partition.
 
 **Do not describe the seams in prose — the tests are the seam.** §Classes'
-Interface column already names the ctor collaborators, and the test that mounts
+ctor row already names the ctor collaborators, and the test that mounts
 them is the executable statement of the same thing; a plan paragraph saying what
 a test will pin is a claim, and the test is the fact. (The collaborator-seam rule
 in the project's state-management rule still binds: it bans listenable /
@@ -809,8 +806,8 @@ an §Error policy matrix that ticks every cell while missing half the
 real failure modes. This phase reviews the plan across the reviewer's
 scope-gated **design-quality** dimensions that the rule-compliance audit
 doesn't cover, and iterates until there are no critical findings,
-before the user is asked to approve in Phase 10. Iron Law 9 binds: this
-phase is non-skippable.
+before the user is asked to approve in Phase 10. The only skip is
+`plan-scope-gate`'s `skip-eligible` verdict (review-loop.md, intro).
 
 The loop, in brief — full protocol in
 **`${CLAUDE_PLUGIN_ROOT}/skills/engineer/references/review-loop.md`**:
@@ -844,8 +841,8 @@ The loop, in brief — full protocol in
    the body is now a different, smaller one, so its two rounds start
    over. A finding that survives the cut, or that spans every phase,
    goes to the user as above — splitting does not resolve it.
-5. **Cite the review log** in the plan header so the calibration is
-   auditable months later.
+5. **Record the verdict line** (`critical n · c10-unanswered m`) in
+   `## Revision history` — the yield record the spawn's future is decided on.
 
 Authoring-against-the-dimensions (Phase 3) is what makes step 1 return
 `proceed` on the first pass; the reviewer stays the independent gate
@@ -1023,8 +1020,8 @@ Source: the feature's Notion task (Product Plan row + Design Sheet)
 Mode: <full / phased (phases authored: <n>/<N>) / delta (parent: <Engineering
       Plan DB row>) / single-slice>
 Audit: <count> items resolved, <count> open questions surfaced
-Plan review: engineer-plan-reviewer (不落檔; verdict recorded in the plan header)
-              verdict: proceed; no critical findings after <N> round(s)
+Plan review: engineer-plan-reviewer — <proceed after <N> round(s) | skipped: surface absent>
+              · critical <n> · c10-unanswered <m> (the `## Revision history` line)
               | accepted: <dimension> <finding id> carried as debt by user
 Handed to the founder: <Notion row URL> — awaiting their review
               <their changes folded into Rev <n> and re-uploaded | no changes requested>

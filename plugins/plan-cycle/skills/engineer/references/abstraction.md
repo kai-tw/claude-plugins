@@ -123,9 +123,9 @@ abstraction:
 - **`## Migration impact`** — concrete schema / API / lint impacts
   vs the last release tag.
 - **`## Classes`** — the inventory table (class + layer + kind + file
-  NEW/MOD/DEL + 職責 + 持有狀態), then one `###` block per class carrying its
-  public-method contracts (signature, callee, evidence, complexity, errors) —
-  signatures only, no bodies. Full feature-prefixed names per `naming.md §Naming`.
+  NEW/MOD/DEL + 職責 + 持有狀態), then a `###` block only for classes whose public
+  methods the plan adds, changes, or cites, carrying their contracts (signature,
+  callee, evidence, errors) — signatures only, no bodies. Full feature-prefixed names per `naming.md §Naming`.
 - **`## Data flow`** — a mermaid graph whose node names match §Classes
   verbatim; origins typed, state nodes marked.
 - **`## Error policy`** — a one-line policy + the shared-state contention

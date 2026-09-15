@@ -107,13 +107,13 @@ is what review is *for*: ownership and shared-state defects (a capability sittin
 in the wrong layer, a private field shared across callers) are found by judgment,
 not by execution, and stay worth sending.
 
-**`engineer-plan-reviewer` runs on every engineer plan** — never skipped, not even on
-a single-slice plan, which would otherwise have no judgment gate at all, only
-a script. The cost stays proportionate because its own **Stage 1b scope-gate**
-right-sizes the fan-out over its **two** dimensions — abstraction / reuse /
+**`engineer-plan-reviewer` runs on every engineer plan with a surface.** The one
+skip is `plan-scope-gate`'s `skip-eligible` verdict (no NEW / DEL / `pubspec.yaml`
+row, no MOD row adding a member, §Migration impact 無變更), recorded in
+`## Revision history`. A `review` verdict spawns, and the reviewer's **Stage 1b
+scope-gate** walks only those of its **two** dimensions — abstraction / reuse /
 ownership, and migration & back-compat, the two that ask *should this exist at
-all* — and a single-slice plan dispatches only those whose surface it actually
-touches. Package choice is not a third: `package-explorer` returns a
+all* — whose surface the plan actually touches. Package choice is not a third: `package-explorer` returns a
 source-evidenced verdict that the review carries intact rather than re-judging. Everything that asks *is it built right*
 (time, space, scalability, extendability, coupling, correctness & race, error
 handling, testability, startup) is graded on the diff by `code-reviewer`, which

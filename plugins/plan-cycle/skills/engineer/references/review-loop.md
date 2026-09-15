@@ -20,8 +20,11 @@ The reviewer names each
 **problem and the fix it would make**; the engineer applies that fix or a
 better one of its own, then one verification round confirms them — no critical
 findings left, warnings applied or recorded — before the approval gate in
-Phase 10. Iron Law 9 binds: this
-phase is non-skippable.
+Phase 10. The spawn is skipped only when `plan-scope-gate` prints
+`VERDICT: skip-eligible` (no NEW / DEL / `pubspec.yaml` row, no MOD row answering
+`為何要新增`, §Migration impact in its one-line 無變更 form, no second-face or
+migration tell); then write `reviewer skipped: surface absent (plan-scope-gate)`
+in `## Revision history` and go to Phase 9. Any other verdict → spawn.
 
 ## Author against the dimensions FIRST (converge to one passing review)
 
@@ -29,16 +32,14 @@ The reviewer is the independent gate (player ≠ referee). The goal is
 **not** to remove it — you cannot grade your own blind spots away — but
 to make its **first pass return `proceed` with no critical**, so review
 converges to a single confirming pass instead of a multi-cycle iteration loop.
-That happens when the draft is authored against, *and self-checked against*, the
-**same rubric the reviewer applies**. Five moves:
+That happens when the draft is authored against the **same rubric the reviewer
+applies**. Four moves:
 
 ### 1. Scope the dimensions
 
-Run `plan-scope-gate <plan-path>`
-(advisory) to enumerate which of the two plan dimensions are in scope.
-Keyword
-heuristic — confirm the set yourself; never *drop* a flagged dimension
-because the script stayed quiet, and add any it missed.
+Run `plan-scope-gate <plan-path>`. `VERDICT: review` lists the dimensions and
+why; `VERDICT: skip-eligible` ends this phase (see the intro). Never *drop* a
+listed dimension; add any the script missed.
 
 ### 2. Load the bar — the rubric is the SSOT, do not reinvent it
 
@@ -66,27 +67,9 @@ The criteria numbers are the same ones in `engineer-plan-reviewer.md §Criterion
 questions per dimension);
 `notion-payload` is the routing SSOT (which section earns which dimension).
 
-### 4. Self-check before you spawn — raise the floor, don't replace the gate
+### 4. Sweep the facts ledger — verify claims before the reviewer does
 
-Before Step 1 below spawns the reviewer, judge your **own** draft against each
-in-scope dimension with the same §Severity table — one line per dimension: what
-would a hostile reader call critical here, and what would they call a warning?
-**Fix anything you would call critical yourself first** — same fix → research →
-escalate ladder as Step 3 below. Only spawn the reviewer once you cannot name a
-critical of your own.
-
-This is floor-raising, not review-replacing. A self-check cannot catch
-the blind spots a fresh-context reviewer can — the context that produced
-a flaw rarely detects it (the independence paradox). The reviewer stays
-the gate; the self-check just stops the *obvious* fixes from costing a
-whole review round-trip, so the gate's first pass **confirms** rather
-than **iterates**. If you can name a critical of your own that research and
-revision do not clear, that is exactly the escalate-to-user case — surface it now rather than spending the review
-cycle discovering it.
-
-### 5. Sweep the facts ledger — verify claims before the reviewer does
-
-The self-check above grades *judgment*; it cannot catch a **false factual
+Authoring against the rubric grades *judgment*; it cannot catch a **false factual
 claim**, because the context that wrote the claim is the context that
 believes it. So before Step 1, dispatch the **claim sweep** over §事實帳:
 read-only-plus-execution `general-purpose` sub-agents (`model: sonnet`; a
@@ -159,7 +142,7 @@ of your own.
 ## Step 3 — Apply the fixes and rev the plan
 
 If the verdict is `proceed` and there is nothing you are applying, there is
-nothing for Step 4 to verify: record the review verdict in the plan header
+nothing for Step 4 to verify: record the verdict line in `## Revision history`
 (Step 5) and proceed to Phase 9.
 
 Otherwise, first snapshot the draft for Step 4's diff
@@ -232,23 +215,20 @@ asks:
 The user's decision lands in `## Revision history` before Phase 10's
 approval gate.
 
-## Step 5 — Record the review verdict in the plan header
+## Step 5 — Record the verdict in `## Revision history`
 
-In the plan's frontmatter-style block (right after `Source spec:`
-or, when non-UI, after `Source plan:`), add a line:
+One line, via the `archivist`:
 
 ```
-Plan review: engineer-plan-reviewer (不落檔 — verdict returned inline)
-              final verdict: proceed; no critical findings after <N> round(s)
-              | accepted: <dimension> <finding id> carried as debt by user
+- YYYY-MM-DD: engineer-plan-reviewer — <proceed | blocked→resolved> after <N> round(s) · critical <n> · c10-unanswered <m> · accepted: <dimension id …>
 ```
 
-The line traces the plan back to its quality verdict so a reader
-of the plan row — months from now, in a different session — can
-audit calibration. The engineer-plan-reviewer writes no log file; the
-plan header IS the durable record of the verdict. Without
-it, the verdict evaporates; with it, the next planner can compare
-against the rubric.
+`critical` and `c10-unanswered` are copied from the report's `Yield:` line
+(`c10-unanswered` = criterion-10 findings whose §Classes row's `為何要新增` did
+not already name the owner or facility the finding cites). A run of plans at
+`critical 0 · c10-unanswered 0` is the founder's evidence for dropping the
+spawn on plans with no persistence / ownership / API-contract surface — the
+line is what that call is made on.
 
 ## What this phase does NOT do
 

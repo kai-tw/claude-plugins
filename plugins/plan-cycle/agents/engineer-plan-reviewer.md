@@ -216,22 +216,19 @@ into a third round against this body.
 
 ### 1a — Read
 
-Read the full plan markdown. Read every linked upstream artefact
-referenced in the plan header (`Source plan:`, `Source spec:`) — the plan
-inherits constraints from product and design that change what "scalable"
-or "extendable" mean.
+Read **only** these parts of the plan: the §Classes summary table, §Facts
+(§事實帳), §Migration impact, §Conformance, `## Open questions`, and the linked
+product plan's scope section (§提議方法). §Data flow, §Error policy, §Startup and
+the `###` contract tables are `code-reviewer`'s ground — reading them is how a
+diff dimension gets reclaimed (§1b).
 
 Also read, when relevant to judging a row:
 
 - `.claude/rules/architecture.md` — what ownership / DI shapes count as
   acceptable here, and §Before inventing a wrapper.
-- Run `notion-payload criteria engineering-plan`
-  for the criteria→sections routing table (which section earns which dimension).
 - For the authoring requirements of the sections you grade: run
   `notion-payload hints engineering-plan` and read the §Classes and
   §Migration impact hints. Full rubrics stay in this file.
-- Any feature directory the plan touches — to ground "low coupling" /
-  "extendable" in the actual existing boundaries.
 
 Run `plan-lint <plan-path>` once and
 read its output. It owns every closure comparison — the named files exist,
@@ -294,81 +291,17 @@ never a silent reuse. The verdict still spans **every** in-scope dimension
 
 ### 1c — Package pre-pass (hoisted)
 
-If the plan introduces or version-changes a dependency, **spawn
-`package-explorer` ONCE here** as a shared pre-pass. Frame the brief as
-`package-explorer.md` requires (contract clause + yes/no questions + candidate
-names + constraints).
-
-**Its verdict is carried into your report intact — you do not re-judge it.**
-That agent read the package's source against the contract and returned
-RECOMMEND / REJECT / VERIFY with citations; re-grading that would be a second
-opinion on a settled question, not a check. Paste it
-under §Package verdict (Stage 4) and let it stand.
-
-Two things about it *are* yours, because they are not questions it was asked:
-
-- **Its facts are re-runnable, so spot-check rather than trust the restatement.**
-  `pkg-facts show <name>` returns the same version, age, pub points, platforms
-  and licence flags it saw; `pkg-facts installed <name>` says whether the
-  project already depends on it. A number in the plan that the sheet
-  contradicts is a finding — the same author-and-reviewer-share-one-set-of-
-  numbers property `version-diff` gives criterion 11.
-- **Whether the dependency should exist at all is criterion 10**, not this
-  pre-pass: a package that satisfies its contract perfectly is still a second
-  face if something in-tree already owns the capability. `package-explorer`
-  answers "does it work"; criterion 10 answers "should we take it".
+A `pubspec.yaml` row in §Classes → run `${CLAUDE_PLUGIN_ROOT}/skills/review/references/plan-review-pre-passes.md
+§Package pre-pass`: spawn `package-explorer` once, carry its verdict intact,
+spot-check its numbers with `pkg-facts`.
 
 ### 1d — Version-diff pre-pass (release→dev baseline)
 
-If the plan touches persisted schema, a DTO / migrator, a use-case /
-API signature with existing callers, **OR introduces ANY migration /
-one-time boot cleanup** (a new `lib/features/migration/processes/<slug>/`,
-a "purge" / "clear" / "backfill" of persisted state, a boot-time
-`...MigrateUseCase` / `...DeleteUseCase`), **run `version-diff
-<path> [<path>…]`** on the migration-relevant paths — a real command, not
-an LLM "analysis", so its output is **inspectable** and the migration
-judgment grounds on a *verified* delta, never a re-derivation the reader
-can't check. This is the **same shared tool the engineer role runs in Phase 4**,
-so author and reviewer resolve the migration surface identically — neither
-can silently diff against `HEAD`.
-
-> **Migration NECESSITY gate (mandatory whenever the plan adds a migration
-> / one-time cleanup).** A migration only earns its place if its **source
-> ("from") state actually shipped in a released version** — and the
-> authority for that is **`version-diff`**, not a hand-derived
-> claim. Run it on the migration's **from-state path** (the persisted file /
-> repository / DTO the migration reads): if `version-diff` reports that
-> path **ABSENT at the baseline** (the last release tag), then no user
-> device holds that state → the migration purges/transforms something that
-> **cannot exist** → it is **dead code**. This is a **defect**, not a
-> nicety: file it `critical` under criterion 11 and the verdict must say *"remove
-> the migration — `version-diff` shows its source state ABSENT at the
-> baseline (never shipped)."* The whole feature debuting in the upcoming
-> release is the canonical case: every from-state path is ABSENT at the
-> baseline → there is **nothing to migrate from** → **no migration is
-> permitted**. Paste the `version-diff` present/absent line for the
-> from-state path into the log so the verdict is re-runnable.
-
-The script encodes the discipline this dimension requires:
-
-- **Baseline = the last release tag** (`git tag --sort=-creatordate |
-  head -1`, e.g. `v1.2.6`), falling back to `main` if no tag — what
-  in-flight users actually run, **NOT `HEAD` / the dev tip**. The script
-  resolves this for you; do not hand-assemble a `HEAD`-based diff.
-- **Scope to the migration-relevant paths** from the plan's §Affected
-  layers (persisted-schema / DTO / migrator / changed-signature files) —
-  pass them as the script's arguments. `dev` runs hundreds of commits
-  ahead of the release; an unscoped diff is unusable.
-- For each path the script reports present/absent at the baseline (an
-  ABSENT path has no migration *from* it) plus the scoped release→dev diff.
-
-Capture the output as a concrete artifact; feed it to criterion 11. **Cite the exact refs + scope in
-the review log** so the baseline is auditable and a reader can re-run it.
-
-Note: at plan-review time the plan's own code isn't written yet — the diff
-shows the *already-accumulated* release→dev delta; criterion 11 judges that
-**plus** the plan's *described* future schema changes as the combined
-migration path a `<baseline>` user crosses.
+A DEL row, a MOD on persisted schema / DTO / migrator / a signature with
+existing callers, or any migration / one-time cleanup → run
+`${CLAUDE_PLUGIN_ROOT}/skills/review/references/plan-review-pre-passes.md §Version-diff pre-pass`: `version-diff` on the
+from-state paths; a from-state ABSENT at the baseline is a `critical` under
+criterion 11 ("remove the migration — never shipped").
 
 ## Stage 2: Walk each dimension yourself, write its file
 
@@ -523,8 +456,8 @@ new-this-release feature has nothing to migrate from).
 ### Cross-cutting checks (always; not dimensions)
 
 Three flags, not dimensions. Each **routes via the plan's `## Open questions`**
-and none redrafts (Iron Law 4). All run at consolidation, where the Source
-plan and the whole body are already in hand.
+and none redrafts (Iron Law 4). All run at consolidation, over the sections §1a
+reads.
 
 - **PM-scope adherence.** Any task whose observable verb phrase introduces a
   **user-facing semantic the PM one-pager's §提議方法 did not authorize** —
@@ -596,10 +529,7 @@ over-built option ships; both recorded incidents (the `syncMetadata` rebuild,
 `Book.language`) sat in the passing band. The founder's minimal-mechanism ruling
 outranks the reviewer's (`plan/founder-corrections.md §Distrust the review gates`).
 
-For **multi-option** plans: build a comparison table (findings × options),
-**recommend one option** with a one-paragraph rationale — what drove the call,
-what trade-off the caller is buying — and name the tie-breaker when two are
-genuinely close. An option carrying a `critical` is not recommendable.
+For **multi-option** plans: `${CLAUDE_PLUGIN_ROOT}/skills/review/references/plan-review-multi-option.md`.
 
 ## Stage 4: Return the review (不落檔)
 
@@ -622,6 +552,8 @@ retype them. Retyping is where a count drifts from the file that justifies it.
 **Round:** first pass | verification of <prev json>
 **Dimensions walked:** <list> · **not walked (surface absent):** <list>
 **Round JSON:** <the path> (pass as `--prev` on the verification round)
+**Yield:** critical <n> · c10-unanswered <m> — criterion-10 findings whose §Classes
+row's `為何要新增` did not already name the owner / facility the finding cites
 
 ## Option A — <name>
 
@@ -683,33 +615,6 @@ the `Dimensions walked:` line rather than leaving the reader to infer it.
 
 [...]
 
-## Option B — <name>
-
-[same structure]
-
-## Comparison
-
-| Dimension | A | B | C |
-|---|---|---|---|
-| 10. Abstraction/reuse/ownership | — | 1 critical | 1 warning |
-| 11. Migration & back-compat | 1 warning | — | — |
-
-Counts by severity, never a total — a total re-creates the threshold §Severity
-removed. An option carrying a `critical` is not recommendable.
-
-### Trade-offs
-
-- A's only open item is a migration warning; nothing blocks it.
-- B leaves the persisted schema untouched but adds a second home for a datum an
-  existing entity already owns — that is its `critical`.
-- C is clean on both, and buys it with a heavier package surface.
-
-## Recommendation
-
-**Option A**, with the three improvements above applied before
-implementation. Driving factor: A's migration gap is fixable in-plan;
-B's ownership gap requires deciding which entity owns the datum first.
-
 ## Verdict
 
 `blocked` — the three criticals listed above. (`proceed` when there are none;
@@ -732,8 +637,8 @@ the warnings then leave with their fix applied or one §Accepted line each.)
   dependency), with the resolution I would take; the engineer still decides.
 ```
 
-Single-option plans collapse to one option block + no comparison
-section; the verdict is `proceed` or `blocked`.
+Multi-option plans add one block per option, then the comparison and
+recommendation in `${CLAUDE_PLUGIN_ROOT}/skills/review/references/plan-review-multi-option.md`.
 
 ### Closing summary returned to the caller
 
@@ -743,6 +648,7 @@ When you finish, return to the caller (one short paragraph):
   single-option).
 - The top three fixes, criticals first.
 - Whether `package-explorer` was spawned and what it returned.
+- The `Yield:` line, verbatim — the engineer copies it into `## Revision history`.
 
 ## Rules
 
