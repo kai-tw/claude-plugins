@@ -21,6 +21,10 @@
     {
       "name": "security-guidance",
       "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "flutter-toolkit",
+      "marketplace": "kai-tw"
     }
   ],
   "skills": [

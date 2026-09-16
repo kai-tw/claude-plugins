@@ -17,4 +17,4 @@ impl="$here/../skills/engineer/scripts/test_first.sh"
 case "${1:-}" in
   --help|-h|'') exec bash "$impl" "$@" ;;
 esac
-exec bash "$here/../skills/qa/scripts/plan_test.sh" --exec bash "$impl" "$@"
+exec plan-test --exec bash "$impl" "$@"

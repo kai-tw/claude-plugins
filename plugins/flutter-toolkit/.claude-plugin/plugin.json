@@ -1,0 +1,11 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "flutter-toolkit",
+  "version": "1.0.0",
+  "description": "Flutter test gates for a shared machine: plan-test (a machine-wide slot budget for test runs), plan-coverage (per-line reach over the diff) and plan-mutation (mutation score over the diff).",
+  "author": { "name": "Kai", "url": "https://github.com/kai-tw" },
+  "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/flutter-toolkit",
+  "license": "MIT",
+  "keywords": ["flutter", "dart", "testing", "coverage", "mutation"],
+  "skills": ["./skills/test-gates"]
+}

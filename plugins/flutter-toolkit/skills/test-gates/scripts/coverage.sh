@@ -9,7 +9,7 @@
 #
 #   The gate is per LINE, not per percent. A file at 92% and a file at 92% are
 #   not the same file: one missed a logging branch, the other missed the error
-#   path. `qa/SKILL.md` states the rule this enforces — for each changed file,
+#   path. plan-cycle's `qa/SKILL.md` states the rule this enforces — for each changed file,
 #   either every line is executed, or the exception is NAMED WITH ITS REASON —
 #   and a percentage cannot express it. So the output is the list of unexecuted
 #   lines, and the pass condition is that every one of them carries a reason.

@@ -110,9 +110,10 @@ exist. Two mechanisms, by what is being referred to:
   plugin is enabled, so every script has a launcher there and is invoked by name
   from anywhere: `plan-cycle`, `notion-payload`, `plan-lint`, `plan-scope-gate`,
   `pm-abstraction-check`, `render-mockups`, `plan-feedback`, `plan-test-first`,
-  `plan-flow`,
-  `plan-mutation`, `plan-coverage`, `plan-qa-report`. The implementations
-  stay with the skills that own them; `bin/` holds three-line `exec` launchers.
+  `plan-flow`, `plan-qa-report`. The implementations stay with the skills that
+  own them; `bin/` holds three-line `exec` launchers. `plan-test`,
+  `plan-coverage` and `plan-mutation` come from the `flutter-toolkit` plugin
+  (a declared dependency) the same way.
   Names carry a `plan-`/`pm-` prefix where the bare word would be too generic
   for a global `PATH`, or would collide with a skill of the same name
   (`plan-feedback` vs the `feedback-ledger` skill).

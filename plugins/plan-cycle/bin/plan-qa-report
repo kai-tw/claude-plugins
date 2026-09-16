@@ -20,4 +20,4 @@ impl="$here/../skills/qa/scripts/qa_report.sh"
 case "${1:-}" in
   --help|-h) exec bash "$impl" "$@" ;;   # printing help must not need a slot
 esac
-exec bash "$here/../skills/qa/scripts/plan_test.sh" --exec bash "$impl" "$@"
+exec plan-test --exec bash "$impl" "$@"

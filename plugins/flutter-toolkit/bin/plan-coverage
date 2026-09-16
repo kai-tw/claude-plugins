@@ -10,7 +10,7 @@
 # from a project-relative reference and changes on every version bump.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-impl="$here/../skills/qa/scripts/coverage.sh"
+impl="$here/../skills/test-gates/scripts/coverage.sh"
 
 # `flutter test --coverage` is the slow shape of the suite (measured ~20 min vs
 # ~4 min plain on NovelGlide), and this script types it INSIDE itself where the
@@ -19,4 +19,4 @@ impl="$here/../skills/qa/scripts/coverage.sh"
 case "${1:-}" in
   --help|-h) exec bash "$impl" "$@" ;;   # printing help must not need a slot
 esac
-exec bash "$here/../skills/qa/scripts/plan_test.sh" --exec bash "$impl" "$@"
+exec bash "$here/../skills/test-gates/scripts/plan_test.sh" --exec bash "$impl" "$@"

@@ -128,11 +128,11 @@ if ci_coverage_green; then
   echo "=== plan-qa-report: coverage — GREEN ON CI for $sha, not re-run ==="
 else
   echo "=== plan-qa-report: coverage ==="
-  bash "$here/coverage.sh" ${PASSTHRU[@]+"${PASSTHRU[@]}"} -- "$@"; cov_rc=$?
+  plan-coverage ${PASSTHRU[@]+"${PASSTHRU[@]}"} -- "$@"; cov_rc=$?
 fi
 echo
 echo "=== plan-qa-report: mutation ==="
-bash "$here/mutation.sh" ${PASSTHRU[@]+"${PASSTHRU[@]}"} ${MUT_ONLY[@]+"${MUT_ONLY[@]}"} -- "$@"; mut_rc=$?
+plan-mutation ${PASSTHRU[@]+"${PASSTHRU[@]}"} ${MUT_ONLY[@]+"${MUT_ONLY[@]}"} -- "$@"; mut_rc=$?
 
 # exit 2 from either means the tool never measured — a red suite, a missing
 # engine, no coverage written. There is no report to post about a run that did

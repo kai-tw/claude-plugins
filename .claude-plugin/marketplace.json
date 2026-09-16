@@ -22,6 +22,17 @@
       "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/dart-lsp"
     },
     {
+      "name": "flutter-toolkit",
+      "description": "Flutter test gates for a shared machine — plan-test slot budget, per-line coverage and mutation score over the diff",
+      "source": "./plugins/flutter-toolkit",
+      "category": "development",
+      "author": {
+        "name": "Kai",
+        "url": "https://github.com/kai-tw"
+      },
+      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/flutter-toolkit"
+    },
+    {
       "name": "session-journal",
       "description": "Cross-session task-state journal — which threads are in flight and where each one lives, surviving context compaction, /clear, and resume",
       "source": "./plugins/session-journal",

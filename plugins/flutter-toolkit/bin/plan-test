@@ -10,4 +10,4 @@
 # from a project-relative reference and changes on every version bump.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec bash "$here/../skills/qa/scripts/plan_test.sh" "$@"
+exec bash "$here/../skills/test-gates/scripts/plan_test.sh" "$@"

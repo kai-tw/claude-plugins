@@ -17,7 +17,7 @@
 #
 # WHY THE SLOT COUNT AND NOT `-j`
 #   Capping concurrent INVOCATIONS is arithmetic: N runs cost N times one run.
-#   Capping each run's `--concurrency` is a different claim, and `qa/SKILL.md`
+#   Capping each run's `--concurrency` is a different claim, and plan-cycle's `qa/SKILL.md`
 #   §Running the suite currently records the opposite for NovelGlide ("no
 #   memory benefit on this repo"). So this does NOT touch `-j` by default.
 #   `PLAN_TEST_J` is there for whoever measures it; until someone does, the
