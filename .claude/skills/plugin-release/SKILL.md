@@ -71,6 +71,9 @@ unrelated edits. Commit or stash those first.
    this repo, the script says so and stops at a clean success rather than
    failing a check that could not have passed.
 7. **Verify** the installed cache contains every file that exists in source.
+8. **Verify it loads** in every install `claude plugin list` shows.
+   `claude plugin update` does not install newly declared `dependencies`, so a
+   complete cache can still fail to load everywhere.
 
 Step 4 is downstream of the commit because anything that inspects committed
 history has to wait for the commit.
@@ -80,10 +83,10 @@ history has to wait for the commit.
 `main`. Tagging here would satisfy that workflow, so it would find nothing to do
 and the version would ship untagged.
 
-Step 7 is the one that matters **when it runs**. Every earlier step succeeded
+Steps 7–8 are the ones that matter **when they run**. Every earlier step succeeded
 during the dart-lsp incident; the failure was visible only by looking inside the
-cache. If it reports missing files, the release did not land — do not report
-success. **Two ways steps 6–7 correctly do not run**, and both end with the
+cache. If either fails, the release did not land — do not report
+success. **Two ways steps 6–8 correctly do not run**, and both end with the
 release pushed and installed nowhere — report that, never "installed and
 verified": the marketplace points somewhere other than this repo, or **HEAD is
 not the repo's default branch**. The second is the ordinary case here, since one

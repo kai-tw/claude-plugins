@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Release a plugin: bump → validate → commit → push → update → VERIFY.
+// Release a plugin: bump → validate → commit → push → update → VERIFY cache → VERIFY load.
 // The TAG is CI's (`.github/workflows/plugin-tag.yml`), not this script's.
 //
 // The verify step is the point. A bump that is not installed is invisible, and
@@ -165,7 +165,7 @@ if (src.source === 'git' || src.source === 'github') {
       .replace(/^origin\//, '');
   } catch {
     // No symref recorded — cannot tell, so don't block. Fall through and let
-    // steps 6-7 run exactly as they did before this check existed.
+    // steps 6-8 run exactly as they did before this check existed.
   }
   const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
 
@@ -246,4 +246,29 @@ if (missing.length) {
 }
 
 console.log(`  ✔ ${inCache.size} file(s) match source`);
+
+step(8, 'VERIFY the plugin loads');
+// A full cache can still fail to load — `claude plugin update` does not install
+// newly declared `dependencies`, and plan-cycle 2.6.0 shipped "verified" while
+// failing to load in every scope. `--json` carries no load status, so read the
+// text form, and fail if the plugin is absent from it: a changed format must
+// not pass silently.
+const id = `${plugin}@${marketplace.name}`;
+const field = (b, k) => b.match(new RegExp(`^\\s*${k}:\\s*(.*)$`, 'm'))?.[1]?.trim() ?? '?';
+const blocks = run('claude', ['plugin', 'list'])
+  .split(/^\s*❯\s+/m)
+  .slice(1)
+  .filter((b) => b.split('\n')[0].trim() === id && field(b, 'Version') === next);
+if (blocks.length === 0) die(`\`claude plugin list\` shows no ${id} at ${next} — cannot confirm it loads`);
+
+const failed = blocks.filter((b) => /Status:.*fail/i.test(b));
+if (failed.length) {
+  const detail = failed.map((b) => `      [${field(b, 'Scope')}] ${field(b, 'Error')}`).join('\n');
+  die(
+    `${id} ${next} is installed but FAILS TO LOAD in ${failed.length} of ${blocks.length} install(s) at ${next}:\n` +
+      `${detail}\n    missing \`dependencies\` are not installed by \`claude plugin update\` — install them, then re-check`,
+  );
+}
+console.log(`  ✔ loads in all ${blocks.length} install(s) at ${next}`);
+
 console.log(`\n✔ ${plugin} ${next} released, installed and verified`);
