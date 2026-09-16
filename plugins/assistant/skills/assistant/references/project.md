@@ -8,8 +8,9 @@ vcs:        git | svn                      # worktree vs working copy; push vs c
 notion_root: <page-id>                     # the KB root; TaskList is resolved by title under it
 lint:       <command>                      # commit-hook leg
 test:       <command>
+coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, or its exception named with a reason
+mutation:   <command or none>              # mutation score on the diff; gate: ≥ 80
 render:     <command or none>              # produces the contact sheet for ② 畫面
-plan_lint:  <command or none>              # e.g. plan-lint (plan-cycle) when installed
 rules:      <path>                         # the project's .claude/rules/ overlay the verifier grades against
 destructive: <list>                        # actions the assistant must ask before (svn revert, force-push, …)
 ```

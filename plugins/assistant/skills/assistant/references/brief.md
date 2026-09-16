@@ -24,6 +24,6 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 - <screens × states the contact sheet will show>
 
 ## 預算與 debt
-- lint 3 · review <0|1> · fix 2 · upload 2
+- review <0|1> · fix 2 · upload 2
 - 已知 debt：<none, or one line each>
 ```

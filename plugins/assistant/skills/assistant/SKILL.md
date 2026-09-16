@@ -43,7 +43,7 @@ message only: a decision needed, a blocker, done.
 ## The flow
 
 ```
-request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Plan-lite ─▶ Build ─▶ ② screens ─▶ Wire ─▶ Verify ─▶ ③ PR ─▶ Close
+request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② screens ─▶ Wire ─▶ Verify ─▶ ③ PR ─▶ Close
 ```
 
 1. **任務書** (you, one paragraph): goal · boundary · done-when · project · tier.
@@ -52,26 +52,25 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Plan-lite ─▶ B
    `feature` (everything else — the full flow). Unsure → `feature`.
 2. **Scout** (`scout`, sonnet, in the project worktree) returns ≤10 fact rows
    (`file:line` or `未讀`) and the intent forks it could not settle.
-3. **① Brief** (you): from the facts and forks, `references/brief.md`. Ask once,
-   with everything `需要你` in one `AskUserQuestion`. Silence on `自行裁定` = accepted.
-4. **Plan-lite** (`builder`): one page per `references/plan-lite.md`; lint via the
-   project's `plan-lint` when it has one, else the section check in the template.
-   `asst-budget spend <slug> lint` before each run — the cap, not you, ends it.
-   One `code-verifier` pass on the plan **only** when it adds a class, a
-   dependency or a persisted format (`asst-budget spend <slug> review`).
-5. **Build** (`builder`): UI first, as real widgets in all four states → render
+3. **① Brief** (you): from the facts and forks, `references/brief.md`. When the
+   design adds a class, a dependency or a persisted format, one `code-verifier`
+   pass on the draft first (`asst-budget spend <slug> review`), so the founder
+   is asked once. Ask once, with everything `需要你` in one `AskUserQuestion`.
+   Silence on `自行裁定` = accepted.
+4. **Build** (`builder`): UI first, as real widgets in all four states → render
    the contact sheet → **② stop for the founder**. Data wiring waits for OK.
-6. **Wire + tests** (`builder`): commits per phase; the project's commit hook
+5. **Wire + tests** (`builder`): commits per phase; the project's commit hook
    (lint · format · tests) is the gate.
-7. **Verify** (three agents in parallel on the diff): `code-verifier` (the four
-   founder dimensions + the design delta), the security floor
-   (`security-guidance` hooks run unattended; the project's own sink rules when
-   it has them), the project's test-strength check when it has one. Builder
-   applies fixes; `asst-budget spend <slug> fix` per round. Residue at the cap →
-   debt task, or one `需要你` line if it changes scope or design.
-8. **③ PR** (you, from the verifier reports): `references/pr-summary.md`. Merge
-   or send-back is the founder's; a send-back re-enters step 6.
-9. **Close** (`scribe`, haiku): board row → shipped, KB entry, one retro line,
+6. **Verify** (three legs in parallel on the diff): `code-verifier` (the six
+   blocks), the security floor (`security-guidance` hooks run unattended; the
+   project's own sink rules when it has them), and the adapter's `coverage:` /
+   `mutation:` commands when set — gate: every changed line executed or its
+   exception named with a reason; mutation score ≥ 80. Builder applies fixes;
+   `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
+   one `需要你` line if it changes scope or design.
+7. **③ PR** (you, from the verifier reports): `references/pr-summary.md`. Merge
+   or send-back is the founder's; a send-back re-enters step 5.
+8. **Close** (`scribe`, haiku): board row → shipped, KB entry, one retro line,
    the task's rounds and cost appended to `.claude/.assistant/ledger.md`.
 
 ## The board
@@ -85,7 +84,7 @@ the board → advance or dispatch each live row → surface new `需要你` line
 
 ## Budgets
 
-`asst-budget` counts per task: lint 3 · review 1 · fix 2 · upload 2. A cap hit is
+`asst-budget` counts per task: review 1 · fix 2 · upload 2. A cap hit is
 never "one more try": record as debt (a Deferred task with a Trigger), cut scope
 (`自行裁定`, written into the brief), or raise `需要你`. No round ends because someone
 inside it felt it converged.

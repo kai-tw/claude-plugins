@@ -16,7 +16,7 @@ tools:
   the script; `asst-notion --help` lists the commands. Writes are dry-run until
   `--commit`. The TaskList / plan / archive schemas are `schemas/*.mjs`.
 - `asst-section replace|append|get <file> <heading> [md|-]` — edit one section of
-  a plan-lite or body file; upload afterwards with `asst-notion update`.
+  a body file; upload afterwards with `asst-notion update`.
 - `ntn` gotchas the CLI does not tell you: raw `ntn api -X POST|PATCH` hangs
   unless stdin is closed (`</dev/null`); `ntn pages trash` needs `--yes`;
   `ntn pages get` prints the generated marker backslash-escaped.

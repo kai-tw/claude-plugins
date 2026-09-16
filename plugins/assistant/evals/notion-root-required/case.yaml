@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: notion-root-required
+description: 沒給 --root 就拒寫，不猜預設 root、不呼叫 ntn。
+tags: [asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: asst-notion set tasklist 12345678123456781234567812345678 Stage=Review; echo "exit=$?"
+  prompt: |
+    把 tasklist 頁 12345678123456781234567812345678 的 Stage 改成 Review（dry-run 即可）。這個專案沒有宣告 notion_root，不要自己猜；印出工具的輸出和 exit code。
+context:
+  scaffold_script: fixture.sh

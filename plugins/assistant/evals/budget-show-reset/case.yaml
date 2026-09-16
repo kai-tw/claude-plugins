@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: budget-show-reset
+description: fix 記到 2/2，其他 kind 不動；reset 後全歸零。
+tags: [asst-budget]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: asst-budget spend demo fix >/dev/null; asst-budget spend demo fix >/dev/null; asst-budget show demo; asst-budget reset demo; asst-budget show demo
+  prompt: |
+    對任務 demo 記 2 次 fix round，印出三種 kind 的計數；然後 reset 這個任務，再印一次。
+context:
+  scaffold_script: fixture.sh

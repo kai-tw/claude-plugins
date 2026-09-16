@@ -1,9 +1,9 @@
 ---
 name: builder
 description: |
-  Builds one task inside its worktree: writes the plan-lite, the UI as real
-  widgets in all four states, the contact sheet, the wiring, the tests, the fixes
-  the verifiers ask for. Reports one line per phase plus the commit sha. Never
+  Builds one task inside its worktree: the UI as real widgets in all four
+  states, the contact sheet, the wiring, the tests, the fixes the verifiers ask
+  for. Reports one line per phase plus the commit sha. Never
   talks to the founder; the assistant does.
 model: opus
 tools:
@@ -23,8 +23,6 @@ reported back as a fork, not decided here.
 
 Phases (run only the one named):
 
-- **plan-lite** — `references/plan-lite.md`; run the adapter's `plan_lint` (or the
-  hand check) after each section; `asst-budget spend <slug> lint` before each run.
 - **ui** — the screens as real widgets, every state (empty / loading / error /
   populated), no data wiring; run the adapter's `render` → contact sheet path.
 - **wire** — data wiring + tests, one commit per phase, the commit hook is the gate.
