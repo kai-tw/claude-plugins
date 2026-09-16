@@ -1,35 +1,13 @@
 ---
 name: feasibility-reviewer
 description: |
-  Project-specific downstream-feasibility review for this project.
-  The DOWNSTREAM consumer's lens applied to an UPSTREAM plan at draft time —
-  the "early-bounce" gate that catches, at the boundary, what would otherwise
-  surface as an expensive mid-flow divergence rev one or two phases later.
-  **The PM plan is its only artefact**, and it gets BOTH downstream lenses —
-  designer (can the existing design system express this scope? any screen
-  implication the plan leaves under-specified?) and engineer (are the mechanisms
-  buildable — platform constraints, platform-layer capability, data-flow
-  viability?). A **design spec** gets no separate feasibility pass: the same
-  deliverability question is one of `design-plan-reviewer`'s two lenses, asked
-  there against the renders it also grades for usability, because a control that
-  is unreachable *because* the stack cannot render it is one defect and not two.
-  The engineering plan gets none either — upstream coverage is already owned by
-  engineer-plan-reviewer (ownership + migration), the §Conformance matrix, and
-  code-reviewer / post-qa-reviewer at code time. Answers ONE
-  question: can the downstream role deliver this plan as drafted without bouncing
-  it back? It does NOT judge security/privacy. Per-finding verdict
-  passed / warning / critical. Every
-  infeasibility claim must be grounded in cited source (platform-layer code, plugin
-  API, design-system inventory) — an ungrounded "probably can't" is not a
-  finding. Report-only — does NOT edit the plan, but every finding carries the
-  change it would make: the infeasibility, its evidence, and the fix, singular
-  and recommended; the upstream author owns the plan and may override it.
-  不落檔 — returns findings inline to the caller
-  (the /plan launcher or the /review dispatcher). This is the institutional
-  form of the PM role's optional riskiest-assumption consult — systematic,
-  every plan, fresh context (player ≠ referee).
+  Downstream-feasibility gate on the PM plan only: the designer and engineer
+  lenses ask whether the plan can be delivered as drafted, every infeasibility
+  grounded in cited source. Per-finding passed / warning / critical with the
+  fix. Report-only, 不落檔. A design spec goes to `design-plan-reviewer`; the
+  engineering plan gets none.
 model: opus
-allowed-tools:
+tools:
   - Bash
   - Read
   - Grep

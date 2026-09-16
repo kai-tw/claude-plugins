@@ -1,51 +1,22 @@
 # ntn — Notion CLI operational notes (the archivist's transport)
 
-All KB I/O runs through the official `ntn` CLI (a thin wrapper over the Notion REST
-API). `SKILL.md` covers the read / write *flow*; this file holds the operational
-detail and the **gotchas that fail silently or surprisingly** — read it before
-driving `ntn` by hand, and whenever a raw `ntn` call behaves unexpectedly.
+All KB I/O runs through Notion's official `ntn` CLI (`github.com/makenotion/cli`,
+install per `https://ntn.dev`). It is self-documenting — prefer these over memory:
+`ntn api ls` (every endpoint), `ntn api <path> --help | --docs | --spec`,
+`ntn <command> --help`. `SKILL.md` holds the read / write flow; this file holds
+what the CLI does not tell you.
 
-## Installing
+## Binary + auth
 
-`ntn` is Notion's official first-party CLI (Beta) — `github.com/makenotion/cli`,
-installer served from `https://ntn.dev` (302s to the docs in a browser; a bare
-`curl` gets the install script). On a fresh machine:
-
-    curl -fsSL https://ntn.dev | NTN_INSTALL_DIR="$HOME/development/ntn" bash
-
-`NTN_INSTALL_DIR` MUST sit on `bash`, not `curl` — a `VAR=… curl | bash` prefix
-scopes the var to curl and the piped `bash` never sees it, dropping the binary in
-the default `~/.local/bin` instead. Either dir is fine; if you take the default,
-update `.zshrc`'s `NTN_INSTALL_DIR` export + the paths in §Invoking the binary to
-match. Then `ntn --version` to verify, and `ntn login` (§Auth). Alternatives:
-`npm install --global ntn`, or `winget install Notion.ntn` (Windows).
-
-## Invoking the binary
-
-- `ntn` is installed at `~/development/ntn`, and is on `PATH` **only** via the
-  user's interactive shell (`.zshrc` exports `NTN_INSTALL_DIR`). A non-interactive
-  tool shell does **not** have it on `PATH` — a bare `ntn …` returns "command not
-  found". This bites every ad-hoc call.
 - The builder resolves the binary itself (`$NTN_BIN` → `$NTN_INSTALL_DIR/ntn` →
-  `~/development/ntn/ntn` → `PATH`), so `node notion_payload.mjs …` always works
-  regardless of `PATH`.
-- For an **ad-hoc** `ntn` call, first `export PATH="$HOME/development/ntn:$PATH"`,
-  or invoke the absolute path `"${NTN_INSTALL_DIR:-$HOME/development/ntn}/ntn"`.
-
-## Auth
-
-- Authenticated via `ntn login` — saved credentials under `~/.config/notion` (a
-  bot user in the workspace). Same-user subprocesses (including Agent-tool
-  subagents on this machine) reuse it; nothing to pass through.
-- `ntn whoami` / `ntn doctor` confirm the session is live (look for "Public API
-  authenticated").
-- **Headless / cron** (no interactive keychain unlock): export `$NOTION_API_TOKEN`
-  (a personal access token — it takes precedence over the keychain), or set
-  `$NOTION_KEYRING=0` to use file-based auth at `~/.config/notion/auth.json`.
-- `$NOTION_API_VERSION` pins the `Notion-Version` header; the default auto-resolves
-  to the latest (which supports the data-source model the registry relies on). Pin
-  it only if a version change actually breaks a call — a wrong pin can only error a
-  request, never corrupt data.
+  `PATH`), so `notion-payload …` works from a non-interactive shell even when
+  `ntn` is on `PATH` only via the interactive one; an ad-hoc call uses the same
+  resolution.
+- `ntn login` saves credentials (a bot user in the workspace); same-user
+  subprocesses reuse them. Headless: `NOTION_API_TOKEN` (takes precedence) or
+  `NOTION_KEYRING=0` (file auth at `~/.config/notion/auth.json`). `ntn whoami`
+  confirms. `NOTION_API_VERSION` pins the header — pin only when a version change
+  breaks a call.
 
 ## Gotchas
 
@@ -92,19 +63,19 @@ These are the things that don't fail loudly — each one cost a debugging cycle.
 
 ## Command crib
 
-All `notion_payload.mjs` write commands are **dry-run** until `--commit`. Reads go
-straight through `ntn`. (See `SKILL.md §Reading` and `§Build request bodies` for
-the full flow; this is the quick lookup.)
+All `notion-payload` write commands are **dry-run** until `--commit`. Reads go
+straight through `ntn`.
 
 | Need | Command |
 |---|---|
-| Read a DB by property | `ntn datasources query <ds> --filter '<json>' --sort '<prop> [asc\|desc]' --json` — build `<json>`+ds with `notion_payload.mjs filter <db> Prop=Val` |
+| Read a DB by property | `ntn datasources query <ds> --filter '<json>' --sort '<prop> [asc\|desc]' --json` — build `<json>` + ds with `notion-payload filter <db> Prop=Val` |
 | Read one page (body) | `ntn pages get <id>` |
-| Read a DB's live schema | `ntn api v1/data_sources/<ds>` (or `notion_payload.mjs schema --live [db]`) |
-| Create rows + body | `notion_payload.mjs create <manifest> --commit` |
-| Update properties | `notion_payload.mjs update <manifest> --commit` |
-| Flip props on ONE page (no manifest) | `notion_payload.mjs set <db> <page-id> Prop=Val … --commit` — the Status/Stage flip |
-| Tick a checklist box | `notion_payload.mjs check <id> "<text>" --commit` |
-| Append blocks to a body | `notion_payload.mjs append <id> <md-file\|-> --commit` |
-| Post a comment | `notion_payload.mjs comment <id> "<text>" --commit` |
-| Trash a page | `notion_payload.mjs trash <id> --commit` |
+| Read a DB's live schema | `ntn api v1/data_sources/<ds>` (or `notion-payload schema --live [db]`) |
+| Create rows + body | `notion-payload create <manifest> --commit` |
+| Update properties / replace a body from its `bodyFile` | `notion-payload update <manifest> --commit` |
+| Edit one section of the local body first | `plan-section replace\|append <bodyFile> <heading> [md\|-]` |
+| Flip props on ONE page (no manifest) | `notion-payload set <db> <page-id> Prop=Val … --commit` |
+| Tick a checklist box | `notion-payload check <id> "<text>" --commit` |
+| Append blocks to a body | `notion-payload append <id> <md-file\|-> --commit` |
+| Post a comment | `notion-payload comment <id> "<text>" --commit` |
+| Trash a page | `notion-payload trash <id> --commit` |

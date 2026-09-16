@@ -1,38 +1,14 @@
 ---
 name: design-plan-reviewer
 description: |
-  The judgment gate on a DESIGN SPEC — the two questions worth asking once the
-  spec is drafted and before anyone builds it, walked in ONE context because both
-  read the same artefact at the same moment. **Usability**: plays an adversarial
-  first-time user, running a cognitive walkthrough of every flow plus a heuristic
-  sweep across six axes (task completability, orientation & feedback, error
-  prevention & recovery, consistency & recognition, reading-first minimalism, and
-  a cross-cutting meta axis for reachability / i18n text-expansion / first-run
-  guidance) against `review/rules/ux/`. **Deliverability**: the downstream
-  engineer's lens on this upstream spec — can the project's UI stack actually
-  deliver each layout, motion and interaction as specified, given the platform
-  bridge, the plugin APIs and the embedded-view boundary? The two meet on the
-  defect neither alone can name: a control the user cannot reach *because* the
-  platform cannot render it there is one finding, not two reports. Per-finding
-  verdict passed / warning / critical — a usability `critical` is an objective
-  defect (a dead-end state, an unreachable primary control, an unconfirmed
-  destructive action, a silent action); a deliverability `critical` is
-  infeasible-as-drafted **with a cited source**, never an ungrounded "probably
-  can't". Right-sizes the usability walk itself (light / standard / deep) from
-  the spec's scope; a caller may override. Report-only — does NOT edit the spec,
-  but every finding carries the change it would make, singular; the designer owns
-  the design and may override it. 不落檔 — returns findings inline to the caller
-  (the /review dispatcher or the /plan designer phase). You score the **rendered
-  PNGs and the widget source** the designer shipped, not a document describing
-  them; `design-lint` already settled layer boundaries and tokens mechanically,
-  so spend your budget on what a grep cannot see. NOT
-  `post-qa-reviewer` (that checks the engineer wired the right
-  data into these widgets at implementation time; this checks the design itself
-  is usable and buildable). NOT `feasibility-reviewer` (that runs the same
-  deliverability question one stage earlier, on the PM plan, with the designer
-  lens as well).
+  Judgment gate on a design spec, two lenses in one context: usability (an
+  adversarial first-time-user walkthrough plus a six-axis heuristic sweep
+  against `review/rules/ux/`) and deliverability (can the UI stack render each
+  layout / motion / interaction — with a cited source). Grades the rendered
+  PNGs and the widget source. Per-finding passed / warning / critical, each
+  with the change it would make. Report-only, 不落檔.
 model: opus
-allowed-tools:
+tools:
   - Read
   - Grep
   - Glob
@@ -141,7 +117,7 @@ require a clear large / novel signal for Deep (it is ~4× the cost). If the call
 **explicitly** states a tier ("go deep", "a quick light pass"), honor it over your
 classification; otherwise this self-classification stands.
 
-### Personas (Deep tier — spawn via the Agent tool, `general-purpose`, `run_in_background: false`, inheriting your model)
+### Personas (Deep tier — spawn via the Agent tool, `general-purpose`, `run_in_background: false`, `model: sonnet`)
 
 Each persona runs the full §Method (cognitive walkthrough + P1–P6 sweep) but weights the
 axes its user feels first; each files both `critical` and `warning` within its lens.

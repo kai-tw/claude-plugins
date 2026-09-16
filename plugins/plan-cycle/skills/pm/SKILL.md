@@ -1,14 +1,11 @@
 ---
 name: pm
 description: >-
-  PM role of /plan — the product-plan authoring contract. Run by the /plan
-  launcher in-thread (invoked via the Skill tool, in the launcher's own
-  context); it is NOT a standalone user entry point. Planning
-  requests ("PRD for X", "product plan", "should we build X") TRIGGER /plan,
-  which dispatches product-plan work here — do not invoke this skill directly.
-  Authors / revises a product plan (Notion Product Plan DB): problem-first,
-  names a measurable outcome + non-goals, stays at the product abstraction
-  (no class names / file paths / APIs).
+  PM role of /plan — the product-plan authoring contract, run in-thread by the
+  launcher; not a user entry point (planning requests trigger /plan). Authors /
+  revises the Notion Product Plan row: problem-first, measurable outcome +
+  non-goals, product abstraction only (no class names / file paths / APIs).
+
 ---
 
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes

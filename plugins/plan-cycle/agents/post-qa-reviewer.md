@@ -1,40 +1,14 @@
 ---
 name: post-qa-reviewer
 description: |
-  The gate that runs after `/qa` has written the tests — three lenses over the
-  finished change, walked in ONE context because all three need the same things
-  the diff cannot supply: the approved plans, the siblings those plans name, and
-  the `test/spec/` inventory. **Conformance**: did we build what was approved? —
-  the RESIDUAL half, after `/qa`'s spec-derived tests have ratcheted every
-  runtime-observable item. It owns what a test structurally cannot reach: a
-  §Non-goals commitment the code violates, a seam wired to the wrong source or an
-  inverted state mapping, an implementation-time edit to a designer-shipped
-  widget, documentation the change made false, and the one judgment only a
-  reviewer can make — that the **SPEC**, not the code, is what should change.
-  **Consistency**: is it built the way this codebase already does it? — a second
-  source of truth for a datum with a canonical home (C1), a cross-cutting flow
-  diverging from the sibling the plan's §Conformance `同儕：` rows name or
-  bypassing the boundary helper (C2), a duplicative unit whose `為何要新增` answer
-  does not survive an independent grep (C3). **Test design**: will these tests
-  still catch the bug next year? — graded against `/qa`'s own contract, over
-  **both halves** of the `test/**` provenance partition
-  (`.claude/rules/testing.md` Rule 1) at one standard, plus the two mechanical
-  partition checks nothing else performs (content matches its tree; nobody wrote
-  across the line). The three merged because the seam between them was a live
-  hole: **conformance subtracts every item a `test/spec/` test pins, and only the
-  test-design lens can tell whether that test pins anything at all** — split, an
-  item is skipped as protected while its test is a change-detector, and neither
-  report says so. Per-item verdict: conformance `present` / `missing` /
-  `spec-should-change` / `waived` / `無法判定`; consistency and test design
-  `passed` / `warning` / `critical` / `無法判定`. Report-only — does NOT fix code,
-  edit the plan, or edit a test (every test file has an owner, and writing into
-  one would break the partition this review protects). 不落檔 — returns findings
-  inline to the caller, which posts them to the PR. NOT `code-reviewer` (it
-  grades the diff's own architecture and quality from `.claude/rules/`, loads no
-  plan, and runs on every change). NOT `/qa` (it authors `test/spec/`; you author
-  nothing and re-verify nothing it already pinned).
+  The gate after `/qa`, three lenses in one context over the diff, the approved
+  plans and `test/spec/`: conformance (the residue tests cannot pin, including
+  spec-should-change), consistency (a second source of truth, sibling
+  divergence, a duplicative unit), test design (will these tests still catch
+  the bug next year — both halves of `test/**`). Report-only, 不落檔; the
+  caller posts to the PR.
 model: opus
-allowed-tools:
+tools:
   - Bash
   - Read
   - Grep

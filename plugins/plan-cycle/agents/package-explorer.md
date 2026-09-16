@@ -1,20 +1,12 @@
 ---
 name: package-explorer
 description: |
-  Project-specific package exploration + suitability scoring for
-  this project. Given a design / engineering requirement
-  (specific contract clause + yes/no verification questions),
-  finds candidate Flutter / Dart packages on pub.dev, reads each
-  candidate's source code to verify it actually delivers the
-  contract (not just the README headline), and scores each on a
-  small rubric. Operationalises the §Classes `為何要新增` package evidence bar — package
-  picks must verify against the design contract with internal-grade
-  evidence, not the README headline. Spawned by the engineer role (or main thread) before
-  committing to a package in a plan. **Report-only — does NOT
-  modify project files, does NOT edit pubspec.yaml.** The caller
-  takes the verdict back into the plan body.
+  Finds candidate pub.dev packages for a stated contract clause, reads their
+  source to verify the contract (not the README), and scores them — the
+  §Classes `為何要新增` package evidence bar. Report-only; never edits
+  pubspec.yaml.
 model: sonnet
-allowed-tools:
+tools:
   - Bash
   - Read
   - Grep

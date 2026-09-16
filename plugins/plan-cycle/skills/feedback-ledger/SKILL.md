@@ -1,27 +1,14 @@
 ---
 name: feedback-ledger
 description: >-
-  The bounded ledger of unconsumed feedback about how this project's own process
-  and review gates are performing, in five categories: process · code-review ·
-  security-review · privacy-review · recurring-bug. One item = one markdown file;
-  all writes go through `scripts/feedback.sh`. Review feedback is recorded whether
-  it came from the reviewer AGENT or from the FOUNDER — the founder's correction
-  of a review is the higher-signal half and the one most often lost; recurring-bug
-  is the intake queue that turns "this bug came back" into a durable check.
-  Consuming an entry means folding it into a rule, a skill, a failure-class
-  bucket or a deletion and then DELETING the file; `plan-cycle clear` nudges at
-  every close-out when a category passes 5 or any recurring-bug entry is open.
-  TRIGGER: log feedback · record this feedback · file a retro entry · runner
-  feedback · process retro · cycle retro · subtraction candidate · the reviewer
-  was wrong · the reviewer missed this · this finding was over-reach · that gate
-  misfired · feedback ledger · list the feedback · how much feedback is open ·
-  tidy the feedback · consume the ledger · 記一下這個回饋 · 記錄回饋 · 這個
-  reviewer 判錯了 · reviewer 漏掉了 · 這條 finding 過度了 · 這個 gate 誤擋 ·
-  流程回饋 · 回饋有幾筆 · 整理回饋 · 看一下回饋
-  NOT for: the /plan cycle itself → /plan (this is only its Step 6.7 sink) ·
-  running a review → /review · in-flight thread state → /session-journal ·
-  Notion backlog rows → /archivist · code-style or architecture rules →
-  `.claude/rules/` (that is where a CONSUMED entry lands, not where it is filed)
+  The bounded ledger of unconsumed feedback on this project's process and review
+  gates: process · code-review · security-review · privacy-review ·
+  recurring-bug. One entry = one file via `scripts/feedback.sh`; consuming =
+  fold into a rule / skill / failure-class bucket, then delete the file.
+  TRIGGER: log feedback · the reviewer was wrong / missed this · that gate
+  misfired · 記錄回饋 · 整理回饋
+  NOT for: the /plan cycle itself · running a review → /review · rules →
+  `.claude/rules/` (where a consumed entry lands)
 allowed-tools:
   - Bash
   - Read
@@ -96,13 +83,9 @@ is a sort, not a debate about where things go:
 | `security-review` / `privacy-review` | the matching rule pack, via its `CONVENTIONS.md` learning 更新法 |
 | `recurring-bug` | **one of two, both checks**: the qa failure-class index (a new bucket, or a mutation pin / case template on an existing one — `qa/failure-classes.md`) or the project's `.claude/rules/consistency.md` mechanism table (a checkpoint the mechanism's canonical helper must now enforce). A recurring bug consumed into prose has not been consumed. |
 
-**The nudge ships with the plugin**: `plan-cycle clear` prints it at every
-close-out — once per cycle, never per turn — when any category exceeds 5, and
-whenever **any** `recurring-bug` entry is open (threshold 0: a recurrence
-lesson has no safe backlog depth). A project may still add its own Stop-hook
-reminder (`.claude/hooks/feedback-tidy.sh`), but consumption no longer depends
-on a hook this plugin does not ship. The nudge never tidies anything itself:
-what gets folded in and what gets dropped is the founder's call.
+No automatic nudge: the founder checks the ledger with `plan-feedback over <n>`
+and `plan-feedback count recurring-bug`, and decides what is folded in or
+dropped.
 
 ## Who files what
 

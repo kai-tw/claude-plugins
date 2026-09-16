@@ -6,6 +6,9 @@
     "name": "Kai",
     "url": "https://github.com/kai-tw"
   },
+  "allowCrossMarketplaceDependenciesOn": [
+    "claude-plugins-official"
+  ],
   "plugins": [
     {
       "name": "dart-lsp",
@@ -61,6 +64,11 @@
         "url": "https://github.com/kai-tw"
       },
       "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/guardrails"
+    },
+    {
+      "name": "assistant",
+      "source": "./plugins/assistant",
+      "description": "Fable as the assistant — request → decision brief → screens → PR, across projects."
     }
   ]
 }

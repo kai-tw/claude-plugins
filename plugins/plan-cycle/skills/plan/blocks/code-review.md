@@ -24,7 +24,8 @@ dispatcher 在 `${CLAUDE_PLUGIN_ROOT}/skills/review/SKILL.md`。本塊只講拼�
 ## 拼裝注意
 
 - **這一塊不能改 code。** 它 report-only；哪些 finding 要動由 caller 裁。
-- verdict 協議是 FIX / DISMISS-with-rationale / ESCALATE / DEFER，逐 finding。
+- CRITICAL / WARNING 先各過一個 `finding-scorer`，低於門檻列 低信心、不裁；其餘逐 finding 走
+  FIX / DISMISS-with-rationale / ESCALATE / DEFER。
 - 每一趟都要貼到 PR 上，**零 finding 也要貼**——否則「沒跑」和「跑完沒事」
   從 PR 上長得一樣。
 

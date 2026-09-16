@@ -1,24 +1,13 @@
 ---
 name: qa
 description: >-
-  Project-specific test-authoring craft.
-  Owns `test/spec/**` — the spec-derived tests pinning the shipped flow to the
-  approved product / design plan; the engineer role owns the rest of `test/**`
-  (contract-derived).
-  Applies formal techniques (equivalence partitioning, boundary
-  analysis, decision tables, state transition, pairwise, error
-  guessing, FMEA-lite, mutation sensitivity) so coverage is
-  systematic, not anecdotal. Scans a category blind-spot list and a
-  compact failure-class catalog (pick what the change touches, not
-  all of it) before writing a line of test
-  code. NOT a debugger — the deliverable is the test that catches
-  the bug next time, not the fix.
-  TRIGGER when: "/qa", "write a test for X",
-  "test cases for X", "regression test for X", "cover X with
-  tests", "write tests for X", "add tests for X", "qa for X".
-  NOT for: fixing the bug itself, authoring standalone test-plan
-  documents, or "just stub a quick test" requests — refuse
-  inline assertions and demand the formal-technique flow.
+  Test-authoring craft. Owns `test/spec/**` (spec-derived tests pinning the
+  shipped flow to the approved plans); the engineer owns the rest of `test/**`.
+  Formal techniques, a category blind-spot list and a failure-class catalog
+  before any test code. Not a debugger: the deliverable is the test, not the
+  fix.
+  TRIGGER: /qa · write / add tests for X · regression test for X
+  NOT for: fixing the bug · "just stub a quick test"
 allowed-tools:
   - Bash
   - Read

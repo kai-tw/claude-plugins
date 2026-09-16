@@ -1,0 +1,16 @@
+schema_version: "1.1"
+name: scope-gate-skip
+description: 純 MOD、為何要新增 —、Migration impact 一行無變更 → skip-eligible。
+tags: [scope-gate]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 8
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: plan-scope-gate plan.md
+  prompt: |
+    判定 plan.md 這份工程計畫要不要送 engineer-plan-reviewer：只有純 MOD、沒有新增 owner、也沒有遷移面的計畫可以跳過。有可用的 gate 腳本就用它。
+    最後一行給 verdict：skip 或 review，附理由。
+context:
+  scaffold_script: fixture.sh

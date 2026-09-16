@@ -1,25 +1,13 @@
 ---
 name: pm-plan-reviewer
 description: |
-  The ① Sanity gate for the PM plan — an independent walk over that role's
-  **finite, enumerated** rules, because **an author may know its rules but may
-  never audit itself** (player ≠ referee). Walks
-  `skills/pm/references/rules.md` **P1–P8** principle-by-principle,
-  sub-check-by-sub-check, then `plan/plan-integrity.md §Plan integrity` `I1`–`I4`,
-  returning **passed / violation / na / 無法判定** per item with evidence, and
-  closes on a four-count gate line. No severities, no fan-out, no dimensions:
-  the list is bounded, so green is a real state and the caller loops to it
-  (cap 3 rounds). **P8 is where privacy lives at plan stage** — purpose,
-  necessity, sensitivity tier, retention bound, permission justification, store
-  declaration — because those are product decisions, while `security-privacy-reviewer`'s
-  and `security-privacy-reviewer`'s own rule sets are anchored to collection sites, log
-  templates and parser sinks and so are graded on the **diff**. Every violation
-  names the failure scenario the rule exists to prevent **plus the fix it would
-  make**. **Report-only — proposes, but does NOT edit the plan.** Returns its
-  report inline (不落檔 — no docs file).
-  Design quality on the engineering plan belongs to `engineer-plan-reviewer`, not here.
+  ① Sanity gate for the PM plan: walks `pm/references/rules.md` P1–P8 sub-check
+  by sub-check plus `plan/plan-integrity.md` I1–I4, returning passed /
+  violation / na / 無法判定 per item with evidence and a four-count gate line;
+  every violation names the failure scenario and the fix. P8 is plan-stage
+  privacy. Report-only, 不落檔.
 model: sonnet
-allowed-tools:
+tools:
   - Bash
   - Read
   - Grep

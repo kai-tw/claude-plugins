@@ -1,31 +1,14 @@
 ---
 name: reclaim-space
 description: >-
-  Developer-disk space reclamation for the Flutter projects on this machine —
-  the close-out step that stops a shipped cycle's build output and machine-wide
-  tool caches from accumulating until they block the next build. Two tiers:
-  PROJECT (`flutter clean` — `build/` + `.dart_tool/`) and GLOBAL (Xcode derived
-  data, the Dart analysis cache, simulator scratch, superseded Gradle version
-  caches, and orphaned `flutter_tools.*` build scratch left in TMPDIR by a
-  killed or crashed flutter build/run/test/pub). Everything it touches
-  regenerates. Body carries the measurement discipline (`df` delta, never `du`
-  totals — `du` double-counts APFS clones), the fail-closed Gradle version scan,
-  the busy-build refusal, what is deliberately never touched, and how to go
-  looking for the next leak when this isn't enough.
-  TRIGGER: reclaim space · free disk space · free up space · clean up disk ·
-  disk is full · running out of space · clean caches · clear DerivedData ·
-  clear the dart cache · clean xcode caches · stale gradle cache · gradle cache
-  is huge · clean the build folder · flutter clean everything · delete
-  unavailable simulators · orphaned tmpdir files · what's eating my disk ·
-  how much space can I get back · 清理空間 ·
-  釋放空間 · 硬碟快滿了 · 磁碟空間不足 · 空間不夠 · 清快取 · 清掉快取 ·
-  清 DerivedData · 清 gradle 快取 · gradle 快取太大 · 清 build 資料夾 ·
-  清掉模擬器 · 可以清出多少空間 · 收尾清空間
-  NOT for: deleting anything non-regenerable — Xcode Archives, source, git
-  history, signing assets (this skill never touches them and must not grow to);
-  emptying the macOS Trash (TCC-protected, the human presses ⌘⇧⌫); the Gradle
-  cache RETENTION policy, which is `~/.gradle/init.d/cache-cleanup.gradle` and
-  is a different mechanism (per-entry LRU during builds, not a sweep).
+  Disk reclamation for the Flutter projects on this machine: PROJECT (`flutter
+  clean`) and GLOBAL (Xcode DerivedData, Dart analysis cache, simulator scratch,
+  superseded Gradle caches, orphaned `flutter_tools.*` scratch). Everything it
+  touches regenerates.
+  TRIGGER: reclaim / free disk space · clean caches · 清理空間 · 硬碟快滿了
+  NOT for: anything non-regenerable (Archives, source, signing assets) · the
+  macOS Trash · the Gradle retention policy
+
 ---
 
 # reclaim-space

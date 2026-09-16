@@ -1,23 +1,13 @@
 ---
 name: qa
 description: |
-  Project-specific test-authoring for this project — the isolated
-  executor behind the `/qa` skill. Owns **`test/spec/**`** — the spec-derived
-  tests pinning the shipped flow to the approved product / design plan. Everything
-  else under `test/**` is the engineer role's (contract-derived), and neither
-  writes into the other's tree (`.claude/rules/testing.md` Rule 1). Applies the
-  formal
-  techniques (equivalence partitioning, boundary analysis, decision tables,
-  state transition, pairwise, error guessing, FMEA-lite, mutation sensitivity),
-  the failure-class catalog, and the category checklist in
-  the `qa` skill — that skill is your complete contract. Spawned
-  by the `/plan` launcher as the QA phase, and by the `/qa` skill on direct
-  invocation, so the `flutter test` output + the write→run→fix loop are born and
-  die in this throwaway context instead of persisting in the caller's. NOT a
-  debugger — the deliverable is the regression test plus a one-line bug note,
-  never the fix.
+  Isolated executor behind the `/qa` skill: owns `test/spec/**`, applies that
+  skill's techniques, catalog and checklist (the skill is the complete
+  contract), and keeps the `flutter test` write→run→fix loop in this throwaway
+  context. Deliverable: the regression test plus a one-line bug note, never the
+  fix.
 model: sonnet
-allowed-tools:
+tools:
   - Bash
   - Read
   - Grep

@@ -1,23 +1,13 @@
 ---
 name: translator
 description: |
-  Project-specific localization for this project. **Owns the WHOLE ARB
-  string** — it mints the feature-prefixed ARB key, writes the `app_en.arb`
-  English source value (placeholders + ICU plural/select + `@`-metadata), and
-  authors all four non-English values (ja / zh / zh_Hans / zh_Hant) as native,
-  on-tone copy, NOT a literal machine-translation pass. The designer role hands
-  it the copy **intent** (what each string says + tone + where it renders); the
-  engineer role only wires the generated `AppLocalizations` methods + runs
-  `flutter gen-l10n`. Spawned by the `/plan` launcher as the **translator phase**
-  — inside the designer phase, after its widgets are built and before they are
-  rendered, so the renders show real copy. Follows the per-locale
-  tone rules in `lib/i18n/CLAUDE.md`, proposes per-locale options for
-  tone-sensitive copy, and flags ja / zh / zh_Hant for founder sign-off (an LLM
-  can fabricate; MT cannot reliably control Japanese keigo or CJK register).
-  Does **NOT** decide copy intent or where a string renders (the designer's job),
-  and does **NOT** wire ARB into widget code (the engineer's job).
+  Owns the whole ARB string: mints the feature-prefixed key, writes the
+  `app_en.arb` source (placeholders, ICU, `@`-metadata) and authors every other
+  locale as native copy per `lib/i18n/CLAUDE.md`, flagging tone-sensitive
+  locales for founder sign-off. Spawned inside the designer phase, before the
+  renders. Does not decide copy intent or wire ARB into widgets.
 model: sonnet
-allowed-tools:
+tools:
   - Read
   - Grep
   - Glob

@@ -1,30 +1,13 @@
 ---
 name: git-ops
 description: >-
-  Git lifecycle guardrails for THIS repo — the push / merge / worktree / codegen
-  traps where the obvious idiom silently does the wrong thing. Body covers:
-  which remote (origin canonical, a gitlab mirror lurks), verifying a
-  squash-merged PR really landed (ancestry checks lie here), where work lives
-  (worktree locally, branch in the cloud — never switch the main tree's branch),
-  the worktree base preflight, regenerating gitignored codegen after a merge,
-  sub-agent dispatch hygiene, the test suite as a POST-merge backstop (only
-  coverage runs on PRs), and `rm` denied → `trash`.
-  TRIGGER: push my changes · push to origin · which remote do I push · is this
-  branch merged · did the PR merge · verify the merge · tear down the worktree ·
-  clean up the worktree · safe to delete the branch · can I make a branch ·
-  should I use a worktree here · build fails after merge ·
-  undefined getter after merge · regen after merge · how do I stage these ·
-  git add is blocked · commit these files · delete this file · spawn a sub-agent
-  to write code · will CI catch this · 推到 origin · 推上去 · 推到哪個 remote ·
-  這個分支 merge 了嗎 · PR 合併了嗎 · 確認有沒有 merge · 收掉 worktree ·
-  worktree 收尾 · 分支可以刪了嗎 · merge 後 build 壞掉 · merge 之後要不要 regen ·
-  怎麼 commit · git add 被擋 · 刪掉這個檔案 · CI 會擋嗎
-  NOT for: the commit-gate DISCIPLINE, i.e. which legs run before a commit →
-  the `commit-gate` skill (cited in the body, never restated)
-  · worktree CREATION mechanics and the /plan cycle →
-  `plan/worktree.md §Worktree isolation` · "which worktree am I in" thread state →
-  /session-journal · Notion flips or archiving → /archivist · release tagging or
-  store upload → /release, /ship-beta · reviewing the code itself → /review
+  Git lifecycle guardrails for this repo: which remote, verifying a
+  squash-merged PR landed, worktree discipline, regenerating codegen after a
+  merge, sub-agent dispatch hygiene, `rm` → `trash`.
+  TRIGGER: push · did the PR merge · tear down the worktree · regen after merge ·
+  推上去 · 收掉 worktree · merge 了嗎
+  NOT for: commit legs → `commit-gate` · reviewing code → /review
+
 ---
 
 # Git lifecycle traps

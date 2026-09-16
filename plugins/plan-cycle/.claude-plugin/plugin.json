@@ -17,6 +17,12 @@
     "notion",
     "qa"
   ],
+  "dependencies": [
+    {
+      "name": "security-guidance",
+      "marketplace": "claude-plugins-official"
+    }
+  ],
   "skills": [
     "./skills/archivist",
     "./skills/commit-gate",

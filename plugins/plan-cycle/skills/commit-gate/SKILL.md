@@ -1,22 +1,14 @@
 ---
 name: commit-gate
 description: >-
-  The legs that must be green before any `git commit` fires in this project —
-  codegen regenerated, lint + format clean, tests green, plan reconciled (when a
-  plan exists), `/review` clean, and a user-facing change device-verified. The SSOT for commit discipline, reachable from
-  ANY path that lands code: the `/plan` engineer phase, a `/bug-investigate`
-  fix, or an ad-hoc edit. Also carries the index-read discipline, the test-first
-  mode, and the tooling carve-out.
-  TRIGGER — about to commit, or just finished changing code: ready to commit ·
-  can I commit this · what runs before a commit · commit gate · pre-commit
-  checks · I finished the fix, now what · the fix works, what's left · close out
-  this change · is this ready to land · what do I run before pushing ·
-  要 commit 了 · 可以 commit 了嗎 · commit 前要跑什麼 · 提交閘門 · 修好了接下來
-  呢 · 這樣可以進去了嗎 · 收尾要做什麼 · push 前要檢查什麼
-  NOT for: the git mechanics themselves — which remote, worktree teardown,
-  staging traps → `git-ops` · the planning cycle's Notion close-out (Feature
-  Archive, trashing the task row) → `/plan` Step 6 · authoring the review
-  findings → `/review` · writing the tests → `/qa`.
+  The legs that must be green before any `git commit`: codegen regenerated,
+  lint + format, tests, plan reconciliation, `/review` clean, device-verify for
+  a user-facing change. The SSOT for commit discipline from every path that
+  lands code.
+  TRIGGER: about to commit · ready to commit · 要 commit 了 · commit 前要跑什麼
+  NOT for: git mechanics → `git-ops` · Notion close-out → `/plan` Step 6 ·
+  tests → `/qa`
+
 ---
 
 # The commit gate

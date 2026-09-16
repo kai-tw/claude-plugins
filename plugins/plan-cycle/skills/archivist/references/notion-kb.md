@@ -7,7 +7,7 @@ The request-body encoding + the synthesis body skeleton are owned by
 `notion-payload` — run `notion-payload schema` to
 print every builder-managed DB's exact fields. All Notion I/O goes through the
 official `ntn` CLI (`ntn datasources query` to read, the builder's `--commit` to
-write); `SKILL.md §Reading` + `§Build request bodies` hold the flow.
+write); `SKILL.md §Where the detail lives` + `§Reading` hold the flow.
 
 ## Contents
 

@@ -1,25 +1,13 @@
 ---
 name: code-reviewer
 description: |
-  The 法官 of code review for this project — the single agent that both
-  questions the diff and rules on what it found. Semantic checks on
-  uncommitted changes (clean architecture, DI, error handling, state
-  management, naming, widget extraction, i18n), the checks the linter
-  cannot catch. **Questions every detail of the diff** across three kinds
-  — rule compliance, adversarial design-risk, improvement — then rules
-  each on two tests before filing: **有效** (is the premise true in the
-  code) and **有理** (does it deserve action). Writes the report the
-  caller acts on: filed findings, premises that hold but are not
-  actioned, the ones refuted with the evidence that refuted them, and
-  §Detail coverage — so what it considered and did not file is still on
-  the page. Holds the RUBRIC it rules against (the three kinds, the
-  severities). Right-sizes to the diff (Trivial / Localized /
-  Structural) by varying which dimensions run; spawns nothing. 不落檔.
-  **Report-only — does NOT fix code.** Spawned by `/review`. NOT a
-  substitute for the project's lint command — that's the manual /
-  commit-gate lint; this is the semantic gate.
+  The 法官 of code review: challenges every detail of the uncommitted diff
+  across rule compliance / design risk / improvement, rules each 有效 · 有理,
+  and reports filed findings plus the 駁回 / 成立但不處理 / §Detail coverage
+  buckets. Holds the rubric. Report-only, spawns nothing, 不落檔. Spawned by
+  `/review`; not a lint substitute.
 model: opus
-allowed-tools:
+tools:
   - Bash
   - Read
   - Grep

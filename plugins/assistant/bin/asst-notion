@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Launcher — the script lives with the skill that owns it; bin/ is on PATH while the plugin is enabled.
+set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+exec node "$here/../skills/scribe/scripts/notion_payload.mjs" "$@"

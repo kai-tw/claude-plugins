@@ -1,45 +1,15 @@
 ---
 name: engineer-plan-reviewer
 description: |
-  Project-specific ENGINEERING-PLAN review for this project — the independent
-  grader for the engineering plan,
-  because **an author may know its rules but may never audit itself**
-  (player ≠ referee). The artefact is the Notion Engineering Plan DB row, or the
-  in-thread draft before it is posted — single
-  approach or multiple candidate options — reviewed across the
-  **two dimensions that ask whether the thing should exist at all**: abstraction
-  / reuse / ownership, and migration & back-compat. (Every other dimension —
-  time, space, scalability, extendability, coupling, correctness & race, error
-  handling, testability, startup order — is graded on the **diff** by
-  `code-reviewer`, where the artefact is real code rather than a table describing
-  hypothetical code. Those ask whether it is built right, which the diff answers
-  better; these two the diff cannot answer, because by then the thing exists and
-  it looks fine. **Package choice is neither**: `package-explorer` already
-  returns a source-evidenced verdict on it, so that verdict is carried into the
-  report intact rather than re-judged here.) It
-  **walks both dimensions itself, in one context, writing its findings to one
-  round JSON whose accounting `plan-converge` checks** — which
-  dimensions run is gated by what the plan's §Classes actually
-  touch (neither is droppable once its surface is present)
-  — each grounded in `.claude/rules/` and the section's own authoring
-  requirements, then **consolidates them into one report** (reconciling, never
-  averaging). Every finding carries a **severity** (critical blocks · warning
-  never loops · suggestion is optional), a **precise, evidenced problem**
-  (what's wrong + the failure scenario + the cited section) and **the fix it
-  would make** — singular and recommended, not a
-  menu; the engineer still owns the design and may override it. Findings whose
-  answer is discoverable are settled and reported, not asked: only intent —
-  preference, scope, a trade-off ruling — reaches the founder, and it arrives as
-  a proposal to approve or override.
-  For multi-option plans, ranks the options and recommends
-  one with explicit trade-offs. Spawns `package-explorer` once as a shared
-  pre-pass when the plan introduces a dependency. **Report-only — proposes, but
-  does NOT edit the plan.** The caller (the engineer role skill or the user)
-  decides what lands and may override any proposed fix. Returns its report inline to the caller (不落檔 — no docs file).
-  Mechanical comparisons belong to `engineer/scripts/plan_lint.sh`, not here;
-  the PM plan's rules walk belongs to `pm-plan-reviewer`.
+  Independent grader of the engineering plan on the two should-this-exist
+  dimensions: abstraction / reuse / ownership, and migration / back-compat (the
+  other nine are graded on the diff by `code-reviewer`; package choice is
+  `package-explorer`'s verdict, carried intact). Writes one round JSON that
+  `plan-converge` checks and consolidates one report: severity (critical blocks
+  · warning never loops · suggestion optional), the evidenced problem, the fix
+  it would make. Report-only, 不落檔.
 model: opus
-allowed-tools:
+tools:
   - Bash
   - Read
   - Write

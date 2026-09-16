@@ -1,31 +1,14 @@
 ---
 name: review
 description: >-
-  The single entry for every review concern — spawns the matching report-only
-  sub-agent against the relevant artifact (an uncommitted diff, or a plan):
-  code-reviewer (the 法官: every detail of the diff challenged, every
-  challenge ruled 有效 · 有理, one report) ·
-  engineer-plan-reviewer (engineering-plan design quality) ·
-  pm-plan-reviewer (the PM plan's rules walk) ·
-  security-privacy-reviewer (threat model AND data minimization, on the diff —
-  one pass, two lenses) · post-qa-reviewer (conformance residue + cross-feature
-  consistency + test design — one pass, three lenses) ·
-  design-plan-reviewer (design-spec usability AND deliverability — one pass, two
-  lenses) · feasibility-reviewer (downstream deliverability of a PM plan). All are report-only — the caller acts on the findings.
-  TRIGGER: code review · review the code · review my changes · review this ·
-  review the tests · test review · are these tests any good · 審一下測試 ·
-  check my code · review before commit · security review · threat model X ·
-  review X for vulnerabilities · privacy review · minimization review ·
-  rules audit X · review the plan · engineering-plan review · design-quality review ·
-  conformance review · feasibility review · ux review · usability review ·
-  heuristic review · will this confuse a first-time user · run review ·
-  consistency review · 一致性檢查 · 跟既有的做法一致嗎 · duplicate implementation ·
-  幫我 review · 檢查這段 code · review 一下改動 · 安全性檢查 · 威脅模型 ·
-  隱私檢查 · 可用性檢查 · 這樣使用者會不會困惑 · 審一下計畫
-  NOT for: bug investigation → /bug-investigate · format runs (the Stop hook) ·
-  lint / analyze (the engineer commit gate; manual
-  the project's lint command) · authoring the plan or spec under review →
-  /plan · FIXING the findings — this skill only reports
+  Single entry for every review: spawns the matching report-only agent —
+  code-reviewer (+ finding-scorer per filed finding), engineer-plan-reviewer,
+  pm-plan-reviewer, security-privacy-reviewer, post-qa-reviewer,
+  design-plan-reviewer, feasibility-reviewer. The caller acts on the findings.
+  TRIGGER: review X · code / security / privacy / plan / ux / feasibility /
+  consistency review · 幫我 review · 審一下
+  NOT for: bug investigation → /bug-investigate · lint · authoring the artefact
+  → /plan · fixing the findings
 allowed-tools:
   - Agent
 ---
@@ -72,34 +55,22 @@ several, spawn them in parallel.
 
 ## Why this many reviewers — the merge criterion
 
-**Dimension count is never the argument, in either direction.** One capable model
-walks many dimensions in one context perfectly well — that is already the house
-pattern: `code-reviewer` grades **nine** dimensions in a single pass,
-`engineer-plan-reviewer` walks two, and `plan_converge.sh` records that its
-per-dimension fan-out was deleted. So "this reviewer covers a lot" is never a
-reason to split it, and "we have several reviewers" is never by itself a reason
-to merge them.
+**Dimension count is never the argument, in either direction**: `code-reviewer`
+walks nine dimensions in one pass, so "covers a lot" never splits a reviewer and
+"we have several" never by itself merges two. **Two reviewers merge only when
+they would run at the same moment on the same artefact** — four tests, all
+required; a different rule corpus fails none of them:
 
-**Two reviewers merge when they would run at the same moment on the same
-artefact.** Four tests, all four required:
-
-1. **Same trigger.** They fire on the same condition. A reviewer that runs on
-   every diff and one that is boundary-gated do not merge: the merged agent
-   either runs the gated walk unconditionally (undoing the gating) or gates
-   internally (the same two gates, now behind one dispatch and one bigger
-   context).
+1. **Same trigger.** A reviewer that runs on every diff and one that is
+   boundary-gated do not merge: the merged agent either runs the gated walk
+   unconditionally or hides the same gate behind one bigger context.
 2. **Same stage.** Same cell of the audit matrix — a ① cheap-tier walk and a ②
-   adversarial pass are answering at different costs for different reasons.
-3. **Isomorphic contracts.** The phases line up, so the merged agent is one
-   spine with two lenses rather than two agents stapled together.
-4. **A cross-reference that disappears.** The strongest signal: they currently
-   tell each other to file half a finding. That protocol is the seam, and it is
-   pure loss.
-
-A **different rule corpus is not a reason to stay apart** — security and privacy
-read different rule packs and still merged, because all four tests passed. What
-keeps reviewers apart is loading a corpus you do not need to answer the other's
-question *at a moment you would not otherwise be running*.
+   adversarial pass answer at different costs for different reasons.
+3. **Isomorphic contracts.** The phases line up, so the result is one spine with
+   two lenses, not two agents stapled together.
+4. **A cross-reference that disappears.** They currently tell each other to file
+   half a finding; that seam is where a finding drops — the strongest signal, and
+   it outranks the other three.
 
 | Reviewer | Trigger | Stage | Also loads |
 |---|---|---|---|
@@ -108,56 +79,20 @@ question *at a moment you would not otherwise be running*.
 | `post-qa-reviewer` | after QA, when an approved plan exists | after-QA | the approved plans + the siblings they name + `/qa`'s contract; it splits the diff by tree (conformance and consistency on `lib/**`, test design on `test/**`) |
 | `pm-plan-reviewer` · `engineer-plan-reviewer` · `feasibility-reviewer` · `design-plan-reviewer` | a plan or spec is drafted | ① / ② | no diff exists yet |
 
-Read the table down the **Trigger** column: that is where the merges live and
-where they die. Every merged agent shares a trigger with its partner exactly;
-every remaining pair differs in it.
-
-*Worked positive, and the reason test 4 outranks the others:* conformance,
-consistency and test design merged into `post-qa-reviewer` on a seam that was a
-**live hole**, not a tidiness argument. The conformance lens opens by subtracting
-every spec item a `test/spec/` test already pins — but whether that test pins
-anything is the test-design lens's question, and a change-detector answers "no"
-while looking complete. Split, an item was skipped as protected by a test the
-other reviewer would have called empty, and no report joined those two facts.
-When you find a cross-reference like that, look for the finding it is dropping.
-
-*Worked negative:* `consistency` looked mergeable into `code-reviewer` because
-both grep the siblings — but its C2.1 and C3.1 **cannot run without §Conformance
-and §Classes**, a plan input `code-reviewer` never loads, and its trigger is the
-after-QA row rather than every diff. It merged the other way instead.
-
-The security + privacy merge is the worked example. Their spawn triggers were
-written identically ("boundary-gated on the diff's own sink signals"), they read
-one shared signal list, their agent files were structurally isomorphic phase for
-phase, and the security agent carried a whole `## Data protection & privacy`
-section — privacy content living in the security reviewer. They were one gate
-wearing two names, and the finding that is *both* a leak and an over-collection
-is now one finding with two verdicts rather than two reports cross-citing each
-other.
-
-**Before proposing another merge, walk the four tests and say which ones pass.**
-Fewer than four, the answer is no — the merge is a dispatch-count optimisation
-and it buys a bigger context loaded more often.
-
-*Worked negative:* `code-reviewer` + `security-privacy-reviewer` looks obvious —
-both grade the diff, neither loads a plan. It fails test 1 and test 2:
-`code-reviewer` runs on **every** code change while `security-privacy-reviewer`
-is boundary-gated on the diff's own sink signals (a pure-removal diff skips it
-entirely), and they sit in different tiers of the matrix's code row. Merging
-them either re-arms the always-on spawn that five consecutive cycles nominated as
-pure latency, or hides the same gate inside a heavier agent.
+Read the table down the **Trigger** column: every merged pair shared one exactly,
+every remaining pair differs in it. Before proposing a merge, say which of the
+four tests pass — fewer than four is a dispatch-count optimisation that buys a
+bigger context loaded more often.
 
 **"Does this design meet the design rules"** is the `design-plan-reviewer`;
 mockup-fidelity is a manual founder check. The `post-qa-reviewer` checks
 **shipped code vs the approved spec** (is a required state / motion / interaction
 actually implemented), not mockup-vs-design-rules.
 
-**Every reviewer above is 不落檔** — they grade and **return their
-findings to this dispatcher** (security/privacy/ux/feasibility/consistency:
-each item `passed` / `warning` / `critical`, looped until all `passed`;
-code review: the 法官's report; engineer-plan-reviewer: the consolidated
-report inline). No file output. (No count here on purpose — the roster grows, and a
-hardcoded number is a staleness bug waiting to print.)
+**Every reviewer above is 不落檔** — it grades and **returns its findings to this
+dispatcher** (security/privacy/ux/feasibility/consistency: each item `passed` /
+`warning` / `critical`, looped until all `passed`; code review: the 法官's report;
+engineer-plan-reviewer: the consolidated report inline). No file output.
 
 ## Spawn protocol
 
@@ -180,11 +115,17 @@ Spawn foreground only when the user explicitly asks ("block on it", "I'll wait")
 Pass the user's request verbatim plus any extra constraints. Do **not** re-run the
 review in this main context.
 
-### Code review is one spawn
+### Code review: the 法官, then a scorer per finding
 
 `code-reviewer` is the 法官: it questions every detail of the diff, rules on its
-own challenges (有效 · 有理), and returns the finished report. One spawn, one
-report — relay and post that.
+own challenges (有效 · 有理), and returns the finished report. Because it referees
+challenges it raised itself, before any verdict spawn one `finding-scorer`
+(sonnet) per filed CRITICAL / WARNING, all in parallel, each briefed with that
+finding's `[C<n>]` block verbatim, the diff hunk it points at, and the rule
+section it cites — never the packs. A finding
+scoring **below 80** moves to a `### 低信心` section of the relayed report with
+its score and the scorer's line — that is its verdict: not acted on, no marker
+owed. SUGGESTION is not scored. Relay and post the scored report.
 
 **Its report must carry the buckets, not only the findings.** 駁回, 成立但不處理,
 無法判定 and §Detail coverage are what a single-agent review has instead of a
@@ -200,18 +141,14 @@ graded findings for security / privacy / ux / feasibility) + a one-line overall 
 
 ### Verdict per finding
 
-**Before verdicting, pass each finding through two checks** — the measured
-failure ran both the other way (a reflexive `isImporting` flag added to a shared
-state type on an over-graded CRITICAL, where an existing enum already modeled
-it): a **severity check** — is it truly CRITICAL
-(data-loss / crash / security), or a minor / self-healing trade-off wearing the
-label? — and a **minimalism check** — does existing domain state (a code, an
-enum, a nullable) already model the fact, so the "fix" would build a parallel
-marker? Reviewers propose; the engineer decides. Down-grading an over-graded
-finding, with the reason stated, is a legitimate verdict — building
-infrastructure for one is not.
+**Before verdicting, run the minimalism check** — the measured failure was a
+reflexive `isImporting` flag added to a shared state type where an existing enum
+already modeled it: does existing domain state (a code, an enum, a nullable)
+already model the fact, so the "fix" would build a parallel marker? Reviewers
+propose; the engineer decides. Down-grading an over-graded finding, with the
+reason stated, is a legitimate verdict — building infrastructure for one is not.
 
-For each finding the reviewer filed, report a verdict from this set:
+For each finding the reviewer filed and the scorer kept, report a verdict from this set:
 
 - **FIX** — apply the change in the main thread (or hand to the user) one finding
   at a time.
@@ -292,7 +229,7 @@ PR body (`plan/SKILL.md` Step 6.0).
 When the branch under review **has an open PR**, the report is posted to that PR
 as a comment — **twice**, and the order is the rule:
 
-1. **Before any fix lands** — post the reviewer's findings as returned. Open the
+1. **Before any fix lands** — post the scored report as relayed. Open the
    comment with the sha that was reviewed — `Reviewed at <git rev-parse HEAD>` —
    then record it: `plan-cycle reviewed <that sha>`.
 2. **After the fixes land** — post the disposition: every finding from comment 1
@@ -346,9 +283,10 @@ These count as silent skipping and must NOT occur:
 ### Re-review
 
 After every finding has a written verdict and any FIX changes land, **re-invoke
-`/review` to confirm clean** when CRITICALs existed or the diff was non-trivial.
-The re-review diff is small, but it costs a full opus pass again — that
-condition is the budget, not a formality.
+`/review` to confirm clean** when CRITICALs existed or the diff was non-trivial,
+briefing the prior report so the pass verifies rather than re-derives. Pin
+`model: sonnet` unless a CRITICAL was filed — only a critical's fix reasoning
+needs opus (`plan/SKILL.md §Model tiering`).
 
 **Why report-only:** an agent auto-fixing in the background is fast but
 asymmetric — a bad fix that lints clean (semantically broken, behavior-altering,

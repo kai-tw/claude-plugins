@@ -1,29 +1,16 @@
 ---
 name: plan
 description: >-
-  Codebase GUARDIAN and SINGLE entry for any task or code change: gates
+  Codebase GUARDIAN and single entry for any task or code change: gates
   non-trivial work behind an approved product → design → engineering plan
-  trail, and is the ONLY creator of a feature's TaskList task. Approvals:
+  trail, and is the only creator of a feature's TaskList task. Approvals:
   MECHANISM → PM, SCREEN → designer, CODE → engineer.
-  TRIGGER: plan · planning · implement X · build/add a feature · new
-  feature/screen/page/flow/system · redesign · refactor with scope change ·
-  improve X · roadmap · scope · should we build X · is this in scope · ship X ·
-  one-pager · PRD · PR-FAQ · product plan · frame the problem · discovery brief
-  · opportunity tree · strategy memo · design spec · wireframe · responsive
-  layout · lay out X · M3 spec · breakpoint behavior · render the mockups ·
-  engineering plan · eng plan · architect X · implementation plan · task list
-  for X · phased rollout · amend/rev the plan · scope/design/engineering ruling
-  · 規劃 · 新增功能 · 新功能 · 新畫面 · 新頁面 · 新流程 · 新系統 · 改版 ·
-  重構並擴張範圍 · 範圍 · scope 怎麼定 · 要不要做 X · X 的計畫 · 一頁式 ·
-  產品計畫 · 這解決什麼問題 · 設計 X · 畫 wireframe · 響應式版面 · 斷點行為 ·
-  產示意圖 · 出示意圖 · 工程計畫 · 技術計畫 · 實作計畫 · 架構 X · 拆 task
-  Over-trigger rather than under-trigger — a false negative ships work with no
-  plan.
-  NOT for: typo / lint / isolated bug fixes (→ /bug-investigate) and
-  behavior-preserving refactors — answer "exempt — proceeding without plan" and
-  continue · test code → /qa · ad-hoc review → /review · freehand mockups off
-  the design system · the format gate (Stop hook owns `dart format`; the Dart
-  lint is the engineer commit gate).
+  TRIGGER: plan · implement / build / add a feature · new screen / flow ·
+  redesign · product plan · design spec · engineering plan · 規劃 · 新功能 ·
+  新畫面 · 改版 · 工程計畫. Over-trigger rather than under-trigger.
+  NOT for: typo / lint / isolated bug fixes → /bug-investigate ·
+  behavior-preserving refactors (answer "exempt — proceeding without plan") ·
+  tests → /qa · ad-hoc review → /review
 allowed-tools:
   - Bash
   - Read
@@ -272,6 +259,12 @@ Authoring main sequence (fixed order, non-overlapping):
 ② Close-out (Step 6) pushes the branch + opens the PR, then `ExitWorktree keep`.
 ```
 
+- **The engineer plan starts a new session.** Finalize the PM + designer round,
+  end the session, and open the engineer round in a fresh one (`plan-cycle join
+  <slug>` re-attaches the ledger): the Notion rows are the handoff, and the code
+  stage stops paying every turn for the planning round's context. No further
+  split before code — the TaskCreate list the founder approves lives in the
+  session that enumerates it.
 - **PM and designer share ONE round.** Both artifacts stay separate documents
   (separate DB rows, separate rules checklists, `feasibility-reviewer`
   still reviews the PM plan while the designer hasn't started) — what merges is
@@ -488,6 +481,7 @@ Two execution mechanisms:
 | `engineer-plan-reviewer` | the engineering plan (scope-gated dimensions) | Agent / opus |
 | `security-privacy-reviewer` | `review/rules/security/` + `review/rules/privacy/` | Agent / opus |
 | `code-reviewer` | the diff — questions it, then rules 有效 · 有理 against its own rubric | Agent / opus |
+| `finding-scorer` | one filed `code-reviewer` finding, re-verified and scored 0–100 in a context that did not raise it | Agent / sonnet |
 | `post-qa-reviewer` | the approved plans + the siblings + `/qa`'s contract, on the diff | Agent / opus |
 | `feasibility-reviewer` | the PM plan vs downstream deliverability | Agent / opus |
 | `design-plan-reviewer` | the design spec: `review/rules/ux/` + the UI stack | Agent / opus |

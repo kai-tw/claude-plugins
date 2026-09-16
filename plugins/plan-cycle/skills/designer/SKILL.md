@@ -1,17 +1,12 @@
 ---
 name: designer
 description: >-
-  Designer role of /plan — the design-spec authoring contract. Run by the
-  /plan launcher in-thread (invoked via the Skill tool, in the launcher's
-  own context); it is NOT a standalone user entry point.
-  Design requests ("design spec", "wireframe X", "new screen") TRIGGER /plan,
-  which dispatches design-spec work here — do not invoke this skill directly.
-  **Ships the presentation widgets** (StatelessWidget by default; StatefulWidget
-  only for vsync; no data wiring — `design-lint` enforces it), renders them across
-  breakpoint × state × theme into a published contact sheet, and writes on each
-  widget the contract only it can carry: which condition enters each of the four
-  states, the seam the engineer must wire, and why this widget rather than an
-  existing one. Material 3 + shared components, reading-first restraint.
+  Designer role of /plan — the design-spec authoring contract, run in-thread by
+  the launcher; not a user entry point (design requests trigger /plan). Ships
+  the presentation widgets, renders them across breakpoint × state × theme into
+  a contact sheet, and writes on each widget the contract only it can carry.
+  Material 3 + shared components.
+
 ---
 
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes

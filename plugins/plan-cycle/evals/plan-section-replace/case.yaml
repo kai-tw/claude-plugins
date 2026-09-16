@@ -1,0 +1,16 @@
+schema_version: "1.1"
+name: plan-section-replace
+description: 只換 §Revision history 一節（append 一行），其他節一字不動。
+tags: [plan-section]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: plan-section append plan.md "Revision history" - <<<"- 2026-09-17: engineer-plan-reviewer — proceed after 1 round(s) · critical 0 · c10-unanswered 0" && cat plan.md
+  prompt: |
+    在 plan.md 的 `## Revision history` 末尾加一行 `- 2026-09-17: engineer-plan-reviewer — proceed after 1 round(s) · critical 0 · c10-unanswered 0`。
+    只能動那一節；其他節必須一字不變。有可用的 section 編輯工具就用它。完成後印出整份 plan.md。
+context:
+  scaffold_script: fixture.sh

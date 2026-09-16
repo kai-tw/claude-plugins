@@ -1,18 +1,14 @@
 ---
 name: worktree-setup
 description: >-
-  Build a project's worktree bootstrap — the `.worktreeinclude` file plus the
-  init step that makes a fresh worktree compile, lint and test without a full
-  regeneration. Derives both from what the project actually generates rather
-  than copying another project's answer.
-  TRIGGER — setting a repo up for worktree isolation, or fixing a worktree that
-  starts broken: worktree is missing generated files · worktree won't build ·
-  set up .worktreeinclude · what should a new worktree copy · worktree init
-  script · why does my worktree need a full codegen · 新 worktree 建不起來 ·
-  worktree 缺生成檔 · 設定 worktree 初始化
-  NOT for: deciding WHEN to use a worktree (that is the project's CLAUDE.md),
-  or worktree lifecycle traps like submodule removal and sub-agent cwd (those
-  are `git-ops`).
+  Build a project's worktree bootstrap: `.worktreeinclude` plus the init step
+  that makes a fresh worktree compile, lint and test without a full
+  regeneration, derived from what the project generates.
+  TRIGGER: worktree missing generated files / won't build · set up
+  .worktreeinclude · 新 worktree 建不起來
+  NOT for: when to use a worktree (the project's CLAUDE.md) · worktree lifecycle
+  traps (`git-ops`)
+
 ---
 
 # Worktree bootstrap — deriving it, not copying it

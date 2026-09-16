@@ -38,8 +38,7 @@ it while hot; the founder consumes it in batches and rules on subtractions.
   lands in `recurring-bug` (anchoring the prior fix it undoes AND the new
   sighting), and this retro entry lists those filenames — the counts are the
   trend, the entries are what a consume batch can act on.
-- **Consume (when `plan-cycle clear` nudges at close-out, or on founder
-  demand):** read the entries, aggregate per-gate hit rates + the most-nominated
+- **Consume (on founder demand):** read the entries, aggregate per-gate hit rates + the most-nominated
   subtraction candidates, route each category to its named destination
   (`feedback-ledger §Consume routing` — recurring-bug goes to the qa
   failure-class index or the consistency mechanism table, never to prose), and

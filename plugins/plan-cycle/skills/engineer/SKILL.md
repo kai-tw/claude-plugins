@@ -1,20 +1,13 @@
 ---
 name: engineer
 description: >-
-  Engineer role of /plan — the engineering-plan authoring contract. Run by the
-  /plan launcher in-thread (invoked via the Skill tool, in the launcher's own
-  context); it is NOT a standalone user entry point. Engineering
-  requests ("engineering plan", "how should we implement X") TRIGGER /plan,
-  which dispatches engineering-plan work here — do not invoke this skill
-  directly. Authors / revises an engineering plan (Notion Engineering Plan DB) as
-  a guided questionnaire: summary, §事實帳 (typed-evidence ledger of every
-  load-bearing existing-behavior claim — file:line / 實驗 / 未讀 / 只能實測 /
-  今天成立; prose cites F-ids, never restates), §Classes (class inventory plus a
-  contract table per class whose public methods this plan adds, changes or
-  cites — callee, evidence-or-未讀, errors),
-  a typed §Data flow graph whose nodes match it, error policy, startup order,
-  migration impact, risks, and the §Conformance reverse walk. Tasks live in
-  TaskCreate, not the plan body.
+  Engineer role of /plan — the engineering-plan authoring contract, run
+  in-thread by the launcher; not a user entry point (engineering requests
+  trigger /plan). Authors / revises the Notion Engineering Plan row: §事實帳
+  (typed evidence), §Classes (inventory + contract tables for the public methods
+  the plan adds, changes or cites), §Data flow, error policy, startup,
+  migration, risks, §Conformance. Tasks live in TaskCreate, not the plan body.
+
 ---
 
 > **Runtime — you run in the caller's (main thread) context.** `/plan` invokes
@@ -335,8 +328,9 @@ deps-graph) parallelises as filesystem read/grep.
 
 ## Phase 3 — Architectural sketch
 
-**Run `notion-payload template engineering-plan` and `hints engineering-plan`
-first**, alongside the SOPs below. The questionnaire's cells *are* the drafting
+**Run `notion-payload template engineering-plan` first**, alongside the SOPs
+below, and pull `notion-payload hints engineering-plan <Section>` as you reach
+each section. The questionnaire's cells *are* the drafting
 constraints — answering `為何要新增` honestly is the check that nothing else can
 make, because `engineer-plan-reviewer` judges inside the design space you drew and
 will endorse a well-built thing that should not exist. A constraint honoured
@@ -364,63 +358,21 @@ they wire to each other, and each block's feature-specific instantiation —
 **citing the block's SOP for its internal shape and `.claude/rules/` for its
 constraints, never re-deriving either inline.**
 
-Translate the upstream brief into concrete code shapes. Each of
-the following maps to a section of the engineering plan row body
-(section schema: `engineering-plan` body in `notion-payload` —
-run `notion-payload hints engineering-plan`
-to print the full section questionnaire with descriptions and hints):
+Translate the upstream brief into the plan's sections. Each section's
+questions, cell forms and 禁-lists live in the questionnaire — pull one section as
+you reach it, `notion-payload hints engineering-plan <Section>` — and are not
+restated here. What this phase adds on top of it:
 
-- **§事實帳 (Facts)** — before any class is named: every **load-bearing
-  claim about existing behavior** ("already covered", "no callers change",
-  "only N sites", "X drives Y") becomes a ledger row with typed evidence —
-  `file:line` · `實驗：<指令> → <觀察>` · `未讀` · `只能實測：<how>` ·
-  `今天成立：<失效事件>` — and prose thereafter cites `F<n>`, **never
-  restates the fact** (single definition: a formula written in two places
-  diverged and bounced a rev; a patch-rev left six sections describing a
-  dead model). Arguments stay prose, but their factual premises must be
-  F-rows, so a falsified row shows exactly which decisions fall with it.
-  The full discipline — what counts as load-bearing, the three experiment
-  rules, the epistemics (reading proves declarations, sweeps prove counts
-  and absence, experiments prove behavior on the exercised path; an absence
-  or count claim needs a **second, different** method — the same corpus
-  searched twice is one method twice) — lives in
-  the questionnaire hint (`notion-payload hints engineering-plan`); the
-  claim sweep (`references/review-loop.md`) verifies every row before the
-  reviewer is spawned, and `plan_lint.sh` gates the evidence typing and
-  flags a single-method absence/count claim.
-- **§Classes** — lead with a **Mermaid composition graph** (Notion
-  renders it) showing block→block wiring (widget → state holder → use case →
-  repository → data source). This is the reviewer's 30-second shape + the
-  modular assembly diagram; nodes are feature-prefixed class names.
-- **§Classes** — the summary table (one row per NEW / MOD / DEL class) plus a
-  `### <Class>` contract table only for classes whose public methods this plan
-  adds, changes, or cites from §Data flow / §Conformance — a body-only MOD or a
-  DEL stops at its summary row. Columns and cell forms live in the questionnaire
-  hint (`notion-payload hints engineering-plan`); **no method bodies, no logic
-  pseudo-code**. Each block is produced by walking its SOP when the project keeps
-  one (each SOP's **Output** names what drops in here; `SOP: —` when it does not).
-  **Presentation is already built** — the `*.design.dart` files are the designer's;
-  your row is the mapper that feeds their parameters, citing each widget's
-  `§Seam` (what each parameter means) and `§States` (which condition enters each
-  state). Push back to the designer role if either is missing, and never edit a
-  delivered widget yourself (Iron Law 8). A layer with no
-  changes is named ("domain: no change") so the implementer knows it was
-  considered, not forgotten. Names are feature-prefixed + role-suffixed per
-  `.claude/rules/naming.md` — naming is
-  *proposed here*, constrained by the rule, no separate naming section. The
-  block's **internal design + method bodies belong to the SOP + the
-  implementation, not the plan**; cite the relevant `.claude/rules/` file
-  for each block's constraints rather than re-deriving them. Runtime call
-  sequence goes in §Data flow (static composition vs runtime sequence —
-  complementary).
-- **Data flow** — sequence per user-facing scenario named in the
-  product plan. Show who calls whom across layers, where the
-  isolate boundary sits (if any), where the
-  `StreamSubscription` lives, where `LogSystem.error` fires. For
-  reactive flows, name the `Stream<T>` type and whether it is
-  `BehaviorSubject`-backed (per `architecture.md` rxdart scope
-  discipline). For network-touching flows, route through
-  `ConnectivityRepository`.
+- **§事實帳 → the claim sweep.** Every load-bearing existing-behavior claim is a
+  ledger row before any class is named; `references/review-loop.md §4` refutes
+  each row before the reviewer is spawned, and `plan_lint.sh` gates the evidence
+  typing.
+- **§Classes → the designer's widgets are not yours.** The `*.design.dart`
+  files are already built; your NEW row is the mapper that feeds their
+  parameters, citing each widget's `§Seam` and `§States`. Push back to the
+  designer role when either is missing; never edit a delivered widget (Iron
+  Law 8). Each block's internal shape comes from its SOP (`SOP: —` when the
+  project keeps none); the plan records the assembly.
 - **Exception enumeration (shift-left, partial).** Fan out read-only
   throw-site tracers (`general-purpose` sub-agents, `model: sonnet` —
   cross-layer call-chain tracing is bounded recon, not judgment) to
@@ -435,9 +387,8 @@ to print the full section questionnaire with descriptions and hints):
   `package-explorer`): a row needs a real grep'd throw site OR a doc page
   that *explicitly* names the throw — a guessed `file:line` is
   counter-evidence, omit the row; do **not** invent exceptions to look
-  thorough. Hold every row to the Evidence-column standard — run
-  `notion-payload hints engineering-plan`
-  and read the §Error policy hint (evidence sources (a)–(d); "could maybe throw"
+  thorough. Hold every row to the Evidence-column standard
+  (`notion-payload hints engineering-plan 'Error policy'`; "could maybe throw"
   is not evidence). **Each tracer
   self-verifies its own cites resolve** (mechanical, in-agent — it already
   has the grep open); this thread then adjudicates only which verified
@@ -451,44 +402,12 @@ to print the full section questionnaire with descriptions and hints):
   stays load-bearing** for those; a populated discovery log there is the
   EXPECTED state whenever the plan defers a leaf/primitive choice, not a
   tracer miss.
-- **§Startup** — construction timing and dependency order for everything the
-  change brings up at launch. Separate from §Error policy because the defects
-  differ in kind: an error-handling gap is a missing branch, a startup gap is a
-  wrong *order*, and no state matrix can express "A ran before B". Separate from
-  the design spec's four states for the same reason — those describe a screen at
-  rest, not the sequence that got it there.
-  The column that carries the section is **"proves it ran"**, and a unit test
-  never satisfies it: tests call `init()` directly, so they pass identically
-  whether or not the app ever reaches it. Cite a device or integration run, a
-  startup-log assertion, or a guard that fails loud. Give any fire-and-forget
-  component — one that drives navigation, subscriptions, or scheduling with no
-  widget consuming it — an eager construction, because lazy plus no consumer is
-  dead code that every test still reports green.
-  No startup-time work? Say so with a reason. An empty table is a finding.
-- **§Conformance** — the acceptance contract that makes nothing in the spec
-  droppable. One row per **product-plan** commitment (success metric / scope item
-  the user approved) **and** per **design-spec** observable item (each §States
-  entry condition, each §Seam behaviour, each motion / interaction the spec names):
-  `# | Requirement | Source (product §outcome / design §item) | 實作於 (Class.method) | Code evidence (file:line) | Test (qa id) | Status`.
-  **Completeness is the point** (Iron Law 8): walking the product plan + design
-  spec, every commitment and every observable item must appear as a row mapped to
-  a `Class.method` that §Classes actually defines — a spec item with no row, or a
-  row pointing at nothing, is an
-  incomplete plan. A **cross-cutting flow** (validation, recording, data-passing —
-  anything a sibling feature already does) additionally carries a
-  `同儕：<feature> <file:line>` row naming the existing mechanism it mirrors:
-  `plan-lint` checks the anchor's format, and `post-qa-reviewer` walks it
-  checkpoint-by-checkpoint after QA — every check the sibling performs that this
-  flow lacks needs a reason written here, at plan time, not discovered at PR
-  review. First implementation of a mechanism, with no sibling to name → note
-  「首例」 and owe the project's `.claude/rules/consistency.md` mechanism table
-  a row. Fill `Requirement / Source / 實作於` at plan time; `Code evidence`
-  is filled during implementation (self-cite the file:line that realises the row,
-  like a §Error-handling handling decision); `Test` points at the QA acceptance
-  test. This is the **inverse** of §Classes' "source-from-spec, never invent":
-  §Classes stops you adding what the spec didn't ask for; §Conformance stops you
-  dropping what it did. Verified post-code by `post-qa-reviewer` + QA
-  (Iron Law 7 / 10).
+- **§Conformance → completeness (Iron Law 8).** One row per product-plan
+  commitment and per design-spec observable item, each mapped to a
+  `Class.method` §Classes defines; `驗證` is the QA acceptance id, `pending`
+  until it exists. The inverse of §Classes: §Classes stops you adding what the
+  spec did not ask for, §Conformance stops you dropping what it did — verified
+  post-code by `post-qa-reviewer` + QA (Iron Law 7 / 10).
 
 The sketch is the single most load-bearing section of the plan —
 this is the surface the user pushes back on before the

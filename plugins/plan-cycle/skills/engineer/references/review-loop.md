@@ -153,9 +153,11 @@ then whichever suggestions you take**:
 - **Take the reviewer's `Fix:` or beat it.** Each finding arrives with the fix
   the reviewer would make. Applying it verbatim is a perfectly good answer and
   usually the fastest one — you own the design, so override it when you see
-  better, but you owe no argument for agreeing. Apply the fix to the plan (the
-  Notion Engineering Plan row body) by invoking the `archivist` skill (no
-  Notion MCP — the launcher's Iron Law 6). **When the fix path is non-obvious, research it**
+  better, but you owe no argument for agreeing. Apply the fix to the plan body
+  one section at a time — `plan-section replace <bodyFile> '<heading>' -` — then
+  upload the bodyFile through the `archivist` skill (`notion-payload update …
+  --commit`; no Notion MCP — the launcher's Iron Law 6), so a rev emits the
+  changed sections, never the whole plan. **When the fix path is non-obvious, research it**
   — `WebSearch` / `WebFetch` for the canonical pattern, prior art, or
   package option — so the rev names a concrete approach, not a guess.
 - If a fix would require new product or design scope (e.g.
@@ -168,7 +170,8 @@ then whichever suggestions you take**:
   the others describing the dead model, and the next review round voids the
   rev. After the rewrite, `plan_lint.sh`'s closure checks verify the sections
   agree again.
-- Mirror every fix into the Notion row body's `## Revision history` (via the `archivist`)
+- Mirror every fix into `## Revision history` (`plan-section append <bodyFile>
+  'Revision history' -`, uploaded with the same update)
   (`Rev N: engineer-plan-reviewer pass — resolved <severity> <dimension> via
   <fix summary>`), **naming the finding ids it resolves** (`[10.1]`, `[11.2]`
   — the ids the round-1 report printed). Every critical and every warning must
@@ -181,7 +184,9 @@ the criticals just have to be resolved before the re-spawn.
 ## Step 4 — Verification round (the second and last spawn)
 
 After Step 3's fixes land, re-spawn `engineer-plan-reviewer` **once**, as a
-verification of round 1 — not a fresh review. Re-running a judgment gate
+verification of round 1 — not a fresh review — pinned `model: sonnet` unless
+round 1 filed a `critical`: confirming a fix is present is sonnet work, judging
+whether a critical's fix reasoning holds is opus (`plan/SKILL.md §Model tiering`). Re-running a judgment gate
 produces a new judgment (`plan/gates.md §Gate loop policy`): a dimension
 re-derived from scratch always finds one more thing to say, and
 a plan reviewed that way never closes, it just grows new findings every
@@ -217,7 +222,8 @@ approval gate.
 
 ## Step 5 — Record the verdict in `## Revision history`
 
-One line, via the `archivist`:
+One line — `plan-section append <bodyFile> 'Revision history' -`, uploaded via
+the `archivist`:
 
 ```
 - YYYY-MM-DD: engineer-plan-reviewer — <proceed | blocked→resolved> after <N> round(s) · critical <n> · c10-unanswered <m> · accepted: <dimension id …>
