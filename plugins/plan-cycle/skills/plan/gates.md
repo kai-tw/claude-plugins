@@ -243,8 +243,10 @@ the PR.
 **Not finished until both measured gates are green.** They are the QA phase's
 output rather than an opinion about it, and `qa/SKILL.md` §Iron Law 1 owns the bar:
 
-- **`plan-coverage`** — every line the cycle changed either executed, or carrying
-  `// coverage-ignore: <reason>`. Deliberately **per line, not per percent**: two
+- **`plan-coverage`** — every line the cycle changed executed, with **no
+  exemption marker**: the old `// coverage-ignore: <reason>` was retired for
+  abuse, and a changed file carrying a `// coverage:ignore-*` pragma is blocked
+  too, since those drop lines from the measurement. Deliberately **per line, not per percent**: two
   files at 92% are not the same file when one missed a logging branch and the
   other missed the error path, and a percentage cannot express the difference.
 - **`plan-mutation`** — every changed file kills its own mutants above the

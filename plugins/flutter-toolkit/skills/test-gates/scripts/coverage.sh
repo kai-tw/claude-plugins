@@ -12,18 +12,21 @@
 #   path. plan-cycle's `qa/SKILL.md` states the rule this enforces — for each changed file,
 #   either every line is executed, or the exception is NAMED WITH ITS REASON —
 #   and a percentage cannot express it. So the output is the list of unexecuted
-#   lines, and the pass condition is that every one of them carries a reason.
+#   lines, and the pass condition is that there are none.
 #
-# THE ESCAPE HATCH
-#   `// coverage-ignore: <reason>` on the line, or on the line directly above
-#   it. The reason is mandatory and must be non-empty — an unexplained "not
-#   covered" is exactly the gap this exists to stop, and a marker with no reason
-#   is that gap wearing a marker. Same shape as `// review-dismiss:`, which the
-#   ledger's Gate 4 already scans for.
+# THERE IS NO ESCAPE HATCH
+#   An earlier version accepted `// coverage-ignore: <reason>` on or above an
+#   unexecuted line. It was retired because it was abused: the reason became
+#   the thing written instead of the test. An unexecuted changed line is now
+#   either tested or reported — the report is the honest record, not a marker.
 #
-#   `lcov.info` is the source of truth for what ran. Whatever the toolchain
-#   already excluded — `// coverage:ignore-file` on generated code, for instance
-#   — is simply absent from it and this script never sees those lines.
+#   The toolchain's own pragmas are closed for the same reason. `flutter test`
+#   drops lines under `// coverage:ignore-line` / `-start` … `-end` / `-file`
+#   from `lcov.info` before this script reads it, so an unexecuted line under
+#   one looks exactly like an executed one. Any changed file that carries such
+#   a pragma — or a leftover `// coverage-ignore:` marker, which now exempts
+#   nothing and only claims to — blocks until it is removed. Generated files
+#   are excluded by name below and never reach that check.
 #
 # USAGE
 #   plan-coverage [--files a.dart …] -- <test-command…>
@@ -35,9 +38,9 @@
 #   the repo root — the test command runs in the CALLER's working directory.
 #
 # EXIT
-#   0  every changed file fully executed, or every gap carries a reason
-#   1  at least one unexplained unexecuted line, or a changed file no test
-#      reached at all
+#   0  every changed line executed
+#   1  at least one unexecuted line, a changed file no test reached at all, or
+#      a changed file carrying a coverage pragma
 #   2  nothing was measured (no repo, no lcov, the run did not happen)
 
 set -uo pipefail
@@ -106,7 +109,7 @@ before=0
 set -- "$@"
 case " $* " in *" --coverage "*) ;; *) set -- "$@" --coverage ;; esac
 
-echo "plan-coverage: ${count_files} changed file(s); every line must be executed or carry \`// coverage-ignore: <reason>\`."
+echo "plan-coverage: ${count_files} changed file(s); every line must be executed — no exemptions."
 echo "plan-coverage: running — $*"
 started=$(date +%s)
 "$@"
@@ -163,23 +166,26 @@ uncov=$(awk -v root="$root/" '
 seen_files=$(printf '%s\n' "$uncov" | awk -F'\t' '$2 == "-" { print $1 }' | sort -u)
 gaps=$(printf '%s\n' "$uncov" | awk -F'\t' '$2 != "-" && NF == 2' | sort -u -t$'\t' -k1,1 -k2,2n)
 
-# --- classify each gap: reasoned or not -------------------------------------
-# The marker is accepted on the line itself or the line directly above it. Above
-# is the common shape for a whole statement; on-line suits a trailing branch.
-# The reason must be non-empty AFTER the colon — a bare marker is the gap with a
-# sticker on it.
-explained=""; unexplained=""
+# --- gaps and pragmas -------------------------------------------------------
+unexecuted=""
 while IFS=$'\t' read -r f ln; do
   [ -n "$f" ] || continue
-  ctx=$(sed -n "$(( ln > 1 ? ln - 1 : 1 )),${ln}p" "$f" 2>/dev/null)
-  reason=$(printf '%s\n' "$ctx" | sed -n 's|.*// *coverage-ignore: *\(.*[^ ]\) *$|\1|p' | tail -1)
-  if [ -n "$reason" ]; then
-    explained="${explained}${f}:${ln}\t${reason}"$'\n'
-  else
-    src=$(sed -n "${ln}p" "$f" 2>/dev/null | sed 's/^[[:space:]]*//')
-    unexplained="${unexplained}${f}:${ln}\t${src}"$'\n'
-  fi
+  src=$(sed -n "${ln}p" "$f" 2>/dev/null | sed 's/^[[:space:]]*//')
+  unexecuted="${unexecuted}${f}:${ln}\t${src}"$'\n'
 done <<< "$gaps"
+
+# A pragma hides lines from lcov, so the per-line view above cannot see what it
+# hid. Read the source instead: every pragma in a changed file is a finding.
+pragmas=""
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  hits=$(grep -nE '//[[:space:]]*coverage(:ignore|-ignore)' "$f" 2>/dev/null) || continue
+  while IFS= read -r h; do
+    ln=${h%%:*}
+    src=$(printf '%s' "${h#*:}" | sed 's/^[[:space:]]*//')
+    pragmas="${pragmas}${f}:${ln}\t${src}"$'\n'
+  done <<< "$hits"
+done <<< "$files"
 
 # A changed file with NO lcov record at all is not 0% — it is a file no test
 # imported. That reads as "nothing to report" in every per-line view, which is
@@ -192,37 +198,42 @@ done <<< "$files"
 
 # --- report -----------------------------------------------------------------
 n_unreached=$(printf '%s' "$unreached" | grep -c . || true)
-n_unexpl=$(printf '%s' "$unexplained" | grep -c . || true)
-n_expl=$(printf '%s' "$explained" | grep -c . || true)
+n_gaps=$(printf '%s' "$unexecuted" | grep -c . || true)
+n_prag=$(printf '%s' "$pragmas" | grep -c . || true)
+
+# One verdict per file, shared by the terminal table and the markdown one:
+# "<VERDICT>\t<gaps>\t<pragmas>".
+verdict() {
+  if printf '%s\n' "$unreached" | grep -qxF "$1"; then printf 'UNREACHED\t-\t-\n'; return; fi
+  local g p v=PASS
+  g=$(printf '%s' "$unexecuted" | grep -c "^${1}:" || true)
+  p=$(printf '%s' "$pragmas"    | grep -c "^${1}:" || true)
+  if [ "$g" -gt 0 ] || [ "$p" -gt 0 ]; then v=FAIL; fi
+  printf '%s\t%s\t%s\n' "$v" "$g" "$p"
+}
 
 echo
-printf '%-10s %8s %10s %11s  %s\n' VERDICT 'GAPS' 'REASONED' 'UNEXPLAINED' FILE
+printf '%-10s %8s %8s  %s\n' VERDICT GAPS PRAGMAS FILE
 while IFS= read -r f; do
   [ -n "$f" ] || continue
-  if printf '%s\n' "$unreached" | grep -qxF "$f"; then
-    printf '%-10s %8s %10s %11s  %s\n' UNREACHED - - - "$f"
-    continue
-  fi
-  e=$(printf '%s' "$explained"   | grep -c "^${f}:" || true)
-  u=$(printf '%s' "$unexplained" | grep -c "^${f}:" || true)
-  v=PASS; [ "$u" -gt 0 ] && v=FAIL
-  printf '%-10s %8s %10s %11s  %s\n' "$v" "$(( e + u ))" "$e" "$u" "$f"
+  IFS=$'\t' read -r v g p <<< "$(verdict "$f")"
+  printf '%-10s %8s %8s  %s\n' "$v" "$g" "$p" "$f"
 done <<< "$files"
 echo "plan-coverage: elapsed ${elapsed}s."
 
-if [ "$n_unexpl" -gt 0 ]; then
+if [ "$n_gaps" -gt 0 ]; then
   echo
-  echo "Unexecuted, with no reason given:"
-  printf '%b' "$unexplained" | while IFS=$'\t' read -r loc src; do
+  echo "Unexecuted:"
+  printf '%b' "$unexecuted" | while IFS=$'\t' read -r loc src; do
     [ -n "$loc" ] && printf '  • %s  %s\n' "$loc" "$src"
   done
 fi
 
-if [ "$n_expl" -gt 0 ]; then
+if [ "$n_prag" -gt 0 ]; then
   echo
-  echo "Unexecuted, reason given:"
-  printf '%b' "$explained" | while IFS=$'\t' read -r loc why; do
-    [ -n "$loc" ] && printf '  · %s  — %s\n' "$loc" "$why"
+  echo "Coverage pragmas (each hides lines from the measurement, or claims a retired exemption):"
+  printf '%b' "$pragmas" | while IFS=$'\t' read -r loc src; do
+    [ -n "$loc" ] && printf '  • %s  %s\n' "$loc" "$src"
   done
 fi
 
@@ -241,44 +252,41 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:coverage sha=%s -->\n' "$head_sha"
   printf '### Coverage — reach\n\n'
-  printf 'Scope: %s changed file(s), `%s`. Every line executed, or the gap carries a written reason.\n\n' "$count_files" "$*"
-  printf '| Verdict | Gaps | Reasoned | Unexplained | File |\n|---|---:|---:|---:|---|\n'
+  printf 'Scope: %s changed file(s), `%s`. Every changed line executed; no exemptions.\n\n' "$count_files" "$*"
+  printf '| Verdict | Gaps | Pragmas | File |\n|---|---:|---:|---|\n'
   while IFS= read -r f; do
     [ -n "$f" ] || continue
-    if printf '%s\n' "$unreached" | grep -qxF "$f"; then
-      printf '| **UNREACHED** | – | – | – | `%s` |\n' "$f"; continue
-    fi
-    e=$(printf '%s' "$explained"   | grep -c "^${f}:" || true)
-    u=$(printf '%s' "$unexplained" | grep -c "^${f}:" || true)
-    v='PASS'; [ "$u" -gt 0 ] && v='**FAIL**'
-    printf '| %s | %s | %s | %s | `%s` |\n' "$v" "$(( e + u ))" "$e" "$u" "$f"
+    IFS=$'\t' read -r v g p <<< "$(verdict "$f")"
+    case "$v" in PASS) ;; *) v="**$v**" ;; esac
+    printf '| %s | %s | %s | `%s` |\n' "$v" "$g" "$p" "$f"
   done <<< "$files"
   if [ "$n_unreached" -gt 0 ]; then
     printf '\n**UNREACHED means no test imported the file at all** — not 0%%%s, but absent from the coverage report entirely.\n' ''
   fi
-  if [ "$n_unexpl" -gt 0 ]; then
-    printf '\n<details><summary>Unexecuted, no reason given (%s)</summary>\n\n' "$n_unexpl"
-    printf '%b' "$unexplained" | while IFS=$'\t' read -r loc src; do
+  if [ "$n_gaps" -gt 0 ]; then
+    printf '\n<details><summary>Unexecuted (%s)</summary>\n\n' "$n_gaps"
+    printf '%b' "$unexecuted" | while IFS=$'\t' read -r loc src; do
       [ -n "$loc" ] && printf -- '- `%s` — `%s`\n' "$loc" "$src"
     done
     printf '\n</details>\n'
   fi
-  if [ "$n_expl" -gt 0 ]; then
-    printf '\n<details><summary>Unexecuted, reason given (%s)</summary>\n\n' "$n_expl"
-    printf '%b' "$explained" | while IFS=$'\t' read -r loc why; do
-      [ -n "$loc" ] && printf -- '- `%s` — %s\n' "$loc" "$why"
+  if [ "$n_prag" -gt 0 ]; then
+    printf '\n<details><summary>Coverage pragmas (%s)</summary>\n\n' "$n_prag"
+    printf '%b' "$pragmas" | while IFS=$'\t' read -r loc src; do
+      [ -n "$loc" ] && printf -- '- `%s` — `%s`\n' "$loc" "$src"
     done
     printf '\n</details>\n'
   fi
 } > "$REPORT"
 echo "plan-coverage: report section — $REPORT"
 
-if [ "$n_unreached" -gt 0 ] || [ "$n_unexpl" -gt 0 ]; then
+if [ "$n_unreached" -gt 0 ] || [ "$n_gaps" -gt 0 ] || [ "$n_prag" -gt 0 ]; then
   cat >&2 <<EOF
 
 plan-coverage: BLOCKED.
 $( [ "$n_unreached" -gt 0 ] && printf '\n  %s changed file(s) appear NOWHERE in the coverage report — no test imports them.\n  That is not a low score; it is an unmeasured file, and mutation cannot see it\n  either (an unexecuted line produces no mutant to survive).\n' "$n_unreached" )
-$( [ "$n_unexpl" -gt 0 ] && printf '\n  %s unexecuted line(s) with no reason. Either add the test that runs the line,\n  or write why it cannot be run, at the site:\n\n      // coverage-ignore: only a real device enters this branch\n\n  "Not covered" with no reason is the gap this gate exists to stop.\n' "$n_unexpl" )
+$( [ "$n_gaps" -gt 0 ] && printf '\n  %s unexecuted line(s). Add the test that runs each one. A line no test can\n  reach is a design finding — put it behind a seam a test can drive — and\n  there is no marker that passes it.\n' "$n_gaps" )
+$( [ "$n_prag" -gt 0 ] && printf '\n  %s coverage pragma(s) in changed files. `coverage:ignore-*` removes lines from\n  the measurement before this gate reads it; `coverage-ignore:` is retired.\n  Remove them and let those lines be measured.\n' "$n_prag" )
 EOF
   exit 1
 fi

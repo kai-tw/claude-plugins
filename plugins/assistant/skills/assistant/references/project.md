@@ -8,7 +8,7 @@ vcs:        git | svn                      # worktree vs working copy; push vs c
 notion_root: <page-id>                     # the KB root; TaskList is resolved by title under it
 lint:       <command>                      # commit-hook leg
 test:       <command>
-coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, or its exception named with a reason
+coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, no exemptions
 mutation:   <command or none>              # mutation score on the diff; gate: ≥ 80
 render:     <command or none>              # produces the contact sheet for ② 畫面
 rules:      <path>                         # the project's .claude/rules/ — 命令層 under style-pack §位階; the verifier grades against both

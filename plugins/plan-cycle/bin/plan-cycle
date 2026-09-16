@@ -1023,8 +1023,9 @@ Run both and post the report, scoped the way the change is scoped:
   plan-qa-report -- flutter test test/features/<feature>/
 
 It runs coverage then mutation, posts one comment to PR #${pr}, and records the
-result here. If a gap is genuinely unreachable, write the reason at the site
-(\`// coverage-ignore: <why>\`) rather than working around the gate.
+result here. There is no marker that exempts a line: if a gap looks
+unreachable, put it behind a seam a test can drive, or stop and bring it to the
+user — never a \`coverage:ignore\` pragma, which the gate also blocks.
 EOF
       exit 1
     fi

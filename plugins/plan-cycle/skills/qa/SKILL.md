@@ -337,10 +337,13 @@ review too; that gap is what these two exist to close.
 
 **Either gap comes back to this agent as a re-dispatch, not a hand-wave.** A
 mutation survivor names a case that does not exist or an assertion that does
-not assert — add the case that kills it. An unexecuted line is either a
-missing test or a genuine impossibility, and the impossibility is written
-**at the site** (`// coverage-ignore: only a real device enters this
-branch`), never left as a bare gap. Both tools refuse a run they could not
+not assert — add the case that kills it. An unexecuted line is a missing
+test. When it looks impossible to reach, that is a design finding — hand it
+back so the line moves behind a seam a test can drive — and if it still cannot
+be reached, the red gate goes to the user as-is. **There is no exemption
+marker**: `// coverage-ignore:` was retired because it was abused, and
+`// coverage:ignore-*` pragmas block the gate, since they hide lines from the
+measurement instead of explaining them. Both tools refuse a run they could not
 measure rather than reporting it as clean.
 
 **A survivor outside your tree is a hand-back, never a reach-across.** Rule 1
