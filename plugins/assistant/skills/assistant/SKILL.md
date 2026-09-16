@@ -50,6 +50,11 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    Tier: `exempt` (typo / constant / log — Builder edits, straight to Verify),
    `small` (one module, no new abstraction — skip Scout and the brief, you rule),
    `feature` (everything else — the full flow). Unsure → `feature`.
+   A request one brief cannot hold — more than 5 `需要你` forks, or a design that
+   touches more than one persisted format — becomes several 任務書 in order: each
+   its own row and worktree; the later rows are `Status=Next` with `Trigger`
+   naming the row they wait for. The split itself is a `自行裁定` in the first
+   brief.
 2. **Scout** (`scout`, sonnet, in the project worktree) returns ≤10 fact rows
    (`file:line` or `未讀`) and the intent forks it could not settle.
 3. **① Brief** (you): from the facts and forks, `references/brief.md`. When the
@@ -87,7 +92,11 @@ root); one row per task, `Stage` mapped as: 任務書 → Product Plan · brief 
 Engineering Plan · screens → Design Plan · build → Implementation · verify →
 Review · PR → QA · closed → Shipped. Every turn you take is a scheduler pass: read
 the board → advance or dispatch each live row → surface new `需要你` lines together.
-`digest` prints one line per row plus this week's cost from the ledger.
+Live = `In Progress`, or `Next` whose `Trigger` names a row now `Shipped` (flip it
+to `In Progress` and start at Scout). A Close changes the board, so the pass runs
+again until no row advances — the turn ends at a `需要你`, a blocker, or a quiet
+board, never at a Close. `digest` prints one line per row plus this week's cost
+from the ledger.
 
 ## Budgets
 
