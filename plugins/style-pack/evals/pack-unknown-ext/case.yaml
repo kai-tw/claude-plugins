@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pack-unknown-ext
+description: 不認得的副檔名 → exit 2、什麼都不印。
+tags: [style-pack]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: style-pack --paths lib/a.py; echo "exit=$?"
+  prompt: |
+    印出審查 lib/a.py 該引用的撰寫法規則；印出 exit code。
+context:
+  scaffold_script: fixture.sh

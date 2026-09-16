@@ -25,6 +25,10 @@
     {
       "name": "flutter-toolkit",
       "marketplace": "kai-tw"
+    },
+    {
+      "name": "style-pack",
+      "marketplace": "kai-tw"
     }
   ],
   "skills": [

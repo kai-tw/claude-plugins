@@ -44,6 +44,17 @@
       "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/session-journal"
     },
     {
+      "name": "style-pack",
+      "description": "The founder's cross-project 撰寫法 — 母法 S1–S15 plus Dart/JS language files, printed by `style-pack` for any reviewer",
+      "source": "./plugins/style-pack",
+      "category": "development",
+      "author": {
+        "name": "Kai",
+        "url": "https://github.com/kai-tw"
+      },
+      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/style-pack"
+    },
+    {
       "name": "plan-cycle",
       "description": "Gated planning cycle with Stop-hook enforcement, shared across the Flutter projects.",
       "source": "./plugins/plan-cycle",

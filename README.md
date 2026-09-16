@@ -32,6 +32,7 @@ claude plugin install dart-lsp@kai-tw
 | [flutter-toolkit](plugins/flutter-toolkit) | Flutter test gates for a shared machine: `plan-test` slot budget, per-line coverage and mutation score over the diff |
 | [session-journal](plugins/session-journal) | Cross-session task-state journal — which threads are in flight and where each one lives, surviving context compaction, `/clear`, and resume |
 | [google-reporting](plugins/google-reporting) | GA4 and Search Console readers via keyless service-account impersonation |
+| [style-pack](plugins/style-pack) | The founder's cross-project 撰寫法: 母法 S1–S15 plus Dart/JS language files, printed by `style-pack` for any reviewer |
 | [plan-cycle](plugins/plan-cycle) | The gated planning cycle: PM → designer → engineer → code → QA → close-out, with a Stop-hook ledger |
 | [guardrails](plugins/guardrails) | Turns corrections into rules that fire — a bounded inbox, a fusion gate, and hooks that speak at the moment of the mistake |
 

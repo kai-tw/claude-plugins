@@ -1,11 +1,12 @@
-# Style rules — 立法程序與體例（review 子系統）
+# Style rules — 立法程序與體例（style-pack plugin）
 
 `Read` 本檔，限於新增、修改、合併或刪除 style rule 之時。
 
-**本包為何.** `code-reviewer` 之撰寫法規則庫（唯一讀者），分二層：**母規則（`index.md`，
+**本包為何.** 撰寫法規則庫，讀者為 plan-cycle 之 `code-reviewer` 與 assistant 之
+`code-verifier`，均經 `style-pack` 指令載入，分二層：**母規則（`index.md`，
 語言與專案中立）**，及**語言層 sub-check（`dart.md` / `js.md`）**。所收者，為 founder
-手抓得到、而 linter 稽核不到之撰寫判斷——該等判斷一旦不在規則之內，`code-reviewer` 依
-Kind 3「taste or style with no rule behind it」即被要求放行，故**立法為唯一入口**。
+手抓得到、而 linter 稽核不到之撰寫判斷——該等判斷一旦不在規則之內，審查器依「無規則可引者不立」
+即被要求放行，故**立法為唯一入口**。
 
 **位階與牴觸.** 唯一版本載於 `index.md §位階`。本檔僅重申一事：**無豁免條款**。牴觸僅有
 三種結局（母規則收窄／母規則廢除／專案改 code），全屬修法。
@@ -16,7 +17,7 @@ ledger 指令或證據檔路徑。母法只定義**位階**（憲法／法律／
 各層由哪個檔案承載：指名了，該檔一改名或一裁撤，母法即失效。
 
 承載關係寫在本檔：法律層為 `dart.md` / `js.md`，命令層為各專案的 `.claude/rules/`。
-落地程序也寫在本檔——牴觸判 `無法判定` 時，其證據格式見 `../../references/evidence.md`，
+落地程序也寫在本檔——牴觸判 `無法判定` 時，其證據格式見 plan-cycle `skills/review/references/evidence.md`，
 並以 `plan-feedback add code-review` 開 ledger。
 
 同理，某條之範圍若因 lint 已涵蓋而收窄，條文只寫**它自己管什麼**，不寫「另一半由誰
@@ -27,8 +28,7 @@ ledger 指令或證據檔路徑。母法只定義**位階**（憲法／法律／
 
 **入庫要件（先過本關，再論體例）.**
 - **formatter / linter 稽核得到者，不收.** 其歸屬為 `analysis_options.yaml` / eslint
-  設定；`code-reviewer.md §Rule surface` 明令不重推 lint 已決之事，收入本包僅係將判斷
-  預算耗於機械題。
+  設定；審查器不重推 lint 已決之事，收入本包僅係將判斷預算耗於機械題。
 - **寫不出 `Check:` 者，不收.** 旁觀者查不動之條，係偏好而非規則
   （`.claude/rules/writing-rules.md`）。
 - **可機械判定而尚無規則者，應往寫 lint 規則，不得寫為散文.** 其去處為專案之 lint 規則

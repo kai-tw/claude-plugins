@@ -11,6 +11,6 @@ test:       <command>
 coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, or its exception named with a reason
 mutation:   <command or none>              # mutation score on the diff; gate: ≥ 80
 render:     <command or none>              # produces the contact sheet for ② 畫面
-rules:      <path>                         # the project's .claude/rules/ overlay the verifier grades against
+rules:      <path>                         # the project's .claude/rules/ — 命令層 under style-pack §位階; the verifier grades against both
 destructive: <list>                        # actions the assistant must ask before (svn revert, force-push, …)
 ```

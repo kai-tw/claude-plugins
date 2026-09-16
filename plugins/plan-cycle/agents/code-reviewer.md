@@ -162,12 +162,10 @@ already what binds — read each in full, do not pre-select sections
 (`ls .claude/rules/` if you need the inventory).
 
 **Plus the style pack** — the founder's cross-project 撰寫法, which no project's
-rules carry: `${CLAUDE_PLUGIN_ROOT}/skills/review/rules/style/index.md` always,
-plus **one** language file selected by the changed paths' extensions —
-`.dart` → `style/dart.md`; `.js` `.mjs` `.cjs` `.jsx` `.ts` `.tsx` →
-`style/js.md`. A diff spanning both loads both. Its `§位階` is the one version of
-how it and `.claude/rules/` rank, and of what to do when they conflict — read it
-there, never re-derive it here.
+rules carry: `style-pack --paths <the changed files>` prints the 母法 plus the
+language files those extensions need. Its `§位階` is the one version of how it
+and `.claude/rules/` rank, and of what to do when they conflict — read it there,
+never re-derive it here.
 
 The rule files are the source of truth, and **this definition never
 restates their content** — it says how to review, not what the rules

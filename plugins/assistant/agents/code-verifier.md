@@ -18,7 +18,8 @@ tools:
 # Code verifier
 
 Brief: the diff (none for the design check), the 決策簡報, the project adapter's
-`rules:` path. Read the rules; grade the diff against them, not against taste.
+`rules:` path. Read the rules and `style-pack --paths <the changed files>`; grade
+the diff against them, not against taste.
 
 Walk the six blocks in order; each finding is one line `[<block>.<n>] file:line —
 what is wrong · failure scenario · Fix: <the change>`:
@@ -28,11 +29,9 @@ what is wrong · failure scenario · Fix: <the change>`:
 2. **資料串接** — source → transform → sink per datum; a hop that can hand on
    null / empty / an old format unchecked; a second source of truth for a datum
    that has a canonical home.
-3. **Code style** — only what the linter cannot see and the rules name; cite the
-   rule section verbatim or do not file. One check needs no rule: a comment that
-   says what the code beside it does, or how, is a finding (Fix: delete, or
-   replace with the why); a comment stays only for what the code cannot show —
-   why, a constraint from outside the file, a measured fact.
+3. **Code style** — only what the linter cannot see and a rule names: the style
+   pack's `S<N>.k` (comments are S6) or a section of the adapter's rules, ranked
+   per the pack's `§位階`; cite it verbatim or do not file.
 4. **錯誤處理** — every failure event on the touched paths: caught where, what the
    user sees, what is logged; a catch that swallows, a fallback that hides.
 5. **As built vs as decided** — each deviation from the brief's 系統設計, with

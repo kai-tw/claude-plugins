@@ -74,7 +74,7 @@ required; a different rule corpus fails none of them:
 
 | Reviewer | Trigger | Stage | Also loads |
 |---|---|---|---|
-| `code-reviewer` (9 dims, 法官) | **every** code change | code ① | `.claude/rules/` + `rules/style/` (母規則 + 該 diff 的語言檔) — no plan |
+| `code-reviewer` (9 dims, 法官) | **every** code change | code ① | `.claude/rules/` + `style-pack --paths` (母規則 + 該 diff 的語言檔) — no plan |
 | `security-privacy-reviewer` | the diff's own **sink signals** (a pure-removal diff skips it) | code ② | sink rule packs + store declarations — no plan |
 | `post-qa-reviewer` | after QA, when an approved plan exists | after-QA | the approved plans + the siblings they name + `/qa`'s contract; it splits the diff by tree (conformance and consistency on `lib/**`, test design on `test/**`) |
 | `pm-plan-reviewer` · `engineer-plan-reviewer` · `feasibility-reviewer` · `design-plan-reviewer` | a plan or spec is drafted | ① / ② | no diff exists yet |

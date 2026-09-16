@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pack-by-paths
+description: --paths 依副檔名選語言檔：.ts 與 .mjs 只帶 js.md，不帶 dart.md，母法在前。
+tags: [style-pack]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: style-pack --paths lib/a.ts lib/b.mjs
+  prompt: |
+    印出審查 lib/a.ts 與 lib/b.mjs 該引用的撰寫法規則。
+context:
+  scaffold_script: fixture.sh

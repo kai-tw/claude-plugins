@@ -3,9 +3,29 @@
   "name": "assistant",
   "version": "0.1.0",
   "description": "Fable as the assistant: takes a request, decides, dispatches worker agents per project, and comes back with three touchpoints — intent + system design, the rendered screens, the PR summary.",
-  "author": { "name": "Kai", "url": "https://github.com/kai-tw" },
+  "author": {
+    "name": "Kai",
+    "url": "https://github.com/kai-tw"
+  },
   "license": "MIT",
-  "keywords": ["assistant", "orchestrator", "multi-project", "notion"],
-  "skills": ["./skills/assistant", "./skills/scribe"],
-  "dependencies": [{ "name": "security-guidance", "marketplace": "claude-plugins-official" }]
+  "keywords": [
+    "assistant",
+    "orchestrator",
+    "multi-project",
+    "notion"
+  ],
+  "skills": [
+    "./skills/assistant",
+    "./skills/scribe"
+  ],
+  "dependencies": [
+    {
+      "name": "security-guidance",
+      "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "style-pack",
+      "marketplace": "kai-tw"
+    }
+  ]
 }

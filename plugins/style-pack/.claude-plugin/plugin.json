@@ -1,0 +1,11 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "style-pack",
+  "version": "1.0.0",
+  "description": "The founder's cross-project 撰寫法: a language-neutral 母法 (S1–S15) plus Dart and JS language files, printed by `style-pack` for any reviewer to grade a diff against.",
+  "author": { "name": "Kai", "url": "https://github.com/kai-tw" },
+  "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/style-pack",
+  "license": "MIT",
+  "keywords": ["code-style", "review", "dart", "javascript"],
+  "skills": ["./skills/style-pack"]
+}
