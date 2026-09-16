@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: intake-github
+description: 指派給我的 issue、要我 review 的 PR、我的 PR 裡被要求修改或 CI 紅的各一行；綠的 PR 不列。
+tags: [asst-intake]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: PATH="$PWD/stub:$PATH" asst-intake; echo "exit=$?"
+  prompt: |
+    ./stub/gh 是假的 gh，先把 ./stub 放到 PATH 最前面，再列出這個專案 board 以外的待辦候選，印出工具的原始輸出和 exit code。
+context:
+  scaffold_script: fixture.sh

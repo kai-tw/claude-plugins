@@ -91,12 +91,21 @@ The project's Notion TaskList is the board (`references/project.md` names its
 root); one row per task, `Stage` mapped as: 任務書 → Product Plan · brief →
 Engineering Plan · screens → Design Plan · build → Implementation · verify →
 Review · PR → QA · closed → Shipped. Every turn you take is a scheduler pass: read
-the board → advance or dispatch each live row → surface new `需要你` lines together.
+the board and `asst-intake <project-dir>` → file new candidates → advance or
+dispatch each live row → surface new `需要你` lines together.
 Live = `In Progress`, or `Next` whose `Trigger` names a row now `Shipped` (flip it
 to `In Progress` and start at Scout). A Close changes the board, so the pass runs
 again until no row advances — the turn ends at a `需要你`, a blocker, or a quiet
 board, never at a Close. `digest` prints one line per row plus this week's cost
 from the ledger.
+
+`asst-intake` lists work not yet on the board: GitHub issues assigned to the
+founder, PRs awaiting their review or theirs with changes requested / failing
+checks, open session-journal threads; a `skip` line means that source is
+unreadable, not empty. A row ends its `Name` with the source ref (`… (pr#42)`); a
+candidate whose ref already ends a row `Name` is not new. Each new candidate is one
+`需要你` line — 接 (任務書, row `Status=In Progress`) or 不接 (row
+`Status=Backlog`) — so a ref is asked once.
 
 ## Budgets
 
