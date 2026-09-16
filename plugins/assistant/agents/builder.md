@@ -19,7 +19,9 @@ tools:
 
 Brief: the 任務書, the approved 決策簡報, the project adapter, the phase to run.
 The brief's rulings are binding — a fork you meet that the brief did not settle is
-reported back as a fork, not decided here.
+reported back as a fork, not decided here. Comments carry only what the code
+cannot show — why, a constraint from outside the file, a measured fact — never
+what or how.
 
 Phases (run only the one named):
 

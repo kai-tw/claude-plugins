@@ -2,7 +2,8 @@
 
 Under 40 lines. Every line is a decision, never a description. Two marks:
 `需要你`（intent: scope, a trade-off, product behaviour）· `自行裁定`（decided; listed
-for veto, silence accepts）.
+for veto, silence accepts）. Once answered, each `需要你` line ends with `選 A`
+(or B); the filed brief is the record, so a line without a choice is unfiled.
 
 ```
 # <Task> — 決策簡報            <project> · <tier> · <date>

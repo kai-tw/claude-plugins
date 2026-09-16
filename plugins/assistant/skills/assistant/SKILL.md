@@ -56,7 +56,9 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    design adds a class, a dependency or a persisted format, one `code-verifier`
    pass on the draft first (`asst-budget spend <slug> review`), so the founder
    is asked once. Ask once, with everything `需要你` in one `AskUserQuestion`.
-   Silence on `自行裁定` = accepted.
+   Silence on `自行裁定` = accepted. Mark each `需要你` line with the choice made,
+   then `scribe` appends the brief to the task row's body — the as-decided every
+   later step reads, without your context.
 4. **Build** (`builder`): UI first, as real widgets in all four states → render
    the contact sheet → **② stop for the founder**. Data wiring waits for OK.
 5. **Wire + tests** (`builder`): commits per phase; the project's commit hook
@@ -70,8 +72,13 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    one `需要你` line if it changes scope or design.
 7. **③ PR** (you, from the verifier reports): `references/pr-summary.md`. Merge
    or send-back is the founder's; a send-back re-enters step 5.
-8. **Close** (`scribe`, haiku): board row → shipped, KB entry, one retro line,
-   the task's rounds and cost appended to `.claude/.assistant/ledger.md`.
+8. **Close** (`scribe`, haiku): board row → shipped; the task row is disposable,
+   so the brief moves to the KB: a `feature-archive` entry (Final Approach = the
+   brief's 系統設計 verbatim, Key Decisions = its 意圖 lines with the choice made,
+   Deferred Items = debt) and one `decision-log` row per `需要你` fork (Context ·
+   Decision · Consequence, the rejected option and its cost in Consequence);
+   one retro line; the task's rounds and cost appended to
+   `.claude/.assistant/ledger.md`.
 
 ## The board
 

@@ -18,7 +18,9 @@ Operations, all through `asst-notion … --root <notion_root>` (dry-run without
 
 - board: `asst-notion set tasklist <page-id> Stage=<label> --commit`
 - new task row: `asst-notion create <manifest> --commit`
-- KB entry at close: `asst-notion create <manifest> --commit` (feature-archive)
+- approved brief: `asst-notion append <page-id> <brief.md> --commit` (task row body)
+- KB at close: `asst-notion create <manifest> --commit`, one manifest for the
+  `feature-archive` entry and one for the `decision-log` rows
 - ledger: append `<date> · <slug> · review n · fix n · upload n · <tokens>`
   to `.claude/.assistant/ledger.md`
 

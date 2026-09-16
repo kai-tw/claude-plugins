@@ -29,7 +29,10 @@ what is wrong · failure scenario · Fix: <the change>`:
    null / empty / an old format unchecked; a second source of truth for a datum
    that has a canonical home.
 3. **Code style** — only what the linter cannot see and the rules name; cite the
-   rule section verbatim or do not file.
+   rule section verbatim or do not file. One check needs no rule: a comment that
+   says what the code beside it does, or how, is a finding (Fix: delete, or
+   replace with the why); a comment stays only for what the code cannot show —
+   why, a constraint from outside the file, a measured fact.
 4. **錯誤處理** — every failure event on the touched paths: caught where, what the
    user sees, what is logged; a catch that swallows, a fallback that hides.
 5. **As built vs as decided** — each deviation from the brief's 系統設計, with
