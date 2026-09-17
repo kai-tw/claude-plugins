@@ -18,13 +18,17 @@ on:
 permissions:
   contents: read
 
+# Back-to-back pushes start one run each. Queue them rather than cancel: a
+# cancelled run could be the only one that saw its version.
+concurrency:
+  group: plugin-tag
+  cancel-in-progress: false
+
 jobs:
   tag:
     runs-on: ubuntu-latest
     permissions:
       contents: write # creates and pushes the tags
-    outputs:
-      tags: ${{ steps.plan.outputs.tags }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,9 +59,23 @@ jobs:
         if: steps.plan.outputs.tags != ''
         env:
           TAGS: ${{ steps.plan.outputs.tags }}
-        # Deliberately unquoted: this is a list of refs and word splitting is
-        # what turns it into one. Through env rather than `${{ }}` so the value
-        # stays an argument instead of becoming shell syntax. `--atomic` so a
-        # partial push cannot leave the sync below shipping under a tag that
-        # does not exist.
-        run: git push --atomic origin $TAGS
+        # One tag per push, so a tag another run already pushed cannot take the
+        # rest down with it. Already on the remote at the same commit is that
+        # other run's success; at a different commit it is one version naming
+        # two trees, and fails. Through env rather than `${{ }}` so the value
+        # stays an argument instead of becoming shell syntax.
+        run: |
+          set -uo pipefail
+          fail=0
+          for t in $TAGS; do
+            git push origin "refs/tags/$t" && continue
+            ours=$(git rev-parse "$t^{commit}")
+            theirs=$(git ls-remote origin "refs/tags/$t^{}" | cut -f1)
+            if [ "$theirs" = "$ours" ]; then
+              echo "✔ $t is already on the remote at ${ours:0:7}"
+            else
+              echo "::error::$t is on the remote at ${theirs:-?}, this run tagged $ours"
+              fail=1
+            fi
+          done
+          exit $fail

@@ -11,9 +11,14 @@
 // number mean two different trees, which is the failure `.claude/rules/
 // releasing.md` opens with.
 //
+// Each tag goes on the commit that last changed the manifest's `version` line —
+// the release commit — not on HEAD. Runs for back-to-back pushes see different
+// HEADs, and only a target every run agrees on lets one of them find the tag
+// already pushed and call it done.
+//
 // Usage: node .github/scripts/plugin-tags.mjs [--create]
 //   (default)  print the plan, change nothing
-//   --create   create the annotated tags at HEAD — does NOT push
+//   --create   create the annotated tags at their release commits — does NOT push
 // Writes `tags=<space separated>` to $GITHUB_OUTPUT when that variable is set.
 
 import { execFileSync } from 'node:child_process';
@@ -86,8 +91,20 @@ for (const name of readdirSync(pluginsDir).sort()) {
     continue;
   }
 
-  planned.push({ name, version, tag });
-  console.log(`→ ${name} ${version} — ${newest ? `newer than ${newest.join('.')}, ` : 'first release, '}will tag ${tag}`);
+  const commit = gitOrNull(
+    'log', '-1', '--format=%H', '-G', '"version"[[:space:]]*:', '--',
+    `plugins/${name}/.claude-plugin/plugin.json`,
+  );
+  if (!commit) {
+    errors.push(`${name}: no commit in history changes the version line of its manifest`);
+    continue;
+  }
+
+  planned.push({ name, version, tag, commit });
+  console.log(
+    `→ ${name} ${version} — ${newest ? `newer than ${newest.join('.')}, ` : 'first release, '}` +
+      `will tag ${tag} at ${commit.slice(0, 7)}`,
+  );
 }
 
 if (errors.length) {
@@ -97,9 +114,9 @@ if (errors.length) {
 }
 
 if (create) {
-  for (const { name, version, tag } of planned) {
-    git('tag', '-a', tag, '-m', `${name} ${version}\n\n由 plugin-tag workflow 依 plugin.json 自動建立。`);
-    console.log(`  tagged ${tag} at ${git('rev-parse', '--short', 'HEAD')}`);
+  for (const { name, version, tag, commit } of planned) {
+    git('tag', '-a', tag, '-m', `${name} ${version}\n\n由 plugin-tag workflow 依 plugin.json 自動建立。`, commit);
+    console.log(`  tagged ${tag} at ${commit.slice(0, 7)}`);
   }
 }
 
