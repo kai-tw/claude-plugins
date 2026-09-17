@@ -3,7 +3,7 @@
 #
 # A launcher, not an implementation — the script lives with the skill that owns
 # it (see the exec line). It exists so skill files, agent files, this plugin's
-# own prose and the resource-gate hook's deny message can invoke it by BARE
+# own prose and the test-gate hook's deny message can invoke it by BARE
 # NAME: the plugin's bin/ is on the Bash tool's PATH whenever the plugin is
 # enabled, while the install path
 # (~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/) is not knowable

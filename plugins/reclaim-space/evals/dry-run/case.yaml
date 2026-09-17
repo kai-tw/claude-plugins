@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: dry-run
+description: 預設是 dry run；沒有專案的目錄只報告沒有東西可清。
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: reclaim-space --project-only
+  prompt: |
+    在沒有任何專案的目錄跑 reclaim-space --project-only（不加 --yes），印出輸出。
+context:
+  scaffold_script: fixture.sh

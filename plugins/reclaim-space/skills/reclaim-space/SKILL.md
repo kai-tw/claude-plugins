@@ -1,0 +1,143 @@
+---
+name: reclaim-space
+description: >-
+  Developer-disk reclamation on macOS, per toolchain present: PROJECT
+  (regenerable build output in each project — Flutter's `flutter clean` today)
+  and GLOBAL (Xcode DerivedData, Dart analysis cache, simulator scratch,
+  superseded Gradle caches, orphaned `flutter_tools.*` scratch). Everything it
+  touches regenerates. Also denies `git worktree add` under a free-disk floor.
+  TRIGGER: reclaim / free disk space · clean caches · 清理空間 · 硬碟快滿了 ·
+  a worktree refused for disk
+  NOT for: anything non-regenerable (Archives, source, signing assets) · the
+  macOS Trash · the Gradle retention policy
+
+---
+
+# reclaim-space
+
+Build output and toolchain caches pile up by the gigabyte and nothing else
+removes them. This is the sweep: each tier belongs to one toolchain and runs
+only where that toolchain's files are.
+
+```bash
+reclaim-space                        # DRY RUN — list targets, delete nothing
+reclaim-space --yes                  # reclaim (project tier = cwd, + global tier)
+reclaim-space --yes --all-projects   # every project under the scan root
+reclaim-space --yes --global-only    # skip the project tier
+```
+
+A new tier is one toolchain's regenerable output, with the guards every tier
+has (see "Finding the next leak").
+
+The command is on PATH whenever this plugin is enabled. `RECLAIM_SCAN_ROOT`
+overrides where sibling projects are looked for (default `$HOME/GitHub`).
+
+## Believe the delta, not the estimate
+
+The per-target sizes in the listing are `du` output, and **`du` counts an APFS
+copy-on-write clone once per clone**. Measured 2026-08-07: XCTest device clones
+read 8.0G under `du` and freed exactly zero bytes when deleted, every block
+being shared with the real device set. Only the change in free space is real, so
+that is the number the live run prints and the only one worth reporting to
+anyone. A target whose estimate dwarfs the delta is a clone, not a leak — do not
+go hunting for the "missing" space.
+
+## Worktrees are in the project tier
+
+`--all-projects` sweeps each repo **and each of its `.claude/worktrees/*`**. A
+worktree is a full checkout: measured 2026-09-01, six of them held **12.7G**, of
+which `build/` was about three quarters — more than the machine had free. None
+of it needs deleting to reclaim: `build/` regenerates, so every branch, every
+unmerged commit and every uncommitted file survives the sweep.
+
+This matters beyond tidiness. `/System/Volumes/VM`, where macOS writes swap,
+shares an APFS container with these checkouts (same `/dev/disk3s6`, same free
+pool). **Free disk is swap headroom**, and on a 16G machine swap is what stands
+between several concurrent test suites and a watchdog reboot. The
+`disk-floor` hook refuses a new worktree below a free-space floor for that
+reason, and points here.
+
+## Orphaned build scratch in TMPDIR
+
+`flutter_tools.*` in `$TMPDIR` is Flutter's own scratch space for build, run,
+test and pub — kernel snapshots, asset-bundle work. A clean exit deletes it;
+a killed or crashed flutter process (a hung build force-quit, a `run` session
+that never got `q`, a CI-style invocation that got SIGKILLed) leaves it
+behind, and nothing else ever revisits TMPDIR to notice.
+Measured 2026-09-08: 641 orphaned dirs held **57G** on one machine, more than
+every other GLOBAL entry combined, and it wasn't `reclaim-space` that found
+it — see "Finding the next leak" below.
+
+TMPDIR is shared with everything else on the box (browsers, IDEs, other
+language toolchains), so liveness for this tier is checked with `lsof` on the
+exact directory, not a flutter-process-name guess: a live build under a
+process name this script doesn't already pattern-match (`pub`, `attach`,
+`analyze`, a future Flutter internal rename) would otherwise get its
+in-progress scratch deleted out from under it. A directory still open is
+reported as skipped, not silently left off the list, so a live run's output
+accounts for every `flutter_tools.*` entry it saw.
+
+## Finding the next leak
+
+This skill's tiers are a fixed list; the machine's actual disk use is not.
+When `reclaim-space --yes --all-projects` still isn't enough — the TMPDIR
+tier above was found exactly this way, not by anyone remembering TMPDIR was
+a candidate — the method is:
+
+1. `du -h -d 1 "$HOME"` (BSD `du` takes `-d`, never combine it with `-s`),
+   then `sort -rh` mentally (BSD `sort` has no `-h`) or just eyeball the
+   biggest few. Drill into anything surprisingly large with another `-d 1`
+   one level deeper. Repeat until a directory's *contents*, not just its
+   name, explain its size.
+2. Check `$TMPDIR` specifically — `du -h -d 1 "$HOME"` never sees it, because
+   it isn't under `$HOME` (it's `/var/folders/<hash>/T` on macOS). It is the
+   one blind spot every tier above already accounts for except this one, and
+   the 57G measurement lived there.
+3. Before treating anything as deletable: is it a tool's own regenerable
+   scratch/cache, not user data? Is anything live holding it open —
+   `lsof +D <dir>`, not a process-name grep, because a name-based guess is
+   exactly the gap #2 above exists to close. `pgrep` for a known daemon
+   (Gradle, xcodebuild) is fine when the *tier itself* IS that daemon's
+   cache; for a shared, multi-tenant location like TMPDIR it isn't
+   sufficient on its own.
+4. A one-off finding gets cleaned by hand and forgotten. A **recurring**
+   category — something that will be back because the
+   tool that made it will run again — belongs as a new tier in
+   `scripts/reclaim_space.sh`, with the same guards every existing tier has:
+   dry-run-by-default, a path-prefix assertion before every delete, and a
+   liveness check that doesn't trust a name.
+
+## What it refuses, and why it fails closed
+
+Deleting a Gradle cache under a live daemon, derived data under a running
+`xcodebuild`, or a project's `.dart_tool/` and `build/` under a **running test
+suite**, corrupts the work in progress. All are cheap to detect, so a live run
+refuses outright rather than racing.
+
+The Gradle tier derives the live version set by scanning every project's
+`gradle-wrapper.properties`; a hardcoded version goes stale silently and then
+deletes a cache someone is mid-build against. **If the scan finds no project at
+all it skips the tier entirely** — an empty scan means "cannot know", never
+"nothing is in use".
+
+## Deliberate omissions
+
+Two things it will not clean, both because the cost lands on the next build
+rather than on disk:
+
+- **`~/Library/Caches/org.swift.swiftpm`** — the shared SPM download cache that
+  `build/ios/SourcePackages` is populated from. Clearing it turns the next iOS
+  build into a network re-download, for well under a gigabyte.
+- **`flutter pub get` after the clean** — a closed-out feature line does not
+  need a resolved project, so the next session that opens it does the pub get.
+  Note the reason is workflow, **not** space: pub-get does re-populate
+  `build/ios/SourcePackages`, but that directory is largely an APFS clone of
+  `~/Library/Caches/org.swift.swiftpm`, so its 1.3–1.7G `du` size costs only
+  ~0.1G of real disk on a warm cache. Do not defend this choice with the `du`
+  figure — it is the same clone illusion described above.
+
+It deletes with `rm -rf` rather than `trash` because a trash on the same APFS
+volume frees nothing until the bin is emptied, and emptying it is TCC-protected.
+The guards that make that safe are dry-run-by-default, a `$HOME/`- (or, for the
+TMPDIR tier, `$FLUTTER_TMP/`-) prefix assertion before every delete, and
+literal path lists.

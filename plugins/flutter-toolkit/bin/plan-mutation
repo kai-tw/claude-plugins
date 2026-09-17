@@ -14,7 +14,7 @@ impl="$here/../skills/test-gates/scripts/mutation.sh"
 
 # Mutation is the heaviest thing this machine runs — one test suite per mutant,
 # in a loop — and it never types `flutter test` at the top level, so the
-# resource-gate hook cannot see it. Route it through the slot budget so it
+# test-gate hook cannot see it. Route it through the slot budget so it
 # cannot spend memory off the books. ONE slot for the whole run, not one per
 # mutant: `plan-test --exec` exports PLAN_TEST_SLOT_HELD, so the inner runs pass
 # straight through instead of thrashing the semaphore.

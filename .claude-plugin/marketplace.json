@@ -77,6 +77,17 @@
       "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/guardrails"
     },
     {
+      "name": "reclaim-space",
+      "description": "Developer-disk reclamation on macOS — regenerable build output and toolchain caches, measured by the real free-space delta, plus a free-space floor on new git worktrees",
+      "source": "./plugins/reclaim-space",
+      "category": "productivity",
+      "author": {
+        "name": "Kai",
+        "url": "https://github.com/kai-tw"
+      },
+      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/reclaim-space"
+    },
+    {
       "name": "assistant",
       "source": "./plugins/assistant",
       "description": "Fable as the assistant — request → decision brief → screens → PR, across projects."

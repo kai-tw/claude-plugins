@@ -14,7 +14,8 @@ allowed-tools:
 
 - `plan-test test/features/<x>/` — scoped run; `--full` for the whole suite;
   `--status` lists slot holders; `--exec <cmd…>` holds one slot around a command.
-  Never the bare `flutter test`: several sessions share this machine's memory.
+  Never the bare `flutter test` / `dart test`: several sessions share this
+  machine's memory, and the plugin's `test-gate` hook denies them.
 - `plan-coverage -- <scoped test command>` — per **line**, not per percent: each
   changed `lib/**.dart` line is executed. No exemptions: a changed file carrying
   `// coverage:ignore-*` (or the retired `// coverage-ignore:`) is blocked too.
