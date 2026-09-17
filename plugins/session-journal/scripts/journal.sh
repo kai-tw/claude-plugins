@@ -10,7 +10,10 @@
 # worktree (the failure mode this system prevents is worktree-related). The
 # directory ignores ITSELF (`init` drops a `*` .gitignore inside it) — local-only
 # working state, never committed, and no entry needed in the consuming project's
-# .gitignore, which a plugin has no business editing. Each
+# .gitignore, which a plugin has no business editing. With SESSION_JOURNAL_ROOT
+# set (settings.json `env`, user- or project-level) the store moves out of the
+# tree to $SESSION_JOURNAL_ROOT/<main-root path, "/" → "-">/ — for working copies
+# where an ignore file cannot protect it (svn) or where nothing may be added. Each
 # session is a DIRECTORY `<sid>/` holding `_detail.md` + any per-session scratch
 # / draft files authored that session; LEGACY sessions are a flat `<sid>.md` file
 # and coexist (they gc away over time — no migration).
@@ -58,7 +61,12 @@ resolve_dir() {
   else
     root="${CLAUDE_PROJECT_DIR:-$(pwd)}"
   fi
-  printf '%s/docs/session-journal' "$root"
+  if [ -n "${SESSION_JOURNAL_ROOT:-}" ]; then
+    local slug="${root#/}"; slug="${slug//\//-}"
+    printf '%s/%s' "${SESSION_JOURNAL_ROOT%/}" "$slug"
+  else
+    printf '%s/docs/session-journal' "$root"
+  fi
 }
 
 JDIR="$(resolve_dir)"

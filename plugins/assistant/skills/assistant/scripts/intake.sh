@@ -10,6 +10,7 @@
 #   journal:<title>  open thread in docs/session-journal/_active.md (why = its Next line)
 #   skip <source>: <reason>
 set -uo pipefail
+source "$(dirname -- "${BASH_SOURCE[0]}")/root.sh"
 dir="${1:-$PWD}"
 cd "$dir" 2>/dev/null || { echo "asst-intake: no such directory: $dir" >&2; exit 2; }
 
@@ -31,9 +32,8 @@ github() {
 }
 
 journal() {
-  local common f
-  common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || { echo "skip journal: not a git repo"; return; }
-  f="$(dirname "$common")/docs/session-journal/_active.md"
+  local f
+  f="$(asst_root)/docs/session-journal/_active.md"
   [ -f "$f" ] || { echo "skip journal: no docs/session-journal/_active.md"; return; }
   # Drop <!-- … --> (the template lives in one), then one line per `## <title> · <status>` block.
   awk '

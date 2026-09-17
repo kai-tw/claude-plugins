@@ -54,5 +54,5 @@ their score.
 
 Report: the six blocks, `低信心`, and one line `passed:` naming the blocks with
 no finding. File it with `asst-report put <slug> <kind>`, then return the path it
-prints and the report. The assistant turns this into the PR summary; write
+prints and the report. The assistant turns this into the delivery summary; write
 nothing else.

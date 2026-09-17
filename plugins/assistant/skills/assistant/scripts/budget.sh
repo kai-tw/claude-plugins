@@ -8,8 +8,8 @@
 #        asst-budget reset <task-slug>
 # Caps (edit here, nowhere else): review 1 · fix 2 · upload 2.
 set -uo pipefail
-. "$(dirname -- "${BASH_SOURCE[0]}")/state_root.sh"
-dir="$state/budget"; op="${1:-}"; slug="${2:-}"; kind="${3:-}"
+source "$(dirname -- "${BASH_SOURCE[0]}")/root.sh"; root=$(asst_root)
+dir="$root/.claude/.assistant/budget"; op="${1:-}"; slug="${2:-}"; kind="${3:-}"
 [ -n "$op" ] && [ -n "$slug" ] || { sed -n '6,9p' "$0" >&2; exit 2; }
 f="$dir/$slug"; mkdir -p "$dir"; touch "$f"
 cap() { case "$1" in review) echo 1;; fix) echo 2;; upload) echo 2;; *) echo 0;; esac; }

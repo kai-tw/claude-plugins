@@ -3,7 +3,7 @@ name: builder
 description: |
   Builds one task inside its worktree: the UI as real widgets in all four
   states, the contact sheet, the wiring, the tests, the fixes the verifiers ask
-  for. Reports one line per phase plus the commit sha. Never
+  for. Reports one line per phase plus its checkpoint. Never
   talks to the founder; the assistant does.
 model: opus
 tools:
@@ -26,7 +26,9 @@ Phases (run only the one named):
 
 - **ui** — the screens as real widgets, every state (empty / loading / error /
   populated), no data wiring; run the adapter's `render` → contact sheet path.
-- **wire** — data wiring + tests, one commit per phase, the commit hook is the gate.
+- **wire** — data wiring + tests; one checkpoint per phase (git: commit, the hook
+  runs `gate`; svn: run `gate`, save `svn diff` under `.claude/.assistant/tasks/<slug>/`,
+  commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
   a better fix of your own); a finding you decline goes on the report's
   `declined:` line, and into the code only as an S6.5 comment when its reason is
@@ -37,7 +39,7 @@ File the report with `asst-report put <slug> build-<phase>`, then return the
 path it prints and the report, exactly:
 
 ```
-phase: <name> · commits: <sha …> · lint: <green|n red> · tests: <green|n red>
+phase: <name> · checkpoints: <sha … | diff path> · gate: <green|n red>
 forks: <none, or one line each>
 debt: <none, or one line each>
 declined: <none, or one line each: [<block>.<n>] file:line — reason>

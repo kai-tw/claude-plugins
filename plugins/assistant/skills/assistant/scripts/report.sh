@@ -8,11 +8,11 @@
 #        asst-report list   <task-slug>
 # kind: scout · brief-review · build-<phase> · verify-<leg>
 set -uo pipefail
-. "$(dirname -- "${BASH_SOURCE[0]}")/state_root.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/root.sh"; root=$(asst_root)
 op="${1:-}"; slug="${2:-}"; kind="${3:-}"
 usage() { sed -n '6,9p' "$0" >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] || usage
-dir="$state/reports/$slug"
+dir="$root/.claude/.assistant/reports/$slug"
 # Round numbers of <kind>, ascending — the n in <kind>-<n>.md.
 rounds() { ls "$dir" 2>/dev/null | sed -nE "s/^${kind}-([0-9]+)\.md$/\1/p" | sort -n; }
 case "$op" in
