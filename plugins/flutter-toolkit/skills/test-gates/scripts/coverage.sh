@@ -196,6 +196,45 @@ while IFS= read -r f; do
   printf '%s\n' "$seen_files" | grep -qxF "$f" || unreached="${unreached}${f}"$'\n'
 done <<< "$files"
 
+# ...or a file with nothing to execute. The VM records every LOADED library that
+# has a coverable line, even at zero hits, and omits the rest — measured: an enum,
+# an interface, typedefs and consts, and a class whose only code is field
+# initializers all leave no record. The probe tells the two apart: a test that
+# only imports the absent files, run under coverage. A file still absent there
+# has no executable line, so it is NO-CODE and does not block. Flutter runs only,
+# since the lcov path is flutter's; a `part of` file cannot be imported and stays
+# UNREACHED, as does everything when the probe itself fails to run.
+nocode=""
+if [ -n "$unreached" ] && [ "$1" = flutter ]; then
+  pkg=$(sed -n 's/^name:[[:space:]]*//p' pubspec.yaml | head -1 | tr -d "\"' ")
+  probe_dir="$root/build/plan-coverage-probe"
+  mkdir -p "$probe_dir"
+  probed=""
+  {
+    printf "import 'package:flutter_test/flutter_test.dart';\n"
+    i=0
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      grep -qE '^[[:space:]]*part[[:space:]]+of[[:space:]]' "$f" && continue
+      printf "import 'package:%s/%s' as p%d;\n" "$pkg" "${f#lib/}" "$i"
+      probed="${probed}${f}"$'\n'; i=$((i + 1))
+    done <<< "$unreached"
+    printf "void main() => test('plan-coverage import probe', () {});\n"
+  } > "$probe_dir/probe_test.dart"
+  if [ -n "$probed" ] && flutter test "$probe_dir/probe_test.dart" --coverage \
+       --coverage-path "$probe_dir/lcov.info" > "$probe_dir/log" 2>&1; then
+    loaded=$(sed -n 's/^SF://p' "$probe_dir/lcov.info" | sed "s|^$root/||")
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      printf '%s\n' "$loaded" | grep -qxF "$f" || nocode="${nocode}${f}"$'\n'
+    done <<< "$probed"
+    unreached=$(printf '%s' "$unreached" | grep -vxF -f <(printf '%s' "$nocode") || true)
+    [ -n "$unreached" ] && unreached="${unreached}"$'\n'
+  elif [ -n "$probed" ]; then
+    echo "plan-coverage: the import probe did not run ($probe_dir/log), so every absent file stays UNREACHED." >&2
+  fi
+fi
+
 # --- report -----------------------------------------------------------------
 n_unreached=$(printf '%s' "$unreached" | grep -c . || true)
 n_gaps=$(printf '%s' "$unexecuted" | grep -c . || true)
@@ -206,6 +245,7 @@ n_prag=$(printf '%s' "$pragmas" | grep -c . || true)
 verdict() {
   if printf '%s\n' "$unreached" | grep -qxF "$1"; then printf 'UNREACHED\t-\t-\n'; return; fi
   local g p v=PASS
+  printf '%s\n' "$nocode" | grep -qxF "$1" && v=NO-CODE
   g=$(printf '%s' "$unexecuted" | grep -c "^${1}:" || true)
   p=$(printf '%s' "$pragmas"    | grep -c "^${1}:" || true)
   if [ "$g" -gt 0 ] || [ "$p" -gt 0 ]; then v=FAIL; fi
@@ -257,11 +297,14 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     IFS=$'\t' read -r v g p <<< "$(verdict "$f")"
-    case "$v" in PASS) ;; *) v="**$v**" ;; esac
+    case "$v" in PASS|NO-CODE) ;; *) v="**$v**" ;; esac
     printf '| %s | %s | %s | `%s` |\n' "$v" "$g" "$p" "$f"
   done <<< "$files"
   if [ "$n_unreached" -gt 0 ]; then
     printf '\n**UNREACHED means no test imported the file at all** — not 0%%%s, but absent from the coverage report entirely.\n' ''
+  fi
+  if [ -n "$nocode" ]; then
+    printf '\nNO-CODE means the file has no executable line (declarations only): importing it alone still leaves no coverage record.\n'
   fi
   if [ "$n_gaps" -gt 0 ]; then
     printf '\n<details><summary>Unexecuted (%s)</summary>\n\n' "$n_gaps"

@@ -19,6 +19,8 @@ allowed-tools:
 - `plan-coverage -- <scoped test command>` — per **line**, not per percent: each
   changed `lib/**.dart` line is executed. No exemptions: a changed file carrying
   `// coverage:ignore-*` (or the retired `// coverage-ignore:`) is blocked too.
+  A file with no coverage record is UNREACHED (blocks) unless an import-only
+  probe shows it has no executable line — NO-CODE, which passes.
 - `plan-mutation -- <scoped test command>` — needs `dart_mutants` in pubspec (the
   script prints the exact stanza when it is missing). While it runs the working
   tree holds live mutants; read files via `git show HEAD:<path>`.
