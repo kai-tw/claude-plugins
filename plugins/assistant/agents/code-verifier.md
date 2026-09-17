@@ -52,4 +52,4 @@ hit in practice · 100 certain). Keep ≥ 80; list the rest under `低信心` wi
 their score.
 
 Return: the six blocks, `低信心`, and one line `passed:` naming the blocks with
-no finding. The assistant turns this into the PR summary; write nothing else.
+no finding. The assistant turns this into the delivery summary; write nothing else.

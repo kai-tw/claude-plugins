@@ -1,10 +1,10 @@
-# PR 摘要 — one screen, six blocks, every line clickable
+# 交付摘要 — one screen, six blocks, every line clickable
 
 Built from the verifier reports; the founder reads this, not the diff and not the
 reports. Anything a linter or a passed check already settled is one line.
 
 ```
-# <Task> — PR #<n>            <project> · <sha>
+# <Task> — <PR #n | r<rev> pending>   <project> · <sha | working copy>
 
 ## 邏輯
 - <user scenario>: <entry file:line> → <decision point file:line> → <outcome>
