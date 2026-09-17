@@ -33,7 +33,6 @@ claude plugin install dart-lsp@kai-tw
 | [session-journal](plugins/session-journal) | Cross-session task-state journal — which threads are in flight and where each one lives, surviving context compaction, `/clear`, and resume |
 | [google-reporting](plugins/google-reporting) | GA4 and Search Console readers via keyless service-account impersonation |
 | [style-pack](plugins/style-pack) | The founder's cross-project 撰寫法: 母法 S1–S15 plus Dart/JS language files, printed by `style-pack` for any reviewer |
-| [plan-cycle](plugins/plan-cycle) | The gated planning cycle: PM → designer → engineer → code → QA → close-out, with a Stop-hook ledger |
 | [guardrails](plugins/guardrails) | Turns corrections into rules that fire — a bounded inbox, a fusion gate, and hooks that speak at the moment of the mistake |
 
 ## Scripts
@@ -43,7 +42,7 @@ mechanism at all.
 
 | Script | Where it goes |
 | --- | --- |
-| [scripts/cloud-setup.sh](scripts/cloud-setup.sh) | The **Setup script** field of a [Claude Code cloud environment](https://code.claude.com/docs/en/cloud-environments#setup-scripts). Installs the pinned Flutter SDK, resolves dependencies for every Flutter repo the environment cloned, installs **every** `@kai-tw` plugin and seeds it for later sessions, and installs `ntn` for the archivist — a fresh container has **no marketplace registered** and **no Notion credentials**, so without this the plan cycle silently isn't there. One copy serves NovelGlide, CherishCRM and any environment added later, because it discovers projects and plugins instead of naming them. Its filesystem result is snapshotted, so the ~1.5 GB SDK download is paid once per cache generation, not once per session. Needs three **Environment variables** set alongside it: `CLAUDE_CODE_PLUGIN_SEED_DIR`, `NOTION_API_TOKEN`, `NOTION_WORKSPACE_ID` (the script's header says why each one cannot be an export). |
+| [scripts/cloud-setup.sh](scripts/cloud-setup.sh) | The **Setup script** field of a [Claude Code cloud environment](https://code.claude.com/docs/en/cloud-environments#setup-scripts). Installs the pinned Flutter SDK, resolves dependencies for every Flutter repo the environment cloned, installs **every** `@kai-tw` plugin and seeds it for later sessions, and installs `ntn` for the assistant's scribe — a fresh container has **no marketplace registered** and **no Notion credentials**, so without this the assistant silently isn't there. One copy serves NovelGlide, CherishCRM and any environment added later, because it discovers projects and plugins instead of naming them. Its filesystem result is snapshotted, so the ~1.5 GB SDK download is paid once per cache generation, not once per session. Needs three **Environment variables** set alongside it: `CLAUDE_CODE_PLUGIN_SEED_DIR`, `NOTION_API_TOKEN`, `NOTION_WORKSPACE_ID` (the script's header says why each one cannot be an export). |
 
 ## License
 

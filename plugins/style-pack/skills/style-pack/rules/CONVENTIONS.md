@@ -2,8 +2,8 @@
 
 `Read` 本檔，限於新增、修改、合併或刪除 style rule 之時。
 
-**本包為何.** 撰寫法規則庫，讀者為 plan-cycle 之 `code-reviewer` 與 assistant 之
-`code-verifier`，均經 `style-pack` 指令載入，分二層：**母規則（`index.md`，
+**本包為何.** 撰寫法規則庫，讀者為 assistant 之 `code-verifier` 等審查器，均經
+`style-pack` 指令載入，分二層：**母規則（`index.md`，
 語言與專案中立）**，及**語言層 sub-check（`dart.md` / `js.md`）**。所收者，為 founder
 手抓得到、而 linter 稽核不到之撰寫判斷——該等判斷一旦不在規則之內，審查器依「無規則可引者不立」
 即被要求放行，故**立法為唯一入口**。
@@ -17,8 +17,8 @@ ledger 指令或證據檔路徑。母法只定義**位階**（憲法／法律／
 各層由哪個檔案承載：指名了，該檔一改名或一裁撤，母法即失效。
 
 承載關係寫在本檔：法律層為 `dart.md` / `js.md`，命令層為各專案的 `.claude/rules/`。
-落地程序也寫在本檔——牴觸判 `無法判定` 時，其證據格式見 plan-cycle `skills/review/references/evidence.md`，
-並以 `plan-feedback add code-review` 開 ledger。
+落地程序也寫在本檔——牴觸判 `無法判定` 時，其證據格式見本包
+`references/evidence.md`。
 
 同理，某條之範圍若因 lint 已涵蓋而收窄，條文只寫**它自己管什麼**，不寫「另一半由誰
 擋下」——那是入庫要件（見下）的效果，不是條文的內容。

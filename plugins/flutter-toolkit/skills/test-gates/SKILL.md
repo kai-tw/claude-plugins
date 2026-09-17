@@ -23,4 +23,4 @@ allowed-tools:
   tree holds live mutants; read files via `git show HEAD:<path>`.
 
 Coverage grades the reach, mutation grades what was reached; neither replaces
-the other. Slot state: `$HOME/.claude/.plan-cycle/slots` (`PLAN_TEST_DIR`).
+the other. Slot state: `$HOME/.claude/.flutter-toolkit/slots` (`PLAN_TEST_DIR`).

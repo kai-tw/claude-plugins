@@ -759,9 +759,8 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 echo "plan-mutation: report section — $REPORT"
 echo "plan-mutation: raw engine report — $REPORT_KEEP"
 
-# LOW-SIGNAL BLOCKS. It always meant "not measured", and plan-cycle's qa/SKILL.md always said
-# such a row is not a pass — but the script exited 0 on it, so the discipline
-# lived only in prose. Measured twice on one real suite: a sign-in widget
+# LOW-SIGNAL BLOCKS. It means "not measured", and a row that was not measured is
+# not a pass; an exit 0 on it leaves that to prose. Measured twice on one real suite: a sign-in widget
 # printed PASS LOW-SIGNAL 100% off ONE mutant with two timed out, and was 33%
 # once all three ran; an auth-session file printed PASS 80% and was 66%. Both
 # rows were labelled correctly and shipped anyway. No improvement to the label

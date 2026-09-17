@@ -615,7 +615,7 @@ function commitCreate(dbKey, built) {
 
 // A failed verify must not read as success. Exit non-zero AFTER the batch (never
 // mid-loop: aborting leaves the remaining rows half-written and unreported), so
-// the caller cannot mark `plan-cycle uploaded` off a write that did not land.
+// the caller cannot record as landed a write that did not land.
 function reportVerifyFailures(bad, total) {
   if (!bad) return;
   console.error(`✗ ${bad}/${total} row(s) failed the Iron-Law-2 body verify — re-write the body`

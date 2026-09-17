@@ -17,9 +17,8 @@
 #
 # WHY THE SLOT COUNT AND NOT `-j`
 #   Capping concurrent INVOCATIONS is arithmetic: N runs cost N times one run.
-#   Capping each run's `--concurrency` is a different claim, and plan-cycle's `qa/SKILL.md`
-#   §Running the suite currently records the opposite for NovelGlide ("no
-#   memory benefit on this repo"). So this does NOT touch `-j` by default.
+#   Capping each run's `--concurrency` is a different claim, and the one repo it
+#   was measured on showed no memory benefit. So this does NOT touch `-j` by default.
 #   `PLAN_TEST_J` is there for whoever measures it; until someone does, the
 #   flag would be a number nobody can defend.
 #
@@ -50,10 +49,10 @@
 #   PLAN_TEST_SLOTS    slot count      (default: max(1, (RAM_GB - 8) / 4))
 #   PLAN_TEST_WAIT     seconds to wait (default: 120)
 #   PLAN_TEST_J        pin --concurrency (default: unset — leave the tool's own)
-#   PLAN_TEST_DIR      slot directory  (default: $HOME/.claude/.plan-cycle/slots)
+#   PLAN_TEST_DIR      slot directory  (default: $HOME/.claude/.flutter-toolkit/slots)
 set -uo pipefail
 
-SLOT_DIR="${PLAN_TEST_DIR:-$HOME/.claude/.plan-cycle/slots}"
+SLOT_DIR="${PLAN_TEST_DIR:-$HOME/.claude/.flutter-toolkit/slots}"
 WAIT_S="${PLAN_TEST_WAIT:-120}"
 POLL_S=3
 

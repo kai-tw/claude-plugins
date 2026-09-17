@@ -249,8 +249,8 @@ console.log(`  ✔ ${inCache.size} file(s) match source`);
 
 step(8, 'VERIFY the plugin loads');
 // A full cache can still fail to load — `claude plugin update` does not install
-// newly declared `dependencies`, and plan-cycle 2.6.0 shipped "verified" while
-// failing to load in every scope. `--json` carries no load status, so read the
+// newly declared `dependencies`, so a release can pass step 7 while failing to
+// load in every scope. `--json` carries no load status, so read the
 // text form, and fail if the plugin is absent from it: a changed format must
 // not pass silently.
 const id = `${plugin}@${marketplace.name}`;

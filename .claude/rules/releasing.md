@@ -1,6 +1,6 @@
 # 出貨規則
 
-- **改了 `plan-cycle/` 的內容就 bump `plugin.json` 的 version.** 消費端的安裝目錄是
+- **改了 `plugins/<plugin>/` 的內容就 bump `plugin.json` 的 version.** 消費端的安裝目錄是
   `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`——**以版本號命名的實體
   目錄**。同一個版本號裝著兩份不同的內容時，更新有沒有落地無法從外部分辨，而使用者拿到
   的回饋是「已是最新」。修 bug 用 patch（0.4.0 → 0.4.1），加或改行為用 minor。
@@ -19,8 +19,7 @@
   啟動」是**重新連線**時間、不是 session 起始（實測：`ListAgents` 說 25 分鐘，transcript
   的 `birth` 是 17 小時前）。cache 目錄的 mtime 也不是安裝紀錄——裝新版時會連帶動到既有
   版本目錄的 mtime。
-  最陰的是 wrapper 幾乎不會改：兩版 `bin/plan-lint` 的 md5 相同、底下的
-  `plan_lint.sh` 不同，所以 `cmp` wrapper 看起來永遠沒事。**所以一律實查、且要驗實作**
+  最陰的是 wrapper 幾乎不會改：兩版 `bin/<name>` 的 md5 相同、底下的腳本不同，所以 `cmp` wrapper 看起來永遠沒事。**所以一律實查、且要驗實作**
   （`type -a <name>` 看解析到哪個版本目錄，或看輸出裡的自報版本）。要確定性就重開
   session。
 - **在 PR 分支上跑 `release.mjs`，第 6–8 步會自己跳過.** marketplace 服務的是預設分支，
@@ -29,7 +28,7 @@
   指令——**那是成功，不是失敗**。合併後才照下一條各補消費端。
 - **`release.mjs` 只更新一個消費端，而它的 `✔ … installed and verified` 只講那一個.**
   第 6、7 步都以 cwd 解析到的專案為對象；其他啟用了這個 plugin 的專案原地不動，收尾那行
-  也不會提到它們——一次 plan-cycle 發版印了全綠，NovelGlide 卻還停在兩版前的 0.15.1。
+  也不會提到它們——曾有一次發版印了全綠，另一個消費端卻還停在兩版前。
   **每個消費端各補一次**：
   ```
   cd <project> && claude plugin update <plugin>@<marketplace> --scope project
@@ -38,10 +37,10 @@
   像成功」），`--scope project` 也不能省，省了會去找 user scope 然後失敗。收尾看
   `~/.claude/plugins/installed_plugins.json` 裡每個 `projectPath` 的 `version`。
 - **新增 `dependencies` 的版本，消費端要先補裝依賴.** `update` 不會裝新宣告的依賴，
-  缺一個 plugin 就在所有 scope 載入失敗（plan-cycle 2.6.0 曾因此全滅）。補裝後以
+  缺一個 plugin 就在所有 scope 載入失敗。補裝後以
   `claude plugin list` 的 `Status` 為準；`release.mjs` 第 8 步只查得到新版本號的安裝。
 - **裸名呼叫自己的腳本.** plugin 的 `bin/` 在啟用時就在 PATH 上；安裝路徑不可從專案
-  相對位置推得、且每次 bump 都會變。寫 `plan-lint`，不要寫 `bash .claude/hooks/…`——
+  相對位置推得、且每次 bump 都會變。寫 `asst-budget`，不要寫 `bash .claude/hooks/…`——
   後者失敗時只印一行 `No such file or directory`，和「這次沒事做」長得一樣。
 - **Tag 不是人打的，也不要試.** 版本一進 `main`，`plugin-tag` workflow 就照 `plugin.json`
   建 `<plugin>--v<version>` 並 push。雲端 session 的 GitHub 授權本來就拒絕 push tag

@@ -1,6 +1,6 @@
 # Evidence rules for a finding
 
-Binds every verdict this agent returns — scored and non-scored alike. A report
+Binds every verdict a reviewer returns — scored and non-scored alike. A report
 that breaks one of these is invalid even when every citation in it resolves.
 
 - **`無法判定` is a verdict; "absent" is not its synonym.** When you looked and
