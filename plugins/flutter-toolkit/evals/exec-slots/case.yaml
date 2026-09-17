@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: exec-slots
+description: --slots n 一次拿 n 個 slot，拿不齊就一個都不留；超過總數或非整數直接拒絕。
+tags: [plan-test]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_SLOTS=2 PLAN_TEST_WAIT=0; plan-test --slots 2 --exec sh -c "echo held=\$(ls s | paste -sd, -)"; echo "after_two=$(ls s | wc -l | xargs)"; plan-test --slots 3 --exec true; echo "over=$?"; plan-test --slots x --exec true; echo "bad=$?"; mkdir -p s/slot-1; echo "pid=$$" > s/slot-1/meta; plan-test --slots 2 --exec true; echo "busy=$? left=$(ls s | paste -sd, -)"; plan-test --exec echo one-ran; plan-mutation --workers 3 -- true; echo "workers=$?"
+  prompt: |
+    在 2 個 slot 的預算下：用 --slots 2 跑一個指令並列出占用的 slot；再試 --slots 3 與 --slots x；然後手動占住 slot-1，再試 --slots 2 與單一 slot 的 --exec。印出每一步的結果。
+context:
+  scaffold_script: fixture.sh

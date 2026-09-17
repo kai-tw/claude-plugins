@@ -30,13 +30,22 @@
 # USAGE
 #   plan-mutation [--min <pct>] [--timeout <s>] [--baseline-timeout <s>]
 #                 [--baseline-factor <n>] [--select-by-coverage]
+#                 [--workers <n>] [--history <file>]
 #                 [--files a.dart …] -- <test-command…>
 #
 #   --timeout is the FLOOR on a mutant's budget; the engine raises it to
 #   --baseline-factor × the measured baseline, and the report prints what it
 #   actually used. --baseline-timeout bounds the cold baseline itself (default
 #   10× --timeout). --select-by-coverage runs each mutant only against the test
-#   files that reach it, and scores a mutant no test reaches as undetected.
+#   files that reach it, gives each test selection its own baseline-derived
+#   budget, and scores a mutant no test reaches as undetected.
+#
+#   --workers n (default 1) runs n mutants at once, each in a symlinked copy of
+#   the package, and holds n plan-test slots for the whole run — every worker is
+#   its own test process, and memory, not cores, is the limit. `flutter test`
+#   already uses several cores, so 2 workers measured 17% faster, not 2×.
+#   --history appends the run's whole report as one JSON line to <file>
+#   (~1 MB per few thousand mutants).
 #
 #   Pass a SCOPED test command — `flutter test test/features/trash`, not a bare
 #   `flutter test`. The scope is what makes this affordable.
@@ -73,13 +82,19 @@ while [ $# -gt 0 ]; do
     --baseline-timeout) ENGINE_EXTRA+=("--baseline-timeout" "${2:?--baseline-timeout needs seconds}"); shift 2 ;;
     --baseline-factor)  ENGINE_EXTRA+=("--baseline-factor" "${2:?--baseline-factor needs a number}"); shift 2 ;;
     --select-by-coverage) ENGINE_EXTRA+=("--select-by-coverage"); shift ;;
+    # The launcher reads the same value to take that many slots.
+    --workers)  case "${2:-}" in
+                  ''|*[!0-9]*|0) echo "plan-mutation: --workers needs a positive integer" >&2; exit 2 ;;
+                esac
+                ENGINE_EXTRA+=("--workers" "$2"); shift 2 ;;
+    --history)  ENGINE_EXTRA+=("--history" "${2:?--history needs a file}"); shift 2 ;;
     --files)    shift
                 while [ $# -gt 0 ] && [ "$1" != "--" ]; do
                   EXPLICIT_FILES="${EXPLICIT_FILES}${1}"$'\n'; shift
                 done
                 [ "${1:-}" = "--" ] && shift ;;
     --)         shift; break ;;
-    -h|--help)  sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)  sed -n '2,63p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # An unrecognised FLAG is refused, never treated as the start of the test
     # command. Measured: `--yes --budget 60 --files x -- flutter test …` (two
     # flags this script had dropped) fell through the old catch-all, so the
@@ -204,8 +219,10 @@ done
 # find an option named --version" and exits 64). The lockfile is also free,
 # where spawning dart costs a few hundred ms on every run.
 #
-# The floor is 0.2.3, not 0.2.0, because of what a timeout costs on a machine
-# somebody is also working on. `flutter test` is three processes; through 0.2.2
+# The floor is 0.2.9 because this script reads the report from `--output` and
+# streams the engine's progress lines, both new there. Below 0.2.3 there is a
+# second reason, and it is about what a timeout costs on a machine somebody is
+# also working on. `flutter test` is three processes; through 0.2.2
 # the timeout SIGKILLed only the direct child, and POSIX reparents the orphaned
 # `flutter_tester` to init rather than killing it, so it went on running the
 # mutant with nothing left to reap it — measured by the engine at 1.86 GB on
@@ -215,7 +232,7 @@ done
 # longer a descendant of anything this script can see. And the remedy this gate
 # prints for a timeout is a LARGER --timeout, which multiplies the exposure,
 # because a mutant allocates for the whole window.
-MIN_ENGINE=0.2.3
+MIN_ENGINE=0.2.9
 
 # A older than B. Used by the gate and again by its explanation, which differs
 # by how far back the resolved version is.
@@ -236,6 +253,9 @@ if [ -n "$lock_ver" ] && older_than "$lock_ver" "$MIN_ENGINE"; then
 scores and prints a normal-looking table over half the mutation space: statement
 deletion, condition negation, &&/|| and arithmetic produce nothing, and no row
 says which engine produced the number."
+  elif ! older_than "$lock_ver" 0.2.3; then
+    why="$lock_ver has no --output, so this script has nowhere to read the report from
+while the engine's progress goes to the terminal."
   else
     why="$lock_ver measures correctly and LEAKS a runaway process on every timeout. It
 SIGKILLs the direct child; the \`flutter_tester\` underneath is orphaned to init
@@ -280,18 +300,12 @@ Add it to pubspec.yaml under dev_dependencies:
       git:
         url: https://github.com/kai-tw/kai-packages.git
         path: packages/dart_mutants
-        ref: dart_mutants-v0.2.3
+        ref: dart_mutants-v0.2.9
 
-then `flutter pub get`. (It replaced `mutation_test`, which was installed
-globally — the prerequisite moved from the machine to the project.)
-
-Take the ref above verbatim; both halves of it are load-bearing. v0.1.0 ships
-four operators and v0.2.0 eight, and the four it adds — statement deletion,
-condition negation, `&&`/`||`, arithmetic — are the half that asks whether a
-line's effect is asserted at all; pinned below v0.2.0 the tool runs, scores and
-reports normally over a pool that cannot see any of that, and nothing about the
-output says which engine produced it. v0.2.3 is where a timed-out mutant stops
-orphaning a test process that outlives the run and eats the machine.
+then `flutter pub get`. Take the ref above verbatim: this script reads the
+engine's `--output` report, which v0.2.9 introduced; below v0.2.3 a timed-out
+mutant orphans a test process that outlives the run and eats the machine; below
+v0.2.0 half the operators do not exist and the score still looks normal.
 EOF
   exit 2
 fi
@@ -439,17 +453,18 @@ EOF
 mv -f "$MARKER.tmp" "$MARKER"
 
 # --- run --------------------------------------------------------------------
-# No pre-run estimate: the engine has no dry-count mode, so an "N mutants × M
-# seconds" figure would be invented rather than measured. What bounds the run
-# instead is --mutant-timeout per mutant plus the diff-sized scope. Elapsed time
-# is reported at the end so the next caller can size the scope from real data.
-echo "plan-mutation: ${count_files} changed file(s), threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s floor per mutant (the engine raises it to a multiple of the measured baseline; the report prints what it used)."
-echo "plan-mutation: no up-front estimate is possible (the engine has no dry-count mode) — watch the elapsed line below."
+# The engine's stdout goes straight to the caller: its first line is the plan
+# (mutant count, baseline, per-mutant cap), then one `[k/N] <verdict> …` line
+# per mutant, so a long run shows how far it is. The report goes to a file.
+# Its stderr is kept for the failure message below and still shown.
+echo "plan-mutation: ${count_files} changed file(s), threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s floor per mutant."
 echo "plan-mutation: WHILE THIS RUNS the source on disk may be a live mutant. Read those files with \`git show ${head_sha}:<path>\`, not from the working tree — anyone sharing this worktree included. Marker: .mutation-in-progress"
+[ "$count_files" -gt 50 ] && echo "plan-mutation: ${count_files} files is a long run — the plan line below gives the mutant count and cap; split the files into batches if that is more than you can wait for."
 started=$(date +%s)
 # shellcheck disable=SC2086
-dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" \
-  ${ENGINE_EXTRA[@]+"${ENGINE_EXTRA[@]}"} --json $files > "$out/report.json" 2>"$out/err"
+{ dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" \
+    ${ENGINE_EXTRA[@]+"${ENGINE_EXTRA[@]}"} --output "$out/report.json" $files \
+    2>&1 1>&3 3>&- | tee "$out/err" >&2; } 3>&1
 elapsed=$(( $(date +%s) - started ))
 
 # Preserved BEFORE the parse check, not after: a report this script cannot read
@@ -468,7 +483,7 @@ score, not a pass, and not a result of any kind. Its output was:
 
 $(head -20 "$out/err" 2>/dev/null | sed 's/^/  /')
 
-Whatever it wrote on stdout is at $REPORT_KEEP.
+Whatever report it wrote is at $REPORT_KEEP.
 
 Until that is fixed, no file in this diff has a mutation score.
 EOF
@@ -584,21 +599,16 @@ fi
 # file it is about.
 # WHAT THE RUN ACTUALLY USED, read back rather than restated.
 #
-# Since engine 0.2.7 the per-mutant budget is derived — the larger of --timeout
-# and a multiple of the baseline's measured wall time — so the flag value is a
-# floor, and a report printing it would name a number the run may never have
-# used. The engine reports the derived budget and the baseline it came from;
-# print those. An older engine omits both fields, and then the flag IS the
-# budget, which is what the fallback says.
+# The per-mutant budget is derived — the larger of --timeout and a multiple of a
+# measured baseline — so the flag value is only a floor. `mutantTimeoutSeconds`
+# is the cap derived from the full command's baseline; under
+# --select-by-coverage each test selection gets its own, never above that cap,
+# and each mutant carries the one it ran with.
 eff_timeout=$(jq -r '.mutantTimeoutSeconds // empty' "$out/report.json")
 baseline_s=$(jq -r '.baselineSeconds // empty' "$out/report.json")
 selected=$(jq -r 'if .selectedByCoverage == true then "yes" else empty end' "$out/report.json")
-if [ -n "$eff_timeout" ]; then
-  budget_line="${eff_timeout}s per mutant (floor ${MUTANT_TIMEOUT}s${baseline_s:+, baseline ${baseline_s}s})"
-else
-  budget_line="${MUTANT_TIMEOUT}s per mutant"
-fi
-[ -n "$selected" ] && budget_line="${budget_line}, tests selected by coverage"
+budget_line="${eff_timeout}s per mutant (floor ${MUTANT_TIMEOUT}s${baseline_s:+, baseline ${baseline_s}s})"
+[ -n "$selected" ] && budget_line="up to ${budget_line}, tests and budget selected by coverage"
 
 rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MIN_MUTANTS" '
   .files | to_entries[] | .value as $v

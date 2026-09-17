@@ -33,17 +33,19 @@
 #   plan-test test/features/foo/      # scoped run (flutter or dart, auto-detected)
 #   plan-test --full                  # the whole suite, deliberately
 #   plan-test --exec <cmd...>         # hold a slot around an arbitrary command
+#   plan-test --slots <n> --exec <cmd...>   # hold n slots (all or none)
 #   plan-test --status                # who is holding what
 #   plan-test --help
 #
 # WHY `--exec` EXISTS
-#   A budget with holes is not a budget. `plan-mutation` and `plan-test-first`
-#   each run a suite — mutation runs MANY — without ever typing `flutter test`
-#   at the top level, so the hook cannot see them and they would spend memory
-#   off the books. Their launchers route through here instead. `--exec` takes
-#   ONE slot for the whole operation, not one per inner run: mutation's inner
-#   loop must not thrash the semaphore, and it is a single long-running job as
-#   far as the machine is concerned.
+#   A budget with holes is not a budget. `plan-mutation` runs MANY suites
+#   without ever typing `flutter test` at the top level, so the hook cannot see
+#   it and it would spend memory off the books. Its launcher routes through here
+#   instead. `--exec` holds its slots for the whole operation, not per inner run:
+#   the inner loop must not thrash the semaphore. It holds one slot per suite
+#   that runs AT ONCE — `--slots n` for `plan-mutation --workers n` — taken all
+#   together or not at all, since a caller sitting on part of its share starves
+#   everyone and still cannot start.
 #
 # Env:
 #   PLAN_TEST_SLOTS    slot count      (default: max(1, (RAM_GB - 8) / 4))
@@ -61,7 +63,8 @@ default_slots=$(( ram_gb > 12 ? (ram_gb - 8) / 4 : 1 ))
 [ "$default_slots" -lt 1 ] && default_slots=1
 SLOTS="${PLAN_TEST_SLOTS:-$default_slots}"
 
-HELD=""
+NEED=1
+HELD=""   # newline-separated slot paths this process owns
 
 now()  { date +%s; }
 mine() { printf '%s' "${PLAN_TEST_NAME:-$(basename "$PWD")}"; }
@@ -107,26 +110,33 @@ reap_stale() {
   done
 }
 
+# NEED slots or none: a partial take is handed straight back.
 acquire() {
-  local i slot
+  local i slot got=0
   for i in $(seq 1 "$SLOTS"); do
+    [ "$got" -ge "$NEED" ] && break
     slot="$SLOT_DIR/slot-$i"
     if mkdir "$slot" 2>/dev/null; then
       printf 'pid=%s\nname=%s\nsession=%s\nstarted=%s\ncmd=%s\n' \
         "$$" "$(mine)" "${CLAUDE_CODE_SESSION_ID:-unknown}" "$(now)" "$*" \
         > "$slot/meta" 2>/dev/null
-      HELD="$slot"
-      return 0
+      HELD="${HELD}${slot}"$'\n'
+      got=$((got + 1))
     fi
   done
+  [ "$got" -ge "$NEED" ] && return 0
+  release
   return 1
 }
 
 # Only ever release a slot this process still owns — a slot reaped out from
 # under us belongs to whoever holds it now.
 release() {
-  [ -n "$HELD" ] || return 0
-  [ "$(slot_field "$HELD" pid)" = "$$" ] && rm -rf "$HELD"
+  local slot
+  while IFS= read -r slot; do
+    [ -n "$slot" ] || continue
+    [ "$(slot_field "$slot" pid)" = "$$" ] && rm -rf "$slot"
+  done <<< "$HELD"
   HELD=""
 }
 trap release EXIT INT TERM
@@ -134,7 +144,7 @@ trap release EXIT INT TERM
 # --------------------------------------------------------------------- args
 
 case "${1:-}" in
-  --help|-h) sed -n '2,45p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  --help|-h) sed -n '2,54p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
   --status)
     echo "plan-test · $SLOTS slots · $SLOT_DIR"
     mkdir -p "$SLOT_DIR" 2>/dev/null
@@ -148,6 +158,18 @@ case "${1:-}" in
 esac
 
 # ------------------------------------------------------------------ command
+
+if [ "${1:-}" = "--slots" ]; then
+  NEED="${2:-}"; shift 2 2>/dev/null || shift $#
+  case "$NEED" in
+    ''|*[!0-9]*|0) echo "plan-test: --slots needs a positive integer." >&2; exit 2 ;;
+  esac
+  [ "${1:-}" = "--exec" ] || { echo "plan-test: --slots only goes with --exec." >&2; exit 2; }
+  if [ "$NEED" -gt "$SLOTS" ]; then
+    echo "plan-test: REFUSED — $NEED slots asked, this machine has $SLOTS. Run with fewer workers." >&2
+    exit 2
+  fi
+fi
 
 if [ "${1:-}" = "--exec" ]; then
   shift
@@ -195,7 +217,7 @@ while :; do
   acquire "${CMD[*]}" && break
   if [ "$(now)" -ge "$deadline" ]; then
     {
-      echo "plan-test: REFUSED — all $SLOTS test slots busy after ${WAIT_S}s."
+      echo "plan-test: REFUSED — $NEED of $SLOTS test slots not free together after ${WAIT_S}s."
       echo
       echo "Holding now:"
       holders
@@ -205,15 +227,15 @@ while :; do
     } >&2
     exit 75          # EX_TEMPFAIL — busy, not broken. Retrying later is valid.
   fi
-  [ $waited -eq 0 ] && echo "plan-test: all $SLOTS slots busy — waiting up to ${WAIT_S}s..." >&2
+  [ $waited -eq 0 ] && echo "plan-test: $NEED of $SLOTS slots not free — waiting up to ${WAIT_S}s..." >&2
   waited=1
   sleep "$POLL_S"
 done
 
-echo "plan-test: slot $(basename "$HELD") · ${CMD[*]}" >&2
+echo "plan-test: $(printf '%s' "$HELD" | xargs -n1 basename | paste -sd, -) · ${CMD[*]}" >&2
 # Children see that a slot is already held, so anything nested (a launcher that
 # routes through --exec, a script that calls plan-test again) runs through
 # instead of blocking on a semaphore this process holds.
-export PLAN_TEST_SLOT_HELD="$HELD"
+export PLAN_TEST_SLOT_HELD="$(printf '%s' "$HELD" | paste -sd' ' -)"
 "${CMD[@]}"
 exit $?
