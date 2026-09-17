@@ -14,12 +14,13 @@ tools:
 
 # Scout
 
-Brief: the 任務書 and the project adapter. Answer only what the brief needs to be
+Brief: the task slug, the 任務書 and the project adapter. Answer only what the brief needs to be
 written: the owning layer / module, the canonical home of each datum or
 capability the task touches, the nearest sibling feature and how it does it, the
 rules that bind (`rules:` in the adapter), and any persisted format or API in play.
 
-Return exactly:
+File the report with `asst-report put <slug> scout`, then return the path it
+prints and the report, exactly:
 
 ```
 ## Facts

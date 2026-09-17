@@ -11,7 +11,7 @@ reports. Anything a linter or a passed check already settled is one line.
 ## 資料串接
 - <source file:line> → <transform file:line> → <sink file:line> · 可能為空/舊格式：<where>
 ## Code style
-- <deviation file:line> · 接受理由：<the review-dismiss line verbatim>   (lint-caught items never appear)
+- <deviation file:line> · 接受理由：<the builder report's declined reason verbatim>   (lint-caught items never appear)
 ## 錯誤處理
 | 失敗事件 | 接住於 | 使用者看到 | log |
 ## As built vs as decided
