@@ -54,9 +54,9 @@ if [ -x "$script" ]; then
 fi
 
 if [ -z "$body" ]; then
-  ctx="No session journal yet (docs/session-journal/). When you pick up or start a task, use the session-journal skill to record it — task / plan / where it lives (worktree, branch, PR, issue or tracker link) / next step — so it survives context compaction and /clear."
+  ctx="No session journal yet ($(bash "$script" dir 2>/dev/null || echo docs/session-journal)). When you pick up or start a task, use the session-journal skill to record it — task / plan / where it lives (worktree, branch, PR, issue or tracker link) / next step — so it survives context compaction and /clear."
 else
-  ctx="Persistent session journal (in-repo, gitignored; survives compaction / clear / resume). Read it to recover which task threads are in flight and WHERE each one lives (worktree / branch / PR# / issue or tracker link) before acting; keep it current via the session-journal skill.
+  ctx="Persistent session journal (local-only, never committed; survives compaction / clear / resume). Read it to recover which task threads are in flight and WHERE each one lives (worktree / branch / PR# / issue or tracker link) before acting; keep it current via the session-journal skill.
 
 $body"
 fi

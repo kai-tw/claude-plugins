@@ -48,7 +48,10 @@ flowchart LR
 
 *Reading is deterministic (a hook injects state every session); writing is nudged at the moments that matter. That symmetry is the whole idea.*
 
-**Two tiers of plain-Markdown state under `docs/session-journal/`:**
+**Two tiers of plain-Markdown state under `docs/session-journal/`** (or, with
+`SESSION_JOURNAL_ROOT` set in `settings.json` → `env`, under
+`$SESSION_JOURNAL_ROOT/<main-root path with "/" → "-">/` — out of the tree, for
+svn working copies or any repo where nothing may be added):
 
 | File | Scope | Survives |
 |---|---|---|

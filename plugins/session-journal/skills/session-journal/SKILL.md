@@ -46,7 +46,10 @@ every live thread is written down and re-injected after every compaction.
 ## Two-tier model + storage
 
 All journal files live under **`docs/session-journal/`**, resolved against the
-**main repo root** (so it is the same directory from inside any worktree). The
+**main repo root** (so it is the same directory from inside any worktree) — or,
+when `SESSION_JOURNAL_ROOT` is set, under `$SESSION_JOURNAL_ROOT/<main-root path
+with "/" → "-">/`, outside the tree. `journal.sh dir` prints the resolved path;
+never hardcode either form. The
 directory **ignores itself** — `init` drops a `*` `.gitignore` inside it, so the
 journal is local-only working state that can never be committed, and the host
 project's own `.gitignore` needs no entry. That is what keeps your task notes,
