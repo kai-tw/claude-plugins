@@ -791,7 +791,12 @@ function mdToBlocks(md) {
         if (wide)
           fail(`append: table row has ${wide.length} cells but the header has ${width}`
             + ` — escape a literal pipe as \\| :\n  | ${wide.join(' | ')} |`);
-        if (width > 100) fail(`append: table is ${width} columns wide; Notion's limit is 100`);
+        // Our sanity cap, not an API limit: Notion documents no maximum
+        // table_width and does accept absurd ones — a 905-column table, 4 real
+        // columns and 901 of padding, sits in a live page in this workspace.
+        // Nobody writes one on purpose, so refuse rather than publish it.
+        if (width > 100) fail(`append: table is ${width} columns wide — refusing to write it;`
+          + ` the header row decides the width, so check it for stray pipes`);
         blocks.push({
           object: 'block', type: 'table',
           table: {
