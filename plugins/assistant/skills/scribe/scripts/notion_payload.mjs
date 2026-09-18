@@ -729,24 +729,69 @@ function checkBox(pageId, match, uncheck, commit) {
   console.log(JSON.stringify({ block: block.id, checked: target }, null, 2));
 }
 
+// Notion rejects a `code` block whose language is not in its enum, and one bad
+// fence fails the whole append — so map the few we write and fall back to plain.
+const CODE_LANG = {
+  sh: 'shell', zsh: 'shell', console: 'shell', js: 'javascript', ts: 'typescript',
+  yml: 'yaml', md: 'markdown', cpp: 'c++', 'c++': 'c++', py: 'python', rs: 'rust',
+  kt: 'kotlin', bash: 'bash', shell: 'shell', javascript: 'javascript',
+  typescript: 'typescript', yaml: 'yaml', markdown: 'markdown', python: 'python',
+  rust: 'rust', kotlin: 'kotlin', dart: 'dart', json: 'json', sql: 'sql',
+  diff: 'diff', html: 'html', css: 'css', xml: 'xml', java: 'java', go: 'go',
+  swift: 'swift', mermaid: 'mermaid',
+};
+
+// Split a pipe-table row on UNESCAPED pipes only: a cell is allowed to contain a
+// literal `\|`, and splitting on it is how one row silently grows extra columns.
+const splitRow = (r) => r.trim().replace(/^\|/, '').replace(/\|$/, '')
+  .split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
+
+// The separator is the SECOND row and its cells are all `---`/`:--`/`--:`. Do not
+// match it by character class: a data row whose cells are all `-` (this house
+// writes `-` for "none") is made of the same characters and would be dropped.
+const isSeparator = (cells) => cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c));
+
 // Bounded Markdown → Notion block objects: heading_1-3, paragraph,
-// bulleted/numbered list, to_do, and pipe-tables (→ a new table block). NOT a
-// general Markdown engine — full bodies still go through `ntn pages edit`.
+// bulleted/numbered list, to_do, fenced code, and pipe-tables (→ a new table
+// block). NOT a general Markdown engine — full bodies still go through
+// `ntn pages edit`.
 function mdToBlocks(md) {
   const lines = md.replace(/\r\n/g, '\n').split('\n');
   const blocks = [];
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
+    // Fenced code FIRST: inside a fence nothing is markup. Without this a `# …`
+    // comment in a shell snippet becomes a real heading on the page — and since
+    // the Iron-Law-2 verify skips fenced headings when reading the source, that
+    // phantom comes back as an EXTRA heading the body never asked for.
+    let m = line.match(/^\s*(```|~~~)\s*([A-Za-z0-9+#._-]*)/);
+    if (m) {
+      const fence = m[1];
+      const lang = CODE_LANG[m[2].toLowerCase()] || 'plain text';
+      const body = [];
+      i++;
+      while (i < lines.length && !new RegExp(`^\\s*${fence}`).test(lines[i])) { body.push(lines[i]); i++; }
+      if (i < lines.length) i++; // the closing fence; an unterminated fence ends at EOF
+      blocks.push({ object: 'block', type: 'code', code: { rich_text: richText(body.join('\n')), language: lang } });
+      continue;
+    }
     if (line.trim() === '') { i++; continue; }
     if (/^\s*\|.*\|\s*$/.test(line)) {
       const raw = [];
       while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { raw.push(lines[i]); i++; }
-      const rows = raw
-        .filter((r) => !/^\s*\|[\s:|-]+\|\s*$/.test(r)) // drop the |---|---| separator
-        .map((r) => r.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim()));
+      const rows = raw.map(splitRow);
+      if (rows.length > 1 && isSeparator(rows[1])) rows.splice(1, 1);
       if (rows.length) {
-        const width = Math.max(...rows.map((c) => c.length));
+        // The HEADER fixes the width. Taking the widest row instead lets one
+        // malformed row widen the whole table and pad every other row with empty
+        // cells — measured elsewhere at 115 columns and 45,953 empty cells.
+        const width = rows[0].length;
+        const wide = rows.find((r) => r.length > width);
+        if (wide)
+          fail(`append: table row has ${wide.length} cells but the header has ${width}`
+            + ` — escape a literal pipe as \\| :\n  | ${wide.join(' | ')} |`);
+        if (width > 100) fail(`append: table is ${width} columns wide; Notion's limit is 100`);
         blocks.push({
           object: 'block', type: 'table',
           table: {
@@ -760,7 +805,6 @@ function mdToBlocks(md) {
       }
       continue;
     }
-    let m;
     if ((m = line.match(/^(#{1,3})\s+(.*)$/))) {
       const t = `heading_${m[1].length}`;
       blocks.push({ object: 'block', type: t, [t]: { rich_text: richText(m[2]) } });
@@ -779,7 +823,7 @@ function mdToBlocks(md) {
       i++; continue;
     }
     const buf = [line]; i++;
-    while (i < lines.length && lines[i].trim() !== '' && !/^\s*(#{1,3}\s|[-*]\s|\d+\.\s|\|)/.test(lines[i])) { buf.push(lines[i]); i++; }
+    while (i < lines.length && lines[i].trim() !== '' && !/^\s*(#{1,3}\s|[-*]\s|\d+\.\s|\||```|~~~)/.test(lines[i])) { buf.push(lines[i]); i++; }
     blocks.push({ object: 'block', type: 'paragraph', paragraph: { rich_text: richText(buf.join('\n')) } });
   }
   return blocks;
