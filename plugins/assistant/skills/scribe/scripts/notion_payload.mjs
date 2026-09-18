@@ -561,36 +561,68 @@ function ntn(args, input) {
   }
   if (r.error) fail(`ntn ${args.join(' ')}: ${r.error.code === 'ENOENT' ? `binary not found (set $NTN_BIN or add ~/development/ntn to PATH)` : r.error.message}`);
   if (r.status !== 0) fail(`ntn ${args.join(' ')} exited ${r.status}: ${(r.stderr || '').trim()}`);
+  // A zero exit does not mean it had nothing to say: `ntn pages get` reports a
+  // TRUNCATED readback on stderr and still exits 0. Swallowing that is how a
+  // partial read gets compared as if it were the whole page.
+  const warn = (r.stderr || '').trim();
+  if (warn) console.error(`⚠ ntn ${args.slice(0, 2).join(' ')}: ${warn}`);
   return r.stdout;
 }
 
 // ── Iron Law 2 verify: did the body we just wrote land IN FULL? ──────────────
 // The marker alone cannot answer that. It is PREPENDED, so a write that lands the
-// head and drops the tail keeps it and reports ✓ — which is exactly the shape of
-// a truncated write we hit once: a long body went out, roughly a third of its
-// blocks arrived, and it stopped mid-document. Cause never established, which is
-// the point — the check has to catch the shape, not the cause. The body goes
-// through ONE `ntn pages edit`, so there is no chunk
-// loop to bound the damage either. So check that every `## ` section arrived,
-// which catches a head, middle, or tail loss alike. A body with no headings falls
-// back to the marker-only check — no regression, and comparing prose Notion is
-// free to reformat would only produce false alarms.
+// head and drops the tail keeps it and reports ✓ — and a long body losing a whole
+// section mid-document is a shape we have hit more than once.
 //
-// Notion returns the body escaped: markdown specials come back backslashed, and
-// non-ASCII may come back as \uXXXX. Normalize both sides before comparing.
-function unescapeNotion(s) {
-  return s.replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
-          .replace(/\\/g, '');
+// The check reads the page back as BLOCKS, never as `ntn pages get` Markdown, and
+// that choice is the fix for a measured false ✓: a 133 KB body read back as 998 KB
+// because every table is re-rendered as HTML (48,861 `<td>`, not one `|` row), so
+// the readback is a different representation, not a copy. Flattening it also drops
+// TABLE TEXT into the same string as the headings — one cell quoting the document's
+// own outline contained the literal text `## Classes`, so a substring check for
+// that heading passed while the section was in fact gone from the page. A heading
+// BLOCK is a block: no table cell can impersonate one.
+//
+// Compare the full heading sequence (h1–h3), not just `## `: a dropped, extra,
+// duplicated or REPARENTED heading all change it, and reparenting is real — one
+// write left four subsections orphaned under a neighbouring section. Headings
+// inside fenced code are not headings; skip the fences or every fenced `#` becomes
+// a phantom miss. A body with no headings falls back to the marker-only check.
+const blockText = (b) => ((b[b.type] || {}).rich_text || [])
+  .map((r) => r.plain_text ?? r.text?.content ?? '').join('').trim();
+
+function sourceHeadings(markdown) {
+  const out = [];
+  let fenced = false;
+  for (const line of markdown.replace(/\r\n/g, '\n').split('\n')) {
+    if (/^\s*(```|~~~)/.test(line)) { fenced = !fenced; continue; }
+    if (fenced) continue;
+    const m = line.match(/^(#{1,3})\s+(.+?)\s*$/);
+    if (m) out.push(`h${m[1].length} ${m[2].trim()}`);
+  }
+  return out;
 }
 
-function verifyBody(markdown, got) {
-  const flat = unescapeNotion(got);
-  if (!flat.includes(MARKER)) return 'NO-MARKER';
-  const heads = [...markdown.matchAll(/^##\s+(.+?)\s*$/gm)].map((m) => unescapeNotion(m[1].trim()));
-  const missing = heads.filter((h) => !flat.includes(`## ${h}`));
-  if (!missing.length) return 'ok';
-  return `TRUNCATED ${heads.length - missing.length}/${heads.length} sections`
-    + ` (missing: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ', …' : ''})`;
+const tally = (xs) => xs.reduce((m, x) => m.set(x, (m.get(x) || 0) + 1), new Map());
+const show = (xs) => xs.slice(0, 3).join(' | ') + (xs.length > 3 ? ' | …' : '');
+
+function verifyBody(markdown, pageId) {
+  const blocks = getAllChildren(pageId);
+  if (!blocks.some((b) => blockText(b).includes(MARKER))) return 'NO-MARKER';
+  const want = sourceHeadings(markdown);
+  if (!want.length) return 'ok';
+  const got = blocks.filter((b) => /^heading_[123]$/.test(b.type))
+    .map((b) => `h${b.type.slice(-1)} ${blockText(b)}`);
+  if (want.join('\n') === got.join('\n')) return 'ok';
+  const wc = tally(want);
+  const gc = tally(got);
+  const missing = [...wc].filter(([h, n]) => (gc.get(h) || 0) < n).map(([h]) => h);
+  const extra = [...gc].filter(([h, n]) => (wc.get(h) || 0) < n).map(([h]) => h);
+  if (missing.length)
+    return `TRUNCATED ${want.length - missing.length}/${want.length} headings landed (missing: ${show(missing)})`;
+  if (extra.length)
+    return `EXTRA ${extra.length} heading(s) on the page that the body does not have (${show(extra)})`;
+  return `REORDERED all ${want.length} headings are present but not in the body's order`;
 }
 
 function commitCreate(dbKey, built) {
@@ -603,8 +635,9 @@ function commitCreate(dbKey, built) {
     if (!id) fail(`create "${title}": response had no page id`);
     if (markdown) ntn(['pages', 'edit', id], markdown);
     // Verify (Iron Law 2): confirm the row exists and (if a body was written) landed whole.
-    const got = ntn(['pages', 'get', id]);
-    const state = markdown ? verifyBody(markdown, got) : '(none)';
+    let state = '(none)';
+    if (markdown) state = verifyBody(markdown, id);
+    else ntn(['api', `v1/pages/${id}`]);
     if (state !== 'ok' && state !== '(none)') bad++;
     results.push({ title, id, url, body: state });
     console.error(`✓ ${dbKey}: ${title} → ${url}${state === 'ok' || state === '(none)' ? '' : `  ⚠ ${state}`}`);
@@ -636,8 +669,7 @@ function commitUpdate(dbKey, built) {
     let ok = true;
     if (markdown) {
       ntn(['pages', 'edit', page_id], markdown);
-      const got = ntn(['pages', 'get', page_id]);
-      const state = verifyBody(markdown, got);
+      const state = verifyBody(markdown, page_id);
       ok = state === 'ok';
       bodyState = ok ? 'replaced' : state;
       if (!ok) bad++;

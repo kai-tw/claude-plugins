@@ -24,3 +24,8 @@ tools:
 - `ntn` gotchas the CLI does not tell you: raw `ntn api -X POST|PATCH` hangs
   unless stdin is closed (`</dev/null`); `ntn pages trash` needs `--yes`;
   `ntn pages get` prints the generated marker backslash-escaped.
+- **Never verify a write against `ntn pages get`.** It is a re-rendering, not a
+  copy — tables come back as HTML, a 133 KB body read back as 998 KB — and it
+  flattens table text in with the headings, so a cell quoting `## Foo` makes a
+  missing `## Foo` section look present. Read blocks back instead
+  (`v1/blocks/<id>/children`, paginated); `asst-notion` does.
