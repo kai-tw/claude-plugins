@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pack-csharp
+description: --paths 依副檔名選語言檔：.cs 只帶 csharp.md，不帶 dart.md 或 js.md，母法在前。
+tags: [style-pack]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: style-pack --paths src/Spins/SpinEngine.cs
+  prompt: |
+    印出審查 src/Spins/SpinEngine.cs 該引用的撰寫法規則。
+context:
+  scaffold_script: fixture.sh

@@ -5,7 +5,7 @@
 # Usage: style-pack [dart|js …]            母法 + the named language files
 #        style-pack --paths <file…>        母法 + the languages those extensions map to
 #        style-pack --help
-# Extension map (the only copy): .dart → dart · .js .mjs .cjs .jsx .ts .tsx → js.
+# Extension map (the only copy): .dart → dart · .cs → csharp · .js .mjs .cjs .jsx .ts .tsx → js.
 # Exit 2 = unknown language or extension, nothing printed.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd); rules="$here/../rules"
@@ -16,13 +16,14 @@ if [ "${1:-}" = --paths ]; then
   for p in "$@"; do
     case "$p" in
       *.dart) langs+=(dart) ;;
+      *.cs) langs+=(csharp) ;;
       *.js|*.mjs|*.cjs|*.jsx|*.ts|*.tsx) langs+=(js) ;;
-      *) echo "style-pack: no language file for '$p' (known: .dart · .js .mjs .cjs .jsx .ts .tsx)" >&2; exit 2 ;;
+      *) echo "style-pack: no language file for '$p' (known: .dart · .cs · .js .mjs .cjs .jsx .ts .tsx)" >&2; exit 2 ;;
     esac
   done
 else
   for l in "$@"; do
-    [ -f "$rules/$l.md" ] && [ "$l" != index ] && [ "$l" != CONVENTIONS ] || { echo "style-pack: unknown language '$l' (known: dart · js)" >&2; exit 2; }
+    [ -f "$rules/$l.md" ] && [ "$l" != index ] && [ "$l" != CONVENTIONS ] || { echo "style-pack: unknown language '$l' (known: dart · csharp · js)" >&2; exit 2; }
     langs+=("$l")
   done
 fi
