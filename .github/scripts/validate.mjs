@@ -206,6 +206,26 @@ for (const entry of entries) {
 
 // ------------------------------------------------------- README install docs
 
+// GAP 7 — `hooks/stale-check.sh` is deliberately duplicated into every plugin:
+// it reports the version of the install it is running from, so it can only do
+// that from INSIDE that install. Nothing else in the repo is copied like this,
+// and a copy that drifts fails in the quietest possible way — the plugin simply
+// never reports itself, indistinguishable from being up to date. So the copies
+// must stay byte-identical, and that is checkable, unlike the drift itself.
+{
+  const copies = [];
+  for (const entry of entries) {
+    const p = join(resolve(root, entry.source ?? ''), 'hooks/stale-check.sh');
+    if (existsSync(p)) copies.push([p.slice(root.length + 1), readFileSync(p, 'utf8')]);
+  }
+  const [, reference] = copies[0] ?? [];
+  for (const [rel, text] of copies) {
+    if (text !== reference) {
+      fail(rel, `differs from ${copies[0][0]} — every plugin's copy must be byte-identical`);
+    }
+  }
+}
+
 const readmePath = join(root, 'README.md');
 if (existsSync(readmePath)) {
   const readme = readFileSync(readmePath, 'utf8');
