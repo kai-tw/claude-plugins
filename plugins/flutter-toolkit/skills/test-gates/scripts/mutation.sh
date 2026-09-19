@@ -313,13 +313,34 @@ fi
 # --- what to mutate --------------------------------------------------------
 # Generated files are excluded: nobody hand-writes them, so a surviving mutant
 # there is a finding about a generator, not about the tests.
+base=
 if [ -n "$EXPLICIT_FILES" ]; then
   files=$(printf '%s' "$EXPLICIT_FILES" | grep -v '^$')
 else
+  # Prefer the REMOTE-tracking ref. `origin/<branch>` is what the PR merges
+  # into and `git fetch` keeps it current without touching the working tree;
+  # the LOCAL branch of the same name only moves when someone checks it out and
+  # pulls, which a squash-merge workflow never does. A stale local base drags
+  # the three-dot merge-base backwards, so every PR merged since lands in
+  # scope and the gate grades files this branch never opened — loudly, by name,
+  # with line counts. The base actually used is printed in the report header,
+  # so the next wrong one is visible instead of inferred.
   base=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)
   base=${base#origin/}
   [ -n "$base" ] || base=main
-  git rev-parse --verify --quiet "$base" >/dev/null 2>&1 || base=main
+  tried="origin/$base $base origin/main main"
+  resolved=
+  for cand in $tried; do
+    git rev-parse --verify --quiet "$cand" >/dev/null 2>&1 && { resolved=$cand; break; }
+  done
+  # No base means no scope. Diffing an unresolvable ref yields an empty file
+  # list, which reads downstream as "nothing changed" and exits 0 — a gate that
+  # could not run, wearing the face of one that passed.
+  [ -n "$resolved" ] || {
+    echo "plan-mutation: no base ref resolves (tried: $(printf %s\\n $tried | awk '!s[$0]++' | paste -sd' ' -)) — pass --files to say what to mutate." >&2
+    exit 2
+  }
+  base=$resolved
   files=$( { git diff --name-only "$base"...HEAD 2>/dev/null
              git diff --name-only HEAD 2>/dev/null; } \
            | sort -u \
@@ -457,7 +478,7 @@ mv -f "$MARKER.tmp" "$MARKER"
 # (mutant count, baseline, per-mutant cap), then one `[k/N] <verdict> …` line
 # per mutant, so a long run shows how far it is. The report goes to a file.
 # Its stderr is kept for the failure message below and still shown.
-echo "plan-mutation: ${count_files} changed file(s), threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s floor per mutant."
+echo "plan-mutation: ${count_files} changed file(s) vs ${base:---files}, threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s floor per mutant."
 echo "plan-mutation: WHILE THIS RUNS the source on disk may be a live mutant. Read those files with \`git show ${head_sha}:<path>\`, not from the working tree — anyone sharing this worktree included. Marker: .mutation-in-progress"
 [ "$count_files" -gt 50 ] && echo "plan-mutation: ${count_files} files is a long run — the plan line below gives the mutant count and cap; split the files into batches if that is more than you can wait for."
 started=$(date +%s)
@@ -743,8 +764,8 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:mutation sha=%s -->\n' "$head_short"
   printf '### Mutation — is the effect asserted?\n\n'
-  printf 'Threshold %s%% per file, %s, %s changed file(s). A LOW-SIGNAL row was **not measured**, whatever percentage it shows.\n\n' \
-    "$MIN_SCORE" "$budget_line" "$count_files"
+  printf 'Threshold %s%% per file, %s, %s changed file(s) vs `%s`. A LOW-SIGNAL row was **not measured**, whatever percentage it shows.\n\n' \
+    "$MIN_SCORE" "$budget_line" "$count_files" "${base:---files}"
   printf '| Verdict | Score | Mutants | Invalid | Timed out | File |\n|---|---:|---:|---:|---:|---|\n'
   printf '%s\n' "$rows" | awk -F'\t' 'NF>=6 {
     s = ($2 == "-") ? "–" : $2 "%"

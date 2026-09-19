@@ -41,7 +41,12 @@
 #   0  every changed line executed
 #   1  at least one unexecuted line, a changed file no test reached at all, or
 #      a changed file carrying a coverage pragma
-#   2  nothing was measured (no repo, no lcov, the run did not happen)
+#   2  nothing was measured (no repo, no base ref, no lcov, the run did not
+#      happen)
+#
+#   Scope is taken against `origin/<default branch>` when that ref exists, and
+#   the base used is printed in the report header. The LOCAL branch of the same
+#   name is the fallback, not the default: it only moves when someone pulls it.
 
 set -uo pipefail
 
@@ -54,7 +59,7 @@ while [ $# -gt 0 ]; do
               done
               [ "${1:-}" = "--" ] && shift ;;
     --)       shift; break ;;
-    -h|--help) sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,49p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # A flag this script does not know is never forwarded silently. Measured on
     # mutation.sh's predecessor: an unrecognised flag fell through into the test
     # command, the run widened to the whole suite, and the score looked normal.
@@ -74,13 +79,34 @@ cd "$root" || exit 2
 # Identical scoping to plan-mutation, deliberately: the two gates must grade the
 # same file set or "reach then assert" is being claimed over two different
 # populations. Generated files are excluded — nobody hand-writes them.
+base=
 if [ -n "$EXPLICIT_FILES" ]; then
   files=$(printf '%s' "$EXPLICIT_FILES" | grep -v '^$')
 else
+  # Prefer the REMOTE-tracking ref. `origin/<branch>` is what the PR merges
+  # into and `git fetch` keeps it current without touching the working tree;
+  # the LOCAL branch of the same name only moves when someone checks it out and
+  # pulls, which a squash-merge workflow never does. A stale local base drags
+  # the three-dot merge-base backwards, so every PR merged since lands in
+  # scope and the gate grades files this branch never opened — loudly, by name,
+  # with line counts. The base actually used is printed in the report header,
+  # so the next wrong one is visible instead of inferred.
   base=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)
   base=${base#origin/}
   [ -n "$base" ] || base=main
-  git rev-parse --verify --quiet "$base" >/dev/null 2>&1 || base=main
+  tried="origin/$base $base origin/main main"
+  resolved=
+  for cand in $tried; do
+    git rev-parse --verify --quiet "$cand" >/dev/null 2>&1 && { resolved=$cand; break; }
+  done
+  # No base means no scope. Diffing an unresolvable ref yields an empty file
+  # list, which reads downstream as "nothing changed" and exits 0 — a gate that
+  # could not run, wearing the face of one that passed.
+  [ -n "$resolved" ] || {
+    echo "plan-coverage: no base ref resolves (tried: $(printf %s\\n $tried | awk '!s[$0]++' | paste -sd' ' -)) — pass --files to say what to measure." >&2
+    exit 2
+  }
+  base=$resolved
   files=$( { git diff --name-only "$base"...HEAD 2>/dev/null
              git diff --name-only HEAD 2>/dev/null; } \
            | sort -u \
@@ -292,7 +318,8 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:coverage sha=%s -->\n' "$head_sha"
   printf '### Coverage — reach\n\n'
-  printf 'Scope: %s changed file(s), `%s`. Every changed line executed; no exemptions.\n\n' "$count_files" "$*"
+  printf 'Scope: %s changed file(s) vs `%s`, `%s`. Every changed line executed; no exemptions.\n\n' \
+    "$count_files" "${base:---files}" "$*"
   printf '| Verdict | Gaps | Pragmas | File |\n|---|---:|---:|---|\n'
   while IFS= read -r f; do
     [ -n "$f" ] || continue
