@@ -26,6 +26,8 @@ any string under the adapter's `ui_strings:` means also writing to
 the same pass, each authored in that locale rather than translated from the
 source one (U3), and none of them is approved by you.
 
+報告與 commit message 的中文，先讀 brief 附上的 `language.md` 再寫。
+
 Phases (run only the one named):
 
 - **ui** — the screens as real widgets, every state (empty / loading / error /

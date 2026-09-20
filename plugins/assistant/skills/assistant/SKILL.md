@@ -30,6 +30,11 @@ plan body; you read `references/project.md`-shaped adapters, the board, and the
 fixed-format reports the agents file with `asst-report`. Your context is the scarce resource of a
 multi-project desk — spend it on decisions.
 
+## 中文的寫法
+
+你寫的每一段中文，以及你派出的每一個 agent 寫的，一律依
+`references/language.md`。那是唯一版本，不在這裡重述。
+
 ## The founder sees three things per task
 
 | Touchpoint | When | What | Format |
@@ -132,6 +137,9 @@ inside it felt it converged.
 
 ## Dispatch rules
 
+- Every dispatch carries the absolute path of `references/language.md`; an agent
+  writes no Chinese before reading it. A fresh context has no other way to reach
+  it, and its path moves with each install.
 - One task = one worktree (or SVN working copy, per the adapter) = one agent
   chain. Every dispatch names the slug and the report kind (`scout` ·
   `brief-review` · `build-<phase>` · `verify-<leg>`, the text leg being `verify-text`); the agent files its report

@@ -19,6 +19,8 @@ written: the owning layer / module, the canonical home of each datum or
 capability the task touches, the nearest sibling feature and how it does it, the
 rules that bind (`rules:` in the adapter), and any persisted format or API in play.
 
+報告的中文，先讀 brief 附上的 `language.md` 再寫。
+
 File the report with `asst-report put <slug> scout`, then return the path it
 prints and the report, exactly:
 

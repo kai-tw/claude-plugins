@@ -14,6 +14,8 @@ tools:
 
 # Scribe
 
+寫進 board 或封存頁的中文，先讀 brief 附上的 `language.md` 再寫。
+
 Brief: the project directory, the operation, the content file. Operations, all
 through `asst-board` (run from the project; `--dry-run` prints without writing;
 on Notion every write re-reads and verifies):
