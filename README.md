@@ -33,6 +33,7 @@ claude plugin install dart-lsp@kai-tw
 | [session-journal](plugins/session-journal) | Cross-session task-state journal — which threads are in flight and where each one lives, surviving context compaction, `/clear`, and resume |
 | [google-reporting](plugins/google-reporting) | GA4 and Search Console readers via keyless service-account impersonation |
 | [style-pack](plugins/style-pack) | The founder's cross-project 撰寫法: 母法 S1–S15 plus Dart/JS language files, printed by `style-pack` for any reviewer |
+| [ui-text-pack](plugins/ui-text-pack) | The founder's cross-project 使用者可見文字撰寫法: 母法 U1–U5 plus zh-Hant / ja / en locale files, printed by `ui-text-pack` for any reviewer grading UI strings and their translations |
 | [reclaim-space](plugins/reclaim-space) | Developer-disk reclamation on macOS: regenerable build output and toolchain caches, with a free-space floor on new git worktrees |
 | [guardrails](plugins/guardrails) | Turns corrections into rules that fire — a bounded inbox, a fusion gate, and hooks that speak at the moment of the mistake |
 
