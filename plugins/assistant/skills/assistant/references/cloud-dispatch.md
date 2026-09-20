@@ -60,9 +60,12 @@ GitHub App 沒裝在上面時，改為上傳本地 bundle（含已追蹤檔的�
 `lib/`，本機在它跑完前讀檔都得繞道 `git show`。送出去，這兩個代價都不存在。同一個範圍
 不得同時在本機與雲端跑，那是付兩次錢拿同一份答案。
 
-**不得為了跑這兩個而在本機另開 worktree**（`Agent` 的 `isolation: "worktree"` 或
-`git worktree`）——那是本機的複本，硬碟是有限的，而上面那兩個代價一個都沒省下。要閃開
-就地改寫，唯一許可的辦法是讓它跑在別台機器上。
+**不得為了跑這兩個而在本機另開 worktree**——那是本機的複本，硬碟是有限的，而上面那兩個
+代價一個都沒省下。要閃開就地改寫，唯一許可的辦法是讓它跑在別台機器上。這一條涵蓋
+`Agent` 的 `isolation`，**兩個值都不得用於此**：`"worktree"` 明定為本機，而 `"remote"`
+實測同樣落成一個本機 worktree（2026-09-20，NG）——它的描述說 remote cloud environment，
+跑出來卻在本機，**而且沒有任何訊息說它退而求其次**。要確認一個派工到底跑在哪，看本機
+有沒有多出 worktree，不要看它的宣告。
 
 **別假設它一定跑得完.** cloud session 閒置一段時間後 VM 會被回收，而回收時仍在跑的背景
 工作（subagent、shell 指令）**不會被還原**。所以長工照樣要回報地與 `ack`，你據以判斷它
@@ -74,14 +77,10 @@ Team，以及具 premium seat 或 Chat + Claude Code seat 的 Enterprise；須�
 須開啟；啟用 Zero Data Retention 的組織不能用。不符者是**當場失敗並印出原因**，不是跑很
 久——別把失敗讀成還在跑。
 
-`Agent` 的 `isolation: "remote"` 是另一條看似更短的路，但**官方文件未載**（該頁只記載
-`isolation: "worktree"`，且明定為本機）。要用者，先以一次最小的派工確認它真的起得來，
-否則以本節的 `--cloud` 為準。
-
 ## 三、非互動 shell 開不了 `--cloud`，走這裡
 
 `claude --cloud "<task>"` 要 TTY，而你的 Bash 是非互動的——這條路在你手上不通，不是
-設定問題，別再試。能用的有三條，依有無文件排序：
+設定問題，別再試。能用的有兩條：
 
 1. **routine 的 API trigger**，唯一全程非互動且有文件的路。一次性在 claude.ai/code/routines
    建好 routine 並產 token（**CLI 建不了也撤不了 token**，token 只顯示一次），之後任何
@@ -105,10 +104,11 @@ Team，以及具 premium seat 或 Chat + Claude Code seat 的 Enterprise；須�
 2. **既有 session 的 follow-up**：`claude -p "<訊息>" --cloud <session-id>` 本身就是非
    互動的（官方明示可用於 CI script）。前提是已經有一個 session，id 從 founder 或從第 1 條
    的回傳拿。
-3. `Agent` 的 `isolation: "remote"`：走 harness 不走 CLI，沒有 TTY 問題，但官方文件
-   未載——值得試一次，不得當預設。
 
-三條都不成立時，這是一行 `需要你`（請 founder 開一個 session，或建一個 routine），不是
+`Agent` 的 `isolation: "remote"` 不在其列：它沒有 TTY 問題，但實測跑在本機（見第二節），
+所以它解的不是這個問題，只是把工作搬到一個吃硬碟的本機複本裡。
+
+兩條都不成立時，這是一行 `需要你`（請 founder 開一個 session，或建一個 routine），不是
 你自己解得掉的 blocker，也不是把工作改回本機跑的理由——本機跑的代價見第二節。
 
 ## 權限邊界（所有路徑皆適用）
