@@ -3,11 +3,11 @@
 適用條件：本 session 的工具清單裡有 `SendMessage` 與 `ListAgents`。沒有者，你就是雲端
 那一端——本節不適用，且不得再往外派工。
 
-| | 既有的雲端 session | remote agent |
+| | 既有的雲端 session | 新開一個 cloud session |
 |---|---|---|
-| 怎麼發動 | founder 開的 session，你以 `SendMessage` 送訊息 | 你以 `Agent` 加 `isolation: "remote"` 開，背景執行 |
-| 怎麼回來 | 它寫進你指定的回報地，你再轉存 | harness 自己送回結果，不需要回報地 |
-| 看得到什麼 | 該 session 自己的工作目錄與上下文 | 只有**已 push** 的 commit；本機狀態一概沒有 |
+| 怎麼發動 | `SendMessage`，或 `claude -p "<訊息>" --cloud <session-id>` | `claude --cloud "<task>"` |
+| 怎麼回來 | 它寫進你指定的回報地，你再轉存 | 同左 |
+| 看得到什麼 | 該 session 自己的工作目錄與上下文 | GitHub remote 在目前 branch 的內容，非本地 checkout |
 | 適合 | 已在跑、帶著上下文的工作 | 無狀態、跑得久、輸出是一份文字報告的工作 |
 
 兩條路共通的一件事：**對方問不了你**。會分叉的決定在派工前定完；派工後才冒出來的 fork，
@@ -18,6 +18,11 @@
 雲端 session 收得到訊息，回不了話：`notify_when_idle` 只對本機 session 有效，而雲端連
 「拒收」都不會回報，**沉默不得當作同意**。所以每一次派工都自帶一個回報地，而你判斷進度
 只看那個地方。`ListAgents` 的 busy / idle 是連線狀態，不是進度。
+
+送訊息有兩條管道，都只是把訊息排進對方的 queue 就結束：`SendMessage`（對方要在
+`ListAgents` 裡看得到），或 `claude -p "<訊息>" --cloud <session-id>`（不必看得到，
+`--output-format json` 回 `{ok, session_id, url}`，可機械確認送出成功——但送出成功不等於
+對方讀了）。
 
 派工訊息自帶四樣：
 
@@ -42,20 +47,32 @@
 同時只派一個雲端 session。回報地整輪皆空 → 照既有的 `re-run` 規則重派（標 `re-run`，不計
 `asst-budget`），不得盲目再派一次。
 
-## 二、remote agent
+## 二、開一個新的 cloud session 跑長工
 
-`Agent` 加 `isolation: "remote"` 在遠端環境跑一個 agent，結果由 harness 送回，不需要回報
-地。它看得到的只有**已 push 的 commit**：本機的 worktree、未 commit 的改動、
-`.claude/.assistant/`、本機的 test slot 一概沒有。**派工前先確認該 diff 已 push**，否則它
-跑的是另一份程式。
+`claude --cloud "<task>"` 開一個新的 cloud session，背景跑，結果留在那個 session 裡。
+它 clone 的是**該 repo 的 GitHub remote 在目前 branch 的內容，不是你的本地 checkout**，
+所以派工前先 push；未 push 的 commit 它看不到。例外：該 repo 沒有 git remote、或 Claude
+GitHub App 沒裝在上面時，改為上傳本地 bundle（含已追蹤檔的未 commit 改動，不含 untracked
+檔）。兩種都不會帶走 `.claude/.assistant/`。
 
 **該往這裡送的，是跑得久而輸出只是一份報告的檢查**——`mutation:`，以及大範圍的
 `coverage:`。兩個理由：它們占著本機的 test slot 不放，而 `plan-mutation` 會就地改寫
-`lib/`，本機在它跑完前讀檔都得繞道 `git show`。送去遠端，這兩個代價都不存在。同一個範圍
-不得同時在本機與遠端跑，那是付兩次錢拿同一份答案。
+`lib/`，本機在它跑完前讀檔都得繞道 `git show`。送出去，這兩個代價都不存在。同一個範圍
+不得同時在本機與雲端跑，那是付兩次錢拿同一份答案。
 
-`isolation: "remote"` 的可用性是受控的，第一次用**實查**：不可用時它是直接失敗，不是跑
-很久，別把失敗讀成還在跑。
+**別假設它一定跑得完.** cloud session 閒置一段時間後 VM 會被回收，而回收時仍在跑的背景
+工作（subagent、shell 指令）**不會被還原**。所以長工照樣要回報地與 `ack`，你據以判斷它
+還活著，而不是假設沒消息就是還在跑。
+
+**可用性是有條件的，第一次用實查.** cloud session 屬 research preview，限 Pro / Max /
+Team，以及具 premium seat 或 Chat + Claude Code seat 的 Enterprise；須以 Anthropic 帳號
+登入（Bedrock / Vertex 等第三方 provider 不支援）；組織的 `allow_remote_sessions` 政策
+須開啟；啟用 Zero Data Retention 的組織不能用。不符者是**當場失敗並印出原因**，不是跑很
+久——別把失敗讀成還在跑。
+
+`Agent` 的 `isolation: "remote"` 是另一條看似更短的路，但**官方文件未載**（該頁只記載
+`isolation: "worktree"`，且明定為本機）。要用者，先以一次最小的派工確認它真的起得來，
+否則以本節的 `--cloud` 為準。
 
 ## 權限邊界（兩條路皆適用）
 

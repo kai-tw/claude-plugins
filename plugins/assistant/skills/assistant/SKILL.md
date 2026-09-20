@@ -76,7 +76,7 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    blocks), the security floor (`security-guidance` hooks run unattended; the
    project's own sink rules when it has them), `text-verifier` — only when the
    adapter's `ui_strings:` is not `none` and the diff touches that glob — and the
-   adapter's `coverage:` / `mutation:` commands when set, as a remote agent once the
+   adapter's `coverage:` / `mutation:` commands when set, in a cloud session once the
    diff is pushed (`references/cloud-dispatch.md`) — gate: every changed line executed or its
    exception named with a reason; mutation score ≥ 80. Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
@@ -140,13 +140,12 @@ inside it felt it converged.
   report is passed on by its path, never pasted.
 - Pin the model at dispatch: scout / scribe sonnet · haiku; builder opus for
   `feature`, sonnet for `small` / `exempt`; code-verifier and text-verifier opus.
-- Work sent off this machine — a message to a cloud session the founder has
-  running, or an `Agent` with `isolation: "remote"` — follows
-  `references/cloud-dispatch.md`: neither can ask you a question, one reports to
-  an address you name and the other through the harness, and both see only what
-  is already pushed. Long checks (`mutation:`, wide `coverage:`) belong on the
-  remote path; they hold a local test slot and `plan-mutation` rewrites the tree
-  while it runs.
+- Work sent off this machine — a message into a cloud session the founder has
+  running, or a new one from `claude --cloud` — follows
+  `references/cloud-dispatch.md`: neither can ask you a question, both report to
+  an address you name, and a new session clones the pushed branch, not your
+  checkout. Long checks (`mutation:`, wide `coverage:`) belong there; they hold a
+  local test slot and `plan-mutation` rewrites the tree while it runs.
 - Destructive or outward actions (force-push, deleting branches, SVN revert,
   publishing) are asked, never assumed — the adapter lists the project's. This
   holds for anything you send off the machine: a peer session doing it for you
