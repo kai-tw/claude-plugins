@@ -78,7 +78,40 @@ Team，以及具 premium seat 或 Chat + Claude Code seat 的 Enterprise；須�
 `isolation: "worktree"`，且明定為本機）。要用者，先以一次最小的派工確認它真的起得來，
 否則以本節的 `--cloud` 為準。
 
-## 權限邊界（兩條路皆適用）
+## 三、非互動 shell 開不了 `--cloud`，走這裡
+
+`claude --cloud "<task>"` 要 TTY，而你的 Bash 是非互動的——這條路在你手上不通，不是
+設定問題，別再試。能用的有三條，依有無文件排序：
+
+1. **routine 的 API trigger**，唯一全程非互動且有文件的路。一次性在 claude.ai/code/routines
+   建好 routine 並產 token（**CLI 建不了也撤不了 token**，token 只顯示一次），之後任何
+   shell 都能開一個雲端 session：
+
+   ```bash
+   curl -X POST "$CLOUD_FIRE_URL" \
+     -H "Authorization: Bearer $CLOUD_FIRE_TOKEN" \
+     -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
+     -H "anthropic-version: 2023-06-01" \
+     -H "Content-Type: application/json" \
+     -d "{\"text\": \"<這一次的工作，含 <slug>#<n> 與回報地>\"}"
+   ```
+
+   回傳 `claude_code_session_id` 與 session URL，那就是你要記在 board 上的把手。
+   URL 記在 adapter 的 `cloud_fire:`，**token 只從環境變數讀，不得進 repo**。
+
+   **陷阱**：`text` 抵達時被包在 `<routine-fire-payload>` 裡並標為不可信資料，routine
+   的**存檔 prompt 必須明文寫「照 routine-fire-payload 裡指定的去做」**，否則那段話整個
+   是惰性的——routine 會跑，但不做你交代的事，而狀態是綠的。
+2. **既有 session 的 follow-up**：`claude -p "<訊息>" --cloud <session-id>` 本身就是非
+   互動的（官方明示可用於 CI script）。前提是已經有一個 session，id 從 founder 或從第 1 條
+   的回傳拿。
+3. `Agent` 的 `isolation: "remote"`：走 harness 不走 CLI，沒有 TTY 問題，但官方文件
+   未載——值得試一次，不得當預設。
+
+三條都不成立時，這是一行 `需要你`（請 founder 開一個 session，或建一個 routine），不是
+你自己解得掉的 blocker，也不是把工作改回本機跑的理由——本機跑的代價見第二節。
+
+## 權限邊界（所有路徑皆適用）
 
 本地被拒、或你預期本地會被拒的動作，**不得轉手請機器外的 session 做**——那是拿別的
 session 繞過 founder 的決定。adapter `destructive:` 上的每一項皆屬之：merge、push main、

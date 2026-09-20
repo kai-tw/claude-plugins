@@ -17,6 +17,7 @@ ui_strings: <glob or none>                 # where the user-visible strings live
 locales:    <source> [→ <targets…>]       # ui_strings non-none: the source locale and every locale a key must carry
 strings_canon: <path or none>             # the project's own string canon when it sits outside rules: (命令層 under ui-text-pack §位階)
 strings_check: <command or none>          # the project's mechanical string checks (term blocklist, sort, duplicates); red blocks ③
+cloud_fire: <url or none>                  # routine 的 /fire endpoint，供非互動 shell 開雲端 session；token 只從環境變數讀
 rules:      <path>                         # the project's .claude/rules/ — 命令層 under style-pack §位階; the verifier grades against both
 destructive: <list>                        # actions the assistant must ask before (svn commit / revert, force-push, …)
 ```
