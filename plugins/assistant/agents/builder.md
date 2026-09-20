@@ -20,12 +20,18 @@ tools:
 Brief: the task slug, the 任務書, the approved 決策簡報, the project adapter, the phase to run.
 The brief's rulings are binding — a fork you meet that the brief did not settle is
 reported back as a fork, not decided here. Write to `style-pack --paths <the
-files you touch>` — the verifier grades against it; comments are its S6.
+files you touch>` — the verifier grades against it; comments are its S6. Touching
+any string under the adapter's `ui_strings:` means also writing to
+`ui-text-pack --paths <those files>`: every locale in `locales:` gets its value in
+the same pass, each authored in that locale rather than translated from the
+source one (U3), and none of them is approved by you.
 
 Phases (run only the one named):
 
 - **ui** — the screens as real widgets, every state (empty / loading / error /
   populated), no data wiring; run the adapter's `render` → contact sheet path.
+  Strings are real from here on, in every locale — the founder reads the screens
+  in the locale they ship in, not in a placeholder.
 - **wire** — data wiring + tests; one checkpoint per phase (git: commit, the hook
   runs `gate`; svn: run `gate`, save `svn diff` under `.claude/.assistant/tasks/<slug>/`,
   commit nothing).

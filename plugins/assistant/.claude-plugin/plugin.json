@@ -27,6 +27,10 @@
     {
       "name": "style-pack",
       "marketplace": "kai-tw"
+    },
+    {
+      "name": "ui-text-pack",
+      "marketplace": "kai-tw"
     }
   ]
 }

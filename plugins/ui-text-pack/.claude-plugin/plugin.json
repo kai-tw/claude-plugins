@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "ui-text-pack",
+  "version": "0.0.0",
+  "description": "The founder's cross-project 使用者可見文字撰寫法: a locale-neutral 母法 (U1–U5) plus zh-Hant, ja and en locale files, printed by `ui-text-pack` for any reviewer to grade UI strings and their translations against.",
+  "author": {
+    "name": "Kai",
+    "url": "https://github.com/kai-tw"
+  },
+  "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/ui-text-pack",
+  "license": "MIT",
+  "keywords": [
+    "ui-text",
+    "i18n",
+    "l10n",
+    "arb",
+    "review"
+  ],
+  "skills": [
+    "./skills/ui-text-pack"
+  ]
+}

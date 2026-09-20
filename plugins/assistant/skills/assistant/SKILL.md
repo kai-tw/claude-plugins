@@ -35,7 +35,7 @@ multi-project desk — spend it on decisions.
 |---|---|---|---|
 | ① 決策簡報 | after Scout, before any code | intent forks + system design | `references/brief.md` |
 | ② 畫面 | widgets built, not yet wired | the rendered contact sheet | image + one question: OK / which cell |
-| ③ 交付摘要 | Verify done | logic · data wiring · style · error handling · as-built vs as-decided · tests | `references/delivery-summary.md` |
+| ③ 交付摘要 | Verify done | logic · data wiring · style · error handling · as-built vs as-decided · tests · 字串逐語系核可 | `references/delivery-summary.md` |
 
 Nothing else reaches the founder. A `需要你` line is the only question you ask;
 `自行裁定` lines are decided and listed for veto. Chat carries three kinds of
@@ -71,16 +71,20 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    `gate` — on git a commit (the hook runs it), on svn a diff saved under
    `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
    before ③.
-6. **Verify** (three legs in parallel on the diff): `code-verifier` (the six
+6. **Verify** (four legs in parallel on the diff): `code-verifier` (the six
    blocks), the security floor (`security-guidance` hooks run unattended; the
-   project's own sink rules when it has them), and the adapter's `coverage:` /
-   `mutation:` commands when set — gate: every changed line executed or its
+   project's own sink rules when it has them), `text-verifier` — only when the
+   adapter's `ui_strings:` is not `none` and the diff touches that glob — and the
+   adapter's `coverage:` / `mutation:` commands when set — gate: every changed line executed or its
    exception named with a reason; mutation score ≥ 80. Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `需要你` line if it changes scope or design.
 7. **③ 交付** (you, from the verifier reports): `references/delivery-summary.md`.
-   Merge (git) or `svn commit` (asked — it is on `destructive:`) or send-back is
-   the founder's; a send-back re-enters step 5.
+   Its 文字 block carries every string the task adds or changes, in every locale,
+   each marked `待核可` — **the founder approves per locale, and an unapproved
+   locale blocks the merge and the commit exactly as `destructive:` does**. Merge
+   (git) or `svn commit` (asked) or send-back is the founder's; a send-back
+   re-enters step 5.
 8. **Close** (`scribe`, haiku): board row → Shipped; the task row is disposable,
    so the brief moves to the archive (`asst-board archive`): Overview · Problem ·
    Final Approach = the brief's 系統設計 verbatim · Key Decisions = its 意圖 lines
@@ -128,11 +132,11 @@ inside it felt it converged.
 
 - One task = one worktree (or SVN working copy, per the adapter) = one agent
   chain. Every dispatch names the slug and the report kind (`scout` ·
-  `brief-review` · `build-<phase>` · `verify-<leg>`); the agent files its report
+  `brief-review` · `build-<phase>` · `verify-<leg>`, the text leg being `verify-text`); the agent files its report
   with `asst-report put <slug> <kind>` before returning, and the output of a
   command you run yourself (`coverage:` / `mutation:`) is filed the same way. A
   report is passed on by its path, never pasted.
 - Pin the model at dispatch: scout / scribe sonnet · haiku; builder opus for
-  `feature`, sonnet for `small` / `exempt`; code-verifier opus.
+  `feature`, sonnet for `small` / `exempt`; code-verifier and text-verifier opus.
 - Destructive or outward actions (force-push, deleting branches, SVN revert,
   publishing) are asked, never assumed — the adapter lists the project's.
