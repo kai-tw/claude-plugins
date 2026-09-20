@@ -145,7 +145,8 @@ inside it felt it converged.
   `references/cloud-dispatch.md`: neither can ask you a question, both report to
   an address you name, and a new session clones the pushed branch, not your
   checkout. Long checks (`mutation:`, wide `coverage:`) belong there; they hold a
-  local test slot and `plan-mutation` rewrites the tree while it runs.
+  local test slot and `plan-mutation` rewrites the tree while it runs. Never open a
+  local worktree just to run them — disk is finite and it saves neither cost.
 - Destructive or outward actions (force-push, deleting branches, SVN revert,
   publishing) are asked, never assumed — the adapter lists the project's. This
   holds for anything you send off the machine: a peer session doing it for you
