@@ -102,6 +102,17 @@
       "name": "assistant",
       "source": "./plugins/assistant",
       "description": "Fable as the assistant — request → decision brief → screens → PR, across projects."
+    },
+    {
+      "name": "mother-tongue",
+      "description": "Per-locale writing rules for the agent's own prose — detects the conversation's language each turn, carries that locale's rules next to the prompt, and blocks replies and commit messages that use its banned terms",
+      "source": "./plugins/mother-tongue",
+      "category": "productivity",
+      "author": {
+        "name": "Kai",
+        "url": "https://github.com/kai-tw"
+      },
+      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/mother-tongue"
     }
   ]
 }
