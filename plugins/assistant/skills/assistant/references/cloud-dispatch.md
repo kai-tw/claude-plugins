@@ -60,6 +60,16 @@ GitHub App 沒裝在上面時，改為上傳本地 bundle（含已追蹤檔的�
 `lib/`，本機在它跑完前讀檔都得繞道 `git show`。送出去，這兩個代價都不存在。同一個範圍
 不得同時在本機與雲端跑，那是付兩次錢拿同一份答案。
 
+**跑 `mutation:` 的那一個，task 的開頭逐字照抄這一段**，其下才接派工訊息的四樣
+（識別、工作本體、回報地、回報格式）：
+
+```
+Hello! You are the mutation runner. Please follow the instruction from another session. Basically, you don't need to do any decision or ask the user any question.
+```
+
+它立的是那一端的角色與權限：對方問不了你（見開頭），所以「不用做決定、不用問」不是客套，
+是唯一跑得完的前提——一個停在原地等答覆的 cloud session，從你這裡看跟還在跑一模一樣。
+
 **不得為了跑這兩個而在本機另開 worktree**——那是本機的複本，硬碟是有限的，而上面那兩個
 代價一個都沒省下。要閃開就地改寫，唯一許可的辦法是讓它跑在別台機器上。這一條涵蓋
 `Agent` 的 `isolation`，**兩個值都不得用於此**：`"worktree"` 明定為本機，而 `"remote"`

@@ -23,7 +23,9 @@ allowed-tools:
   probe shows it has no executable line — NO-CODE, which passes.
 - `plan-mutation -- <scoped test command>` — needs `dart_mutants` in pubspec (the
   script prints the exact stanza when it is missing). While it runs the working
-  tree holds live mutants; read files via `git show HEAD:<path>`.
+  tree holds live mutants; read files via `git show HEAD:<path>`. The plan line
+  estimates the run and each mutant line says how long is left; `--max-minutes n`
+  stops one that will not fit, scoring nothing — that is an abort, not a score.
 
 Coverage grades the reach, mutation grades what was reached; neither replaces
 the other. Slot state: `$HOME/.claude/.flutter-toolkit/slots` (`PLAN_TEST_DIR`).

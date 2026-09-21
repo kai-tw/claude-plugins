@@ -30,7 +30,7 @@
 # USAGE
 #   plan-mutation [--min <pct>] [--timeout <s>] [--baseline-timeout <s>]
 #                 [--baseline-factor <n>] [--select-by-coverage]
-#                 [--workers <n>] [--history <file>]
+#                 [--workers <n>] [--max-minutes <n>] [--history <file>]
 #                 [--files a.dart …] -- <test-command…>
 #
 #   --timeout is the FLOOR on a mutant's budget; the engine raises it to
@@ -46,6 +46,21 @@
 #   already uses several cores, so 2 workers measured 17% faster, not 2×.
 #   --history appends the run's whole report as one JSON line to <file>
 #   (~1 MB per few thousand mutants).
+#
+# HOW LONG IT WILL TAKE, AND CAPPING IT
+#   The engine prints two numbers. After the baseline, the plan says what the
+#   run costs at one baseline per mutant across the workers — an upper bound,
+#   since a mutant the gate rejects runs no test and a selected one runs a
+#   fraction of the suite. Then every `[k/N]` line carries a measured `left`,
+#   from the pace this run is actually holding.
+#
+#   --max-minutes n ends a run that will not fit: refused before the first
+#   mutant when the plan's floor alone is over it, otherwise stopped between
+#   mutants as soon as the measured pace says so, with the tree restored and
+#   NOTHING scored (`ABORTED (over-budget)`, exit 1 — not a low score).
+#   There is no dry run to estimate against first: both numbers need the
+#   baseline, which is the run's own first step, so a separate counting pass
+#   would run the whole suite again to learn what this learns on the way past.
 #
 #   Pass a SCOPED test command — `flutter test test/features/trash`, not a bare
 #   `flutter test`. The scope is what makes this affordable.
@@ -87,6 +102,7 @@ while [ $# -gt 0 ]; do
                   ''|*[!0-9]*|0) echo "plan-mutation: --workers needs a positive integer" >&2; exit 2 ;;
                 esac
                 ENGINE_EXTRA+=("--workers" "$2"); shift 2 ;;
+    --max-minutes) ENGINE_EXTRA+=("--max-minutes" "${2:?--max-minutes needs a number of minutes}"); shift 2 ;;
     --history)  ENGINE_EXTRA+=("--history" "${2:?--history needs a file}"); shift 2 ;;
     --files)    shift
                 while [ $# -gt 0 ] && [ "$1" != "--" ]; do
@@ -94,7 +110,7 @@ while [ $# -gt 0 ]; do
                 done
                 [ "${1:-}" = "--" ] && shift ;;
     --)         shift; break ;;
-    -h|--help)  sed -n '2,63p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)  sed -n '2,77p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # An unrecognised FLAG is refused, never treated as the start of the test
     # command. Measured: `--yes --budget 60 --files x -- flutter test …` (two
     # flags this script had dropped) fell through the old catch-all, so the
@@ -111,8 +127,10 @@ while [ $# -gt 0 ]; do
                   --budget|--yes)
                     why='
   --budget / --yes were REMOVED with the regex engine: there is no dry-count
-  mode to estimate against, so there is nothing to approve. Each mutant is
-  bounded by --timeout instead.' ;;
+  mode to approve, because counting needs the baseline the run itself starts
+  with. What caps a run now is --max-minutes, which stops it rather than asks:
+  before the first mutant when the plan is already over, and otherwise as soon
+  as the measured pace says it will not fit.' ;;
                   --test-command)
                     why='
   --test-command belongs to the ENGINE, not to this script, and never was a
@@ -232,7 +250,7 @@ done
 # longer a descendant of anything this script can see. And the remedy this gate
 # prints for a timeout is a LARGER --timeout, which multiplies the exposure,
 # because a mutant allocates for the whole window.
-MIN_ENGINE=0.2.9
+MIN_ENGINE=0.3.0
 
 # A older than B. Used by the gate and again by its explanation, which differs
 # by how far back the resolved version is.
@@ -253,6 +271,12 @@ if [ -n "$lock_ver" ] && older_than "$lock_ver" "$MIN_ENGINE"; then
 scores and prints a normal-looking table over half the mutation space: statement
 deletion, condition negation, &&/|| and arithmetic produce nothing, and no row
 says which engine produced the number."
+  elif ! older_than "$lock_ver" 0.2.9; then
+    why="$lock_ver measures correctly and says nothing about TIME. It prints no estimate
+and no remaining time, and it has no --max-minutes — so a run that will take
+nine hours looks exactly like one that will take nine minutes until it ends,
+and the only way to stop it is to kill it, which leaves a live mutant in
+\`lib/\` and a stale .mutation-in-progress behind."
   elif ! older_than "$lock_ver" 0.2.3; then
     why="$lock_ver has no --output, so this script has nowhere to read the report from
 while the engine's progress goes to the terminal."
@@ -300,10 +324,11 @@ Add it to pubspec.yaml under dev_dependencies:
       git:
         url: https://github.com/kai-tw/kai-packages.git
         path: packages/dart_mutants
-        ref: dart_mutants-v0.2.9
+        ref: dart_mutants-v0.3.0
 
-then `flutter pub get`. Take the ref above verbatim: this script reads the
-engine's `--output` report, which v0.2.9 introduced; below v0.2.3 a timed-out
+then `flutter pub get`. Take the ref above verbatim: v0.3.0 is where a run says
+how long it will take and where --max-minutes can stop one; below v0.2.9 there
+is no `--output` report for this script to read; below v0.2.3 a timed-out
 mutant orphans a test process that outlives the run and eats the machine; below
 v0.2.0 half the operators do not exist and the score still looks normal.
 EOF
@@ -556,6 +581,17 @@ EOF
       ;;
     baseline-failed)
       echo "plan-mutation: a mutation score off a red suite is meaningless (every mutant looks detected). Fix the suite first." >&2
+      ;;
+    over-budget)
+      cat >&2 <<EOF
+plan-mutation: that was --max-minutes doing its job — the run was going to take
+longer than you allowed, so it stopped. Nothing is wrong with the suite, the
+budget or the code: NO FILE IN THIS DIFF HAS A SCORE, which is not a pass and
+not a low score. The engine's line above says what it would have cost.
+
+  Give it the time (--max-minutes), cut the scope (fewer --files, or a
+  narrower test command), or make it cheaper (--select-by-coverage, --workers).
+EOF
       ;;
     gate-rejects-unmodified)
       cat >&2 <<EOF
