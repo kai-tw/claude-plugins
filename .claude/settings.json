@@ -1,3 +1,5 @@
 {
-  "enabledPlugins": {}
+  "enabledPlugins": {
+    "mother-tongue@kai-tw": true
+  }
 }
