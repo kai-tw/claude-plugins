@@ -17,19 +17,12 @@
 //   `ntn pages edit`, which converts Markdown → Notion blocks itself — so this
 //   script never builds block JSON.
 //
-//   Plan body section definitions (description + hint + criteria) live in
-//   schemas/<plan-type>.mjs — add a new plan type there, not here.
-//
 // USAGE
 //   notion-payload create   <manifest.json | -> [--commit]   # dry-run, or create via ntn
 //   notion-payload update   <manifest.json | -> [--commit]   # dry-run, or PATCH props via ntn
 //   notion-payload filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
 //       date props also accept <,<=,>,>= and the literal `today`, e.g. "Check Date<=today"
 //   notion-payload schema   [db]                  # print embedded schema(s)
-//   notion-payload hints    <db> [type] [section] # section questionnaire (one section when named)
-//   notion-payload template <db>                  # print a skeleton body to fill in
-//   notion-payload sections <db>                  # print key::heading-regex (for scripts)
-//   notion-payload criteria <db>                  # print criteria→sections routing table
 //   notion-payload --help
 //
 //   Manifest (create):  { "db": "<key>", "rows": [ {<props + body sections | content>}, … ] }
@@ -48,10 +41,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, resolve, isAbsolute, dirname } from 'node:path';
 
-import { CRITERIA } from '../schemas/criteria.mjs';
-import { types as productPlanTypes } from '../schemas/product-plan.mjs';
-import { body as engineeringPlanBody } from '../schemas/engineering-plan.mjs';
-
 // ── DB registry ────────────────────────────────────────────────────────────────
 // Per DB: ds (data_source_id for the create parent), title (the title property name),
 // props (logical name → {type, options?, notionName?}), and body (synthesis section
@@ -62,8 +51,7 @@ import { body as engineeringPlanBody } from '../schemas/engineering-plan.mjs';
 // author-friendly registry key (validated against live schema via `ntn api
 // v1/data_sources/<ds>`).
 //
-// Plan body sections (description + hint + criteria) live in schemas/<plan>.mjs.
-// Body section kinds: para | bullets | table | checklist | raw
+// Body section kinds: para | bullets
 const SEL = (...o) => ({ type: 'select', options: o });
 const MULTI = (...o) => ({ type: 'multi_select', options: o });
 
@@ -122,48 +110,15 @@ const DB = {
       'Check Date': { type: 'date' },
       'Check Target': { type: 'text' },
       'Linked Archive': { type: 'url' },
-      // The git-side anchor. `/plan` Step 2 opens the issue alongside the task
-      // whenever the cycle will produce a PR, and the PR closes it (`Fixes #N`).
-      // Empty for plan-only and Tracing rows — nothing to link.
+      // The git-side anchor: the issue the task's PR closes (`Fixes #N`).
+      // Empty for Tracing rows — nothing to link.
       'GitHub Issue': { type: 'url' },
-      // The design phase's render contact sheet. That phase has no plan row, so
-      // this is the whole of the task's design trail; close-out copies it onto
-      // the Feature Archive row before trashing the task. Empty for non-UI work.
+      // The ② contact sheet — the task's design trail. Empty for non-UI work.
       'Design Sheet': { type: 'url' },
     },
-    // The Product/Design/Engineering Plans relations are Notion-auto-populated
-    // reverse relations (the plan DBs own the Task relation) — not builder-written.
-    // body: optional `content` — the `## Implementation` checklist lives here.
-  },
-
-  'product-plan': {
-    title: 'Name',
-    props: {
-      Name: { type: 'title' },
-      Status: SEL('Draft', 'Approved', 'Superseded'),
-      Type: SEL('one-pager', 'prd', 'prfaq', 'strategy', 'roadmap', 'opportunity-tree', 'discovery-brief'),
-      Date: { type: 'date' },
-      Task: { type: 'relation', dsRef: 'tasklist' },
-      'Feature Archive': { type: 'relation', dsRef: 'feature-archive' },
-    },
-    // Section definitions per Type live in schemas/product-plan.mjs — ADVISORY:
-    // they drive `hints`, they do not gate `create`/`update` (see freeformBody).
-    bodyByType: productPlanTypes,
-    freeformBody: true,
-  },
-
-  'engineering-plan': {
-    title: 'Name',
-    props: {
-      Name: { type: 'title' },
-      Status: SEL('Draft', 'In Progress', 'Shipped', 'Superseded', 'Approved'),
-      Date: { type: 'date' },
-      Task: { type: 'relation', dsRef: 'tasklist' },
-      'Feature Archive': { type: 'relation', dsRef: 'feature-archive' },
-    },
-    // Section definitions (description + hint + criteria) in schemas/engineering-plan.mjs — ADVISORY.
-    body: engineeringPlanBody,
-    freeformBody: true,
+    // Relation props on this DB are Notion-managed reverse relations — not
+    // builder-written.
+    // body: optional `content` — the approved brief is appended here.
   },
 
   'release-log': {
@@ -290,9 +245,7 @@ function normalizeRelationId(v) {
 }
 
 // ── body assembly (Markdown; ntn pages edit converts it to blocks) ──────────────
-// `description`, `hint`, and `criteria` on section definitions are metadata;
-// they are not emitted into the Notion body.
-function assembleBody(dbKey, body, row, rowLabel, freeform = false) {
+function assembleBody(dbKey, body, row, rowLabel) {
   const parts = [MARKER];
   for (const sec of body) {
     const v = row[sec.key];
@@ -300,8 +253,7 @@ function assembleBody(dbKey, body, row, rowLabel, freeform = false) {
       || (typeof v === 'string' && v.trim() === '')
       || (Array.isArray(v) && v.filter((x) => String(x).trim() !== '').length === 0);
     if (empty) {
-      // freeformBody DBs treat `required` as advice: omit the section, don't reject.
-      if (sec.required && !freeform) fail(`${dbKey}.${sec.key} (row ${rowLabel}): required body section is empty`);
+      if (sec.required) fail(`${dbKey}.${sec.key} (row ${rowLabel}): required body section is empty`);
       continue;
     }
     if (sec.kind === 'bullets') {
@@ -320,9 +272,9 @@ function assembleBody(dbKey, body, row, rowLabel, freeform = false) {
 // prepended. For section-keyed DBs the `## ` headings are validated against the
 // schema (required present, none unknown) WITHOUT touching the bytes; for content
 // DBs the whole file is the body. A repo-relative path resolves against the MAIN
-// worktree root (§mainRepoRoot), NOT cwd — a /plan code cycle runs from a git
-// worktree whose cwd is under .claude/worktrees/, while the session-journal draft
-// the bodyFile points at lives (gitignored) only in the MAIN tree.
+// worktree root (§mainRepoRoot), NOT cwd — a task runs from a git worktree whose
+// cwd is under .claude/worktrees/, while the session-journal draft the bodyFile
+// points at lives (gitignored) only in the MAIN tree.
 let _mainRoot;
 function mainRepoRoot() {
   // `git rev-parse --git-common-dir` returns the shared main .git even from a
@@ -340,7 +292,7 @@ function mainRepoRoot() {
   }
   return _mainRoot;
 }
-function bodyFromFile(dbKey, resolvedBody, filePath, rowLabel, freeform = false) {
+function bodyFromFile(dbKey, resolvedBody, filePath, rowLabel) {
   let raw;
   try {
     raw = readFileSync(
@@ -354,10 +306,7 @@ function bodyFromFile(dbKey, resolvedBody, filePath, rowLabel, freeform = false)
   const afterMarker = raw.replace(/^<!--[\s\S]*?-->\s*/, '').trimStart();
   if (/^#\s/.test(afterMarker))
     fail(`${dbKey}: bodyFile must not begin with an "# H1" (row ${rowLabel}) — the title lives in the property, not the body.`);
-  // freeformBody DBs: any `## heading` is legal and nothing is mandatory — the
-  // section arrays stay as `hints` guidance only. The H1 guard above still holds
-  // (the title lives in the property).
-  if (resolvedBody && !freeform) {
+  if (resolvedBody) {
     const textKeys = new Set(resolvedBody.map((s) => s.key));
     const seen = new Set();
     for (const m of raw.matchAll(/^##\s+(.+?)\s*$/gm)) {
@@ -376,17 +325,14 @@ function bodyFromFile(dbKey, resolvedBody, filePath, rowLabel, freeform = false)
   return md;
 }
 
-// ── half-width punctuation in CJK prose (house-rules §Communication & scope) ──
-// 「逗號請用全形」. Plan bodies are the one surface where this is mechanically
-// checkable — chat and commit messages have no equivalent gate — so the check
-// lives here, at the moment the body is about to become a Notion page.
+// ── half-width punctuation in CJK prose ──────────────────────────────────────
+// 「逗號請用全形」, checked at the moment a body is about to become a Notion page.
 //
-// WARNS, never fails. Measured against every real plan body in both projects:
-// after masking, the survivors split into unambiguous violations
-// (`(NEW，搬移＋分群)`) and calls a reasonable author would defend — `O(檔案數 ×
-// 規則數)` is maths, and a bilingual user story (`As a 專員, I want to …`) is an
-// English sentence with CJK filled in. Blocking an upload on those would cost
-// more than the rule returns; printing them at the moment of authoring does not.
+// WARNS, never fails. Measured against real page bodies in both projects: after
+// masking, the survivors split into unambiguous violations (`(NEW，搬移＋分群)`)
+// and calls a reasonable author would defend — `O(檔案數 × 規則數)` is maths.
+// Blocking an upload on those would cost more than the rule returns; printing
+// them at the moment of authoring does not.
 const CJK_CLASS = '\\u3400-\\u4dbf\\u4e00-\\u9fff';
 const CJK_CHAR = new RegExp(`[${CJK_CLASS}]`);
 const HW_PAIRED = { '(': '（', ')': '）' };
@@ -402,13 +348,7 @@ function maskAsciiExempt(s) {
     .replace(/`[^`\n]*`/g, blank)
     .replace(/<!--[\s\S]*?-->/g, blank)
     .replace(/\]\([^)\n]*\)/g, blank)
-    .replace(/\bhttps?:\/\/\S+/g, blank)
-    // The user-story line is an ENGLISH sentence with CJK slotted in, and this
-    // same plugin mandates it verbatim — `schemas/product-plan.mjs` §User
-    // stories: 「格式（verbatim）：As a <persona>, I want to <action> so that
-    // <outcome>」. Warning about the commas the schema requires would be the
-    // plugin contradicting itself, and it was every hit on one real PM plan.
-    .replace(/^.*\bAs an? .*\bI want\b.*$/gm, blank);
+    .replace(/\bhttps?:\/\/\S+/g, blank);
 }
 
 function warnHalfWidth(raw, label) {
@@ -431,7 +371,7 @@ function warnHalfWidth(raw, label) {
   });
   if (!hits.length) return;
   console.error(`⚠ ${label}: ${hits.length} half-width punctuation mark(s) touching CJK`
-    + ` — 繁體中文 prose uses ，。：；！？（）(house-rules §Communication & scope):`);
+    + ` — 繁體中文 prose uses ，。：；！？（）:`);
   for (const h of hits.slice(0, 12))
     console.error(`    ${h.line}:${h.col}  ${h.ch} → ${h.want}   ${h.text}`);
   if (hits.length > 12) console.error(`    … ${hits.length - 12} more`);
@@ -444,23 +384,13 @@ function buildRow(dbKey, def, row, mode) {
   const rowLabel = row[def.title] ?? row.page_id ?? '?';
   const properties = {};
 
-  // Resolve body section array: flat (def.body) or type-indexed (def.bodyByType[row.Type])
-  let resolvedBody = def.body ?? null;
-  if (def.bodyByType) {
-    const type = row.Type;
-    if (!type) fail(`${dbKey}: rows require a "Type" field to select the body section template (row ${rowLabel})`);
-    resolvedBody = def.bodyByType[type];
-    if (!resolvedBody) fail(`${dbKey}: unknown Type "${type}". Valid: ${Object.keys(def.bodyByType).join(', ')} (row ${rowLabel})`);
-  }
-
+  const resolvedBody = def.body ?? null;
   const bodyKeys = new Set((resolvedBody ?? []).map((s) => s.key));
   const reserved = new Set([...Object.keys(def.props), ...bodyKeys, 'content', 'bodyFile', 'page_id', 'icon', 'cover']);
 
-  // On a freeformBody DB an unrecognised key is an ad hoc section, not an error.
-  if (!def.freeformBody)
-    for (const k of Object.keys(row))
-      if (!reserved.has(k))
-        fail(`${dbKey}: unknown field "${k}" (row ${rowLabel}). Known: ${[...reserved].filter((x) => x !== 'page_id' && x !== 'icon' && x !== 'cover').join(', ')}`);
+  for (const k of Object.keys(row))
+    if (!reserved.has(k))
+      fail(`${dbKey}: unknown field "${k}" (row ${rowLabel}). Known: ${[...reserved].filter((x) => x !== 'page_id' && x !== 'icon' && x !== 'cover').join(', ')}`);
 
   for (const [name, spec] of Object.entries(def.props))
     encodeProp(dbKey, name, spec, row[name], properties, rowLabel);
@@ -489,9 +419,9 @@ function buildRow(dbKey, def, row, mode) {
   // Assemble the text body from whichever source is present.
   let markdown;
   if (hasBodyFile) {
-    markdown = bodyFromFile(dbKey, resolvedBody, String(row.bodyFile), rowLabel, !!def.freeformBody);
+    markdown = bodyFromFile(dbKey, resolvedBody, String(row.bodyFile), rowLabel);
   } else if (resolvedBody && hasInlineSections) {
-    markdown = assembleBody(dbKey, resolvedBody, row, rowLabel, !!def.freeformBody);
+    markdown = assembleBody(dbKey, resolvedBody, row, rowLabel);
   } else if (hasOpaqueContent) {
     markdown = String(row.content).trim();
     const firstLine = markdown.replace(/^<!--[\s\S]*?-->\s*/, '').trimStart();
@@ -540,7 +470,7 @@ const NTN = resolveNtn();
 // uploaded from memory — a ledger fact asserting a write that never landed.
 // So every call is bounded. A bound that fires is an error, never a silent
 // partial success: the row may be half-written, which is exactly what the
-// Iron-Law-2 verify exists to catch on the next run.
+// body verify exists to catch on the next run.
 const NTN_TIMEOUT_MS = Number(process.env.NTN_TIMEOUT_MS || 180_000);
 
 function ntn(args, input) {
@@ -569,7 +499,7 @@ function ntn(args, input) {
   return r.stdout;
 }
 
-// ── Iron Law 2 verify: did the body we just wrote land IN FULL? ──────────────
+// ── body verify: did the body we just wrote land IN FULL? ───────────────────
 // The marker alone cannot answer that. It is PREPENDED, so a write that lands the
 // head and drops the tail keeps it and reports ✓ — and a long body losing a whole
 // section mid-document is a shape we have hit more than once.
@@ -634,7 +564,7 @@ function commitCreate(dbKey, built) {
     const url = created.url || created.public_url || '';
     if (!id) fail(`create "${title}": response had no page id`);
     if (markdown) ntn(['pages', 'edit', id], markdown);
-    // Verify (Iron Law 2): confirm the row exists and (if a body was written) landed whole.
+    // Verify: confirm the row exists and (if a body was written) landed whole.
     let state = '(none)';
     if (markdown) state = verifyBody(markdown, id);
     else ntn(['api', `v1/pages/${id}`]);
@@ -651,7 +581,7 @@ function commitCreate(dbKey, built) {
 // the caller cannot record as landed a write that did not land.
 function reportVerifyFailures(bad, total) {
   if (!bad) return;
-  console.error(`✗ ${bad}/${total} row(s) failed the Iron-Law-2 body verify — re-write the body`
+  console.error(`✗ ${bad}/${total} row(s) failed the body verify — re-write the body`
     + ` and re-verify BEFORE marking anything uploaded or trashing any source.`);
   process.exitCode = 1;
 }
@@ -664,7 +594,7 @@ function commitUpdate(dbKey, built) {
     if (Object.keys(properties).length)
       JSON.parse(ntn(['api', `v1/pages/${page_id}`, '-X', 'PATCH'], JSON.stringify({ properties })));
     // Body: full-replace from the bodyFile (the file is the single source of truth),
-    // then verify it landed whole (Iron Law 2).
+    // then verify it landed whole.
     let bodyState = '(unchanged)';
     let ok = true;
     if (markdown) {
@@ -683,13 +613,13 @@ function commitUpdate(dbKey, built) {
 }
 
 // ── trash a page (close-out) ─────────────────────────────────────────────────
-// Iron Law 7 guard: refuse to trash a page that lacks the archivist marker (it
+// Guard: refuse to trash a page that lacks the archivist marker (it
 // would be hand-authored). Dry-run by default; --commit actually trashes.
 function trashPage(pageId, commit) {
   const got = ntn(['pages', 'get', pageId]);
   const marked = got.replace(/\\/g, '').includes(MARKER);
   if (!marked)
-    fail(`refusing to trash ${pageId}: no "${MARKER}" marker — it looks hand-authored (Iron Law 7). `
+    fail(`refusing to trash ${pageId}: no "${MARKER}" marker — it looks hand-authored. `
       + `If you are certain, trash it by hand: ntn pages trash ${pageId} --yes`);
   if (!commit) { console.log(`would trash ${pageId} (archivist marker present). Re-run with --commit.`); return; }
   ntn(['pages', 'trash', pageId, '--yes']);
@@ -763,7 +693,7 @@ function mdToBlocks(md) {
     const line = lines[i];
     // Fenced code FIRST: inside a fence nothing is markup. Without this a `# …`
     // comment in a shell snippet becomes a real heading on the page — and since
-    // the Iron-Law-2 verify skips fenced headings when reading the source, that
+    // the body verify skips fenced headings when reading the source, that
     // phantom comes back as an EXTRA heading the body never asked for.
     let m = line.match(/^\s*(```|~~~)\s*([A-Za-z0-9+#._-]*)/);
     if (m) {
@@ -933,24 +863,8 @@ function printSchema(only) {
     }
     if (def.body) {
       console.log('  body sections:');
-      for (const s of def.body) {
-        const req = s.required ? '(required)' : '(optional)';
-        const crit = s.criteria && s.criteria.length
-          ? `  [criteria: ${s.criteria.map((k) => { const c = CRITERIA[k]; return c ? `${c.n}` : k; }).join(', ')}]`
-          : '';
-        console.log(`    ## ${s.key}  [${s.kind}] ${req}${crit}`);
-        if (s.description) console.log(`       ↳ ${s.description}`);
-      }
-    } else if (def.bodyByType) {
-      console.log('  body sections (by Type):');
-      for (const [t, sections] of Object.entries(def.bodyByType)) {
-        console.log(`    [${t}]`);
-        for (const s of sections) {
-          const req = s.required ? '(required)' : '(optional)';
-          console.log(`      ## ${s.key}  [${s.kind}] ${req}`);
-          if (s.description) console.log(`         ↳ ${s.description}`);
-        }
-      }
+      for (const s of def.body)
+        console.log(`    ## ${s.key}  [${s.kind}] ${s.required ? '(required)' : '(optional)'}`);
     } else {
       console.log('  body: opaque "content" string (authoring role owns it)');
     }
@@ -1002,148 +916,6 @@ function schemaLive(only) {
   if (anyDrift) process.exitCode = 3;
 }
 
-// ── hints printer ──────────────────────────────────────────────────────────────
-function printSectionList(dbKey, typeKey, sections) {
-  console.log(`# ${dbKey}${typeKey ? ` (${typeKey})` : ''} — body section questionnaire\n`);
-  console.log(`Fill each section below and pass it as the matching key in the manifest row.\n`);
-  for (const s of sections) {
-    const req = s.required ? 'required' : 'optional';
-    console.log(`${'─'.repeat(72)}`);
-    console.log(`## ${s.key}  [kind: ${s.kind}] (${req})`);
-    if (s.description) console.log(`\nDescription: ${s.description}`);
-    if (s.criteria && s.criteria.length > 0) {
-      const labels = s.criteria.map((k) => { const c = CRITERIA[k]; return c ? `${c.n} ${c.label}` : k; }).join(', ');
-      console.log(`Criteria:    ${labels}`);
-    }
-    if (s.hint) console.log(`\nHint:\n${s.hint.split('\n').map((l) => `  ${l}`).join('\n')}`);
-    console.log('');
-  }
-}
-
-// Shared lookup for `hints` / `sections` / `template` — one resolver so the
-// three can never disagree about which sections a db+type has.
-// Returns the section array, or null after printing the error (exit code set).
-function resolveSections(dbKey, typeKey, cmd) {
-  if (!dbKey) { console.error(`${cmd} requires a db argument. Valid: ` + Object.keys(DB).join(', ')); process.exitCode = 1; return null; }
-  const def = DB[dbKey];
-  if (!def) { console.error(unknownDb(dbKey)); process.exitCode = 1; return null; }
-
-  if (def.bodyByType) {
-    if (!typeKey) {
-      console.error(`"${dbKey}" has one body structure per Type. Valid: ${Object.keys(def.bodyByType).join(', ')}`);
-      console.error(`Usage: notion-payload ${cmd} ${dbKey} <type>`);
-      process.exitCode = 1; return null;
-    }
-    const sections = def.bodyByType[typeKey];
-    if (!sections) { console.error(`unknown type "${typeKey}" for "${dbKey}". Valid: ${Object.keys(def.bodyByType).join(', ')}`); process.exitCode = 1; return null; }
-    return sections;
-  }
-
-  if (!def.body) { console.error(`"${dbKey}" has no structured body sections (opaque content — the authoring role owns it).`); process.exitCode = 1; return null; }
-  return def.body;
-}
-
-function printHints(dbKey, typeKey, sectionKey) {
-  const def = dbKey ? DB[dbKey] : null;
-  // `hints` with no type on a by-Type db lists the types instead of erroring —
-  // it is the discovery entry point the authoring roles call first.
-  if (def?.bodyByType && !typeKey) {
-    console.log(`# ${dbKey} — body section questionnaire\n`);
-    console.log(`This DB has multiple body structures by Type. Available types:\n`);
-    for (const [t, sections] of Object.entries(def.bodyByType))
-      console.log(`  ${t.padEnd(20)} ${sections.map((s) => s.key).join(' · ')}`);
-    console.log(`\nUsage: notion-payload hints ${dbKey} <type>`);
-    return;
-  }
-  let sections = resolveSections(dbKey, typeKey, 'hints');
-  if (!sections) return;
-  // One section on request — the authoring role pulls each section's questions
-  // as it reaches it instead of loading the whole questionnaire into context.
-  if (sectionKey) {
-    const want = sectionKey.replace(/^§/, '').toLowerCase();
-    sections = sections.filter((x) => [x.key, ...(x.aliases ?? [])].some((k) => k.toLowerCase() === want));
-    if (!sections.length) {
-      console.error(`unknown section "${sectionKey}" for "${dbKey}". Valid: ` + resolveSections(dbKey, typeKey, 'hints').map((x) => x.key).join(' · '));
-      process.exitCode = 1; return;
-    }
-  }
-  printSectionList(dbKey, typeKey ?? null, sections);
-}
-
-// ── sections printer (machine-readable; plan_lint.sh consumes this) ───────────
-// One line per section: `<key>::<heading regex>`. The regex ORs the English key
-// with the section's `aliases` — headings are translated to 繁體中文 per the
-// authoring skill's §Language, so an English-only match would false-negative.
-// This exists so nothing outside schemas/ keeps its own copy of the section
-// list; that duplication is what let a retired section linger in the linter.
-function printSections(dbKey, typeKey) {
-  const sections = resolveSections(dbKey, typeKey, 'sections');
-  if (!sections) return;
-  for (const s of sections)
-    console.log(`${s.key}::${[s.key, ...(s.aliases ?? [])].join('|')}`);
-}
-
-// ── template printer ──────────────────────────────────────────────────────────
-// A skeleton body to fill in. `hints` states the per-section rules (including
-// the 禁-lists, which an example cannot show); this shows the SHAPE — heading
-// order, the density I3 asks for, and where an I4 decision note goes.
-const STUB = {
-  para: '<一句話說完；講不完才第二句>',
-  bullets: '- <一條一個裁定或事實>\n- <同上>',
-  table: '| <欄> | <欄> |\n|---|---|\n| <值> | <值> |',
-  checklist: '- [ ] <可勾掉的一件事>',
-  raw: '<依 hints 的結構填>',
-};
-
-function printTemplate(dbKey, typeKey) {
-  const sections = resolveSections(dbKey, typeKey, 'template');
-  if (!sections) return;
-  console.log(`<!-- ${dbKey}${typeKey ? ` (${typeKey})` : ''} skeleton.`);
-  console.log(`     Per-section rules + 禁-lists: notion-payload hints ${dbKey}${typeKey ? ` ${typeKey}` : ''}`);
-  console.log(`     I3 — 條列為主，每行都要答得出「我承載哪個裁定或事實」，答不出來就刪.`);
-  console.log(`     I4 — 裁定的那一行下面附一行：〔自行裁定〕+理由，或 〔使用者〕「逐字原話」→ 本輪怎麼落地；引號內是原話，不得改寫.`);
-  console.log(`     Delete every placeholder and this comment before saving. -->`);
-  for (const s of sections) {
-    console.log(`\n## ${s.key}${s.required ? '' : '   <!-- optional; delete if 不適用 -->'}`);
-    // A section's own `template` wins; the kind-based stub is the fallback for
-    // sections that have not authored one.
-    console.log(s.template ?? STUB[s.kind] ?? STUB.raw);
-  }
-  // The example must not start any line with `#` — a template whose comment
-  // survives into the body would otherwise register a phantom heading with
-  // every tool that greps for `^## `, plan_lint.sh included.
-  console.log(`\n<!-- 決策註記範例（放在被裁定的那一行正下方，不要集中在一處）：`);
-  console.log(`     | \`ReaderShell\` | 承載分頁與捲動位置 | 既有 |`);
-  console.log(`     〔自行裁定〕沿用 ReaderShell 而非新增 wrapper——它已持有捲動位置，新增等於第二真相源。 -->`);
-}
-
-// ── criteria printer ──────────────────────────────────────────────────────────
-function printCriteria(dbKey) {
-  if (!dbKey) { console.error('criteria requires a db argument. Valid: ' + Object.keys(DB).join(', ')); process.exitCode = 1; return; }
-  const def = DB[dbKey];
-  if (!def) { console.error(unknownDb(dbKey)); process.exitCode = 1; return; }
-  if (!def.body) { console.error(`"${dbKey}" has no structured body sections with criteria.`); process.exitCode = 1; return; }
-
-  const map = {};
-  for (const s of def.body)
-    for (const c of (s.criteria ?? [])) {
-      if (!map[c]) map[c] = [];
-      map[c].push(s.key);
-    }
-
-  console.log(`# ${dbKey} — criteria routing\n`);
-  console.log(`Criterion → which gate grades it → plan section(s) where it is earned.`);
-  console.log(`  plan = engineer-plan-reviewer, before code (rubric: engineer-plan-reviewer.md §Criterion N)`);
-  console.log(`  diff = code-reviewer, on real code (rule: the owning .claude/rules/ file)`);
-  console.log(`  pre-pass = a named agent's verdict, carried into the report intact\n`);
-  console.log(`| Criterion | Graded on | Earned in plan section(s) |`);
-  console.log(`|---|---|---|`);
-  for (const [key, crit] of Object.entries(CRITERIA)) {
-    const sections = (map[key] ?? []).map((s) => `§${s}`).join(', ') || '*(cross-cutting)*';
-    console.log(`| ${crit.n} — ${crit.label} | ${crit.where ?? '?'} | ${sections} |`);
-  }
-}
-
 const HELP = `notion-payload — Archivist Notion request builder + writer (via the ntn CLI)
 
   notion-payload create   <manifest.json | -> [--commit]   dry-run, or create pages via ntn
@@ -1155,15 +927,9 @@ const HELP = `notion-payload — Archivist Notion request builder + writer (via 
   notion-payload append   <page-id> [md-file|-] [--commit]           append blocks to a page body
   notion-payload comment  <page-id> <text|-> [--commit]              post a comment (e.g. review findings)
   notion-payload schema   [db] [--live]                    embedded schema, or --live drift vs Notion
-  notion-payload hints    <db> [type]                      section questionnaire (rules + 禁-lists)
-  notion-payload template <db> [type]                      skeleton body to fill in (shape + I3/I4)
-  notion-payload sections <db> [type]                      key::heading-regex, one per line (for scripts)
-  notion-payload criteria <db>                             criteria→sections routing table
   notion-payload --help
 
 DBs: ${Object.keys(DB).join(', ')}
-Plan body schemas: schemas/product-plan.mjs (by Type), schemas/engineering-plan.mjs
-Criteria registry: schemas/criteria.mjs
 
 create/update without --commit print the plan only (no writes). --commit drives ntn:
   create → ntn api v1/pages (POST props) + ntn pages edit (Markdown body) + verify, per row.
@@ -1178,19 +944,19 @@ re-typed into the manifest → CJK-safe). Put "bodyFile": "<path>" on a row inst
 of inline body sections / "content"; its "## Heading"s must match the DB schema.
 On UPDATE, a bodyFile does a safe full-body replace (the file is the SoT); without
 it, update stays properties-only. Convention: docs/session-journal/<sid>/<artifact>.md.
-  create: { "db":"engineering-plan", "rows":[ { "Name":"…", "Task":"…", "bodyFile":"docs/session-journal/<sid>/engineering-plan.md" } ] }
+  create: { "db":"feature-archive", "rows":[ { "Name":"…", "bodyFile":"docs/session-journal/<sid>/archive.md" } ] }
 Use "-" to read the manifest from stdin.`;
 
 // ── Project KB resolution ───────────────────────────────────────────────────────
 //
 // The registry above carries STRUCTURE — property names, types, body skeletons,
-// and the workflow's own vocabularies (Status, Stage). Those are the plan
-// cycle's contract and are identical in every project.
+// and the workflow's own vocabularies (Status, Stage). Those are the
+// workflow's contract and are identical in every project.
 //
 // Two things are NOT: which Notion data sources to write to, and the feature
 // taxonomy (Area / Feature Area), which mirrors each project's own modules.
 // Both are resolved here at startup from ONE input — the KB root page id — so a
-// project configures a single value instead of eight ids that can silently rot.
+// project configures a single value instead of one id per database that can silently rot.
 //
 // FAIL CLOSED. A missing or wrong root must abort, never fall back to a default.
 // The failure this guards against is not a harmless error: a baked-in default
@@ -1208,8 +974,6 @@ const DB_TITLE = {
   'feature-archive': 'Feature Archive',
   'decision-log': 'Decision Log',
   'tasklist': 'TaskList',
-  'product-plan': 'Product Plan',
-  'engineering-plan': 'Engineering Plan',
   'release-log': 'Release Log',
   'analytics-catalog': 'Analytics Event Catalog',
 };
@@ -1354,18 +1118,8 @@ function main() {
   // Resolve the project's KB only for the commands that actually need a data
   // source id or the project-owned vocabulary. Resolution costs one API call
   // plus one per database — several seconds, and it needs the network.
-  //
-  // The structural commands (`hints`, `criteria`) need neither: they print
-  // section skeletons and grading criteria straight out of schemas/, and a
-  // planning cycle calls them repeatedly. Making them pay for the workspace
-  // they never touch bought nothing and made an offline `hints` impossible.
   // The page-id commands (`trash` / `check` / `append` / `comment`) address a
   // page directly and never consult the registry at all.
-  //
-  // Consequence to know: an unresolved registry lists the plugin's full set of
-  // databases, not the project's subset, so `hints`/`criteria` will answer for
-  // a database this workspace does not keep. That is correct — they are asking
-  // about the SCHEMA, not about the workspace.
   const NEEDS_KB = new Set(['create', 'update', 'set', 'filter']);
   // `schema` is the discovery command: keep it usable offline, but resolve when
   // the caller supplied a root (then it reports real ds ids + live vocabulary).
@@ -1379,10 +1133,6 @@ function main() {
   }
 
   if (cmd === 'schema') { if (flags.has('--live')) schemaLive(pos[0]); else printSchema(pos[0]); return; }
-  if (cmd === 'hints') { const d = DB[pos[0]]; if (d && !d.bodyByType) printHints(pos[0], undefined, pos[1]); else printHints(pos[0], pos[1], pos[2]); return; }
-  if (cmd === 'sections') { printSections(pos[0], pos[1]); return; }
-  if (cmd === 'template') { printTemplate(pos[0], pos[1]); return; }
-  if (cmd === 'criteria') { printCriteria(pos[0]); return; }
   if (cmd === 'filter') {
     try { printFilter(pos[0], pos.slice(1), flags.has('--json')); }
     catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
