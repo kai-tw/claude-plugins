@@ -3,8 +3,8 @@
 # cannot tell. Every hook routes through this one judgment so that the reminder,
 # the reply check and the commit check never disagree about the language.
 #
-# Code is stripped first (fenced blocks, `inline spans`, URLs): identifiers are
-# Latin in every language and would drag CJK prose toward `en`.
+# Code, URLs and paths are stripped first (strip.sh): they are Latin in every
+# language and would drag CJK prose toward `en`.
 #
 # CJK wins when it has at least as many characters as there are Latin words —
 # one Han character carries roughly one word, so "把 worktree 的 cache 清掉" is
@@ -15,8 +15,8 @@
 # Script cannot tell zh-TW from zh-HK, so Chinese maps to MOTHER_TONGUE_ZH
 # (default zh-TW).
 set -uo pipefail
-tag=$(perl -CSD -0777 -ne '
-  s/```.*?```//gs; s/`[^`\n]*`//g; s{\bhttps?://\S+}{}g;
+here=$(cd "$(dirname "$0")" && pwd)
+tag=$("$here/strip.sh" | perl -CSD -0777 -ne '
   my $kana   = () = /[\p{Hiragana}\p{Katakana}]/g;
   my $hangul = () = /\p{Hangul}/g;
   my $han    = () = /\p{Han}/g;

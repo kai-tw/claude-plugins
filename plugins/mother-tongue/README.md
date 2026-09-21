@@ -12,9 +12,11 @@ the latest prompt and blocks what a word list can catch.
 
 Detection is by script (`hooks/detect.sh`): Hangul → `ko`, kana → `ja`, other
 Han → `$MOTHER_TONGUE_ZH` (default `zh-TW`), mostly Latin → `en`. A prompt too
-short to tell keeps the session's previous locale. Code blocks and
-`backtick spans` are ignored, which is also how a banned term is quoted on
-purpose.
+short to tell keeps the session's previous locale. Code blocks, `backtick
+spans`, URLs and paths are ignored (`hooks/strip.sh`); backticks are also how a
+banned term is quoted on purpose. The commit check judges only the message:
+quoted strings, heredoc bodies and `-F`/`--body-file` files, minus `…-by:`
+trailers.
 
 ## Adding a locale
 
@@ -22,9 +24,13 @@ Create `locales/<tag>/` with either file:
 
 - `rules.md` — attached to every prompt in that locale, verbatim. Keep it to a
   screenful; it is paid for on every turn.
-- `banned.tsv` — `wrong<TAB>right` per line. Only terms with no legitimate use
-  in that locale belong here (`水平` and `程序` are correct Taiwanese in other
-  senses, so they are rules, not entries).
+- `banned.tsv` — `wrong<TAB>right[<TAB>exceptions]` per line. Exceptions are
+  `、`-separated strings that contain `wrong` across a word boundary (`內存在`
+  in `體內存在`); a match inside one does not count. Longer terms match first.
+  Only terms with no legitimate use in that locale belong here (`數據`, `代碼`
+  and `當前` are correct Taiwanese in other senses; judging those is left to
+  `rules.md`), and a term earns an entry only after a scan of real zh-TW text
+  finds no false hits.
 
 ## Settings
 
