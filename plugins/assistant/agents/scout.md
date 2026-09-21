@@ -33,5 +33,7 @@ prints and the report, exactly:
 - <one line each, or 無>
 ```
 
+Each `file:line` is relative to the worktree root and is checked by `asst-cite`
+(its header states the test), so put the thing a row cites in backticks.
 An absence claim (只有 / 沒有 / 全部) needs a second method beside grep, or it is
 written as 未讀. Do not recommend; the assistant decides.

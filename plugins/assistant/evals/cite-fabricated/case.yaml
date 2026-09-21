@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: cite-fabricated
+description: 事實表引用了不存在的方法、超出檔案的行號，asst-cite 都要判 FAIL；真引用判 ok。
+tags: [asst-cite]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: asst-cite . scout.md; echo "exit=$?"
+  prompt: |
+    scout.md 是一份 Scout 報告。逐條核對它 Facts 表裡的 `file:line` 引用是否真的支持旁邊的斷言，有可用的引用檢查工具就用它。印出每一條的結果與最後的 exit code。
+context:
+  scaffold_script: fixture.sh

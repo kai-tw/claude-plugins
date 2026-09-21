@@ -64,6 +64,9 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    brief.
 2. **Scout** (`scout`, sonnet, in the project worktree) returns ≤10 fact rows
    (`file:line` or `未讀`) and the intent forks it could not settle.
+   `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
+   goes back to Scout once, marked `re-run`; still failing, it enters the brief as
+   `未讀`.
 3. **① Brief** (you): from the facts and forks, `references/brief.md`. When the
    design adds a class, a dependency or a persisted format, one `code-verifier`
    pass on the draft first (`asst-budget spend <slug> review`), so the founder
@@ -91,6 +94,10 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `需要你` line if it changes scope or design.
 7. **③ 交付** (you, from the verifier reports): `references/delivery-summary.md`.
+   On git it is written only from a clean, pushed tree — `git -C <worktree>
+   status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
+   checkpoints first: a check that read files the branch never got graded code
+   that does not ship.
    Its 文字 block only asks whether ②的核可仍成立——語意自②以來有變者，原核可失效
    （母法 U5.1），**失效之語系擋合併也擋提交，與 `destructive:` 同級**。Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back

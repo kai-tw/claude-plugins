@@ -45,7 +45,7 @@ Phases (run only the one named):
   a better fix of your own); a finding you decline goes on the report's
   `declined:` line, and into the code only as an S6.5 comment when its reason is
   a fact the code cannot show. `asst-budget spend <slug> fix` first, unless the
-  brief is marked `re-run`.
+  brief is marked `re-run`. Then one checkpoint, as in wire.
 
 File the report with `asst-report put <slug> build-<phase>`, then return the
 path it prints and the report, exactly:
