@@ -12,7 +12,7 @@ kb:         <dir>                          # board=file: where `asst-board archi
 gate:       <command>                      # lint · format · tests in one command; red blocks the checkpoint
 coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, no exemptions
 mutation:   <command or none>              # mutation score on the diff; gate: ≥ 80
-render:     <command or none>              # produces the contact sheet for ② 畫面
+render:     <command or none>              # produces the contact sheet for ② 畫面與字串
 ui_strings: <glob or none>                 # where the user-visible strings live (ARB); none = this project has none yet, the text leg is skipped
 locales:    <source> [→ <targets…>]       # ui_strings non-none: the source locale and every locale a key must carry
 strings_canon: <path or none>             # the project's own string canon when it sits outside rules: (命令層 under ui-text-pack §位階)

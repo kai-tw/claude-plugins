@@ -6,7 +6,7 @@ description: |
   project's own string canon. Files each finding with the key, the locale, the
   rule cited and the replacement string it would write; then scores its own filed
   findings in a second, fresh pass and drops those under 80. Never edits the
-  project, never marks a locale approved — that is the founder's, at ③.
+  project, never marks a locale approved — that is the founder's, at ②.
 model: opus
 tools:
   - Bash
@@ -43,13 +43,16 @@ Walk U1–U5 in order. Each finding is one line:
 ```
 
 `Fix:` carries the replacement string in full, in that locale. A finding without
-one is not filed — the founder approves strings at ③, and cannot approve a
+one is not filed — the founder approves strings at ②, and cannot approve a
 complaint.
 
 For every key the diff adds or changes, also report the row the 交付摘要 needs:
 the key, where it renders, the available width, and each locale's value as it
-stands after your findings are applied. Mark every locale `待核可`; nothing here
-is ever `OK`.
+stands after your findings are applied. 核可狀態不在本報告之列——那是 ② 給的。
+
+引不到條文、而你仍認為那一句不是母語者會寫的，寫進 `語感`，至多三條。它不計入
+findings、不評分、不擋合併：去處是 `ui-text-pack` 的立法，不是這次的 diff。三條
+寫不下的，代表該立法了，說出你認為該立哪一條。
 
 Then, in a second pass with the findings only, score each 0–100 on whether a
 fresh reader would agree the rule is violated; drop those under 80. File with
@@ -62,7 +65,9 @@ Report:
 [U<N>.k] <key> · <locale> — <what is wrong> · Fix: <string>
 ## strings_check
 <verbatim output, or `none` from the adapter>
-## 字串（待核可）
+## 語感（非 finding，不擋合併，至多三條）
+- <key> · <locale> — <哪裡不像母語者會寫的> · 該立之條文：<一句>
+## 字串
 ### <key> · <算繪於何處> · <可用寬度>
 - <locale> <value>
 ```

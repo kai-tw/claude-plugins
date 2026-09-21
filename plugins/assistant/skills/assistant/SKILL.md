@@ -40,8 +40,8 @@ multi-project desk — spend it on decisions.
 | Touchpoint | When | What | Format |
 |---|---|---|---|
 | ① 決策簡報 | after Scout, before any code | intent forks + system design | `references/brief.md` |
-| ② 畫面 | widgets built, not yet wired | the rendered contact sheet | image + one question: OK / which cell |
-| ③ 交付摘要 | Verify done | logic · data wiring · style · error handling · as-built vs as-decided · tests · 字串逐語系核可 | `references/delivery-summary.md` |
+| ② 畫面與字串 | widgets built, not yet wired | the rendered contact sheet + 字串逐語系核可 | image + one question: OK / which cell / 哪個字串選哪一版 |
+| ③ 交付摘要 | Verify done | logic · data wiring · style · error handling · as-built vs as-decided · tests · ②的核可是否仍成立 | `references/delivery-summary.md` |
 
 Nothing else reaches the founder. A `需要你` line is the only question you ask;
 `自行裁定` lines are decided and listed for veto. Chat carries three kinds of
@@ -73,6 +73,10 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    later step reads, without your context.
 4. **Build** (`builder`): UI first, as real widgets in all four states → render
    the contact sheet → **② stop for the founder**. Data wiring waits for OK.
+   ② 一併帶本次新增或變更之字串，逐語系列值；語氣敏感者（錯誤、引導、確認、空狀態）
+   每語系各帶 2–3 個並列選項（母法 U3.3），founder 在同一次裡選定並逐語系核可。
+   **字串的核可只發生在這裡**——③ 之後字串已抄進測試與 mockup，改一個字要連帶改掉
+   數十行斷言。wire 階段才生出來的字串，builder 以一次只帶字串的 ② 補件，不重算繪。
 5. **Wire + tests** (`builder`): one checkpoint per phase, gated by the adapter's
    `gate` — on git a commit (the hook runs it), on svn a diff saved under
    `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
@@ -87,9 +91,8 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `需要你` line if it changes scope or design.
 7. **③ 交付** (you, from the verifier reports): `references/delivery-summary.md`.
-   Its 文字 block carries every string the task adds or changes, in every locale,
-   each marked `待核可` — **the founder approves per locale, and an unapproved
-   locale blocks the merge and the commit exactly as `destructive:` does**. Merge
+   Its 文字 block only asks whether ②的核可仍成立——語意自②以來有變者，原核可失效
+   （母法 U5.1），**失效之語系擋合併也擋提交，與 `destructive:` 同級**。Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back
    re-enters step 5.
 8. **Close** (`scribe`, haiku): board row → Shipped; the task row is disposable,
