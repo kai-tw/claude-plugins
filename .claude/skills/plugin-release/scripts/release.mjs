@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Release a plugin: bump → validate → commit → push → update → VERIFY cache → VERIFY load.
+// Release a plugin: evals → bump → validate → commit → push → update → VERIFY cache → VERIFY load.
 // The TAG is CI's (`.github/workflows/plugin-tag.yml`), not this script's.
 //
 // The verify step is the point. A bump that is not installed is invisible, and
@@ -73,6 +73,14 @@ if (!commit) {
 // A release must not sweep up unrelated edits.
 const dirty = run('git', ['status', '--porcelain']);
 if (dirty) die(`working tree is dirty — commit or stash first:\n${dirty}`);
+
+step(0, `evals for ${plugin}`);
+// Before the bump, so a failing release leaves nothing to revert.
+try {
+  console.log(run('node', ['.github/scripts/run-evals.mjs', plugin]));
+} catch (e) {
+  die(`evals failed — nothing released:\n${e.stdout ?? ''}${e.stderr ?? e.message}`);
+}
 
 step(1, `bump plugin.json to ${next}`);
 manifest.version = next;

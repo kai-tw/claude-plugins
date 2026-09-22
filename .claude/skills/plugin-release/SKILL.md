@@ -55,6 +55,9 @@ unrelated edits. Commit or stash those first.
 
 ## What it does, and why the order is fixed
 
+0. **Evals** — `run-evals.mjs <plugin>`, the same check CI runs on every PR.
+   Fails when the plugin's evals fail, grade nothing, or are missing while the
+   plugin carries code. Before the bump, so a failure leaves nothing to revert.
 1. **Bump** `plugin.json`.
 2. **`validate.mjs`** — structural checks, before anything is published. On
    failure it reverts the bump and stops, leaving the tree as it found it.

@@ -34,3 +34,8 @@ jobs:
       # anyone. Verified the hard way — dart-lsp shipped without its skill.
       - name: Version bump check
         run: node .github/scripts/check-version-bump.mjs "${{ github.event.pull_request.base.sha || 'HEAD^' }}"
+
+      # Well-formed is not working: every changed plugin's evals must pass, and
+      # a changed plugin with code must have evals at all.
+      - name: Evals
+        run: node .github/scripts/run-evals.mjs --base "${{ github.event.pull_request.base.sha || 'HEAD^' }}"

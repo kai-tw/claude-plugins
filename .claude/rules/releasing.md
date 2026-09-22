@@ -1,5 +1,9 @@
 # 出貨規則
 
+- **改動走 branch + draft PR，不直接 commit 到 `main`.** 改 plugin 要附一個在舊版會失敗
+  的 eval case；CI 的 `Evals`（`.github/scripts/run-evals.mjs`）綠了、版號也 bump 完，
+  才 `gh pr ready`——draft 狀態擋的是在 agent 還沒做完時就被合併。
+
 - **改了 `plugins/<plugin>/` 的內容就 bump `plugin.json` 的 version.** 消費端的安裝目錄是
   `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`——**以版本號命名的實體
   目錄**。同一個版本號裝著兩份不同的內容時，更新有沒有落地無法從外部分辨，而使用者拿到
