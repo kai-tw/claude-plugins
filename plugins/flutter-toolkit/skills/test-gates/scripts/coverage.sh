@@ -28,19 +28,29 @@
 #   nothing and only claims to — blocks until it is removed. Generated files
 #   are excluded by name below and never reach that check.
 #
+# LINES THE VM NEVER RECORDS
+#   A statement with no call or allocation in it — `throw const E();`,
+#   `throw 'msg';`, `throw kError;` — gets no `DA:` line at all, so an error
+#   path no test entered reads like a line with no code. Branch coverage closes
+#   that for statements: every block (if/else body, switch case, catch) gets a
+#   `BRDA:` record, and one at 0 is a gap, reported on the line the block opens.
+#   An expression arm — `x ?? (throw …)`, `c ? throw … : v` — gets no record
+#   of its own under either, whatever it throws, so it blocks as UNMEASURABLE
+#   until it is a statement (`if (x == null) throw …;`) the gate can see.
+#
 # USAGE
 #   plan-coverage [--files a.dart …] -- <test-command…>
 #
 #   Pass a SCOPED test command, the same scope the change lives in:
 #     plan-coverage -- flutter test test/features/trash
 #
-#   `--coverage` is appended for you if it is not already there. Run this from
-#   the repo root — the test command runs in the CALLER's working directory.
+#   `--coverage --branch-coverage` is appended for you where absent. Run this
+#   from the repo root — the test command runs in the CALLER's working directory.
 #
 # EXIT
 #   0  every changed line executed
-#   1  at least one unexecuted line, a changed file no test reached at all, or
-#      a changed file carrying a coverage pragma
+#   1  at least one unexecuted line or branch, a changed file no test reached at
+#      all, a changed file carrying a coverage pragma, or an unmeasurable throw
 #   2  nothing was measured (no repo, no base ref, no lcov, the run did not
 #      happen)
 #
@@ -59,7 +69,7 @@ while [ $# -gt 0 ]; do
               done
               [ "${1:-}" = "--" ] && shift ;;
     --)       shift; break ;;
-    -h|--help) sed -n '2,49p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,59p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # A flag this script does not know is never forwarded silently. Measured on
     # mutation.sh's predecessor: an unrecognised flag fell through into the test
     # command, the run widened to the whole suite, and the score looked normal.
@@ -134,6 +144,7 @@ before=0
 # harmless but noisy, so only when absent.
 set -- "$@"
 case " $* " in *" --coverage "*) ;; *) set -- "$@" --coverage ;; esac
+case " $* " in *" --branch-coverage "*) ;; *) set -- "$@" --branch-coverage ;; esac
 
 echo "plan-coverage: ${count_files} changed file(s); every line must be executed — no exemptions."
 echo "plan-coverage: running — $*"
@@ -169,11 +180,12 @@ EOF
 fi
 
 # --- parse ------------------------------------------------------------------
-# One awk pass over lcov: for each SF: record whose path is one of ours, collect
-# the DA: lines whose hit count is 0. Paths come back absolute on some
-# toolchains and package-relative on others, so strip a leading repo root rather
-# than assuming either — without the strip, every record fails to match and the
-# gate reports perfect reach over zero files.
+# One awk pass over lcov: for each SF: record whose path is one of ours, print
+# every DA: and BRDA: record as "<file>\t<line>\t<line|branch|hit>" — a DA at 0
+# is an unexecuted line, a BRDA at 0 (or `-`) a block never entered. Paths come
+# back absolute on some toolchains and package-relative on others, so strip a
+# leading repo root rather than assuming either — without the strip, every
+# record fails to match and the gate reports perfect reach over zero files.
 uncov=$(awk -v root="$root/" '
   BEGIN { while ((getline f < "/dev/stdin") > 0) want[f] = 1 }
   /^SF:/ {
@@ -184,21 +196,43 @@ uncov=$(awk -v root="$root/" '
   }
   cur != "" && /^DA:/ {
     split(substr($0, 4), a, ",")
-    if (a[2] + 0 == 0) print cur "\t" a[1]
+    print cur "\t" a[1] "\t" (a[2] + 0 == 0 ? "line" : "hit")
+  }
+  cur != "" && /^BRDA:/ {
+    split(substr($0, 6), a, ",")
+    print cur "\t" a[1] "\t" (a[4] == "-" || a[4] + 0 == 0 ? "branch" : "hit")
   }
   END { for (f in seen) print f "\t-" }
 ' "$LCOV" <<< "$files")
 
 seen_files=$(printf '%s\n' "$uncov" | awk -F'\t' '$2 == "-" { print $1 }' | sort -u)
-gaps=$(printf '%s\n' "$uncov" | awk -F'\t' '$2 != "-" && NF == 2' | sort -u -t$'\t' -k1,1 -k2,2n)
+# One gap per line; a DA at 0 outranks a BRDA opening on the same line.
+gaps=$(printf '%s\n' "$uncov" | awk -F'\t' '$3 == "line" || $3 == "branch"' \
+       | sort -t$'\t' -k1,1 -k2,2n -k3,3r | awk -F'\t' '!s[$1 FS $2]++')
 
 # --- gaps and pragmas -------------------------------------------------------
 unexecuted=""
-while IFS=$'\t' read -r f ln; do
+while IFS=$'\t' read -r f ln kind; do
   [ -n "$f" ] || continue
   src=$(sed -n "${ln}p" "$f" 2>/dev/null | sed 's/^[[:space:]]*//')
+  [ "$kind" = branch ] && src="${src}  ← block never entered"
   unexecuted="${unexecuted}${f}:${ln}\t${src}"$'\n'
 done <<< "$gaps"
+
+# A throw arm of `??` / `?:` shares its line's record with the other arm, so no
+# measurement can tell whether it ran — read the source instead. `case …:` /
+# `default:` open statements, which BRDA already sees.
+unmeasurable=""
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  hits=$(grep -nE '[?:][[:space:]]*\(?[[:space:]]*throw([^[:alnum:]_]|$)' "$f" 2>/dev/null) || continue
+  while IFS= read -r h; do
+    ln=${h%%:*}
+    src=$(printf '%s' "${h#*:}" | sed 's/^[[:space:]]*//')
+    case "$src" in case\ *|default:*|//*) continue ;; esac
+    unmeasurable="${unmeasurable}${f}:${ln}\t${src}"$'\n'
+  done <<< "$hits"
+done <<< "$files"
 
 # A pragma hides lines from lcov, so the per-line view above cannot see what it
 # hid. Read the source instead: every pragma in a changed file is a finding.
@@ -265,6 +299,7 @@ fi
 n_unreached=$(printf '%s' "$unreached" | grep -c . || true)
 n_gaps=$(printf '%s' "$unexecuted" | grep -c . || true)
 n_prag=$(printf '%s' "$pragmas" | grep -c . || true)
+n_unmeas=$(printf '%s' "$unmeasurable" | grep -c . || true)
 
 # One verdict per file, shared by the terminal table and the markdown one:
 # "<VERDICT>\t<gaps>\t<pragmas>".
@@ -272,7 +307,7 @@ verdict() {
   if printf '%s\n' "$unreached" | grep -qxF "$1"; then printf 'UNREACHED\t-\t-\n'; return; fi
   local g p v=PASS
   printf '%s\n' "$nocode" | grep -qxF "$1" && v=NO-CODE
-  g=$(printf '%s' "$unexecuted" | grep -c "^${1}:" || true)
+  g=$(printf '%s%s' "$unexecuted" "$unmeasurable" | grep -c "^${1}:" || true)
   p=$(printf '%s' "$pragmas"    | grep -c "^${1}:" || true)
   if [ "$g" -gt 0 ] || [ "$p" -gt 0 ]; then v=FAIL; fi
   printf '%s\t%s\t%s\n' "$v" "$g" "$p"
@@ -291,6 +326,14 @@ if [ "$n_gaps" -gt 0 ]; then
   echo
   echo "Unexecuted:"
   printf '%b' "$unexecuted" | while IFS=$'\t' read -r loc src; do
+    [ -n "$loc" ] && printf '  • %s  %s\n' "$loc" "$src"
+  done
+fi
+
+if [ "$n_unmeas" -gt 0 ]; then
+  echo
+  echo "Unmeasurable (a throw arm of ?? / ?: — no record tells whether it ran):"
+  printf '%b' "$unmeasurable" | while IFS=$'\t' read -r loc src; do
     [ -n "$loc" ] && printf '  • %s  %s\n' "$loc" "$src"
   done
 fi
@@ -340,6 +383,13 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
     done
     printf '\n</details>\n'
   fi
+  if [ "$n_unmeas" -gt 0 ]; then
+    printf '\n<details><summary>Unmeasurable throw arms (%s)</summary>\n\n' "$n_unmeas"
+    printf '%b' "$unmeasurable" | while IFS=$'\t' read -r loc src; do
+      [ -n "$loc" ] && printf -- '- `%s` — `%s`\n' "$loc" "$src"
+    done
+    printf '\n</details>\n'
+  fi
   if [ "$n_prag" -gt 0 ]; then
     printf '\n<details><summary>Coverage pragmas (%s)</summary>\n\n' "$n_prag"
     printf '%b' "$pragmas" | while IFS=$'\t' read -r loc src; do
@@ -350,12 +400,13 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 } > "$REPORT"
 echo "plan-coverage: report section — $REPORT"
 
-if [ "$n_unreached" -gt 0 ] || [ "$n_gaps" -gt 0 ] || [ "$n_prag" -gt 0 ]; then
+if [ "$n_unreached" -gt 0 ] || [ "$n_gaps" -gt 0 ] || [ "$n_prag" -gt 0 ] || [ "$n_unmeas" -gt 0 ]; then
   cat >&2 <<EOF
 
 plan-coverage: BLOCKED.
 $( [ "$n_unreached" -gt 0 ] && printf '\n  %s changed file(s) appear NOWHERE in the coverage report — no test imports them.\n  That is not a low score; it is an unmeasured file, and mutation cannot see it\n  either (an unexecuted line produces no mutant to survive).\n' "$n_unreached" )
 $( [ "$n_gaps" -gt 0 ] && printf '\n  %s unexecuted line(s). Add the test that runs each one. A line no test can\n  reach is a design finding — put it behind a seam a test can drive — and\n  there is no marker that passes it.\n' "$n_gaps" )
+$( [ "$n_unmeas" -gt 0 ] && printf '\n  %s throw arm(s) of ?? / ?: that no coverage record can see. Rewrite each as a\n  statement (`if (x == null) throw …;`) so branch coverage measures it, then\n  test it.\n' "$n_unmeas" )
 $( [ "$n_prag" -gt 0 ] && printf '\n  %s coverage pragma(s) in changed files. `coverage:ignore-*` removes lines from\n  the measurement before this gate reads it; `coverage-ignore:` is retired.\n  Remove them and let those lines be measured.\n' "$n_prag" )
 EOF
   exit 1
