@@ -99,7 +99,9 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    checkpoints first: a check that read files the branch never got graded code
    that does not ship. Once it is written, `asst-pr ready <slug> <worktree>` turns
    the draft PR ready; it refuses while the tree is dirty or unpushed, or while a
-   required `verify-<leg>` report is missing or older than `HEAD`.
+   required `verify-<leg>` report is missing or older than `HEAD`. Exit 2 means no
+   PR is possible here (no usable `gh`, no GitHub remote): ③ carries that line as a
+   `需要你`, and the PR is the founder's to open.
    Its 文字 block only asks whether ②的核可仍成立——語意自②以來有變者，原核可失效
    （母法 U5.1），**失效之語系擋合併也擋提交，與 `destructive:` 同級**。Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back

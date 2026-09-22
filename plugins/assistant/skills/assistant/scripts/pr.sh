@@ -14,12 +14,13 @@
 #          verify leg the adapter requires has a report filed after HEAD's commit
 # Legs: verify-code always · verify-coverage / verify-mutation when the adapter's
 # coverage: / mutation: are set · verify-text when ui_strings: is set and the
-# PR's diff touches it. Exit: 0 done · 1 refused · 2 usage or not a git task.
+# PR's diff touches it. Exit: 0 done · 1 refused · 2 usage, not a git task, or no
+# PR possible here (gh missing or unauthenticated, no GitHub remote).
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,17p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,18p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
@@ -31,18 +32,31 @@ field() { sed -nE "s/^$1:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" "$adapter" 2>/
 g() { git -C "$wt" "$@"; }
 branch=$(g symbolic-ref --quiet --short HEAD) || { echo "asst-pr: $wt is on a detached HEAD" >&2; exit 2; }
 refuse() { printf 'asst-pr: NOT READY — %s\n' "$1" >&2; exit 1; }
+# No usable gh is its own answer, never "no PR": a missing binary read as a
+# missing PR sends the row back to a step that did run.
+github() {
+  local why=""
+  if ! command -v gh >/dev/null; then why="gh not installed"
+  elif ! (cd "$wt" && gh auth status >/dev/null 2>&1); then why="gh not authenticated"
+  elif ! (cd "$wt" && gh repo view --json name >/dev/null 2>&1); then why="no GitHub remote"
+  fi
+  [ -z "$why" ] && return 0
+  printf 'asst-pr: NO PR POSSIBLE HERE — %s. %s\n' "$why" "$1" >&2; exit 2
+}
 
 case "$op" in
   open)
     default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); default=${default#origin/}
     [ "$branch" != "${default:-main}" ] || { echo "asst-pr: $branch is the default branch — a task PR comes from its own branch" >&2; exit 2; }
     g push --quiet -u origin HEAD || { echo "asst-pr: push failed" >&2; exit 1; }
+    github "$branch is pushed; the PR is the founder's to open — report it as 需要你."
     url=$(cd "$wt" && gh pr view "$branch" --json url --jq .url 2>/dev/null) && { echo "$url"; exit 0; }
     case " $* " in *" --title "*|*" -t "*|*" --fill "*) ;; *) set -- "$@" --fill ;; esac
     (cd "$wt" && gh pr create --draft --head "$branch" "$@") ;;
   ready)
     [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — checkpoint first"
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed — run asst-pr open first"
+    github "Nothing was checked — ③ goes to the founder with this line as 需要你."
     pr=$(cd "$wt" && gh pr view "$branch" --json number,isDraft,baseRefName --jq '"\(.number) \(.isDraft) \(.baseRefName)"' 2>/dev/null) \
       || refuse "no PR for $branch — asst-pr open never ran"
     read -r num draft base <<< "$pr"

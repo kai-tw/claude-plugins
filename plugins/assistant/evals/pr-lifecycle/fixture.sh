@@ -22,6 +22,7 @@ cat > stub/gh <<'SH'
 #!/usr/bin/env bash
 state="$EVAL_WS/gh.state"
 case "$1 $2" in
+  "auth status"|"repo view") exit 0 ;;
   "pr view")
     [ -f "$state" ] || exit 1
     read -r kind num < "$state"
