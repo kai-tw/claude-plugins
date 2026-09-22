@@ -12,8 +12,8 @@ that breaks one of these is invalid even when every citation in it resolves.
 - **An absence claim needs a sweep, not a grep.** 只有・全部・沒有・從來・N 個 —
   a grep proves existence and can never prove absence or completeness, because it
   cannot report what it did not look at. Either dispatch `Explore` over the whole
-  space (state the breadth in the prompt — no hook reaches a sub-agent, so the
-  prompt is the only channel), or downgrade the sentence to an existential one:
+  space (state the breadth in the prompt — a sub-agent starts from a fresh
+  context, so the prompt is the only channel), or downgrade the sentence to an existential one:
   "I looked in A, B and C; not there", never "only X exists".
 
 - **A count or list claim needs the list, not the number.** "3 matches" /

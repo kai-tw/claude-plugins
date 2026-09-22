@@ -153,6 +153,13 @@ function checkSkills(plugin, dir, source) {
     if (literalBlockDescription(raw)) {
       fail(where, 'SKILL.md `description` uses a literal block scalar (`|`) — the skill loader reads the literal `|` instead of the content, so it can never trigger; use `>-` (folded) instead');
     }
+
+    // GAP 6 — `tools:` is the subagent key. In a SKILL.md it is silently
+    // ignored, so the list reads like a restriction and does nothing. A skill's
+    // key is `allowed-tools`, and it pre-approves rather than restricts.
+    if ('tools' in fm) {
+      fail(where, 'SKILL.md has `tools:` — that is the subagent key and is ignored in a skill; use `allowed-tools` (it pre-approves, it does not restrict) or remove it');
+    }
   }
 }
 

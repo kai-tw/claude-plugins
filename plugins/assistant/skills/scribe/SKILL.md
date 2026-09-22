@@ -6,8 +6,6 @@ description: >-
   request builder + writer behind it), `asst-section` (edit one `## ` section of a
   local Markdown body). Used by the `scribe` and `builder` agents; not a user
   entry point.
-tools:
-  - Bash
 ---
 
 # Scribe toolbelt

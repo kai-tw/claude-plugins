@@ -73,8 +73,8 @@ Hello! You are the mutation runner. Please follow the instruction from another s
 **不得為了跑這兩個而在本機另開 worktree**——那是本機的複本，硬碟是有限的，而上面那兩個
 代價一個都沒省下。要閃開就地改寫，唯一許可的辦法是讓它跑在別台機器上。這一條涵蓋
 `Agent` 的 `isolation`，**兩個值都不得用於此**：`"worktree"` 明定為本機，而 `"remote"`
-實測同樣落成一個本機 worktree（2026-09-20，NG）——它的描述說 remote cloud environment，
-跑出來卻在本機，**而且沒有任何訊息說它退而求其次**。要確認一個派工到底跑在哪，看本機
+實測同樣落成一個本機 worktree（2026-09-20，NG；2026-09-23 重測仍同）——它的描述說
+remote cloud environment，跑出來卻在本機，**而且沒有任何訊息說它退而求其次**。要確認一個派工到底跑在哪，看本機
 有沒有多出 worktree，不要看它的宣告。
 
 **別假設它一定跑得完.** cloud session 閒置一段時間後 VM 會被回收，而回收時仍在跑的背景
