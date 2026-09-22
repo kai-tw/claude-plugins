@@ -18,7 +18,7 @@
 # PR possible here (gh missing or unauthenticated, no GitHub remote).
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-source "$here/root.sh"
+source "$here/root.sh"; source "$here/github.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
 usage() { sed -n '10,18p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
@@ -32,14 +32,8 @@ field() { sed -nE "s/^$1:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" "$adapter" 2>/
 g() { git -C "$wt" "$@"; }
 branch=$(g symbolic-ref --quiet --short HEAD) || { echo "asst-pr: $wt is on a detached HEAD" >&2; exit 2; }
 refuse() { printf 'asst-pr: NOT READY — %s\n' "$1" >&2; exit 1; }
-# No usable gh is its own answer, never "no PR": a missing binary read as a
-# missing PR sends the row back to a step that did run.
 github() {
-  local why=""
-  if ! command -v gh >/dev/null; then why="gh not installed"
-  elif ! (cd "$wt" && gh auth status >/dev/null 2>&1); then why="gh not authenticated"
-  elif ! (cd "$wt" && gh repo view --json name >/dev/null 2>&1); then why="no GitHub remote"
-  fi
+  local why; why=$(gh_unusable "$wt")
   [ -z "$why" ] && return 0
   printf 'asst-pr: NO PR POSSIBLE HERE — %s. %s\n' "$why" "$1" >&2; exit 2
 }
