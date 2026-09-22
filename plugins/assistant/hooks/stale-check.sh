@@ -14,11 +14,13 @@
 # to a consumer project — which is exactly when the drift matters. A clone that
 # was never refreshed produces silence, never a wrong answer.
 #
-# Blocks the stop so the reason reaches the model as a system message, at most
-# ONCE per session (Claude Code independently caps Stop blocks at 10
-# consecutive). Everything here degrades to exit 0: a missing jq, an unexpected
-# install layout, or a marketplace that is not a clone means no notice, never a
-# stuck session.
+# Blocks the stop so the reason reaches the model, at most ONCE per session
+# (Claude Code also caps consecutive Stop blocks on its own). A Stop block is
+# top-level `decision` / `reason`; `hookSpecificOutput.permissionDecision` is
+# PreToolUse's shape and is silently ignored here (measured: the hook ran, the
+# model never saw the notice). Everything here degrades to exit 0: a missing jq,
+# an unexpected install layout, or a marketplace that is not a clone means no
+# notice, never a stuck session.
 set -uo pipefail
 
 command -v jq >/dev/null 2>&1 || exit 0
@@ -68,11 +70,5 @@ Tell the user now, plainly, and give them this command to run:
 Then say that the update only takes effect in a NEW session, so this one keeps \
 running ${running} regardless. Do not run the command yourself."
 
-jq -n --arg r "$reason" '{
-  hookSpecificOutput: {
-    hookEventName: "Stop",
-    permissionDecision: "block",
-    permissionDecisionReason: $r
-  }
-}'
+jq -n --arg r "$reason" '{decision: "block", reason: $r}'
 exit 0
