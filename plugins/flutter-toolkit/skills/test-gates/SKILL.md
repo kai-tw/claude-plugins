@@ -20,7 +20,9 @@ allowed-tools:
   changed `lib/**.dart` line is executed. No exemptions: a changed file carrying
   `// coverage:ignore-*` (or the retired `// coverage-ignore:`) is blocked too.
   A file with no coverage record is UNREACHED (blocks) unless an import-only
-  probe shows it has no executable line — NO-CODE, which passes.
+  probe shows it has no executable line — NO-CODE, which passes. Runs with
+  branch coverage, so a `throw const …` body no test entered is a gap; a throw
+  arm of `??` / `?:` is unmeasurable and blocks until rewritten as a statement.
 - `plan-mutation -- <scoped test command>` — needs `dart_mutants` in pubspec (the
   script prints the exact stanza when it is missing). While it runs the working
   tree holds live mutants; read files via `git show HEAD:<path>`. The plan line
