@@ -39,8 +39,9 @@ Phases (run only the one named):
   Strings are real from here on, in every locale — the founder reads the screens
   in the locale they ship in, not in a placeholder.
 - **wire** — data wiring + tests; one checkpoint per phase (git: commit, the hook
-  runs `gate`; svn: run `gate`, save `svn diff` under `.claude/.assistant/tasks/<slug>/`,
-  commit nothing).
+  runs `gate`, then `asst-pr open <slug> <worktree>` — it pushes and keeps the
+  task's PR a draft; svn: run `gate`, save `svn diff` under
+  `.claude/.assistant/tasks/<slug>/`, commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
   a better fix of your own); a finding you decline goes on the report's
   `declined:` line, and into the code only as an S6.5 comment when its reason is
