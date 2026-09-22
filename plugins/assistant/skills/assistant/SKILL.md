@@ -159,8 +159,10 @@ inside it felt it converged.
   `brief-review` · `build-<phase>` · `verify-<leg>`, the legs being `verify-code` · `verify-text` · `verify-coverage` ·
   `verify-mutation`); the agent files its report
   with `asst-report put <slug> <kind>` before returning, and the output of a
-  command you run yourself (`coverage:` / `mutation:`) is filed the same way. A
-  report is passed on by its path, never pasted.
+  command you run yourself (`coverage:` / `mutation:`) is filed the same way, with
+  `--worktree <worktree>`. A `verify-<leg>` report is also posted to the task's PR,
+  so a leg missing there is visible before the merge. A report is passed on by
+  its path, never pasted.
 - Pin the model at dispatch: scout / scribe sonnet · haiku; builder opus for
   `feature`, sonnet for `small` / `exempt`; code-verifier and text-verifier opus.
 - Work sent off this machine — a message into a cloud session the founder has

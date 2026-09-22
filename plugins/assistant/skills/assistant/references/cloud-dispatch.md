@@ -40,8 +40,8 @@
 這是唯一能分辨「還在做」與「沒收到，或寫不進去」的憑據——後者你等多久都不會變。
 
 **回收.** 雲端寫不到 `.claude/.assistant/`。`done` 進來後，由你以
-`asst-report put <slug> <kind>` 轉存本地，後續步驟才讀得到——雲端的回報本身不是 report，
-是 report 的來源。
+`asst-report put <slug> <kind> --worktree <worktree> --no-post` 轉存本地，後續步驟才讀得到
+——雲端的回報本身不是 report，是 report 的來源；它已經在 PR 上，所以不再貼一次。
 
 **節奏.** 輪詢併進既有的 scheduler pass，一輪讀一次該任務的回報地，不另起機制。一個 slug
 同時只派一個雲端 session。回報地整輪皆空 → 照既有的 `re-run` 規則重派（標 `re-run`，不計
