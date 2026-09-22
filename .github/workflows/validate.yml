@@ -29,8 +29,16 @@ jobs:
       - name: Repo checks
         run: node .github/scripts/validate.mjs
 
+      # Well-formed is not working: every changed plugin's evals must pass, and
+      # a changed plugin with code must have evals at all.
+      - name: Evals
+        run: node .github/scripts/run-evals.mjs --base "${{ github.event.pull_request.base.sha || 'HEAD^' }}"
+
       # A plugin whose files change must change its version: installs are cached
       # per version, so an unbumped change is served stale and never reaches
       # anyone. Verified the hard way — dart-lsp shipped without its skill.
+      # always(): on a PR the bump comes last, once the evals pass, so this is
+      # expected to fail until then and must not hide the Evals result.
       - name: Version bump check
+        if: always()
         run: node .github/scripts/check-version-bump.mjs "${{ github.event.pull_request.base.sha || 'HEAD^' }}"
