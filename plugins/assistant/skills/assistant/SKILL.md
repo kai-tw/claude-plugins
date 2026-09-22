@@ -89,15 +89,19 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    project's own sink rules when it has them), `text-verifier` — only when the
    adapter's `ui_strings:` is not `none` and the diff touches that glob — and the
    adapter's `coverage:` / `mutation:` commands when set, in a cloud session once the
-   diff is pushed (`references/cloud-dispatch.md`) — gate: every changed line executed or its
-   exception named with a reason; mutation score ≥ 80. Builder applies fixes;
+   diff is pushed (`references/cloud-dispatch.md`) — gate: every changed line executed, no
+   exemptions; mutation score ≥ 80. Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `需要你` line if it changes scope or design.
 7. **③ 交付** (you, from the verifier reports): `references/delivery-summary.md`.
    On git it is written only from a clean, pushed tree — `git -C <worktree>
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
    checkpoints first: a check that read files the branch never got graded code
-   that does not ship.
+   that does not ship. Once it is written, `asst-pr ready <slug> <worktree>` turns
+   the draft PR ready; it refuses while the tree is dirty or unpushed, or while a
+   required `verify-<leg>` report is missing or older than `HEAD`. Exit 2 means no
+   PR is possible here (no usable `gh`, no GitHub remote): ③ carries that line as a
+   `需要你`, and the PR is the founder's to open.
    Its 文字 block only asks whether ②的核可仍成立——語意自②以來有變者，原核可失效
    （母法 U5.1），**失效之語系擋合併也擋提交，與 `destructive:` 同級**。Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back
@@ -152,7 +156,8 @@ inside it felt it converged.
   it, and its path moves with each install.
 - One task = one worktree (or SVN working copy, per the adapter) = one agent
   chain. Every dispatch names the slug and the report kind (`scout` ·
-  `brief-review` · `build-<phase>` · `verify-<leg>`, the text leg being `verify-text`); the agent files its report
+  `brief-review` · `build-<phase>` · `verify-<leg>`, the legs being `verify-code` · `verify-text` · `verify-coverage` ·
+  `verify-mutation`); the agent files its report
   with `asst-report put <slug> <kind>` before returning, and the output of a
   command you run yourself (`coverage:` / `mutation:`) is filed the same way. A
   report is passed on by its path, never pasted.
