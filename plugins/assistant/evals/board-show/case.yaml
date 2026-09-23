@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: board-show
+description: asst-board show 只取一列的完整 properties（省略空值），--body 在 --- 之後附上內文；Notion 只打這一頁，不查整個資料庫；檔案型任務版同樣可用。
+tags: [asst-board, asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" NTN_BIN="$PWD/stub/ntn"; (cd notion && asst-board show 99999999999999999999999999999999 --body); echo "queries=$(grep -c "datasources query" ntn.log)"; (cd file && asst-board show t1 --body; asst-board show t1 | wc -l | tr -d " " | sed "s/^/file_lines=/")
+  prompt: |
+    用 asst-board show 分別讀一個 Notion 任務版與一個檔案型任務版上的單一列，加上 --body 時附上內文，印出結果。
+context:
+  scaffold_script: fixture.sh

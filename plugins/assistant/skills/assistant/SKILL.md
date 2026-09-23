@@ -109,7 +109,9 @@ TaskList, or the personal `.claude/.assistant/board.md` — read and written onl
 through `asst-board`, same columns either way (Status · Stage · Trigger). One row
 per task, `Stage` mapped as: 任務書 → Product Plan · brief → Engineering Plan ·
 screens → Design Plan · build → Implementation · verify → Review · 交付 → QA ·
-closed → Shipped. Every turn you take is a scheduler pass: `asst-board list` and
+closed → Shipped. `list` is the summary (Name · Status · Stage · Trigger); one row's
+every property, and with `--body` its brief, is `asst-board show <slug> [--body]` —
+never a whole-board query read for one row. Every turn you take is a scheduler pass: `asst-board list` and
 `asst-intake <project-dir>` → file new candidates → advance or
 dispatch each live row → surface new `需要你` lines together.
 Live = `In Progress`, or `Next` whose `Trigger` names a row now `Shipped` (flip it
@@ -126,7 +128,8 @@ ledger.
 founder, PRs awaiting their review or theirs with changes requested / failing
 checks, open session-journal threads; a `skip` line means that source is
 unreadable, not empty. A row ends its `Name` with the source ref (`… (pr#42)`); a
-candidate whose ref already ends a row `Name` is not new. Each new candidate is one
+candidate whose ref already ends a row `Name` in `asst-board list --all` is not new
+(every row, every status — `list` alone shows only the live ones). Each new candidate is one
 `需要你` line — 接 (任務書, row `Status=In Progress`) or 不接 (row
 `Status=Backlog`) — so a ref is asked once.
 

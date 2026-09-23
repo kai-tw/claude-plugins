@@ -8,7 +8,8 @@
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
 //        asst-board archive <slug> <archive.md>                at close: the archive + its decisions
-//        asst-board list                                       the rows (notion: the query to run)
+//        asst-board show    <slug|page-id> [--body]           one row whole; --body adds its brief after ---
+//        asst-board list [--all]                               the live rows (In Progress · Next), or every row
 //        asst-board --help                    Any op takes --dry-run: print, write nothing.
 //
 // archive.md: the five archive sections (## Overview · ## Problem · ## Final Approach
@@ -51,6 +52,18 @@ function notion(cmdArgs, stdin, { write = true } = {}) {
   process.stdout.write(r.stdout); process.stderr.write(r.stderr);
   if (r.status !== 0) process.exit(r.status);
   return r.stdout;
+}
+function notionRows(pairs) {
+  if (!adapter.notion_root) fail('adapter board: notion needs notion_root:');
+  const line = ['asst-notion', 'query', 'tasklist', ...pairs, '--root', adapter.notion_root];
+  if (dry) { console.log(line.join(' ')); return []; }
+  const r = spawnSync(line[0], line.slice(1), { encoding: 'utf8' });
+  if (r.error) fail(`asst-notion: ${r.error.message}`);
+  if (r.status !== 0) { process.stderr.write(r.stderr); process.exit(r.status); }
+  const [head, ...lines] = r.stdout.trim().split('\n');
+  const rows = lines.map(l => JSON.parse(l));
+  if (rows.length !== JSON.parse(head).count) fail(`asst-notion query said ${JSON.parse(head).count} rows, sent ${rows.length}`);
+  return rows;
 }
 const pageFile = (slug) => join(stateDir, 'tasks', slug, 'page');
 function pageIdOf(ref) {
@@ -127,10 +140,28 @@ switch (op) {
     if (decs.length) notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs }));
     break;
   }
+  case 'show': {
+    const [ref] = rest.filter(a => a !== '--body'); const body = rest.includes('--body');
+    if (!ref) fail('show <slug|page-id> [--body]');
+    if (backend === 'file') {
+      const r = readRows().find(x => x.Slug === ref); if (!r) fail(`no row "${ref}"`);
+      console.log(JSON.stringify(r));
+      const brief = join(stateDir, 'tasks', ref, 'brief.md');
+      if (body) { console.log('---'); console.log(existsSync(brief) ? readFileSync(brief, 'utf8').trimEnd() : '(no brief filed)'); }
+      break;
+    }
+    notion(['get', pageIdOf(ref), ...(body ? ['--body'] : [])], undefined, { write: false }); break;
+  }
   case 'list': {
-    if (backend === 'file') { const rows = readRows(); console.log(rows.length ? rows.map(r => COLS.map(k => r[k]).join(' · ')).join('\n') : '(empty board)'); break; }
-    for (const st of ['In Progress', 'Next']) notion(['filter', 'tasklist', `Status=${st}`], undefined, { write: false });
+    const all = rest.includes('--all');
+    const live = (r) => ['In Progress', 'Next'].includes(r.Status);
+    // The count leads, so a list cut short on screen still says how long it is.
+    const print = (lines) => console.log([`${lines.length} rows (${all ? 'all' : 'live'})`, ...lines].join('\n'));
+    if (backend === 'file') { print(readRows().filter(r => all || live(r)).map(r => COLS.map(k => r[k]).join(' · '))); break; }
+    // One query per status, each followed to its last page by asst-notion query.
+    const rows = (all ? [[]] : [['Status=In Progress'], ['Status=Next']]).flatMap(notionRows);
+    if (!dry) print(rows.map(r => [r.Name, r.Status, r.Stage, r.Trigger, r.id].map(v => v ?? '').join(' · ')));
     break;
   }
-  default: fail(`unknown op "${op}" (create · set · brief · archive · list)`);
+  default: fail(`unknown op "${op}" (create · set · brief · archive · show · list)`);
 }

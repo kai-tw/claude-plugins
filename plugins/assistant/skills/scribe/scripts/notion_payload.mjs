@@ -21,6 +21,8 @@
 //   notion-payload create   <manifest.json | -> [--commit]   # dry-run, or create via ntn
 //   notion-payload update   <manifest.json | -> [--commit]   # dry-run, or PATCH props via ntn
 //   notion-payload filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
+//   notion-payload query    <db> [Prop=Val …]      # every matching row, all pages: {db,count}, then one JSON row per line
+//   notion-payload get      <page-id> [--body]     # one row: its properties as JSON, with --body its page after ---
 //       date props also accept <,<=,>,>= and the literal `today`, e.g. "Check Date<=today"
 //   notion-payload schema   [db]                  # print embedded schema(s)
 //   notion-payload --help
@@ -29,8 +31,8 @@
 //   Manifest (update):  { "db": "<key>", "rows": [ { "page_id": "…", <props> }, … ] }
 //   `-` reads the manifest from stdin.
 //
-//   Reads run through `ntn datasources query <ds> --filter '<json>'` directly —
-//   use the `filter` command to build the `<json>` (and to print the ds id).
+//   Reads run through `query`, which follows the cursor to the last page. A bare
+//   `ntn datasources query` stops at 25 rows and says so only in `has_more`.
 //
 //   ntn auth: the `ntn login` saved credentials are reused by same-user runs.
 //   Override version with $NOTION_API_VERSION, token with $NOTION_API_TOKEN
@@ -789,7 +791,7 @@ function postComment(pageId, text, commit) {
 
 // ── filter builder ──────────────────────────────────────────────────────────────
 // `filter <db> Prop=Val …` → a Notion query filter, using the registry to pick the
-// right operator per property type. Read still runs through `ntn datasources query`.
+// right operator per property type. `query` below runs it.
 // Date properties also accept the comparison operators `<`, `<=`, `>`, `>=`
 // (e.g. `"Check Date<=today"` for overdue+due), and the literal `today` on either
 // side of the operator resolves to the system's local date.
@@ -844,7 +846,67 @@ function printFilter(dbKey, pairs, jsonOnly) {
   if (jsonOnly) { console.log(json); return; }
   console.log(`ds:     ${ds}`);
   console.log(`filter: ${json}`);
-  console.log(`\nrun:\n  ntn datasources query ${ds} --filter '${json}' --json`);
+  console.log(`\nrun:\n  asst-notion query ${dbKey} ${pairs.map((p) => `'${p}'`).join(' ')} --root <notion_root>`);
+}
+
+// ── query: every matching row, never one page of them ──────────────────────────
+// `ntn datasources query` returns 25 rows by default with `has_more: true`, and a
+// reader that does not follow `next_cursor` sees a board that simply ends there —
+// nothing about the output says rows are missing. So the cursor is followed here,
+// to the end, and the rows come back flattened to plain values.
+const plainValue = (p) => {
+  const text = (rt) => (rt || []).map((r) => r.plain_text ?? '').join('');
+  switch (p.type) {
+    case 'title': return text(p.title);
+    case 'rich_text': return text(p.rich_text);
+    case 'status': return p.status?.name ?? null;
+    case 'select': return p.select?.name ?? null;
+    case 'multi_select': return (p.multi_select || []).map((o) => o.name);
+    case 'date': return p.date ? (p.date.end ? `${p.date.start}→${p.date.end}` : p.date.start) : null;
+    case 'checkbox': return p.checkbox;
+    case 'number': return p.number;
+    case 'url': return p.url;
+    case 'relation': return (p.relation || []).map((r) => r.id);
+    case 'people': return (p.people || []).map((u) => u.name ?? u.id);
+    case 'created_time': return p.created_time;
+    case 'last_edited_time': return p.last_edited_time;
+    default: return null;
+  }
+};
+const withoutEmpty = (row) => Object.fromEntries(Object.entries(row)
+  .filter(([, v]) => !(v === null || v === '' || (Array.isArray(v) && v.length === 0))));
+
+// ── get: one row whole — its properties, and with --body its page content ──────
+// Reading one task is one page fetch, never a whole-database query filtered by
+// eye. The body comes from `ntn pages get`, a re-rendering (tables as HTML): fit
+// to read, never to verify a write against.
+function getRow(pageId, withBody) {
+  const page = JSON.parse(ntn(['api', `v1/pages/${pageId}`]));
+  if (page.object === 'error') fail(`${pageId}: ${page.code} — ${page.message}`);
+  const props = Object.fromEntries(Object.entries(page.properties || {}).map(([k, v]) => [k, plainValue(v)]));
+  console.log(JSON.stringify(withoutEmpty({ id: page.id, url: page.url, ...props })));
+  if (withBody) { console.log('---'); process.stdout.write(ntn(['pages', 'get', pageId])); }
+}
+
+function queryRows(dbKey, pairs) {
+  const def = DB[dbKey];
+  if (!def) fail(unknownDb(dbKey));
+  const filter = pairs.length ? JSON.stringify(buildFilter(dbKey, pairs).filter) : null;
+  const rows = [];
+  let cursor = null;
+  do {
+    const args = ['datasources', 'query', def.ds, '--limit', '100', '--json'];
+    if (filter) args.push('--filter', filter);
+    if (cursor) args.push('--start-cursor', cursor);
+    const res = JSON.parse(ntn(args));
+    for (const page of res.results || []) {
+      const props = Object.fromEntries(Object.entries(page.properties || {}).map(([k, v]) => [k, plainValue(v)]));
+      rows.push({ id: page.id, url: page.url, ...props });
+    }
+    cursor = res.has_more ? res.next_cursor : null;
+    if (res.has_more && !cursor) fail(`${dbKey}: ntn reported has_more with no next_cursor — the rows are incomplete`);
+  } while (cursor);
+  return rows;
 }
 
 // ── schema printer ─────────────────────────────────────────────────────────────
@@ -922,6 +984,8 @@ const HELP = `notion-payload — Archivist Notion request builder + writer (via 
   notion-payload update   <manifest.json | -> [--commit]   dry-run, or PATCH properties via ntn
   notion-payload set      <db> <page-id> Prop=Val […] [--commit]     one-row property flip, no manifest
   notion-payload filter   <db> Prop=Val […] [--json]       build a Notion query filter (+ ds id)
+  notion-payload query    <db> [Prop=Val …]               every matching row (all pages): a {db,count} line, then one JSON row per line
+  notion-payload get      <page-id> [--body]               one row: its properties as JSON; --body adds the page after a --- line
   notion-payload trash    <page-id> [--commit]             trash a page (marker-guarded; close-out)
   notion-payload check    <page-id> <match> [--uncheck] [--commit]   toggle one checklist box
   notion-payload append   <page-id> [md-file|-] [--commit]           append blocks to a page body
@@ -934,7 +998,7 @@ DBs: ${Object.keys(DB).join(', ')}
 create/update without --commit print the plan only (no writes). --commit drives ntn:
   create → ntn api v1/pages (POST props) + ntn pages edit (Markdown body) + verify, per row.
   update → ntn api v1/pages/<id> (PATCH properties only), per row.
-Reads: build the filter here, then \`ntn datasources query <ds> --filter '<json>' --json\`.
+Reads: \`query <db> [Prop=Val …]\` — never a bare \`ntn datasources query\`, which stops at 25 rows.
 
 Manifest (create): { "db": "feature-archive", "rows": [ { …props + body sections } ] }
 Manifest (update): { "db": "tasklist", "rows": [ { "page_id": "…", "Stage": "Review" } ] }
@@ -1120,7 +1184,7 @@ function main() {
   // plus one per database — several seconds, and it needs the network.
   // The page-id commands (`trash` / `check` / `append` / `comment`) address a
   // page directly and never consult the registry at all.
-  const NEEDS_KB = new Set(['create', 'update', 'set', 'filter']);
+  const NEEDS_KB = new Set(['create', 'update', 'set', 'filter', 'query']);
   // `schema` is the discovery command: keep it usable offline, but resolve when
   // the caller supplied a root (then it reports real ds ids + live vocabulary).
   if (NEEDS_KB.has(cmd) || (cmd === 'schema' && (flags.has('--live') || rootId))) {
@@ -1135,6 +1199,24 @@ function main() {
   if (cmd === 'schema') { if (flags.has('--live')) schemaLive(pos[0]); else printSchema(pos[0]); return; }
   if (cmd === 'filter') {
     try { printFilter(pos[0], pos.slice(1), flags.has('--json')); }
+    catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
+    return;
+  }
+  if (cmd === 'query') {
+    try {
+      // The count comes first and each row is one compact line with its empty
+      // properties dropped: an output past the Bash tool's limit is saved to a
+      // file and only its head is shown, and the head must still say how many
+      // rows there are.
+      const rows = queryRows(pos[0], pos.slice(1));
+      console.log(JSON.stringify({ db: pos[0], count: rows.length }));
+      for (const r of rows) console.log(JSON.stringify(withoutEmpty(r)));
+    } catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
+    return;
+  }
+  if (cmd === 'get') {
+    if (!pos[0]) { console.error('get requires a <page-id>'); process.exitCode = 1; return; }
+    try { getRow(pos[0], flags.has('--body')); }
     catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
     return;
   }
