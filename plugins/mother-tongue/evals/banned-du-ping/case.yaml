@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-du-ping
+description: 回覆寫了「讀屏」時 Stop hook 擋下並給出台灣說法；「閱讀屏東」與 backtick 引用不算。
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    對 stop.sh 餵三則中文回覆（用了「讀屏」、寫到「閱讀屏東」、以 backtick 引用），印出輸出。
+context:
+  scaffold_script: fixture.sh

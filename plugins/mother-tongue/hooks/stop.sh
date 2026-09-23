@@ -30,11 +30,22 @@ if [ -z "$text" ]; then
 fi
 [ -n "$text" ] || exit 0
 
+session=$(jq -r '.session_id // empty' <<<"$input")
+conv=$(cat "${TMPDIR:-/tmp}/mother-tongue-${session:-none}" 2>/dev/null)
 loc=$("$here/detect.sh" <<<"$text")
-if [ -z "$loc" ]; then
-  session=$(jq -r '.session_id // empty' <<<"$input")
-  loc=$(cat "${TMPDIR:-/tmp}/mother-tongue-${session:-none}" 2>/dev/null)
+
+# A reply that falls back to English in a non-English conversation is blocked
+# whole. Only this direction: an unfenced English log pasted with a short
+# question reads as an English prompt, and a reply in the user's language must
+# not be blocked for it.
+if [ "$loc" = en ] && [ -n "$conv" ] && [ "$conv" != en ]; then
+  jq -n --arg c "$conv" '{decision:"block",reason:(
+    "The conversation is in " + $c + ", but your last reply is in English. "
+    + "Rewrite the reply in " + $c + ". Text the user asked for in English goes in a code block.")}'
+  exit 0
 fi
+
+[ -z "$loc" ] && loc=$conv
 hits=$("$here/scan.sh" "$loc" <<<"$text")
 [ -n "$hits" ] || exit 0
 
