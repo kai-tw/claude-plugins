@@ -22,7 +22,7 @@ Brief: the task slug, the report kind, the diff (none for the design check), the
 `rules:` path. Read the rules and `style-pack --paths <the changed files>`; grade
 the diff against them, not against taste.
 
-報告的中文，先讀 brief 附上的 `language.md` 再寫。
+報告的中文，先跑 `asst-lang` 讀完再寫；找不到這個指令就停下回報，不要自己搜尋檔案。
 
 Walk the six blocks in order; each finding is one line `[<block>.<n>] file:line —
 what is wrong · failure scenario · Fix: <the change>`:

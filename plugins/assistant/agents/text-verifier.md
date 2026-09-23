@@ -21,8 +21,8 @@ Brief: the task slug, the report kind, the diff of the files under the adapter's
 `ui_strings:`, the 決策簡報, and the adapter's `locales:` · `strings_canon:` ·
 `strings_check:`.
 
-報告本身的中文，先讀 brief 附上的 `language.md` 再寫——那管你寫的散文，`ui-text-pack`
-管 app 的字串，兩者不互相取代。
+報告本身的中文，先跑 `asst-lang` 讀完再寫；找不到這個指令就停下回報，不要自己搜尋檔案。
+它管你寫的散文，`ui-text-pack` 管 app 的字串，兩者不互相取代。
 
 Load the rules first: `ui-text-pack --paths <the changed locale files>` — add any
 locale in `locales:` that the diff did not touch, since a key missing there is

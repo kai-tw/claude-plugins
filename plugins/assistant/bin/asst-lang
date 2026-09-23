@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Launcher — prints references/language.md, the one version of the 中文 rules; bin/ is on PATH while the plugin is enabled.
+set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+exec cat "$here/../skills/assistant/references/language.md"
