@@ -59,7 +59,10 @@ function notionRows(pairs) {
   const r = spawnSync(line[0], line.slice(1), { encoding: 'utf8' });
   if (r.error) fail(`asst-notion: ${r.error.message}`);
   if (r.status !== 0) { process.stderr.write(r.stderr); process.exit(r.status); }
-  return JSON.parse(r.stdout).rows;
+  const [head, ...lines] = r.stdout.trim().split('\n');
+  const rows = lines.map(l => JSON.parse(l));
+  if (rows.length !== JSON.parse(head).count) fail(`asst-notion query said ${JSON.parse(head).count} rows, sent ${rows.length}`);
+  return rows;
 }
 const pageFile = (slug) => join(stateDir, 'tasks', slug, 'page');
 function pageIdOf(ref) {
@@ -139,10 +142,12 @@ switch (op) {
   case 'list': {
     const all = rest.includes('--all');
     const live = (r) => ['In Progress', 'Next'].includes(r.Status);
-    if (backend === 'file') { const rows = readRows().filter(r => all || live(r)); console.log(rows.length ? rows.map(r => COLS.map(k => r[k]).join(' · ')).join('\n') : '(empty board)'); break; }
+    // The count leads, so a list cut short on screen still says how long it is.
+    const print = (lines) => console.log([`${lines.length} rows (${all ? 'all' : 'live'})`, ...lines].join('\n'));
+    if (backend === 'file') { print(readRows().filter(r => all || live(r)).map(r => COLS.map(k => r[k]).join(' · '))); break; }
     // One query per status, each followed to its last page by asst-notion query.
     const rows = (all ? [[]] : [['Status=In Progress'], ['Status=Next']]).flatMap(notionRows);
-    if (!dry) console.log(rows.length ? rows.map(r => [r.Name, r.Status, r.Stage, r.Trigger, r.id].map(v => v ?? '').join(' · ')).join('\n') : '(empty board)');
+    if (!dry) print(rows.map(r => [r.Name, r.Status, r.Stage, r.Trigger, r.id].map(v => v ?? '').join(' · ')));
     break;
   }
   default: fail(`unknown op "${op}" (create · set · brief · archive · list)`);

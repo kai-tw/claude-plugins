@@ -21,7 +21,7 @@
 //   notion-payload create   <manifest.json | -> [--commit]   # dry-run, or create via ntn
 //   notion-payload update   <manifest.json | -> [--commit]   # dry-run, or PATCH props via ntn
 //   notion-payload filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
-//   notion-payload query    <db> [Prop=Val …]      # every matching row, all pages, as JSON
+//   notion-payload query    <db> [Prop=Val …]      # every matching row, all pages: {db,count}, then one JSON row per line
 //       date props also accept <,<=,>,>= and the literal `today`, e.g. "Check Date<=today"
 //   notion-payload schema   [db]                  # print embedded schema(s)
 //   notion-payload --help
@@ -968,7 +968,7 @@ const HELP = `notion-payload — Archivist Notion request builder + writer (via 
   notion-payload update   <manifest.json | -> [--commit]   dry-run, or PATCH properties via ntn
   notion-payload set      <db> <page-id> Prop=Val […] [--commit]     one-row property flip, no manifest
   notion-payload filter   <db> Prop=Val […] [--json]       build a Notion query filter (+ ds id)
-  notion-payload query    <db> [Prop=Val …]               every matching row (all pages), as JSON
+  notion-payload query    <db> [Prop=Val …]               every matching row (all pages): a {db,count} line, then one JSON row per line
   notion-payload trash    <page-id> [--commit]             trash a page (marker-guarded; close-out)
   notion-payload check    <page-id> <match> [--uncheck] [--commit]   toggle one checklist box
   notion-payload append   <page-id> [md-file|-] [--commit]           append blocks to a page body
@@ -1187,8 +1187,14 @@ function main() {
   }
   if (cmd === 'query') {
     try {
+      // The count comes first and each row is one compact line with its empty
+      // properties dropped: an output past the Bash tool's limit is saved to a
+      // file and only its head is shown, and the head must still say how many
+      // rows there are.
       const rows = queryRows(pos[0], pos.slice(1));
-      console.log(JSON.stringify({ db: pos[0], count: rows.length, rows }, null, 2));
+      const empty = (v) => v === null || v === '' || (Array.isArray(v) && v.length === 0);
+      console.log(JSON.stringify({ db: pos[0], count: rows.length }));
+      for (const r of rows) console.log(JSON.stringify(Object.fromEntries(Object.entries(r).filter(([, v]) => !empty(v)))));
     } catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
     return;
   }
