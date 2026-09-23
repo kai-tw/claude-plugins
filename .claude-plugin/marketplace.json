@@ -101,7 +101,7 @@
     {
       "name": "assistant",
       "source": "./plugins/assistant",
-      "description": "Fable as the assistant — request → decision brief → screens → PR, across projects."
+      "description": "The founder's assistant — request → decision brief → screens → PR, across projects."
     },
     {
       "name": "mother-tongue",

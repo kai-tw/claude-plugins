@@ -4,8 +4,8 @@
 # A PR that looks mergeable gets merged: opened ready while agents were still
 # working, one was merged before its work was done. A draft cannot be merged, so
 # `open` hard-codes --draft, and `ready` refuses until every stage it can check
-# is complete. A hook cannot hold this line — hooks do not reach sub-agents, and
-# the Builder is one; a script it calls by bare name does.
+# is complete. Those stages are the task's own state (its worktree, its verify
+# reports), which a hook on a bare `gh` command cannot see.
 #
 # Usage: asst-pr open  <task-slug> <worktree> [gh pr create flags…]
 #          push the branch, then ensure a draft PR exists for it → prints the URL

@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "assistant",
-  "version": "0.21.1",
-  "description": "Fable as the assistant: takes a request, decides, dispatches worker agents per project, and comes back with three touchpoints — intent + system design, the rendered screens, the delivery summary.",
+  "version": "0.21.2",
+  "description": "The founder's assistant: takes a request, decides, dispatches worker agents per project, and comes back with three touchpoints — intent + system design, the rendered screens, the delivery summary.",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"

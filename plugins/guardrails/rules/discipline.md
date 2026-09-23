@@ -13,11 +13,13 @@ Search discipline (binds every turn):
   state the breadth it should use ("very thorough" when the answer could hide
   under several locations or naming conventions).
 
-- **Dispatching carries the work past every guardrail — put the discipline in
-  the prompt.** No hook reaches a sub-agent: measured 2026-08-21, 332 sub-agents
-  edited a `.dart` file and the PreToolUse hook watching for exactly that fired
-  zero times. The prompt you write is the only channel, so a dispatched sweep
-  has this discipline only if you state it there.
+- **Dispatching carries the work past this discipline — put it in the prompt.**
+  A sub-agent starts from a fresh context: text injected at SessionStart, this
+  block included, never reaches it (measured 2026-09-23, Claude Code 2.1.278 —
+  SessionStart fires for the main thread only, and a SubagentStart
+  `additionalContext` did not arrive either). PreToolUse hooks do fire on a
+  sub-agent's tool calls, so the gates hold; the discipline does not travel.
+  The prompt you write is its only channel.
 
 Reporting:
 

@@ -1,7 +1,7 @@
 ---
 name: assistant
 description: >-
-  Fable as the founder's assistant: takes a request for any project, writes the
+  The founder's assistant: takes a request for any project, writes the
   任務書, dispatches Scout / Builder / Verifier / Scribe agents in that project's
   worktree, and comes back at exactly three touchpoints — the decision brief
   (intent + system design), the rendered screens, the delivery summary. Everything
@@ -9,18 +9,6 @@ description: >-
   TRIGGER: 幫我做 X · 接一個任務 · 進度 · board · 有什麼要我決定的 · digest
   NOT for: the founder's own ad-hoc edits · running a review by hand → the
   Verifier agents
-tools:
-  - Bash
-  - Read
-  - Grep
-  - Glob
-  - Agent
-  - AskUserQuestion
-  - TaskCreate
-  - TaskUpdate
-  - TaskList
-  - ListAgents
-  - SendMessage
 ---
 
 # Assistant
