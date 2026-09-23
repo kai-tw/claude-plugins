@@ -8,6 +8,7 @@
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
 //        asst-board archive <slug> <archive.md>                at close: the archive + its decisions
+//        asst-board show    <slug|page-id> [--body]           one row whole; --body adds its brief after ---
 //        asst-board list [--all]                               the live rows (In Progress · Next), or every row
 //        asst-board --help                    Any op takes --dry-run: print, write nothing.
 //
@@ -139,6 +140,18 @@ switch (op) {
     if (decs.length) notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs }));
     break;
   }
+  case 'show': {
+    const [ref] = rest.filter(a => a !== '--body'); const body = rest.includes('--body');
+    if (!ref) fail('show <slug|page-id> [--body]');
+    if (backend === 'file') {
+      const r = readRows().find(x => x.Slug === ref); if (!r) fail(`no row "${ref}"`);
+      console.log(JSON.stringify(r));
+      const brief = join(stateDir, 'tasks', ref, 'brief.md');
+      if (body) { console.log('---'); console.log(existsSync(brief) ? readFileSync(brief, 'utf8').trimEnd() : '(no brief filed)'); }
+      break;
+    }
+    notion(['get', pageIdOf(ref), ...(body ? ['--body'] : [])], undefined, { write: false }); break;
+  }
   case 'list': {
     const all = rest.includes('--all');
     const live = (r) => ['In Progress', 'Next'].includes(r.Status);
@@ -150,5 +163,5 @@ switch (op) {
     if (!dry) print(rows.map(r => [r.Name, r.Status, r.Stage, r.Trigger, r.id].map(v => v ?? '').join(' · ')));
     break;
   }
-  default: fail(`unknown op "${op}" (create · set · brief · archive · list)`);
+  default: fail(`unknown op "${op}" (create · set · brief · archive · show · list)`);
 }
