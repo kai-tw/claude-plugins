@@ -22,6 +22,7 @@
 //   notion-payload update   <manifest.json | -> [--commit]   # dry-run, or PATCH props via ntn
 //   notion-payload filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
 //   notion-payload query    <db> [Prop=Val …]      # every matching row, all pages: {db,count}, then one JSON row per line
+//   notion-payload get      <page-id> [--body]     # one row: its properties as JSON, with --body its page after ---
 //       date props also accept <,<=,>,>= and the literal `today`, e.g. "Check Date<=today"
 //   notion-payload schema   [db]                  # print embedded schema(s)
 //   notion-payload --help
@@ -872,6 +873,21 @@ const plainValue = (p) => {
     default: return null;
   }
 };
+const withoutEmpty = (row) => Object.fromEntries(Object.entries(row)
+  .filter(([, v]) => !(v === null || v === '' || (Array.isArray(v) && v.length === 0))));
+
+// ── get: one row whole — its properties, and with --body its page content ──────
+// Reading one task is one page fetch, never a whole-database query filtered by
+// eye. The body comes from `ntn pages get`, a re-rendering (tables as HTML): fit
+// to read, never to verify a write against.
+function getRow(pageId, withBody) {
+  const page = JSON.parse(ntn(['api', `v1/pages/${pageId}`]));
+  if (page.object === 'error') fail(`${pageId}: ${page.code} — ${page.message}`);
+  const props = Object.fromEntries(Object.entries(page.properties || {}).map(([k, v]) => [k, plainValue(v)]));
+  console.log(JSON.stringify(withoutEmpty({ id: page.id, url: page.url, ...props })));
+  if (withBody) { console.log('---'); process.stdout.write(ntn(['pages', 'get', pageId])); }
+}
+
 function queryRows(dbKey, pairs) {
   const def = DB[dbKey];
   if (!def) fail(unknownDb(dbKey));
@@ -969,6 +985,7 @@ const HELP = `notion-payload — Archivist Notion request builder + writer (via 
   notion-payload set      <db> <page-id> Prop=Val […] [--commit]     one-row property flip, no manifest
   notion-payload filter   <db> Prop=Val […] [--json]       build a Notion query filter (+ ds id)
   notion-payload query    <db> [Prop=Val …]               every matching row (all pages): a {db,count} line, then one JSON row per line
+  notion-payload get      <page-id> [--body]               one row: its properties as JSON; --body adds the page after a --- line
   notion-payload trash    <page-id> [--commit]             trash a page (marker-guarded; close-out)
   notion-payload check    <page-id> <match> [--uncheck] [--commit]   toggle one checklist box
   notion-payload append   <page-id> [md-file|-] [--commit]           append blocks to a page body
@@ -1192,10 +1209,15 @@ function main() {
       // file and only its head is shown, and the head must still say how many
       // rows there are.
       const rows = queryRows(pos[0], pos.slice(1));
-      const empty = (v) => v === null || v === '' || (Array.isArray(v) && v.length === 0);
       console.log(JSON.stringify({ db: pos[0], count: rows.length }));
-      for (const r of rows) console.log(JSON.stringify(Object.fromEntries(Object.entries(r).filter(([, v]) => !empty(v)))));
+      for (const r of rows) console.log(JSON.stringify(withoutEmpty(r)));
     } catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
+    return;
+  }
+  if (cmd === 'get') {
+    if (!pos[0]) { console.error('get requires a <page-id>'); process.exitCode = 1; return; }
+    try { getRow(pos[0], flags.has('--body')); }
+    catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
     return;
   }
   if (cmd === 'trash') {
