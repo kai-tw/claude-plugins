@@ -7,7 +7,7 @@ the latest prompt and blocks what a word list can catch.
 | Hook | Does |
 | --- | --- |
 | `UserPromptSubmit` | Detects the prompt's locale and attaches that locale's `rules.md` to it |
-| `Stop` | Detects the reply's locale; if it uses a term from that locale's `banned.tsv`, blocks and asks for the sentences to be rewritten |
+| `Stop` | Blocks a reply written in English when the conversation is not, and asks for it in the conversation's locale; otherwise detects the reply's locale and, if it uses a term from that locale's `banned.tsv`, blocks and asks for the sentences to be rewritten |
 | `PreToolUse` (Bash) | Same check on the text of `git commit` and `gh pr\|issue create\|edit\|comment` |
 
 Detection is by script (`hooks/detect.sh`): Hangul → `ko`, kana → `ja`, other

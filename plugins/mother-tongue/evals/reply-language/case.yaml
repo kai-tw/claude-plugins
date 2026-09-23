@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: reply-language
+description: 中文對話裡回覆退回英文時，Stop hook 整則擋下、要求用中文重寫；英文放在 code block、英文對話、沒有對話語系時不擋。
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    設定對話語系後對 stop.sh 餵幾則回覆，印出輸出。
+context:
+  scaffold_script: fixture.sh
