@@ -126,7 +126,8 @@ ledger.
 founder, PRs awaiting their review or theirs with changes requested / failing
 checks, open session-journal threads; a `skip` line means that source is
 unreadable, not empty. A row ends its `Name` with the source ref (`… (pr#42)`); a
-candidate whose ref already ends a row `Name` is not new. Each new candidate is one
+candidate whose ref already ends a row `Name` in `asst-board list --all` is not new
+(every row, every status — `list` alone shows only the live ones). Each new candidate is one
 `需要你` line — 接 (任務書, row `Status=In Progress`) or 不接 (row
 `Status=Backlog`) — so a ref is asked once.
 

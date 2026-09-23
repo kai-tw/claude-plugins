@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: board-all-pages
+description: asst-notion query 沿著 next_cursor 翻到最後一頁，不停在第一頁；asst-board list 只回 live 的列，list --all 回每一列。
+tags: [asst-board, asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" NTN_BIN="$PWD/stub/ntn"; asst-notion query tasklist --root 11111111111111111111111111111111 | jq -c "{count, names: [.rows[].Name]}"; echo "pages=$(grep -c "query" ntn.log)"; echo "live=$(asst-board list | grep -c " · ") statuses=$(asst-board list | awk -F " · " "{print \$2}" | sort -u | paste -sd, - | tr -d " ")"; echo "all=$(asst-board list --all | grep -c " · ")"; asst-board list --all
+  prompt: |
+    在一個假的 Notion（任務版分成三頁、共五列）上，用 asst-notion query 讀整個任務版，再用 asst-board list 與 list --all 列出，印出結果。
+context:
+  scaffold_script: fixture.sh

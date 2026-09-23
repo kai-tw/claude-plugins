@@ -8,7 +8,7 @@
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
 //        asst-board archive <slug> <archive.md>                at close: the archive + its decisions
-//        asst-board list                                       the rows (notion: the query to run)
+//        asst-board list [--all]                               the live rows (In Progress · Next), or every row
 //        asst-board --help                    Any op takes --dry-run: print, write nothing.
 //
 // archive.md: the five archive sections (## Overview · ## Problem · ## Final Approach
@@ -51,6 +51,15 @@ function notion(cmdArgs, stdin, { write = true } = {}) {
   process.stdout.write(r.stdout); process.stderr.write(r.stderr);
   if (r.status !== 0) process.exit(r.status);
   return r.stdout;
+}
+function notionRows(pairs) {
+  if (!adapter.notion_root) fail('adapter board: notion needs notion_root:');
+  const line = ['asst-notion', 'query', 'tasklist', ...pairs, '--root', adapter.notion_root];
+  if (dry) { console.log(line.join(' ')); return []; }
+  const r = spawnSync(line[0], line.slice(1), { encoding: 'utf8' });
+  if (r.error) fail(`asst-notion: ${r.error.message}`);
+  if (r.status !== 0) { process.stderr.write(r.stderr); process.exit(r.status); }
+  return JSON.parse(r.stdout).rows;
 }
 const pageFile = (slug) => join(stateDir, 'tasks', slug, 'page');
 function pageIdOf(ref) {
@@ -128,8 +137,12 @@ switch (op) {
     break;
   }
   case 'list': {
-    if (backend === 'file') { const rows = readRows(); console.log(rows.length ? rows.map(r => COLS.map(k => r[k]).join(' · ')).join('\n') : '(empty board)'); break; }
-    for (const st of ['In Progress', 'Next']) notion(['filter', 'tasklist', `Status=${st}`], undefined, { write: false });
+    const all = rest.includes('--all');
+    const live = (r) => ['In Progress', 'Next'].includes(r.Status);
+    if (backend === 'file') { const rows = readRows().filter(r => all || live(r)); console.log(rows.length ? rows.map(r => COLS.map(k => r[k]).join(' · ')).join('\n') : '(empty board)'); break; }
+    // One query per status, each followed to its last page by asst-notion query.
+    const rows = (all ? [[]] : [['Status=In Progress'], ['Status=Next']]).flatMap(notionRows);
+    if (!dry) console.log(rows.length ? rows.map(r => [r.Name, r.Status, r.Stage, r.Trigger, r.id].map(v => v ?? '').join(' · ')).join('\n') : '(empty board)');
     break;
   }
   default: fail(`unknown op "${op}" (create · set · brief · archive · list)`);
