@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: rules-on-path
+description: mother-tongue-rules 以裸名在任何工作目錄印出 zh-TW 的 rules.md；不存在的語系回 1。
+tags: [bin]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: cd "$(mktemp -d)" && mother-tongue-rules; echo "rules=$?"; mother-tongue-rules xx; echo "missing=$?"
+  prompt: |
+    在一個空目錄裡印出中文寫作規則與 exit code，再對不存在的語系 xx 做一次。
+context:
+  scaffold_script: fixture.sh

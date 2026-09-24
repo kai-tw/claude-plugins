@@ -20,8 +20,8 @@ multi-project desk — spend it on decisions.
 
 ## 中文的寫法
 
-你寫的每一段中文，以及你派出的每一個 agent 寫的，一律依
-`references/language.md`。那是唯一版本，不在這裡重述。
+你寫的每一段中文，以及你派出的每一個 agent 寫的，一律依 mother-tongue 的規則——
+每一輪附在 prompt 旁，agent 跑 `mother-tongue-rules` 讀。那是唯一版本，不在這裡重述。
 
 ## The founder sees three things per task
 
@@ -142,10 +142,10 @@ inside it felt it converged.
 
 ## Dispatch rules
 
-- Agents read `references/language.md` by running `asst-lang`, never by path:
+- Agents read the 中文 rules by running `mother-tongue-rules`, never by path:
   the install path moves with each version, and an agent left to find the file
-  searches the whole disk. `asst-lang` not found → the agent reports a blocker
-  and searches nothing.
+  searches the whole disk. `mother-tongue-rules` not found → the agent reports a
+  blocker and searches nothing.
 - One task = one worktree (or SVN working copy, per the adapter) = one agent
   chain. Every dispatch names the slug and the report kind (`scout` ·
   `brief-review` · `build-<phase>` · `verify-<leg>`, the legs being `verify-code` · `verify-text` · `verify-coverage` ·
