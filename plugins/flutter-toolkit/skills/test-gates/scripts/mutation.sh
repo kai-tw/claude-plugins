@@ -268,6 +268,36 @@ lock_ver=""
   inpkg && /^    version:/ { gsub(/[" ]/,""); sub(/^version:/,""); print; exit }
 ' pubspec.lock)
 
+# Every command printed below is this project's own: a Flutter package resolves
+# with `flutter pub get`, and a pure Dart one may have no Flutter installed.
+if grep -qE '^[[:space:]]+sdk:[[:space:]]*flutter' pubspec.yaml 2>/dev/null; then
+  PUB="flutter pub get"
+else
+  PUB="dart pub get"
+fi
+
+# THE NEWEST ENGINE — a reminder, never a gate. The floor above is what this
+# script needs; a release past it fixes things the floor does not know about,
+# and a project only learns of it here. Offline or unreachable, `latest` stays
+# empty and nothing is said: a run must not depend on the network.
+ENGINE_REPO="${PLAN_MUTATION_ENGINE_REPO:-https://github.com/kai-tw/kai-packages.git}"
+latest=$(GIT_TERMINAL_PROMPT=0 git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=5 \
+           ls-remote --tags --refs "$ENGINE_REPO" 'dart_mutants-v*' 2>/dev/null \
+         | sed -n 's|.*refs/tags/dart_mutants-v||p' | sort -V | tail -1)
+target=$MIN_ENGINE
+[ -n "$latest" ] && older_than "$target" "$latest" && target=$latest
+
+if [ -n "$lock_ver" ] && [ "$target" != "$MIN_ENGINE" ] \
+   && ! older_than "$lock_ver" "$MIN_ENGINE" && older_than "$lock_ver" "$target"; then
+  cat >&2 <<EOF
+plan-mutation: dart_mutants $target is out; this project resolves $lock_ver. This
+run goes ahead on $lock_ver. To update, set the ref in pubspec.yaml to
+dart_mutants-v$target, then \`$PUB\`. What changed:
+  https://github.com/kai-tw/kai-packages/blob/main/packages/dart_mutants/CHANGELOG.md
+
+EOF
+fi
+
 if [ -n "$lock_ver" ] && older_than "$lock_ver" "$MIN_ENGINE"; then
   # Two different defects live below the floor, and naming the wrong one sends
   # the reader after the wrong thing. Branch on which it actually is.
@@ -304,18 +334,17 @@ $MIN_ENGINE or newer. Nothing was measured.
 
 $why
 
-Update the ref in pubspec.yaml to dart_mutants-v$MIN_ENGINE or newer, then
-\`flutter pub get\`.
+Update the ref in pubspec.yaml to dart_mutants-v$target, then \`$PUB\`.
 EOF
   exit 2
 fi
 
 if [ -z "$lock_ver" ] && grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
-  cat >&2 <<'EOF'
-plan-mutation: pubspec.yaml declares `dart_mutants` but pubspec.lock does not
+  cat >&2 <<EOF
+plan-mutation: pubspec.yaml declares \`dart_mutants\` but pubspec.lock does not
 resolve it, so the engine is not installed. Nothing was measured.
 
-  flutter pub get
+  $PUB
 
 (Declared is not installed — this is the state a yaml-only check called ready.)
 EOF
@@ -323,8 +352,8 @@ EOF
 fi
 
 if ! grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
-  cat >&2 <<'EOF'
-plan-mutation: this project does not depend on `dart_mutants`, so there is no
+  cat >&2 <<EOF
+plan-mutation: this project does not depend on \`dart_mutants\`, so there is no
 engine to run. Nothing was measured.
 
 Add it to pubspec.yaml under dev_dependencies:
@@ -332,14 +361,14 @@ Add it to pubspec.yaml under dev_dependencies:
   dev_dependencies:
     dart_mutants:
       git:
-        url: https://github.com/kai-tw/kai-packages.git
+        url: $ENGINE_REPO
         path: packages/dart_mutants
-        ref: dart_mutants-v0.3.1
+        ref: dart_mutants-v$target
 
-then `flutter pub get`. Take the ref above verbatim: v0.3.1 is where a test run
+then \`$PUB\`. Take the ref above verbatim: v0.3.1 is where a test run
 stops leaving ~270 MB in the system temp dir per mutant; below v0.3.0 a run
 does not say how long it will take and has no --max-minutes; below v0.2.9 there
-is no `--output` report for this script to read; below v0.2.3 a timed-out
+is no \`--output\` report for this script to read; below v0.2.3 a timed-out
 mutant orphans a test process that outlives the run and eats the machine; below
 v0.2.0 half the operators do not exist and the score still looks normal.
 EOF
