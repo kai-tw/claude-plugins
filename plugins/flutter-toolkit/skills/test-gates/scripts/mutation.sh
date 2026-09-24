@@ -27,11 +27,27 @@
 #   silently INFLATED score), and a mutant that hangs is killed and scored
 #   `timedOut` rather than waited on forever. Neither counts toward total.
 #
+# JS / TS FILES
+#   Changed `.js .jsx .ts .tsx .mjs .cjs .mts .cts` files go to StrykerJS, run in
+#   the nearest directory holding a `package.json`, which must have
+#   `@stryker-mutator/core` installed. From the diff, a file counts when it sits
+#   under that package's `src/` or `lib/` and is not a `.d.ts`, a `*.test.*` /
+#   `*.spec.*` or under `__tests__/` — Stryker's own default `mutate`. Stryker
+#   runs the tests its config names, so the `--` test command is for Dart files
+#   only. Its report is graded by the same per-file table and threshold:
+#   Killed and Timeout are detected, Survived and NoCoverage are survivors,
+#   CompileError and RuntimeError are invalid. Timeout counts as detected, as
+#   in Stryker's own score, because its budget is derived from the measured time
+#   of the tests covering each mutant, so a timeout is a hang the tests caught —
+#   measured on a mutex, 10 of 18 mutants deadlock, and no --timeout answers them.
+#   `--workers n` is Stryker's `--concurrency`; `--timeout`, when given, its
+#   `--timeoutMS`; the other engine flags are Dart-only.
+#
 # USAGE
 #   plan-mutation [--min <pct>] [--timeout <s>] [--baseline-timeout <s>]
 #                 [--baseline-factor <n>] [--select-by-coverage]
 #                 [--workers <n>] [--max-minutes <n>] [--history <file>]
-#                 [--files a.dart …] -- <test-command…>
+#                 [--files a.dart b.ts …] [-- <test-command…>]
 #
 #   --timeout is the FLOOR on a mutant's budget; the engine raises it to
 #   --baseline-factor × the measured baseline, and the report prints what it
@@ -122,26 +138,29 @@ MIN_MUTANTS=5       # below this a percentage is arithmetic, not evidence
 # so the number the run actually used is read back out of the report rather than
 # printed from here.
 MUTANT_TIMEOUT=30
+TIMEOUT_GIVEN=""     # Stryker keeps its own timeout unless --timeout is typed
+WORKERS=1
 EXPLICIT_FILES=""
 ENGINE_EXTRA=()      # 0.2.7 flags, forwarded only when the caller asks for them
+DART_ONLY=""         # the Dart-only flags typed, named when JS files are in scope
 SELECT_BY_COVERAGE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --min)      MIN_SCORE="${2:-80}"; shift 2 ;;
-    --timeout)  MUTANT_TIMEOUT="${2:-30}"; shift 2 ;;
+    --timeout)  MUTANT_TIMEOUT="${2:-30}"; TIMEOUT_GIVEN=1; shift 2 ;;
     # The baseline is the COLD run and had no budget of its own until 0.2.7;
     # it now defaults to 10× --timeout. Forwarded, not re-derived here.
-    --baseline-timeout) ENGINE_EXTRA+=("--baseline-timeout" "${2:?--baseline-timeout needs seconds}"); shift 2 ;;
-    --baseline-factor)  ENGINE_EXTRA+=("--baseline-factor" "${2:?--baseline-factor needs a number}"); shift 2 ;;
-    --select-by-coverage) SELECT_BY_COVERAGE=1; ENGINE_EXTRA+=("--select-by-coverage"); shift ;;
+    --baseline-timeout) ENGINE_EXTRA+=("--baseline-timeout" "${2:?--baseline-timeout needs seconds}"); DART_ONLY+=" $1"; shift 2 ;;
+    --baseline-factor)  ENGINE_EXTRA+=("--baseline-factor" "${2:?--baseline-factor needs a number}"); DART_ONLY+=" $1"; shift 2 ;;
+    --select-by-coverage) SELECT_BY_COVERAGE=1; ENGINE_EXTRA+=("--select-by-coverage"); DART_ONLY+=" $1"; shift ;;
     # The launcher reads the same value to take that many slots.
     --workers)  case "${2:-}" in
                   ''|*[!0-9]*|0) echo "plan-mutation: --workers needs a positive integer" >&2; exit 2 ;;
                 esac
-                ENGINE_EXTRA+=("--workers" "$2"); shift 2 ;;
-    --max-minutes) ENGINE_EXTRA+=("--max-minutes" "${2:?--max-minutes needs a number of minutes}"); shift 2 ;;
-    --history)  ENGINE_EXTRA+=("--history" "${2:?--history needs a file}"); shift 2 ;;
+                WORKERS=$2; ENGINE_EXTRA+=("--workers" "$2"); shift 2 ;;
+    --max-minutes) ENGINE_EXTRA+=("--max-minutes" "${2:?--max-minutes needs a number of minutes}"); DART_ONLY+=" $1"; shift 2 ;;
+    --history)  ENGINE_EXTRA+=("--history" "${2:?--history needs a file}"); DART_ONLY+=" $1"; shift 2 ;;
     --files)    shift
                 while [ $# -gt 0 ] && [ "$1" != "--" ]; do
                   EXPLICIT_FILES="${EXPLICIT_FILES}${1}"$'\n'; shift
@@ -183,7 +202,7 @@ while [ $# -gt 0 ]; do
 plan-mutation: unknown option "$1".
 ${why}
 
-  usage: plan-mutation [--min <pct>] [--timeout <s>] [--files a.dart …] -- <test-command…>
+  usage: plan-mutation [--min <pct>] [--timeout <s>] [--files a.dart b.ts …] [-- <test-command…>]
          --timeout defaults to ${MUTANT_TIMEOUT}s per mutant.
 EOF
                 exit 2 ;;
@@ -191,8 +210,7 @@ EOF
   esac
 done
 
-[ $# -gt 0 ] || { echo "plan-mutation: need a test command (e.g. plan-mutation -- flutter test test/features/trash)" >&2; exit 2; }
-TEST_CMD="$*"
+TEST_CMD="$*"   # required once a Dart file is in scope; Stryker's config names its tests
 command -v jq >/dev/null 2>&1 || { echo "plan-mutation: jq is required" >&2; exit 2; }
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "plan-mutation: not in a git repo" >&2; exit 2; }
@@ -256,6 +274,85 @@ EOF
   exit 2
 done
 
+# --- what to mutate --------------------------------------------------------
+# Chosen before the engine checks, because the files decide which engine has to
+# be present: a diff with no Dart file needs no dart_mutants, one with no JS/TS
+# file no Stryker. Existence is checked after them, so an engine refusal still
+# names what to install.
+# Generated files are excluded: nobody hand-writes them, so a surviving mutant
+# there is a finding about a generator, not about the tests.
+JS_EXT='\.(js|jsx|ts|tsx|mjs|cjs|mts|cts)$'
+base=
+if [ -n "$EXPLICIT_FILES" ]; then
+  files=$(printf '%s' "$EXPLICIT_FILES" | grep -v '^$')
+else
+  # Prefer the REMOTE-tracking ref. `origin/<branch>` is what the PR merges
+  # into and `git fetch` keeps it current without touching the working tree;
+  # the LOCAL branch of the same name only moves when someone checks it out and
+  # pulls, which a squash-merge workflow never does. A stale local base drags
+  # the three-dot merge-base backwards, so every PR merged since lands in
+  # scope and the gate grades files this branch never opened — loudly, by name,
+  # with line counts. The base actually used is printed in the report header,
+  # so the next wrong one is visible instead of inferred.
+  base=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)
+  base=${base#origin/}
+  [ -n "$base" ] || base=main
+  tried="origin/$base $base origin/main main"
+  resolved=
+  for cand in $tried; do
+    git rev-parse --verify --quiet "$cand" >/dev/null 2>&1 && { resolved=$cand; break; }
+  done
+  # No base means no scope. Diffing an unresolvable ref yields an empty file
+  # list, which reads downstream as "nothing changed" and exits 0 — a gate that
+  # could not run, wearing the face of one that passed.
+  [ -n "$resolved" ] || {
+    echo "plan-mutation: no base ref resolves (tried: $(printf %s\\n $tried | awk '!s[$0]++' | paste -sd' ' -)) — pass --files to say what to mutate." >&2
+    exit 2
+  }
+  base=$resolved
+  changed=$( { git diff --name-only "$base"...HEAD 2>/dev/null
+               git diff --name-only HEAD 2>/dev/null; } | sort -u )
+  files=$( { printf '%s\n' "$changed" | grep -E '^lib/.*\.dart$' \
+               | grep -vE '\.(g|freezed|config|gen)\.dart$|^lib/generated/'
+             printf '%s\n' "$changed" | grep -E "$JS_EXT" \
+               | grep -vE '\.d\.[mc]?ts$|\.(test|spec)\.[^/]*$|(^|/)(__tests__|node_modules)/'; } )
+fi
+
+# The nearest directory above <dir> holding <path>, up to the repo root; empty
+# when none does. A workspace hoists Stryker to the root's node_modules, so it
+# is looked for the same way as the package itself.
+find_up() {
+  local d=$1
+  while :; do
+    [ -e "$d/$2" ] && { printf '%s\n' "$d/$2"; return; }
+    [ "$d" = . ] && return
+    d=$(dirname "$d")
+  done
+}
+
+# JS/TS files as `<package dir> TAB <path inside it>`: Stryker runs in the
+# package, and its report is keyed by the second column.
+dart_files=$(printf '%s\n' "$files" | grep -E '\.dart$')
+js_rows=""
+while IFS= read -r f; do
+  case "$f" in ''|*.dart) continue ;; esac
+  printf '%s\n' "$f" | grep -qE "$JS_EXT" || {
+    echo "plan-mutation: no engine mutates $f — Dart and JS/TS files only." >&2; exit 2; }
+  pj=$(find_up "$(dirname "$f")" package.json)
+  if [ -z "$pj" ]; then
+    [ -n "$EXPLICIT_FILES" ] || continue   # a loose script is nobody's package source
+    echo "plan-mutation: $f is in no directory with a package.json, so there is nowhere to run Stryker." >&2
+    exit 2
+  fi
+  pkg=$(dirname "$pj")
+  rel=${f#"$pkg/"}
+  # From the diff, only what Stryker's default `mutate` would take: package source.
+  [ -n "$EXPLICIT_FILES" ] || case "$rel" in src/*|lib/*) ;; *) continue ;; esac
+  js_rows+="$pkg"$'\t'"$rel"$'\n'
+done <<<"$files"
+files=$( { printf '%s\n' "$dart_files"
+           printf '%s' "$js_rows" | awk -F'\t' '{ print ($1 == "." ? $2 : $1 "/" $2) }'; } | grep -v '^$')
+
 # --- the engine has to be here before anything else happens -----------------
 # Switching from the regex engine to the AST one changed an UNDECLARED
 # prerequisite: `mutation_test` was `dart pub global activate`d, `dart_mutants`
@@ -303,8 +400,10 @@ MIN_ENGINE=0.3.1
 # by how far back the resolved version is.
 older_than() { [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" != "$2" ]; }
 
+# Every Dart check below is keyed on the lock's version or on pubspec.yaml; with
+# no Dart file in scope the first stays empty and the second is not read.
 lock_ver=""
-[ -f pubspec.lock ] && lock_ver=$(awk '
+[ -n "$dart_files" ] && [ -f pubspec.lock ] && lock_ver=$(awk '
   /^  dart_mutants:/ { inpkg=1; next }
   inpkg && /^  [a-zA-Z]/ { inpkg=0 }
   inpkg && /^    version:/ { gsub(/[" ]/,""); sub(/^version:/,""); print; exit }
@@ -323,7 +422,8 @@ fi
 # and a project only learns of it here. Offline or unreachable, `latest` stays
 # empty and nothing is said: a run must not depend on the network.
 ENGINE_REPO="${PLAN_MUTATION_ENGINE_REPO:-https://github.com/kai-tw/kai-packages.git}"
-latest=$(GIT_TERMINAL_PROMPT=0 git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=5 \
+latest=
+[ -n "$dart_files" ] && latest=$(GIT_TERMINAL_PROMPT=0 git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=5 \
            ls-remote --tags --refs "$ENGINE_REPO" 'dart_mutants-v*' 2>/dev/null \
          | sed -n 's|.*refs/tags/dart_mutants-v||p' | sort -V | tail -1)
 target=$MIN_ENGINE
@@ -405,7 +505,7 @@ EOF
   exit 2
 fi
 
-if [ -z "$lock_ver" ] && grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
+if [ -n "$dart_files" ] && [ -z "$lock_ver" ] && grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
   cat >&2 <<EOF
 plan-mutation: pubspec.yaml declares \`dart_mutants\` but pubspec.lock does not
 resolve it, so the engine is not installed. Nothing was measured.
@@ -417,7 +517,7 @@ EOF
   exit 2
 fi
 
-if ! grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
+if [ -n "$dart_files" ] && ! grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
   cat >&2 <<EOF
 plan-mutation: this project does not depend on \`dart_mutants\`, so there is no
 engine to run. Nothing was measured.
@@ -441,46 +541,60 @@ EOF
   exit 2
 fi
 
-# --- what to mutate --------------------------------------------------------
-# Generated files are excluded: nobody hand-writes them, so a surviving mutant
-# there is a finding about a generator, not about the tests.
-base=
-if [ -n "$EXPLICIT_FILES" ]; then
-  files=$(printf '%s' "$EXPLICIT_FILES" | grep -v '^$')
-else
-  # Prefer the REMOTE-tracking ref. `origin/<branch>` is what the PR merges
-  # into and `git fetch` keeps it current without touching the working tree;
-  # the LOCAL branch of the same name only moves when someone checks it out and
-  # pulls, which a squash-merge workflow never does. A stale local base drags
-  # the three-dot merge-base backwards, so every PR merged since lands in
-  # scope and the gate grades files this branch never opened — loudly, by name,
-  # with line counts. The base actually used is printed in the report header,
-  # so the next wrong one is visible instead of inferred.
-  base=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)
-  base=${base#origin/}
-  [ -n "$base" ] || base=main
-  tried="origin/$base $base origin/main main"
-  resolved=
-  for cand in $tried; do
-    git rev-parse --verify --quiet "$cand" >/dev/null 2>&1 && { resolved=$cand; break; }
-  done
-  # No base means no scope. Diffing an unresolvable ref yields an empty file
-  # list, which reads downstream as "nothing changed" and exits 0 — a gate that
-  # could not run, wearing the face of one that passed.
-  [ -n "$resolved" ] || {
-    echo "plan-mutation: no base ref resolves (tried: $(printf %s\\n $tried | awk '!s[$0]++' | paste -sd' ' -)) — pass --files to say what to mutate." >&2
+# --- StrykerJS, once per package holding a JS/TS file -----------------------
+# Declared is not installed, the same as pubspec above: a cloud checkout with no
+# `npm install` has the first and not the second.
+js_pkgs=$(printf '%s' "$js_rows" | cut -f1 | sort -u)
+while IFS= read -r pkg; do
+  [ -n "$pkg" ] || continue
+  if [ -f "$pkg/pnpm-lock.yaml" ] || [ -f pnpm-lock.yaml ]; then add="pnpm add -D"; inst="pnpm install"
+  elif [ -f "$pkg/yarn.lock" ] || [ -f yarn.lock ]; then add="yarn add -D"; inst="yarn install"
+  else add="npm install --save-dev"; inst="npm install"; fi
+  if ! jq -e '(.devDependencies // {}) + (.dependencies // {}) | has("@stryker-mutator/core")' \
+         "$pkg/package.json" >/dev/null 2>&1; then
+    cat >&2 <<EOF
+plan-mutation: $pkg/package.json does not depend on \`@stryker-mutator/core\`, so
+there is no engine for its JS/TS files. Nothing was measured.
+
+  cd $pkg && $add @stryker-mutator/core @stryker-mutator/<runner>-runner
+
+<runner> is the package's test runner (jest, vitest, mocha, karma); with none,
+Stryker runs \`npm test\` once per mutant. \`npx stryker init\` writes a config.
+EOF
     exit 2
-  }
-  base=$resolved
-  files=$( { git diff --name-only "$base"...HEAD 2>/dev/null
-             git diff --name-only HEAD 2>/dev/null; } \
-           | sort -u \
-           | grep -E '^lib/.*\.dart$' \
-           | grep -vE '\.(g|freezed|config|gen)\.dart$|^lib/generated/' )
+  fi
+  if [ -z "$(find_up "$pkg" node_modules/.bin/stryker)" ] \
+     || [ -z "$(find_up "$pkg" node_modules/@stryker-mutator/core/package.json)" ]; then
+    cat >&2 <<EOF
+plan-mutation: $pkg/package.json declares \`@stryker-mutator/core\` but it is not
+installed, so there is no engine for its JS/TS files. Nothing was measured.
+
+  cd $pkg && $inst
+EOF
+    exit 2
+  fi
+done <<<"$js_pkgs"
+
+# A diff names files it deleted, and those are skipped. A path typed into
+# --files is the caller's scope: dropping a mistyped one silently passes a file
+# nobody measured — measured, `--files a.ts b.ts` with b.ts misspelt graded a
+# alone and exited 0.
+if [ -n "$EXPLICIT_FILES" ]; then
+  absent=$(printf '%s\n' "$files" | while IFS= read -r f; do [ -z "$f" ] || [ -f "$f" ] || printf '%s\n' "$f"; done)
+  [ -z "$absent" ] || {
+    printf 'plan-mutation: --files names no file at:\n%s\nNothing was measured.\n' "$(printf '%s\n' "$absent" | sed 's/^/  /')" >&2
+    exit 2; }
 fi
 files=$(printf '%s\n' "$files" | grep -v '^$' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)
-[ -n "$files" ] || { echo "plan-mutation: no changed lib/**.dart files to mutate — nothing to do."; exit 0; }
+[ -n "$files" ] || { echo "plan-mutation: no changed lib/**.dart or package JS/TS source to mutate — nothing to do."; exit 0; }
+dart_files=$(printf '%s\n' "$files" | grep -E '\.dart$')
+js_rows=$(printf '%s' "$js_rows" | while IFS=$'\t' read -r p r; do
+  [ -f "$p/$r" ] && printf '%s\t%s\n' "$p" "$r"; done)
+js_pkgs=$(printf '%s\n' "$js_rows" | cut -f1 | grep -v '^$' | sort -u)
+[ -z "$dart_files" ] || [ -n "$TEST_CMD" ] || {
+  echo "plan-mutation: Dart files need a test command (e.g. plan-mutation -- flutter test test/features/trash)" >&2; exit 2; }
 count_files=$(printf '%s\n' "$files" | grep -c .)
+count_dart=$(printf '%s\n' "$dart_files" | grep -c .)
 
 out=$(mktemp -d) || exit 2
 snap=$(mktemp -d) || exit 2
@@ -609,19 +723,24 @@ mv -f "$MARKER.tmp" "$MARKER"
 # (mutant count, baseline, per-mutant cap), then one `[k/N] <verdict> …` line
 # per mutant, so a long run shows how far it is. The report goes to a file.
 # Its stderr is kept for the failure message below and still shown.
-echo "plan-mutation: ${count_files} changed file(s) vs ${base:---files}, threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s floor per mutant."
+echo "plan-mutation: ${count_files} changed file(s) (Dart ${count_dart}, JS/TS $(( count_files - count_dart ))) vs ${base:---files}, threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s floor per Dart mutant."
 echo "plan-mutation: WHILE THIS RUNS the source on disk may be a live mutant. Read those files with \`git show ${head_sha}:<path>\`, not from the working tree — anyone sharing this worktree included. Marker: .mutation-in-progress"
 [ "$count_files" -gt 50 ] && echo "plan-mutation: ${count_files} files is a long run — the plan line below gives the mutant count and cap; split the files into batches if that is more than you can wait for."
 started=$(date +%s)
-# shellcheck disable=SC2086
-{ dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" \
-    ${ENGINE_EXTRA[@]+"${ENGINE_EXTRA[@]}"} --output "$out/report.json" $files \
-    2>&1 1>&3 3>&- | tee "$out/err" >&2; } 3>&1
-elapsed=$(( $(date +%s) - started ))
-
-# Preserved BEFORE the parse check, not after: a report this script cannot read
-# is exactly the one somebody needs the bytes of, and the check below exits.
-[ -s "$out/report.json" ] && cp "$out/report.json" "$REPORT_KEEP" 2>/dev/null
+KEPT=""   # the raw reports this run leaves outside the repo
+if [ -n "$dart_files" ]; then
+  # shellcheck disable=SC2086
+  { dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" \
+      ${ENGINE_EXTRA[@]+"${ENGINE_EXTRA[@]}"} --output "$out/report.json" $dart_files \
+      2>&1 1>&3 3>&- | tee "$out/err" >&2; } 3>&1
+  # Preserved BEFORE the parse check, not after: a report this script cannot read
+  # is exactly the one somebody needs the bytes of, and the check below exits.
+  [ -s "$out/report.json" ] && cp "$out/report.json" "$REPORT_KEEP" 2>/dev/null
+  KEPT=$REPORT_KEEP
+else
+  # No Dart run: an empty report that the JS results below are merged into.
+  echo '{"files":{}}' > "$out/report.json"
+fi
 
 jq -e . "$out/report.json" >/dev/null 2>&1 || {
   # Say what happened, not what was declined. "Not scoring anything off that"
@@ -724,6 +843,90 @@ EOF
   exit 1
 fi
 
+# --- JS / TS: one Stryker run per package -----------------------------------
+# `--reporters` replaces the config's list, so only the JSON report is written,
+# at the default `jsonReporter.fileName`. It is deleted first, so a run that dies
+# is never graded on the previous run's file, and moved out after, so the gate
+# leaves nothing in the repo; a config that moves the report ends in "did not
+# run", never in a stale score. Stryker's exit code is not read: a config's
+# `thresholds.break` fails a run whose report is complete.
+#
+# Its statuses are mapped onto the Dart engine's report, so every table below
+# reads one shape. A requested file the report does not list had no mutable
+# code (NO-MUTANTS); a listed file nobody requested means the keys do not match
+# the request, and nothing can be graded.
+STRYKER_TO_REPORT='
+  def entry($p): {filePath: $p, line: .location.start.line, column: .location.start.column,
+    operatorName: .mutatorName,
+    description: ("→ " + ((.replacement // "") | gsub("\\s+"; " ") | .[0:60]))};
+  (.files | keys - $req) as $extra
+  | if ($extra | length) > 0 then error("the report names files it was not asked for: \($extra | join(", "))") else . end
+  | .files as $f
+  | {files: ([ $req[] as $r | ($prefix + $r) as $p | ($f[$r].mutants // []) as $m
+      | ([$m[].status] - ["Killed","Survived","NoCoverage","Timeout","CompileError","RuntimeError","Ignored"]) as $bad
+      | if ($bad | length) > 0 then error("\($p): mutant status \($bad[0]) — not the report of a finished run") else . end
+      | {key: $p, value: {
+          filePath: $p,
+          detected: ([$m[] | select(.status | IN("Killed","Timeout"))] | length),
+          total: ([$m[] | select(.status | IN("Killed","Timeout","Survived","NoCoverage"))] | length),
+          invalid: ([$m[] | select(.status | IN("CompileError","RuntimeError"))] | length),
+          timedOut: 0,
+          undetectedMutants: [$m[] | select(.status | IN("Survived","NoCoverage")) | entry($p)],
+          timedOutMutants: [] }} ] | from_entries)}'
+[ -n "$js_pkgs" ] && [ -n "$DART_ONLY" ] \
+  && echo "plan-mutation: NOTE —$DART_ONLY apply to the Dart engine only; the JS/TS files run without them." >&2
+while IFS= read -r pkg; do
+  [ -n "$pkg" ] || continue
+  mutate=$(printf '%s\n' "$js_rows" | awk -F'\t' -v p="$pkg" '$1 == p { print $2 }' | paste -sd, -)
+  prefix="$pkg/"; slug=$(printf '%s' "$pkg" | tr -c 'A-Za-z0-9._-' '_')
+  [ "$pkg" = . ] && { prefix=""; slug=root; }
+  js_report="$pkg/reports/mutation/mutation.json"
+  js_keep="${TMPDIR:-/tmp}/plan-mutation-stryker-$slug.json"
+  stryker="$root/$(find_up "$pkg" node_modules/.bin/stryker)"
+  ver=$(jq -r '.version // "?"' "$(find_up "$pkg" node_modules/@stryker-mutator/core/package.json)" 2>/dev/null)
+  echo "plan-mutation: Stryker $ver in $pkg, concurrency $WORKERS: $mutate"
+  rm -f "$js_report"
+  # shellcheck disable=SC2046
+  ( cd "$pkg" && "$stryker" run --mutate "$mutate" --reporters json,progress-append-only \
+      --concurrency "$WORKERS" --cleanTempDir always \
+      $([ -n "$TIMEOUT_GIVEN" ] && printf -- '--timeoutMS %s' "$(( MUTANT_TIMEOUT * 1000 ))") ) 2>&1 \
+    | tee "$out/stryker.log"
+  if [ ! -s "$js_report" ]; then
+    # From its first ERROR line, not the tail: a failed dry run ends in a stack
+    # trace that names Stryker's internals, while the cause (the test error) is
+    # logged above it.
+    first=$(grep -n -m1 'ERROR' "$out/stryker.log" 2>/dev/null | cut -d: -f1)
+    cat >&2 <<EOF
+plan-mutation: STRYKER DID NOT RUN in $pkg. Nothing was measured — this is not a
+low score, not a pass, and not a result of any kind. Its output from the first error:
+
+$( if [ -n "$first" ]; then sed -n "${first},$(( first + 19 ))p" "$out/stryker.log"; else tail -20 "$out/stryker.log"; fi 2>/dev/null | sed 's/^/  /')
+
+This gate reads reports/mutation/mutation.json; a Stryker config that sets
+\`jsonReporter.fileName\` elsewhere ends here too.
+EOF
+    exit 2
+  fi
+  mv -f "$js_report" "$js_keep"
+  rmdir "$pkg/reports/mutation" "$pkg/reports" 2>/dev/null
+  KEPT="${KEPT:+$KEPT }$js_keep"
+  req=$(printf '%s' "$mutate" | tr , '\n' | jq -R . | jq -sc .)
+  jq --arg prefix "$prefix" --argjson req "$req" "$STRYKER_TO_REPORT" "$js_keep" > "$out/js.json" 2> "$out/js.err" || {
+    cat >&2 <<EOF
+plan-mutation: Stryker's report for $pkg cannot be graded. Nothing was measured
+for its files:
+
+$(sed 's/^/  /' "$out/js.err")
+
+The report is at $js_keep.
+EOF
+    exit 2
+  }
+  jq -s '.[0] + {files: (.[0].files + .[1].files)}' "$out/report.json" "$out/js.json" > "$out/merged.json" \
+    && mv -f "$out/merged.json" "$out/report.json"
+done <<<"$js_pkgs"
+elapsed=$(( $(date +%s) - started ))
+
 # EVERY FILE WE ASKED ABOUT HAS TO APPEAR IN THE REPORT.
 #
 # `jq -e` above proves the report is parseable JSON, not that it contains
@@ -780,8 +983,15 @@ fi
 eff_timeout=$(jq -r '.mutantTimeoutSeconds // empty' "$out/report.json")
 baseline_s=$(jq -r '.baselineSeconds // empty' "$out/report.json")
 selected=$(jq -r 'if .selectedByCoverage == true then "yes" else empty end' "$out/report.json")
-budget_line="${eff_timeout}s per mutant (floor ${MUTANT_TIMEOUT}s${baseline_s:+, baseline ${baseline_s}s})"
-[ -n "$selected" ] && budget_line="up to ${budget_line}, tests and budget selected by coverage"
+budget_line=""
+if [ -n "$dart_files" ]; then
+  budget_line="${eff_timeout}s per mutant (floor ${MUTANT_TIMEOUT}s${baseline_s:+, baseline ${baseline_s}s})"
+  [ -n "$selected" ] && budget_line="up to ${budget_line}, tests and budget selected by coverage"
+fi
+if [ -n "$js_pkgs" ]; then
+  js_budget="Stryker's timeout ($( [ -n "$TIMEOUT_GIVEN" ] && echo "timeoutMS $(( MUTANT_TIMEOUT * 1000 ))" || echo "its config's timeoutMS" ) over each mutant's expected time)"
+  budget_line="${budget_line:+Dart $budget_line; JS/TS }$js_budget"
+fi
 
 rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MIN_MUTANTS" '
   .files | to_entries[] | .value as $v
@@ -825,7 +1035,7 @@ printf '%-18s %5s %8s %8s %9s  %s\n' VERDICT SCORE MUTANTS INVALID TIMEDOUT FILE
 printf '%s\n' "$rows" | awk -F'\t' '{ s = ($2 == "-") ? "  n/a" : sprintf("%4s%%", $2);
   printf "%-18s %5s %8s %8s %9s  %s\n", $6, s, $3, $4, $5, $1 }'
 echo "plan-mutation: elapsed ${elapsed}s."
-echo "plan-mutation: raw engine report — $REPORT_KEEP (every field, including any this table does not render)."
+echo "plan-mutation: raw engine report(s) — $KEPT (every field, including any this table does not render)."
 
 surv=$(jq -r '.files | to_entries[] | .value.undetectedMutants[]?
   | "  • \(.filePath | split("/") | last):\(.line):\(.column)  \(.operatorName) — \(.description)"' "$out/report.json")
@@ -857,6 +1067,24 @@ byop=$(jq -r '[.files[].undetectedMutants[]?.operatorName] | group_by(.)
       q["ternary_swap"]                    = "the branch is unpinned"
       q["switch_expression_arm_swap"]      = "the arm mapping is unpinned"
       q["null_coalescing_deletion"]        = "the fallback is unpinned"
+      # StrykerJS mutator names
+      q["BlockStatement"]                  = "nothing asserts these lines ran"
+      q["ConditionalExpression"]           = "the guard true/false choice is unpinned"
+      q["EqualityOperator"]                = "the boundary is unpinned"
+      q["LogicalOperator"]                 = "which operand decides is unpinned"
+      q["ArithmeticOperator"]              = "the arithmetic result is unasserted"
+      q["AssignmentOperator"]              = "the assigned result is unasserted"
+      q["UnaryOperator"]                   = "the sign or negation is unasserted"
+      q["UpdateOperator"]                  = "the step direction is unasserted"
+      q["BooleanLiteral"]                  = "the boolean value is unasserted"
+      q["StringLiteral"]                   = "the string value is unasserted"
+      q["ArrayDeclaration"]                = "the array contents are unasserted"
+      q["ObjectLiteral"]                   = "the object contents are unasserted"
+      q["OptionalChaining"]                = "the null path is unpinned"
+      q["MethodExpression"]                = "which method is called is unpinned"
+      q["CallExpression"]                  = "nothing asserts the call happened"
+      q["ArrowFunction"]                   = "the function result is unasserted"
+      q["Regex"]                           = "the pattern is unpinned"
     }
     { printf "  %3s  %-34s %s\n", $1, $2, ($2 in q) ? q[$2] : "(unrecognised operator)" }'
 }
@@ -925,12 +1153,12 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
     printf "| %s | %s | %s | %s | %s | `%s` |\n", v, s, $3, $4, $5, $1 }'
   if [ -n "$surv" ]; then
     printf '\n<details><summary>Surviving mutants</summary>\n\n'
-    printf '%s\n' "$surv" | sed 's|^  • |- `|; s|  \([a-z_]*\) — |` — `\1` — |'
+    printf '%s\n' "$surv" | sed 's|^  • |- `|; s|  \([A-Za-z_]*\) — |` — `\1` — |'
     printf '\n</details>\n'
   fi
   if [ -n "${timed:-}" ]; then
     printf '\n<details><summary>Timed-out mutants — never answered, excluded from the score</summary>\n\n'
-    printf '%s\n' "$timed" | sed 's|^  • |- `|; s|  \([a-z_]*\) — |` — `\1` — |'
+    printf '%s\n' "$timed" | sed 's|^  • |- `|; s|  \([A-Za-z_]*\) — |` — `\1` — |'
     printf '\n</details>\n'
   fi
 } > "$REPORT"
@@ -940,7 +1168,7 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 # even on this one. Same reason `archivist/references/notion-kb.md §No repo
 # pointers` keeps navigation out of the KB: the artefact has to stand alone.
 echo "plan-mutation: report section — $REPORT"
-echo "plan-mutation: raw engine report — $REPORT_KEEP"
+echo "plan-mutation: raw engine report(s) — $KEPT"
 
 # LOW-SIGNAL BLOCKS. It means "not measured", and a row that was not measured is
 # not a pass; an exit 0 on it leaves that to prose. Measured twice on one real suite: a sign-in widget

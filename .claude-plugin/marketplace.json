@@ -23,7 +23,7 @@
     },
     {
       "name": "flutter-toolkit",
-      "description": "Flutter test gates for a shared machine — plan-test slot budget, per-line coverage and mutation score over the diff",
+      "description": "Flutter test gates for a shared machine — plan-test slot budget, per-line coverage and mutation score over the diff (Dart and JS/TS)",
       "source": "./plugins/flutter-toolkit",
       "category": "development",
       "author": {

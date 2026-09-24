@@ -4,8 +4,8 @@ description: >-
   Three bare-name commands for Flutter/Dart test runs on a shared machine:
   `plan-test` (run a suite inside a machine-wide slot budget), `plan-coverage`
   (every changed line executed, no exemptions) and `plan-mutation`
-  (mutation score over the changed files). `<cmd> --help` for flags.
-  TRIGGER: run tests · coverage · mutation · who is holding a test slot
+  (mutation score over the changed Dart and JS/TS files). `<cmd> --help` for flags.
+  TRIGGER: run tests · coverage · mutation · Stryker · who is holding a test slot
 allowed-tools:
   - Bash
 ---
@@ -31,6 +31,10 @@ allowed-tools:
   A long run goes in the background with output to a file; wait on it with
   `plan-mutation --wait <pid>` (Bash timeout 600000, repeat while it exits 1),
   never `Monitor` or `tail -f` — each copy lives until the run ends.
+  Changed JS/TS package source (`<package>/src|lib/**`) goes to StrykerJS in
+  that package — `@stryker-mutator/core` installed there, tests from its
+  Stryker config, so no test command is needed when no Dart file changed.
+  `--workers n` is its concurrency; the other engine flags are Dart-only.
 
 Coverage grades the reach, mutation grades what was reached; neither replaces
 the other. Slot state: `$HOME/.claude/.flutter-toolkit/slots` (`PLAN_TEST_DIR`).

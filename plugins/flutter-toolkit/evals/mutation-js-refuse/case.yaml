@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-js-refuse
+description: plan-mutation refuses JS/TS files it cannot measure with exit 2 and does not run Stryker — the package does not depend on @stryker-mutator/core, declares it without installing it, a --files path does not exist, or a --files path is in no package.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0; for p in nodep noinst typo loose; do f=web/src/a.ts; [ $p = typo ] && f="web/src/a.ts web/src/b.ts"; [ $p = loose ] && f=tools/x.js; (cd $p && plan-mutation --files $f 2>&1; echo "rc=$?"; [ -e stryker-ran ] && echo "stryker ran") | sed "s/^/$p: /"; done
+  prompt: |
+    Run plan-mutation on JS/TS files in four repos it cannot measure; print the output and exit codes.
+context:
+  scaffold_script: fixture.sh
