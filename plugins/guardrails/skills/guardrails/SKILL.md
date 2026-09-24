@@ -19,7 +19,7 @@ Two rule sets, each read by its own hook. Nothing else.
 | `rules/tool.tsv` | `PreToolUse` on Bash | before a matching command runs |
 | `rules/discipline.md` | `SessionStart` | injected once, binds every turn |
 
-Two more rules are in neither set because they **deny** rather than warn. Each
+Three more rules are in neither set because they **deny** rather than warn. Each
 is its own file so `intercept.sh` keeps its "never blocks" promise — that
 promise is what lets it speak on every command without becoming noise.
 
@@ -27,11 +27,13 @@ promise is what lets it speak on every command without becoming noise.
 |---|---|
 | `hooks/deletion-gate.sh` | deleting through whichever of `rm` / `trash` this machine does NOT have |
 | `hooks/push-gate.sh` | a force-push or a delete aimed at `main` / `master` — force onto any other branch is fine |
+| `hooks/poll-gate.sh` | polling — `gh pr checks --watch`, `gh run watch`, `watch`, a loop that sleeps — in Bash or Monitor; the wait belongs to a one-shot schedule |
 
-A gate earns its place only where the decision needs something the command
-string does not carry: which binary exists here, which branch you are on. That
-is also why neither could be a `permissions` pattern. Anything a warning would
-cover stays a warning.
+A gate earns its place only where a `permissions` pattern cannot do the job:
+the decision needs something the command string does not carry (which binary
+exists here, which branch you are on), or the refusal must name the replacement
+(a bare deny sends the agent to the next form of the same wait). Anything a
+warning would cover stays a warning.
 
 ## The bar
 

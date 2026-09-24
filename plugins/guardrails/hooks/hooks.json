@@ -17,6 +17,15 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/push-gate.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash|Monitor",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/poll-gate.sh"
+          }
+        ]
       }
     ],
     "Stop": [

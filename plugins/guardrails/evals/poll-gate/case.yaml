@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: poll-gate
+description: poll-gate 擋下 `gh pr checks --watch`、`gh run watch`、`watch` 與帶 sleep 的迴圈（exit 2）；一次性查詢、build watcher、不 sleep 的迴圈，以及只在訊息或 heredoc 裡提到的都放行。
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    對 poll-gate hook 餵幾條 polling 指令與幾條正常指令，印出每條的 exit code。
+context:
+  scaffold_script: fixture.sh
