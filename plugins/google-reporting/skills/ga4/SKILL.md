@@ -10,7 +10,7 @@ description: >-
   on that project's own event catalog and files backlog candidates).
   TRIGGER when: "/ga4", "check ga4", "check google analytics", "ga4
   data", "active users", "ga4 events", "analytics numbers", "查一下
-  GA4", "查 google analytics", "使用者數據", "ga4 事件".
+  GA4", "查 google analytics", "使用者數據", "ga4 事件", "user data".
   NOT for: turning usage into product-roadmap candidates (that's a
   project-specific skill layered on top of this — see e.g.
   `ga-triage`); Search Console / SEO / indexing data (that's the

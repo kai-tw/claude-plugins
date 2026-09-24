@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: disk-floor
-description: 可用空間低於門檻時擋 git worktree add；門檻 0、別的指令、或沒有 swap volume 的機器放行。
+description: Blocks git worktree add when free space is below the floor; a floor of 0, other commands, or a machine without a swap volume pass.
 tags: [hooks]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export RECLAIM_SWAP_VOLUME=.; RECLAIM_DISK_FLOOR_GB=999999 "$root/hooks/disk-floor.sh" < add.json; echo "ok_bytes=$(RECLAIM_DISK_FLOOR_GB=0 "$root/hooks/disk-floor.sh" < add.json | wc -c | tr -d " ")"; echo "list_bytes=$(RECLAIM_DISK_FLOOR_GB=999999 "$root/hooks/disk-floor.sh" < list.json | wc -c | tr -d " ")"; echo "noswap_bytes=$(RECLAIM_SWAP_VOLUME=./no-such-volume RECLAIM_DISK_FLOOR_GB=999999 "$root/hooks/disk-floor.sh" < add.json | wc -c | tr -d " ")"
   prompt: |
-    以極高與零的門檻各餵一次 git worktree add，再以極高門檻餵 git worktree list、以及在沒有 swap volume 時餵 git worktree add；印出 hook 的輸出。
+    Feed git worktree add once with a very high floor and once with zero, then git worktree list with a very high floor, and git worktree add with no swap volume; print the hook's output.
 context:
   scaffold_script: fixture.sh

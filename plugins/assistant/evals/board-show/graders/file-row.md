@@ -4,4 +4,4 @@ pattern: '^\{"Slug":"t1","Name":"Local task","Status":"In Progress","Stage":"Rev
 flags: m
 arm: with-only
 ---
-檔案型任務版回傳該列。
+The file task board returns the row.

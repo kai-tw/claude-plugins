@@ -4,4 +4,4 @@ pattern: '^busy: rc=1$'
 flags: m
 arm: with-only
 ---
-上限到了 run 還在，回 1 叫它再等一次；PLAN_TEST_SLOTS=0 也沒擋下它，證明 --wait 不占 slot。
+Run still alive at the limit returns 1 to wait again; PLAN_TEST_SLOTS=0 did not block it, proving --wait takes no slot.

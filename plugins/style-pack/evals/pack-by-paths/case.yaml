@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: pack-by-paths
-description: --paths 依副檔名選語言檔：.ts 與 .mjs 只帶 js.md，不帶 dart.md，母法在前。
+description: --paths picks language files by extension — .ts and .mjs bring only js.md, not dart.md, with the charter first.
 tags: [style-pack]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: style-pack --paths lib/a.ts lib/b.mjs
   prompt: |
-    印出審查 lib/a.ts 與 lib/b.mjs 該引用的撰寫法規則。
+    Print the style-code rules a review of lib/a.ts and lib/b.mjs should cite.
 context:
   scaffold_script: fixture.sh

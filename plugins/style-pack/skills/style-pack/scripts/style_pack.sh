@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# style-pack — print the 撰寫法母法 (rules/index.md) plus the language files a diff
+# style-pack — print the style-code charter (rules/index.md) plus the language files a diff
 # needs, to stdout, so a reviewer in any plugin loads one version of the rules.
 #
-# Usage: style-pack [dart|js …]            母法 + the named language files
-#        style-pack --paths <file…>        母法 + the languages those extensions map to
+# Usage: style-pack [dart|js …]            charter + the named language files
+#        style-pack --paths <file…>        charter + the languages those extensions map to
 #        style-pack --help
 # Extension map (the only copy): .dart → dart · .cs → csharp · .js .mjs .cjs .jsx .ts .tsx → js.
 # Exit 2 = unknown language or extension, nothing printed.

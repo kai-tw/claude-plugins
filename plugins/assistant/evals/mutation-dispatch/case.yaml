@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-dispatch
-description: 派 mutation runner 的規範寫明等法（plan-mutation --wait）與拒跑或中止時回報、不改 pubspec.yaml 也不改範圍重跑——只禁 polling 不給等法，runner 會自己開 Monitor 與 tail -f。
+description: The rules for dispatching a mutation runner state how to wait (plan-mutation --wait) and to report a refusal or an abort, neither editing pubspec.yaml nor rerunning with a changed scope — forbidding polling without giving a way to wait, the runner opens Monitor and tail -f on its own.
 tags: [cloud]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: f="$root/skills/assistant/references/cloud-dispatch.md"; grep -c "plan-mutation --wait" "$f" | sed "s/^/wait=/"; grep -c "跑完而改 .pubspec.yaml." "$f" | sed "s/^/pubspec=/"; grep -c "印出 .ABORTED. 時" "$f" | sed "s/^/abort=/"
+    EVAL_CMD: f="$root/skills/assistant/references/cloud-dispatch.md"; grep -c "plan-mutation --wait" "$f" | sed "s/^/wait=/"; grep -c "edit .pubspec.yaml. to get the run through" "$f" | sed "s/^/pubspec=/"; grep -c "prints .ABORTED., report the message" "$f" | sed "s/^/abort=/"
   prompt: |
-    查 cloud-dispatch.md 派 mutation runner 的段落有沒有寫等法、拒跑時是否禁止改 pubspec.yaml，以及中止時是否要求回報。
+    Check whether the section of cloud-dispatch.md on dispatching a mutation runner states how to wait, whether it forbids editing pubspec.yaml on a refusal, and whether it requires a report on an abort.
 context:
   scaffold_script: fixture.sh

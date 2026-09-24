@@ -51,16 +51,16 @@ deny() { printf '%s\n' "$1" >&2; exit 2; }
 
 if command -v trash >/dev/null 2>&1 || [ -x /usr/bin/trash ]; then
   uses_rm "$cmd" && deny \
-"🛡️ guardrails — 這台機器有 \`trash\`，所以刪除走它：\`/usr/bin/trash -v <targets…>\`。
+"🛡️ guardrails — this machine has \`trash\`, so deletion goes through it: \`/usr/bin/trash -v <targets…>\`.
 
-\`rm\` 不可回復，而 \`trash\` 可以。（同卷宗的 trash 在清空前不會釋放磁碟空間；要真的
-騰出空間，最後一步是人自己在 Finder 按 ⌘⇧⌫，shell 做不到。）"
+\`rm\` cannot be undone; \`trash\` can. (Trash on the same volume frees no disk space until
+emptied; to actually free space, the last step is a human pressing ⌘⇧⌫ in Finder — the shell cannot.)"
 else
   printf '%s' "$cmd" | grep -qE "${POS}trash[[:space:]]" && deny \
-"🛡️ guardrails — 這台機器**沒有** \`trash\`（\`command -v trash\` 為空），用 \`rm\`。
+"🛡️ guardrails — this machine has **no** \`trash\` (\`command -v trash\` is empty); use \`rm\`.
 
-擋下來而不是讓它跑，是因為 \`trash … 2>/dev/null\` 在這裡刪不掉任何東西，卻跟成功
-長得一模一樣——2026-09-02 就這樣讓一個竄改測試誤判為通過。"
+Blocked rather than run because \`trash … 2>/dev/null\` deletes nothing here yet looks
+exactly like success — on 2026-09-02 that made a tamper test read as passed."
 fi
 
 exit 0

@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-approved 且 CI 綠的 PR 沒有待辦。
+An approved PR with green CI has no to-do.

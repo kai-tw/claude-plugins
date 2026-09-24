@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-只提到字樣的指令沒有輸出、exit 0。
+A command that only mentions the words produces no output and exits 0.

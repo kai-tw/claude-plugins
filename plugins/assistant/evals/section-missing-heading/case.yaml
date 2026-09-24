@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: section-missing-heading
-description: 不存在的 heading → exit 1 並列出現有 headings。
+description: A heading that does not exist → exit 1, listing the headings present.
 tags: [asst-section]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-section get body.md "Problem"; echo "exit=$?"
   prompt: |
-    印出 body.md 的 `## Problem` 一節。若該節不存在，說明沒有並列出檔內實際有哪些 `## ` 節；印出工具的 exit code。
+    Print the `## Problem` section of body.md. If it does not exist, say so and list which `## ` sections the file actually has; print the tool's exit code.
 context:
   scaffold_script: fixture.sh

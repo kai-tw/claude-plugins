@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-建議指令原樣保留參數。
+The suggested command keeps the arguments unchanged.

@@ -16,7 +16,7 @@ class LabelMapper {
 SRC
 cat > scout.md <<'REPORT'
 ## Facts
-| # | 斷言 | 證據 |
+| # | Claim | Evidence |
 |---|---|---|
 | F1 | `LabelMapper.titleOf` 回傳名稱 | lib/label_mapper.dart:4 |
 | F2 | `LabelMapper.subtitleOf` 已用來區分同一項目下的多筆紀錄 | lib/label_mapper.dart:7-8 |

@@ -4,4 +4,4 @@ pattern: '^over=2$'
 flags: m
 arm: with-only
 ---
-超過總數直接拒絕。
+More than the total is rejected outright.

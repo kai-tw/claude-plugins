@@ -328,7 +328,7 @@ function bodyFromFile(dbKey, resolvedBody, filePath, rowLabel) {
 }
 
 // ── half-width punctuation in CJK prose ──────────────────────────────────────
-// 「逗號請用全形」, checked at the moment a body is about to become a Notion page.
+// The full-width-punctuation rule, checked at the moment a body is about to become a Notion page.
 //
 // WARNS, never fails. Measured against real page bodies in both projects: after
 // masking, the survivors split into unambiguous violations (`(NEW，搬移＋分群)`)
@@ -373,7 +373,7 @@ function warnHalfWidth(raw, label) {
   });
   if (!hits.length) return;
   console.error(`⚠ ${label}: ${hits.length} half-width punctuation mark(s) touching CJK`
-    + ` — 繁體中文 prose uses ，。：；！？（）:`);
+    + ` — Traditional Chinese prose uses ，。：；！？（）:`);
   for (const h of hits.slice(0, 12))
     console.error(`    ${h.line}:${h.col}  ${h.ch} → ${h.want}   ${h.text}`);
   if (hits.length > 12) console.error(`    … ${hits.length - 12} more`);

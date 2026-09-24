@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: reply-language
-description: 中文對話裡回覆退回英文時，Stop hook 整則擋下、要求用中文重寫；英文放在 code block、英文對話、沒有對話語系時不擋。
+description: When a reply in a Chinese conversation falls back to English, the Stop hook blocks it whole and asks for a Chinese rewrite; English inside a code block, an English conversation, and no recorded conversation locale are not blocked.
 tags: [hooks]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh "$root"
   prompt: |
-    設定對話語系後對 stop.sh 餵幾則回覆，印出輸出。
+    Set a conversation locale, feed stop.sh several replies, and print the output.
 context:
   scaffold_script: fixture.sh

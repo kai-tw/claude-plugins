@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-沒有 swap volume（Linux、雲端 VM）時門檻不成立，放行。
+With no swap volume (Linux, cloud VMs) the floor does not apply, so it passes.

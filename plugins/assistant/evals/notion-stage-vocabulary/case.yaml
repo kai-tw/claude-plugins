@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: notion-stage-vocabulary
-description: SKILL.md 看板 Stage 對應用到的 7 個 label 都在內嵌 tasklist schema 的 Stage 選項裡。
+description: All 7 labels of SKILL.md's board Stage mapping are among the Stage options of the embedded tasklist schema.
 tags: [asst-notion]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-notion schema tasklist
   prompt: |
-    印出 tasklist DB 的內嵌 schema（不連 Notion），確認 Stage 選項含 Product Plan、Engineering Plan、Design Plan、Implementation、Review、QA、Shipped。
+    Print the tasklist DB's embedded schema (without connecting to Notion) and confirm the Stage options include Product Plan, Engineering Plan, Design Plan, Implementation, Review, QA, Shipped.
 context:
   scaffold_script: fixture.sh

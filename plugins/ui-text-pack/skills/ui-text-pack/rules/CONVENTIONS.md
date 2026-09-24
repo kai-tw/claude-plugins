@@ -1,53 +1,72 @@
-# UI text rules — 立法程序與體例（ui-text-pack plugin）
+# UI text rules — legislative procedure and format (ui-text-pack plugin)
 
-`Read` 本檔，限於新增、修改、合併或刪除一條 UI 文字規則之時。
+`Read` this file only when adding, changing, merging or deleting a UI text rule.
 
-**本包為何.** 使用者可見文字之撰寫法規則庫，讀者為審查器（assistant 之 `text-verifier`
-等），均經 `ui-text-pack` 指令載入，分二層：**母規則（`index.md`，語系與專案中立）**，
-及**語系層（`zh-Hant.md` / `ja.md` / `en.md`）**。所收者，為 founder 手抓得到、而腳本查
-不到之文字判斷——該等判斷一旦不在規則之內，審查器依「無規則可引者不立」即被要求放行，故
-**立法為唯一入口**。
+**What this pack is.** A rulebook for writing user-visible text, read by reviewers
+(assistant's `text-verifier`, etc.), all loaded through the `ui-text-pack` command, in two
+layers: **base rules (`index.md`, locale- and project-neutral)** and the **locale layer
+(`zh-Hant.md` / `ja.md` / `en.md`)**. It holds text judgments the founder catches by hand
+and scripts cannot — once such a judgment is outside the rules, reviewers are required to
+pass it under "no rule to cite, no finding", so **legislation is the only way in**.
 
-**位階與牴觸.** 唯一版本載於 `index.md §位階`。本檔僅重申一事：**無豁免條款**。牴觸僅有
-三種結局（母規則收窄／母規則廢除／專案改字串），全屬修法。
+**Precedence and conflict.** The only version is `index.md §Precedence`. This file restates one
+thing: **no exemption clauses**. A conflict has only three outcomes (narrow the base rule /
+repeal the base rule / the project changes the string), all amendments.
 
-**母法自給自足.** `index.md` 為母法，**除本法自身之條次外，不得指名任何東西**——不指名
-語系檔、不指名審查器、不指名檢查腳本、不指名字串之存放格式（ARB、resx、strings 皆屬命令
-層之事實）。母法只定義**位階**，不指名各層由哪個檔案承載：指名了，該檔一改名或一裁撤，
-母法即失效。
+**The charter is self-contained.** `index.md` is the charter and **must not name anything
+but its own rule numbers** — no locale files, reviewers, check scripts, or string storage
+formats (ARB, resx, strings are regulation-layer facts). The charter defines only
+**precedence**, not which file carries each layer: once named, renaming or removing that
+file breaks the charter.
 
-承載關係寫在本檔：語系層為 `zh-Hant.md` / `ja.md` / `en.md`，命令層為各專案的
-`.claude/rules/` 或該專案自陳之字串法典。
+Which file carries which layer is recorded here: the locale layer is `zh-Hant.md` /
+`ja.md` / `en.md`; the regulation layer is each project's `.claude/rules/` or the string canon
+the project declares.
 
-**入憲要件（母規則置於何處之唯一出口）.** 一條規則入 `index.md` 之要件，為**於所有語系
-下均成立**。「本條於日文下不成立」非屬例外，乃其不應入憲之證明——應下移至語系層。
+**Charter admission (the only test for where a base rule goes).** A rule enters
+`index.md` only if it **holds in every locale**. "This rule does not hold in Japanese" is
+not an exception but proof it does not belong in the charter — move it down to the locale
+layer.
 
-**入庫要件（先過本關，再論體例）.**
-- **腳本查得到者，不收.** 詞彙黑名單、標點形制、半形全形、第二人稱代名詞、驚嘆號與語氣
-  詞、版本號字樣、缺譯之 key——凡以字串比對即可判定者，其歸屬為各專案之檢查腳本與 CI；
-  審查器不重推腳本已決之事，收入本包僅係將判斷預算耗於機械題。
-- **寫不出 `Check:` 者，不收.** 旁觀者查不動之條，係偏好而非規則
-  （`.claude/rules/writing-rules.md`）。
-- **可機械判定而尚無腳本者，應往寫腳本，不得寫為散文.** 其去處為該專案既有之字串檢查腳
-  本；該處係確定性的，且於 CI 即達於作者。
-  推論：語系檔長期將趨近於空——語系層之可判定項幾乎均應為腳本規則，此非漏收，乃分工。
+**Admission criteria (pass these before format).**
+- **Nothing a script can check.** Term blocklists, punctuation form, half- vs full-width,
+  second-person pronouns, exclamation marks and interjections, version-number wording,
+  keys missing translations — anything decidable by string matching belongs to each
+  project's check scripts and CI; reviewers do not re-derive what scripts decided, and
+  admitting it here only spends judgment budget on mechanical questions.
+- **Nothing without a `Check:`.** A rule a bystander cannot verify is a preference, not a
+  rule (`.claude/rules/writing-rules.md`).
+- **Mechanically decidable but not yet scripted: write the script, not prose.** It goes
+  into the project's existing string check script; that is deterministic and reaches the
+  author in CI.
+  Corollary: locale files will tend toward empty over time — nearly every decidable
+  locale-layer item should be a script rule; that is division of labor, not omission.
 
-**體例.**
-- 母規則：`index.md` 一節一條 —— `## U<N> — <title>` + `**Principle:**` 通則一至二句，
-  後接該母規則**跨語系成立**之 sub-check，一條一 bullet：
-  `- **U<N>.k <名>** — Check: <一行判準>. Example: <≤1 句>`。
-  母規則與其 sub-check 均**不帶語系**：出現某語系之詞彙、句型或標點者，即屬語系層。
-- 語系層：同體例，編號帶後綴 `U<N>.k-<tag>`，僅置**該語系特有**之具體化。**語系層之 `k`
-  自成一套，從 1 起算**，與母法同一 `U<N>` 下的 `k` 互不相干。
-- **每條語系 sub-check 應掛於一既有 `U<N>` 之下.** 掛不上者即應修憲：先於 `index.md` 立
-  母規則，再掛。語系檔不得自立母規則。
-- **用詞一律台灣用語、法律用詞.** 禁止用「不得」，義務用「應」，容許用「得」；條件句用
-  「…者，…」，排除用「不在本條之列」；主體稱「本條」。
-- **舉例一律引該語系之實例**，不得以來源語言之句子加註「（中文同此）」代之。
+**Format.**
+- Base rules: one per section in `index.md` — `## U<N> — <title>` + `**Principle:**` one
+  or two sentences of general rule, followed by that base rule's sub-checks that **hold
+  across locales**, one bullet each:
+  `- **U<N>.k <name>** — Check: <one-line test>. Example: <≤1 sentence>`.
+  Base rules and their sub-checks **carry no locale**: one containing a locale's
+  vocabulary, sentence patterns or punctuation belongs to the locale layer.
+- Locale layer: same format, numbered with a suffix `U<N>.k-<tag>`, holding only
+  **that locale's own** concrete criteria. **The locale layer's `k` is its own sequence,
+  starting at 1**, unrelated to the charter's `k` under the same `U<N>`.
+- **Every locale sub-check must attach to an existing `U<N>`.** One that cannot requires
+  amending the charter: first make the base rule in `index.md`, then attach. Locale files
+  must not make their own base rules.
+- **Legal register; Chinese text uses Taiwan usage.** Prohibition `must not`, obligation
+  `must`, permission `may`; conditions `Where …, …`; exclusions `… is outside this rule`;
+  the subject is `this rule`.
+- **Examples always quote that locale's real text**, never a source-language sentence
+  annotated "(same in Chinese)".
 
-**learning 更新程序.**
-1. 先查 `index.md` 有無可掛之母規則。
-2. 有者 → 增一條語系 sub-check 於對應語系檔（或擴充既有條之 `Check:`，不新增項）。
-3. 無者 → 先於 `index.md` 立母規則（應過入憲要件），再掛。
-4. 牴觸者 → 依 `index.md §位階` 之三種結局修法，不得加例外條款。
-5. 過時之條目，逕予刪除，不留「已退役」殘影（歷史在 git）。
+**Learning update procedure.**
+1. First check whether `index.md` has a base rule to attach to.
+2. If it does → add a locale sub-check to the matching locale file (or widen an existing
+   item's `Check:` instead of adding one).
+3. If not → first make the base rule in `index.md` (it must pass charter admission),
+   then attach.
+4. On conflict → amend per the three outcomes in `index.md §Precedence`; do not add exception
+   clauses.
+5. Delete outdated items outright, leaving no "retired" residue (history is in git).

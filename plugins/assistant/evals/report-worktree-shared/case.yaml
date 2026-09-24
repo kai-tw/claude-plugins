@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: report-worktree-shared
-description: agent 在 worktree 裡記的輪次與報告，主樹的 assistant 讀得到。
+description: Rounds and reports an agent records inside a worktree are readable by the assistant in the main tree.
 tags: [asst-report, asst-budget]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: (cd wt && asst-budget spend t fix >/dev/null && echo finding | asst-report put t verify-code); asst-budget show t; asst-report latest t verify-code
   prompt: |
-    在 worktree wt 裡對任務 t 記一次 fix round、存一份 verify-code 報告；回到主樹，印出 t 的計數和最新的 verify-code 報告路徑。
+    Inside worktree wt, record one fix round for task t and file a verify-code report; back in the main tree, print t's counts and the latest verify-code report path.
 context:
   scaffold_script: fixture.sh

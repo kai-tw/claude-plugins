@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-沒有 --yes 就不刪。
+Nothing is deleted without --yes.

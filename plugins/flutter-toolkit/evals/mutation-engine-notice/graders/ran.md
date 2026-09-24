@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-提醒不擋：兩個落後的專案都照常結束（exit 0）。
+The notice does not block: both lagging projects finish normally (exit 0).

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: board-no-adapter
-description: 沒有 adapter → exit 2、指名該寫 adapter，不猜後端。
+description: No adapter → exit 2, naming the adapter to write, without guessing a backend.
 tags: [asst-board]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-board list; echo "exit=$?"
   prompt: |
-    列出這個專案的 board。專案還沒有 .claude/assistant.md。印出工具輸出與 exit code。
+    List this project's board. The project has no .claude/assistant.md yet. Print the tool output and exit code.
 context:
   scaffold_script: fixture.sh

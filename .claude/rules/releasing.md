@@ -1,57 +1,74 @@
-# 出貨規則
+# Shipping rules
 
-- **改動走 branch + draft PR，不直接 commit 到 `main`.** 改 plugin 要附一個在舊版會失敗
-  的 eval case；CI 的 `Evals`（`.github/scripts/run-evals.mjs`）綠了、版號也 bump 完，
-  才 `gh pr ready`——draft 狀態擋的是在 agent 還沒做完時就被合併。
+- **Changes go on a branch + draft PR, never a direct commit to `main`.** A plugin change
+  carries an eval case that fails on the old version; run `gh pr ready` only after CI's
+  `Evals` (`.github/scripts/run-evals.mjs`) is green and the version is bumped — the draft
+  state is what stops a merge while the agent is still working.
 
-- **改了 `plugins/<plugin>/` 的內容就 bump `plugin.json` 的 version.** 消費端的安裝目錄是
-  `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`——**以版本號命名的實體
-  目錄**。同一個版本號裝著兩份不同的內容時，更新有沒有落地無法從外部分辨，而使用者拿到
-  的回饋是「已是最新」。修 bug 用 patch（0.4.0 → 0.4.1），加或改行為用 minor。
-- **push 完不等於生效，而且「更新完」也不等於生效.** marketplace 讀的是 GitHub 上的
-  `kai-tw/claude-plugins`，所以 push 之後要先 `claude plugin marketplace update kai-tw`
-  刷新索引（不刷新，`claude plugin update` 會拿舊索引比對然後誠實地回報「已是最新」，
-  版號還是舊的），再讓消費端跑 `claude plugin update` 把內容複製進 cache。但 **PATH
-  指向哪個版本無法從外部預測**：它在 session 存續期間會變，
-  而且不追蹤安裝——同一個 session 的 transcript 裡依序出現 `0.15.1` → `0.17.0` →
-  `0.19.0`（沒重開、沒跑 `update`，而且跳過了 `0.18.0`），且 `0.19.1` 已進 cache 後它
-  仍解析到 `0.19.0`。刷新的觸發條件不明，從 session 內部看不到。
-  這件事會發生是因為 `bin/` 的 wrapper 是 `exec "$here/../skills/…"`，`$here` 是**它
-  自己的安裝目錄**，不是任何工作目錄——所以解析到哪個版本目錄，就跑哪一版的實作，
-  **腳本、schema、skill 內文、frontmatter 都跟著那一版**，沒有哪一半是即時的。
-  推論的兩條路都不通：安裝紀錄不代表某個 session 吃得到，而 `ListAgents` 的「N 分鐘前
-  啟動」是**重新連線**時間、不是 session 起始（實測：`ListAgents` 說 25 分鐘，transcript
-  的 `birth` 是 17 小時前）。cache 目錄的 mtime 也不是安裝紀錄——裝新版時會連帶動到既有
-  版本目錄的 mtime。
-  最陰的是 wrapper 幾乎不會改：兩版 `bin/<name>` 的 md5 相同、底下的腳本不同，所以 `cmp` wrapper 看起來永遠沒事。**所以一律實查、且要驗實作**
-  （`type -a <name>` 看解析到哪個版本目錄，或看輸出裡的自報版本）。要確定性就重開
-  session。
-- **在 PR 分支上跑 `release.mjs`，第 6–8 步會自己跳過.** marketplace 服務的是預設分支，
-  所以分支上的新版號在合併前裝不進任何地方。腳本偵測到 HEAD 不是預設分支就停在第 5 步，
-  印 `✔ … committed and pushed on <branch> — install after merge` 並列出合併後要補的兩行
-  指令——**那是成功，不是失敗**。合併後才照下一條各補消費端。
-- **`release.mjs` 只更新一個消費端，而它的 `✔ … installed and verified` 只講那一個.**
-  第 6、7 步都以 cwd 解析到的專案為對象；其他啟用了這個 plugin 的專案原地不動，收尾那行
-  也不會提到它們——曾有一次發版印了全綠，另一個消費端卻還停在兩版前。
-  **每個消費端各補一次**：
+- **Changing anything under `plugins/<plugin>/` means bumping `version` in `plugin.json`.**
+  Consumers install into `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` — **a
+  real directory named after the version**. When one version number holds two different
+  contents, nobody outside can tell whether an update landed, and the user is told
+  "already at the latest version". A bug fix is a patch (0.4.0 → 0.4.1); adding or changing
+  behaviour is a minor.
+- **Pushed is not live, and "updated" is not live either.** The marketplace reads
+  `kai-tw/claude-plugins` on GitHub, so after a push first refresh the index with
+  `claude plugin marketplace update kai-tw` (without it, `claude plugin update` compares
+  against the old index and truthfully reports "already at the latest version" with the old
+  number), then have each consumer run `claude plugin update` to copy the content into the
+  cache. But **which version PATH points at cannot be predicted from outside**: it changes
+  during a session and does not follow installs — one session's transcript shows `0.15.1` →
+  `0.17.0` → `0.19.0` in turn (no restart, no `update`, and `0.18.0` skipped), and it still
+  resolved to `0.19.0` after `0.19.1` was in the cache. What triggers the refresh is
+  unknown and invisible from inside the session.
+  It happens because each `bin/` wrapper is `exec "$here/../skills/…"`, where `$here` is
+  **its own install directory**, not any working directory — whichever version directory it
+  resolves to is the implementation that runs, **scripts, schemas, skill text and
+  frontmatter alike**; no half of it is live.
+  Neither inference works: an install record does not mean a given session sees it, and
+  `ListAgents`' "started N minutes ago" is the **reconnect** time, not the session start
+  (measured: `ListAgents` said 25 minutes, the transcript's `birth` was 17 hours earlier).
+  A cache directory's mtime is not an install record either — installing a new version
+  touches the mtime of existing version directories.
+  Worst of all, the wrapper almost never changes: two versions' `bin/<name>` share an md5
+  while the scripts under them differ, so `cmp` on the wrapper always looks fine. **So always
+  check, and check the implementation** (`type -a <name>` for the version directory it
+  resolves to, or the version the output reports about itself). For certainty, restart the
+  session.
+- **On a PR branch, `release.mjs` skips steps 6–8 by itself.** The marketplace serves the
+  default branch, so a new version on a branch cannot be installed anywhere until it merges.
+  When HEAD is not the default branch the script stops after step 5, prints
+  `✔ … committed and pushed on <branch> — install after merge` and lists the two commands
+  to run after the merge — **that is success, not failure**. After the merge, update each
+  consumer as the next rule says.
+- **`release.mjs` updates one consumer, and its `✔ … installed and verified` speaks for that
+  one only.** Steps 6 and 7 target the project the cwd resolves to; every other project
+  with the plugin enabled stays where it was, and the closing line does not mention them —
+  one release printed all green while another consumer sat two versions behind.
+  **Update every consumer once**:
   ```
   cd <project> && claude plugin update <plugin>@<marketplace> --scope project
   ```
-  `install` 對已安裝的 plugin 只印 `already installed` 然後什麼都不做（第二個「失敗長得
-  像成功」），`--scope project` 也不能省，省了會去找 user scope 然後失敗。收尾看
-  `~/.claude/plugins/installed_plugins.json` 裡每個 `projectPath` 的 `version`。
-- **新增 `dependencies` 的版本，消費端要先補裝依賴.** `update` 不會裝新宣告的依賴，
-  缺一個 plugin 就在所有 scope 載入失敗。補裝後以
-  `claude plugin list` 的 `Status` 為準；`release.mjs` 第 8 步只查得到新版本號的安裝。
-- **裸名呼叫自己的腳本.** plugin 的 `bin/` 在啟用時就在 PATH 上；安裝路徑不可從專案
-  相對位置推得、且每次 bump 都會變。寫 `asst-budget`，不要寫 `bash .claude/hooks/…`——
-  後者失敗時只印一行 `No such file or directory`，和「這次沒事做」長得一樣。
-- **Tag 不是人打的，也不要試.** 版本一進 `main`，`plugin-tag` workflow 就照 `plugin.json`
-  建 `<plugin>--v<version>` 並 push。雲端 session 的 GitHub 授權本來就拒絕 push tag
-  （403），而**本機先打 tag 更糟**：workflow 看到 tag 已存在就無事可做，這一版等於沒被
-  標記過。
-- **一個 PR 全程只 bump 一次版號，收尾前才跑.** Tag 只在進 `main` 那一刻打（上一條）
-  ——PR 存續期間中途 bump 幾次都不會被 tag、不會被任何消費端看到，只會在 `git log`
-  裡留下一串從未真正存在過的版本。改動確定收斂、真的要送出這個 PR 時才跑一次
-  `release.mjs`。同一個 plugin 還有未合併的 PR 時，後續改動加進那個 PR：另開一個
-  疊在上面的 PR 會再 bump 一次，多出一個版本、多一輪消費端更新。
+  `install` on an installed plugin prints `already installed` and does nothing (a second
+  "failure that looks like success"), and `--scope project` cannot be dropped — without it
+  the command looks in user scope and fails. Finish by reading each `projectPath`'s
+  `version` in `~/.claude/plugins/installed_plugins.json`.
+- **A version that adds `dependencies` needs the consumer to install them first.** `update`
+  does not install newly declared dependencies, and one missing plugin fails the load in
+  every scope. After installing, trust the `Status` column of `claude plugin list`;
+  `release.mjs` step 8 only sees installs of the new version number.
+- **Call your own scripts by bare name.** A plugin's `bin/` is on PATH once it is enabled;
+  the install path cannot be derived from the project and changes with every bump. Write
+  `asst-budget`, not `bash .claude/hooks/…` — the latter fails with a single
+  `No such file or directory` line that looks just like "nothing to do this time".
+- **Tags are not made by hand; do not try.** Once a version reaches `main`, the
+  `plugin-tag` workflow creates `<plugin>--v<version>` from `plugin.json` and pushes it.
+  Cloud sessions' GitHub credentials refuse tag pushes anyway (403), and **tagging locally
+  first is worse**: the workflow finds the tag already there and does nothing, so the
+  version is never really tagged.
+- **Bump a PR's version once, at close-out.** The tag is made only when the version reaches
+  `main` (previous rule) — bumps in the middle of a PR are never tagged or seen by any
+  consumer; they only leave a trail of versions in `git log` that never existed. Run
+  `release.mjs` once, when the change has settled and the PR is really going out. While a
+  plugin still has an unmerged PR, add later changes to that PR: a second PR stacked on it
+  bumps again, adding a version and another round of consumer updates.

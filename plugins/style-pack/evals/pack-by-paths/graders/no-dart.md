@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-dart 語言檔不在輸出裡。
+The dart language file is not in the output.

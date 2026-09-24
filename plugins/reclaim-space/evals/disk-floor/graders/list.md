@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-worktree list 不受影響。
+worktree list is unaffected.

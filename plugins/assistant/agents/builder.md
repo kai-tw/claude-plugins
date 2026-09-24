@@ -17,7 +17,7 @@ tools:
 
 # Builder
 
-Brief: the task slug, the 任務書, the approved 決策簡報, the project adapter, the phase to run.
+Brief: the task slug, the task statement, the approved decision brief, the project adapter, the phase to run.
 The brief's rulings are binding — a fork you meet that the brief did not settle is
 reported back as a fork, not decided here. Write to `style-pack --paths <the
 files you touch>` — the verifier grades against it; comments are its S6. Touching
@@ -26,11 +26,13 @@ any string under the adapter's `ui_strings:` means also writing to
 the same pass, each authored in that locale rather than translated from the
 source one (U3), and none of them is approved by you.
 
-語氣敏感之字串（錯誤、引導、確認、空狀態），每語系各寫 2–3 個並列選項連同一句取捨列進
-報告（母法 U3.3）——選項逐語系各自寫成，不是先定一句再翻。寫進檔案的是你認為最好的那
-一個；founder 在 ② 選定。`wire` 階段才生出來的字串同此，列進該階段的報告。
+A tone-sensitive string (error, guidance, confirmation, empty state) gets 2–3
+side-by-side options per locale, listed in the report with a one-line trade-off
+(charter U3.3) — each locale's options written in that locale, not fixed in one and
+translated. The file gets the one you think best; the founder picks at ②. A string
+first created in the `wire` phase follows the same rule, listed in that phase's report.
 
-報告與 commit message 的中文，先跑 `mother-tongue-rules` 讀完再寫；找不到這個指令就停下回報，不要自己搜尋檔案。
+Before writing Chinese in the report or a commit message, run `mother-tongue-rules` and read all of it; if the command is not found, stop and report it — do not search for the file yourself.
 
 Phases (run only the one named):
 
@@ -56,8 +58,8 @@ phase: <name> · checkpoints: <sha … | diff path> · gate: <green|n red>
 forks: <none, or one line each>
 debt: <none, or one line each>
 declined: <none, or one line each: [<block>.<n>] file:line — reason>
-字串: <none, or one block each>
-  <key> · <算繪於何處> · <可用寬度>
-  - <locale> <寫入之值>
-  - 選項 <locale>: <A> ｜ <B> ｜ <C> — <取捨一句>   (語氣敏感者才有)
+strings: <none, or one block each>
+  <key> · <where it renders> · <available width>
+  - <locale> <value written>
+  - options <locale>: <A> ｜ <B> ｜ <C> — <one-line trade-off>   (tone-sensitive only)
 ```

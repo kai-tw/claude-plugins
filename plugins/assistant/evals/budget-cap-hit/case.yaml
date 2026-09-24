@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: budget-cap-hit
-description: 第 3 次 fix spend 撞 cap 2：印 CAP HIT、exit 1。
+description: The 3rd fix spend hits cap 2: prints CAP HIT, exit 1.
 tags: [asst-budget]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: for i in 1 2 3; do asst-budget spend demo fix; done; echo "exit=$?"
   prompt: |
-    對任務 demo 連續記 3 次 fix round（每輪都用預算工具記一次）。第 3 次應該被擋下；印出工具每次的輸出和最後一次的 exit code。
+    Record 3 fix rounds in a row for task demo (one budget-tool record per round). The 3rd should be blocked; print the tool's output each time and the last exit code.
 context:
   scaffold_script: fixture.sh

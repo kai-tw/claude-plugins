@@ -4,4 +4,4 @@ pattern: '^rc=1$'
 flags: m
 arm: with-only
 ---
-有缺口時擋下。
+Blocks when there is a gap.

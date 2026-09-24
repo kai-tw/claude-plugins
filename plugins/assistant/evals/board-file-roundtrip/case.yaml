@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: board-file-roundtrip
-description: file 後端：建 row → 改 Stage → 放簡報 → 歸檔到 kb → list 看到該 row。
+description: file backend: create a row → change Stage → file the brief → archive to kb → list shows the row.
 tags: [asst-board]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-board create t1 "Name=Trash restore" && asst-board set t1 Stage=Review && asst-board brief t1 brief.md && asst-board archive t1 archive.md && asst-board list && ls docs/decisions .claude/.assistant/tasks/t1
   prompt: |
-    這個專案沒有 Notion，adapter 說 board 用本機檔。為任務 t1（Trash restore）建一行、Stage 設 Review、把 brief.md 存進去、把 archive.md 歸檔，然後列出 board 與產生的檔案。
+    This project has no Notion; the adapter says the board is a local file. For task t1 (Trash restore), create a row, set Stage to Review, file brief.md, archive archive.md, then list the board and the files produced.
 context:
   scaffold_script: fixture.sh

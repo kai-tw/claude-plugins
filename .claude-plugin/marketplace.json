@@ -45,7 +45,7 @@
     },
     {
       "name": "style-pack",
-      "description": "The founder's cross-project 撰寫法 — 母法 S1–S15 plus Dart/JS language files, printed by `style-pack` for any reviewer",
+      "description": "The founder's cross-project style code — a language-neutral charter (S1–S16) plus Dart, C# and JS language files, printed by `style-pack` for any reviewer to grade a diff against",
       "source": "./plugins/style-pack",
       "category": "development",
       "author": {
@@ -56,7 +56,7 @@
     },
     {
       "name": "ui-text-pack",
-      "description": "The founder's cross-project 使用者可見文字撰寫法 — a locale-neutral 母法 (U1–U5) plus zh-Hant / ja / en locale files, printed by `ui-text-pack` for any reviewer to grade UI strings and their translations against",
+      "description": "The founder's cross-project rules for writing user-visible text — a locale-neutral charter (U1–U5) plus zh-Hant / ja / en locale files, printed by `ui-text-pack` for any reviewer to grade UI strings and their translations against",
       "source": "./plugins/ui-text-pack",
       "category": "development",
       "author": {

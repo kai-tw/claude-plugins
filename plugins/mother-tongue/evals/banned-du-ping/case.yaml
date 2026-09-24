@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: banned-du-ping
-description: 回覆寫了「讀屏」時 Stop hook 擋下並給出台灣說法；「閱讀屏東」與 backtick 引用不算。
+description: The Stop hook blocks a reply that writes 讀屏 (Mainland term for "screen reader") and offers the Taiwanese term; 閱讀屏東 and a backtick-quoted mention do not count.
 tags: [hooks]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh "$root"
   prompt: |
-    對 stop.sh 餵三則中文回覆（用了「讀屏」、寫到「閱讀屏東」、以 backtick 引用），印出輸出。
+    Feed stop.sh three zh-TW replies (one using 讀屏, one containing 閱讀屏東, one quoting it in backticks) and print the output.
 context:
   scaffold_script: fixture.sh

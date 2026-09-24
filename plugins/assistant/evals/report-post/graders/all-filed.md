@@ -4,4 +4,4 @@ pattern: '^files=.*scout-1\.md.*verify-code-1\.md.*verify-coverage-1\.md.*verify
 flags: m
 arm: with-only
 ---
-沒貼上的報告照樣歸檔。
+Reports not posted are filed anyway.

@@ -13,6 +13,6 @@ run bad-while   $'while true\ndo\n  curl -s localhost:3000 && break\n  sleep 1\n
 run ok-checks   'gh pr checks 16'
 run ok-builder  'dart run build_runner watch'
 run ok-for      'for f in *.md; do wc -l "$f"; done'
-run ok-message  'git commit -m "guardrails：禁 gh pr checks --watch 與 sleep 迴圈"'
-run ok-heredoc  $'git commit -F - <<\'EOF\'\nwhile true; do sleep 5; done 不准再出現\nEOF'
+run ok-message  'git commit -m "guardrails: ban gh pr checks --watch and sleep loops"'
+run ok-heredoc  $'git commit -F - <<\'EOF\'\nwhile true; do sleep 5; done must not appear again\nEOF'
 SH

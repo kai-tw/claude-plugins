@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-wait
-description: plan-mutation --wait 一次呼叫就擋到 run 結束（上限 PLAN_MUTATION_WAIT 秒），不占 slot；還在跑回 1、結束回 0、run 被砍而留下 marker 回 3。
+description: plan-mutation --wait blocks in one call until the run ends (at most PLAN_MUTATION_WAIT seconds) and takes no slot; returns 1 if still running, 0 when ended, 3 if the run was killed and left its marker.
 tags: [plan-mutation]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_SLOTS=0; plan-mutation --wait; echo "none: rc=$?"; sleep 30 & p=$!; PLAN_MUTATION_WAIT=1 plan-mutation --wait $p; echo "busy: rc=$?"; kill $p; bash run.sh & sleep 1; s=$SECONDS; plan-mutation --wait; echo "ended: rc=$? t=$((SECONDS-s))"; echo "pid: 999999" > .mutation-in-progress; plan-mutation --wait 2>&1; echo "killed: rc=$?"
   prompt: |
-    分別在沒有 run、run 還在跑、run 正常結束、run 被砍而留下 marker 四種情況下跑 plan-mutation --wait，印出各自的結束碼。
+    Run plan-mutation --wait in four cases: no run, run still going, run ended normally, run killed leaving its marker. Print each exit code.
 context:
   scaffold_script: fixture.sh

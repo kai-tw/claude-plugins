@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-已是最新時不出聲。
+Quiet when already current.

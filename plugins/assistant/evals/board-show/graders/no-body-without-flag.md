@@ -4,4 +4,4 @@ pattern: '^file_lines=1$'
 flags: m
 arm: with-only
 ---
-沒有 --body 時只回一行。
+Without --body it returns one line.

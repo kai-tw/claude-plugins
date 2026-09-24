@@ -1,13 +1,21 @@
-# 寫規則的規則
+# Rules for writing rules
 
-適用本 repo 所有 skill / agent / rules 檔的編寫與修改。讀者永遠是 fresh-context agent：
-它只看得到檔案此刻寫什麼，看不到你為什麼改、也讀不到上一版。
+Applies to writing or changing any skill, agent or rules file in this repo. The reader is
+always a fresh-context agent: it sees only what the file says now, not why you changed it,
+and never the previous version.
 
-- **最小行數、最小字數.** 一條規則講一件事，一句能講完就不寫兩句。WHY 只在「不寫就會被
-  合理地違反」時留，且壓成同一句裡的子句，不另起段落。
-- **刪就刪乾淨.** 移除一個機制、一個 agent、一段舊行為時，連同所有指涉一併刪除。不留
-  「X 已退役」「舊做法是 Y，現在改成 Z」這類殘影——fresh context 讀到只會不知道該信哪一版。
-  歷史在 git。
-- **一個行為只有一個版本.** 同一行為寫在多處（launcher / role skill / rules）時，數字與
-  條件必須逐字一致；改一處就得改全部，否則先合併成一處、其餘改為引用路徑。
-- **可查證才是規則.** 旁觀者查不動的那條不是規則，是偏好——刪掉或改寫成可查證的判準。
+- **English only.** The repo is public: every file, commit message and PR is in English.
+  Chinese stays only where it is the content — mother-tongue's `locales/zh-TW/`, Chinese
+  test data, and trigger phrases that match a Chinese-speaking user's prompt.
+- **Fewest lines, fewest words.** One rule says one thing; never two sentences where one
+  will do. Keep a WHY only when the rule would otherwise be reasonably broken, and fold it
+  into a clause of the same sentence, not a paragraph of its own.
+- **Delete cleanly.** When a mechanism, an agent or an old behaviour goes, every reference
+  to it goes too. No "X is retired" or "it used to be Y, now it is Z" residue — a fresh
+  reader cannot tell which version to believe. History lives in git.
+- **One behaviour, one version.** When the same behaviour is written in several places
+  (launcher / role skill / rules), numbers and conditions must match word for word;
+  changing one means changing all, or first merge them into one place and point the rest
+  at its path.
+- **A rule is what can be checked.** A rule an onlooker cannot check is a preference —
+  delete it or rewrite it as a checkable criterion.

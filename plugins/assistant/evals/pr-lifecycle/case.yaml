@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: pr-lifecycle
-description: asst-pr open 一律開 draft 且可重複呼叫；ready 在未 push、tree 不乾淨、驗證報告缺漏或早於 HEAD 時拒絕，齊了才轉 ready。
+description: asst-pr open always opens a draft and can be called repeatedly; ready refuses while unpushed, with a dirty tree, or with verify reports missing or older than HEAD, and turns ready only once all are in place.
 tags: [asst-pr]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; asst-pr ready x wt; echo "unpushed=$?"; asst-pr open x wt --title T; asst-pr open x wt; echo "creates=$(grep -c "pr create" gh.log)"; asst-pr ready x wt; echo "noreports=$?"; (cd wt && echo r | asst-report put x verify-code >/dev/null && echo r | asst-report put x verify-coverage >/dev/null && echo r | asst-report put x verify-text >/dev/null); touch -t 202001010000 wt/.claude/.assistant/reports/x/verify-code-1.md; asst-pr ready x wt; echo "stale=$?"; (cd wt && echo r | asst-report put x verify-code >/dev/null); echo x > wt/stray; asst-pr ready x wt; echo "dirty=$?"; git -C wt clean -fq; asst-pr ready x wt; echo "ready=$?"; cat gh.log
   prompt: |
-    在一個有本地 remote 與假 gh 的 worktree 上，依序跑 asst-pr 的 open 與 ready，逐步補齊條件，印出每一步的輸出與結束碼。
+    On a worktree with a local remote and a fake gh, run asst-pr open and ready in turn, meeting the conditions step by step, and print each step's output and exit code.
 context:
   scaffold_script: fixture.sh

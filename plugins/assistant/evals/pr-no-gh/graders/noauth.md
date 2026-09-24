@@ -4,4 +4,4 @@ pattern: '^noauth=2$'
 flags: m
 arm: with-only
 ---
-gh 沒登入時 exit 2。
+gh not signed in → exit 2.

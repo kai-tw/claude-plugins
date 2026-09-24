@@ -4,4 +4,4 @@ pattern: '^ok-heredoc=0$'
 flags: m
 arm: with-only
 ---
-check.sh 跑到最後一條——另外兩個 grader 在沒有輸出時也會通過，這條防它空轉。
+check.sh reached its last line — the other two graders also pass on empty output; this one keeps them from passing idle.

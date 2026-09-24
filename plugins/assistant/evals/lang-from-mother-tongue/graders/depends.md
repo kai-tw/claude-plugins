@@ -4,4 +4,4 @@ pattern: '^mother-tongue$'
 flags: m
 arm: with-only
 ---
-assistant 宣告依賴 mother-tongue。
+assistant declares a dependency on mother-tongue.

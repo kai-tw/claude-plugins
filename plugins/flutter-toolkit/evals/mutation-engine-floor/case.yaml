@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-engine-floor
-description: pubspec.lock 解析到 dart_mutants 0.3.0 時，plan-mutation 不跑、以 exit 2 擋下，說明舊版會把 flutter_tools 暫存目錄留在系統暫存區、塞滿磁碟，並要求 0.3.1。
+description: When pubspec.lock resolves dart_mutants 0.3.0, plan-mutation does not run and blocks with exit 2, explaining that the old version leaves flutter_tools scratch directories in the system temp area until the disk fills, and requires 0.3.1.
 tags: [plan-mutation]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; plan-mutation --files lib/a.dart -- flutter test; echo "rc=$?"
   prompt: |
-    在 lock 檔解析到 dart_mutants 0.3.0 的專案裡跑 plan-mutation，印出輸出與結束碼。
+    Run plan-mutation in a project whose lock file resolves dart_mutants 0.3.0; print the output and exit code.
 context:
   scaffold_script: fixture.sh

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: report-latest-empty
-description: latest 取數字最大的一輪（10 在 9 之後）；沒有報告與空報告都 exit 1。
+description: latest takes the highest-numbered round (10 after 9); no report and an empty report both exit 1.
 tags: [asst-report]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: for i in 1 2 3 4 5 6 7 8 9 10; do echo r$i | asst-report put t verify-code >/dev/null; done; asst-report latest t verify-code; asst-report latest t scout; echo "none=$?"; asst-report put t scout </dev/null; echo "empty=$? scout_files=$(asst-report list t | grep -c scout)"
   prompt: |
-    對任務 t 存 10 份 verify-code 報告，印出最新那份的路徑；再查 scout 報告（還沒有）、試著存一份空的 scout 報告，印出兩次的 exit code 和 scout 報告數。
+    File 10 verify-code reports for task t and print the latest one's path; then look up the scout report (none yet), try to file an empty scout report, and print both exit codes and the scout report count.
 context:
   scaffold_script: fixture.sh

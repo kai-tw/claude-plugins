@@ -5,4 +5,4 @@ flags: m
 arm: with-only
 match: not_contains
 ---
-輸出裡不再有要 agent 自己跑的 ntn 查詢指令。
+The output no longer carries an ntn query command for the agent to run itself.

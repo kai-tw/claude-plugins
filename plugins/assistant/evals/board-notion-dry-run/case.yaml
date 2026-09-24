@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: board-notion-dry-run
-description: notion 後端 --dry-run：印出會跑的 asst-notion 指令（含 --root 與 --commit），不寫。
+description: notion backend with --dry-run: prints the asst-notion commands it would run (with --root and --commit), writes nothing.
 tags: [asst-board]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-board set 12345678123456781234567812345678 Stage=Review --dry-run; asst-board create t2 "Name=Sync" --dry-run | head -1
   prompt: |
-    adapter 說 board 在 Notion。用 dry-run 看把頁 12345678123456781234567812345678 的 Stage 改成 Review、以及新建 t2（Sync）會送出什麼指令。
+    The adapter says the board is in Notion. Use dry-run to see what commands would be sent to set page 12345678123456781234567812345678's Stage to Review and to create t2 (Sync).
 context:
   scaffold_script: fixture.sh

@@ -4,4 +4,4 @@ pattern: 'no GitHub remote'
 flags: m
 arm: with-only
 ---
-說出原因是 remote 不在 GitHub。
+States the reason: the remote is not on GitHub.

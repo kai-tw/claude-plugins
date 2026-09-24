@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-直接的 flutter test 被擋。
+A direct flutter test is blocked.

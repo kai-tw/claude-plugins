@@ -79,7 +79,7 @@ for seg in "${segs[@]}"; do
   refs=(); [ ${#targets[@]} -gt 1 ] && refs=("${targets[@]:1}")
 
   if [ "$wildcard" = 1 ] && [ -n "$force" ]; then
-    deny "🛡️ guardrails — \`--all\` / \`--mirror\` 會連 \`main\` 一起改寫，這裡擋下來。要推哪一條就寫哪一條。"
+    deny "🛡️ guardrails — \`--all\` / \`--mirror\` rewrites \`main\` too, so it is blocked here. Name the branch you mean to push."
   fi
 
   if [ ${#refs[@]} -eq 0 ]; then
@@ -87,12 +87,12 @@ for seg in "${segs[@]}"; do
     # pattern is blind to.
     cur="$(git -C "${repo:-$cwd}" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
     if [ -z "$cur" ]; then
-      deny "🛡️ guardrails — 這條 push 沒寫 refspec，而這裡讀不出目前的分支（不是 git repo，或 detached HEAD），所以無法判斷它會不會打到 \`main\`。把分支寫出來：\`git push --force origin <branch>\`。"
+      deny "🛡️ guardrails — this push has no refspec and the current branch cannot be read here (not a git repo, or detached HEAD), so whether it hits \`main\` cannot be judged. Name the branch: \`git push --force origin <branch>\`."
     fi
     printf '%s' "$cur" | grep -qE "$PROTECTED" && deny \
-"🛡️ guardrails — 這條指令會 force 到 \`$cur\`。
+"🛡️ guardrails — this command would force onto \`$cur\`.
 
-它的指令字串裡沒有 \`$cur\` 這個字：沒寫 refspec 時 git 推的是**目前所在的分支**，而你現在就在上面。對分支 force 沒問題，對 \`main\` 不行。"
+\`$cur\` appears nowhere in the command string: with no refspec, git pushes the **current branch**, and you are on it. Forcing a branch is fine; forcing \`main\` is not."
     continue
   fi
 
@@ -101,13 +101,13 @@ for seg in "${segs[@]}"; do
     dst="${ref##*:}"
     case "$dst" in *'$'*|*'`'*)
       [ -n "$force$plus" ] && deny \
-"🛡️ guardrails — 這條 push 帶 force，但目標 \`$dst\` 是變數，這裡展不開，所以判不出它是不是 \`main\`。
+"🛡️ guardrails — this push forces, but its target \`$dst\` is a variable that cannot be expanded here, so whether it is \`main\` cannot be judged.
 
-寫成字面的分支名再跑。判不出來時放行，等於這個閘門不存在。" ;;
+Write the branch name literally and run it again. Letting an unjudgeable push through would make this gate pointless." ;;
     esac
     printf '%s' "$dst" | grep -qE "$PROTECTED" || continue
-    [ -n "$deleting" ] && deny "🛡️ guardrails — 這條指令會**刪掉** remote 的 \`$dst\`。刪 feature 分支沒問題，\`main\` 不行。"
-    deny "🛡️ guardrails — 這條指令會 force 到 \`$dst\`。對分支 force 沒問題，對 \`main\` 不行。"
+    [ -n "$deleting" ] && deny "🛡️ guardrails — this command would **delete** \`$dst\` on the remote. Deleting a feature branch is fine; \`main\` is not."
+    deny "🛡️ guardrails — this command would force onto \`$dst\`. Forcing a branch is fine; forcing \`main\` is not."
   done
 done
 

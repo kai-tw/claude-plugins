@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-其他語言檔不在輸出裡。
+No other language file is in the output.

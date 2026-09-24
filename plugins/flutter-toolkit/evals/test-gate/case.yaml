@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: test-gate
-description: 裸的 flutter test 被擋並指向 plan-test（原樣帶參數）；只是提到字樣的指令放行。
+description: A bare flutter test is blocked and pointed to plan-test (with its arguments unchanged); a command that merely mentions the words passes.
 tags: [hooks]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: "$root/hooks/test-gate.sh" < bare.json; "$root/hooks/test-gate.sh" < mention.json; echo "quiet=$?"
   prompt: |
-    對 test-gate hook 餵兩個指令：一個直接跑 flutter test，一個只是 echo 字樣再跑 plan-test；印出 hook 的輸出。
+    Feed the test-gate hook two commands: one runs flutter test directly, one only echoes the words and then runs plan-test; print the hook's output.
 context:
   scaffold_script: fixture.sh

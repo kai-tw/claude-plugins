@@ -12,12 +12,12 @@ kb:         <dir>                          # board=file: where `asst-board archi
 gate:       <command>                      # lint · format · tests in one command; red blocks the checkpoint
 coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, no exemptions
 mutation:   <command or none>              # mutation score on the diff; gate: ≥ 80
-render:     <command or none>              # produces the contact sheet for ② 畫面與字串
+render:     <command or none>              # produces the contact sheet for ② screens and strings
 ui_strings: <glob or none>                 # where the user-visible strings live (ARB); none = this project has none yet, the text leg is skipped
 locales:    <source> [→ <targets…>]       # ui_strings non-none: the source locale and every locale a key must carry
-strings_canon: <path or none>             # the project's own string canon when it sits outside rules: (命令層 under ui-text-pack §位階)
+strings_canon: <path or none>             # the project's own string canon when it sits outside rules: (the regulation layer under ui-text-pack §Precedence)
 strings_check: <command or none>          # the project's mechanical string checks (term blocklist, sort, duplicates); red blocks ③
-cloud_fire: <url or none>                  # routine 的 /fire endpoint，供非互動 shell 開雲端 session；token 只從環境變數讀
-rules:      <path>                         # the project's .claude/rules/ — 命令層 under style-pack §位階; the verifier grades against both
+cloud_fire: <url or none>                  # the routine's /fire endpoint, for opening a cloud session from a non-interactive shell; the token is read only from an environment variable
+rules:      <path>                         # the project's .claude/rules/ — the regulation layer under style-pack §Precedence; the verifier grades against both
 destructive: <list>                        # actions the assistant must ask before (svn commit / revert, force-push, …)
 ```

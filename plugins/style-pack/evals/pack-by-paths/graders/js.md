@@ -4,4 +4,4 @@ pattern: 'S[0-9]+\.[0-9]+-js'
 flags: m
 arm: with-only
 ---
-js 語言檔在輸出裡。
+The js language file is in the output.

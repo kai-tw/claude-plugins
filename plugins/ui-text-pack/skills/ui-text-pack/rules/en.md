@@ -1,21 +1,24 @@
-# 使用者可見文字 — English 語系層
+# User-visible text — English locale layer
 
-載入條件：`locales` 含 en。每條應掛於母法之一既有 `U<N>` 下；掛不上者，應先修憲
-（`CONVENTIONS.md`）。
+Loads when: `locales` includes en. Every item must attach to an existing `U<N>` of the base
+law; one that cannot must first amend the charter (`CONVENTIONS.md`).
 
-## U1 — 一個字串之寫法，由它算繪之位置決定
+## U1 — How a string is written is decided by where it renders
 
-- **U1.1-en 完整句收句點，標籤不收句尾標點** — Check: 該值為完整句者，是否以 `.` 收尾？
-  為標籤、按鈕、標題者，是否不帶句尾標點？二者互易，違反本條。
+- **U1.1-en Full sentences end with a period; labels take no ending punctuation** — Check:
+  Where the value is a full sentence, does it end with `.`? Where it is a label, button or
+  title, does it carry no ending punctuation? Swapping the two violates this rule.
 
-## U2 — 失敗之訊息，應載明發生何事、現處何狀態、下一步為何
+## U2 — A failure message must state what happened, the current state, and the next step
 
-- **U2.1-en 能力之欠缺用 `couldn't` / `can't`，`failed` 僅用於具名程序** — Check: 該句
-  所述為某事做不成者，是否用 `couldn't` / `can't`？以 `failed` 述一般性失敗者，違反
-  本條——`failed` 保留給使用者叫得出名字之程序（`Sign-out failed`）。
+- **U2.1-en Inability uses `couldn't` / `can't`; `failed` only for named procedures** —
+  Check: Where the sentence says something could not be done, does it use `couldn't` /
+  `can't`? Using `failed` for a general failure violates this rule — `failed` is reserved
+  for procedures the user can name (`Sign-out failed`).
 
-## U3 — 每一語系各自以母語寫成
+## U3 — Each locale is written natively
 
-- **U3.1-en 要求以祈使句直述，`Please` 僅用於請使用者重做剛失敗之事** — Check: 該要求是
-  否以動詞起首（`Try again`、`Check your connection`）？凡要求皆冠 `Please` 者，違反
-  本條：英文介面之禮貌來自句子本身，不來自副詞。
+- **U3.1-en Requests are plain imperatives; `Please` only when asking the user to redo what
+  just failed** — Check: Does the request open with a verb (`Try again`, `Check your
+  connection`)? Prefixing every request with `Please` violates this rule: politeness in an
+  English UI comes from the sentence itself, not from an adverb.

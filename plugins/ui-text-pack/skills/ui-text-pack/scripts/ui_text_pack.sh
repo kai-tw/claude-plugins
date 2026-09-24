@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# ui-text-pack — print the 使用者可見文字撰寫法母法 (rules/index.md) plus the locale
+# ui-text-pack — print the charter of user-visible text (rules/index.md) plus the locale
 # files a change needs, to stdout, so a reviewer in any plugin loads one version
 # of the rules.
 #
-# Usage: ui-text-pack [zh-Hant|ja|en …]     母法 + the named locale files
-#        ui-text-pack --paths <file…>       母法 + the locales those ARB filenames carry
+# Usage: ui-text-pack [zh-Hant|ja|en …]     charter + the named locale files
+#        ui-text-pack --paths <file…>       charter + the locales those ARB filenames carry
 #        ui-text-pack --help
 # Locale tags are matched case-insensitively and `_` = `-` (zh_Hant = zh-hant).
 # ARB filenames parse as <prefix>_<tag>.arb (app_zh_Hant.arb → zh-Hant).
-# A tag with no locale file is NOT an error — the 母法 still binds; the tag is
+# A tag with no locale file is NOT an error — the charter still binds; the tag is
 # named on stderr. Exit 2 = a path that is not an ARB filename, nothing printed.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd); rules="$here/../rules"
@@ -28,7 +28,7 @@ else
   tags=("$@")
 fi
 # Resolve each tag to a rules file, case-insensitively, `_` = `-`. Unmatched tags
-# are collected rather than fatal: no locale file means the 母法 alone binds.
+# are collected rather than fatal: no locale file means the charter alone binds.
 files=(); missing=()
 for t in ${tags[@]+"${tags[@]}"}; do
   norm=$(printf '%s' "$t" | tr 'A-Z_' 'a-z-')
@@ -42,4 +42,4 @@ for t in ${tags[@]+"${tags[@]}"}; do
 done
 cat "$rules/index.md"
 printf '%s\n' ${files[@]+"${files[@]}"} | awk 'NF && !seen[$0]++' | while read -r f; do echo; cat "$f"; done
-[ ${#missing[@]} -eq 0 ] || echo "ui-text-pack: no locale file for: ${missing[*]} (母法 only)" >&2
+[ ${#missing[@]} -eq 0 ] || echo "ui-text-pack: no locale file for: ${missing[*]} (charter only)" >&2

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: section-append
-description: 只在 §Deferred Items 末尾加一行，其他節一字不動。
+description: Adds one line at the end of §Deferred Items only; every other section stays unchanged to the character.
 tags: [asst-section]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-section append body.md "Deferred Items" - <<<"- fix 2/2 殘留：空 map 的 putAll 未測 · task T-12" && cat body.md
   prompt: |
-    在 body.md 的 `## Deferred Items` 末尾加一行 `- fix 2/2 殘留：空 map 的 putAll 未測 · task T-12`。只能動那一節；其他節必須一字不變。有可用的 section 編輯工具就用它。完成後印出整份 body.md。
+    Append the line `- fix 2/2 殘留：空 map 的 putAll 未測 · task T-12` at the end of `## Deferred Items` in body.md. Touch only that section; every other section must stay unchanged to the character. Use a section-editing tool if one is available. Then print the whole body.md.
 context:
   scaffold_script: fixture.sh

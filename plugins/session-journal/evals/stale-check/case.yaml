@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: stale-check
-description: 執行中的版本落後 marketplace 索引時，Stop hook 以頂層 decision / reason 擋下並附上更新指令；同一 session 只說一次，stop_hook_active 為 true 或版本相同時不出聲。
+description: When the running version lags the marketplace index, the Stop hook blocks with top-level decision / reason and includes the update command; it speaks once per session and stays quiet when stop_hook_active is true or the versions match.
 tags: [hooks]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh "$root"
   prompt: |
-    在假的安裝目錄下（執行中 0.1.0、索引 0.2.0）對 stale-check hook 餵幾次 Stop 輸入，印出輸出。
+    In a fake install directory (running 0.1.0, index 0.2.0), feed the stale-check hook several Stop inputs and print the output.
 context:
   scaffold_script: fixture.sh

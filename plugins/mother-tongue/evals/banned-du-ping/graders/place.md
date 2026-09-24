@@ -4,4 +4,4 @@ pattern: '^place=\[\]$'
 flags: m
 arm: with-only
 ---
-「閱讀屏東」跨詞邊界，不算。
+閱讀屏東 spans a word boundary and does not count.

@@ -4,4 +4,4 @@ pattern: '^killed: rc=3$'
 flags: m
 arm: with-only
 ---
-marker 裡的 pid 已死而 marker 還在：回 3，tree 可能還留著 mutant。
+The marker's pid is dead but the marker remains: returns 3, since the tree may still hold a mutant.

@@ -1,92 +1,112 @@
-# Style rules — Dart / Flutter 法律層
+# Style rules — Dart / Flutter statute layer
 
-載入條件：diff 含 `.dart`。每條應掛於母法之一既有 `S<N>` 下；掛不上者，應先修憲
-（`CONVENTIONS.md`）。
+Loaded when: the diff contains `.dart`. Each rule must hang under an existing charter
+`S<N>`; if it cannot, amend the charter first (`CONVENTIONS.md`).
 
-## S2 — 名字離開宣告後，應仍可辨其所屬、種類與分類
+## S2 — A name must still reveal its owner, kind and category once it leaves its declaration
 
-- **S2.1-dart 型別名依 `<所屬><概念><種類>` 之序組成，所屬依用途判定** — Check: 該型別
-  （private 亦然）是否以其所屬為首？功能所有者以該功能名；跨功能共用者以命令層所定之一個
-  保留字；因單一平台 API 而存在者以平台名（`Ios` / `Android`），依其用途而非其編譯範圍。
-  概念名詞已含功能名者，不重複前綴。所屬錯置或缺漏者，違反本條。種類詞之詞彙由命令層定之。
-- **S2.2-dart 以 Material / Cupertino 元件名收尾之 widget，應即為該元件** — Check: 名為
-  `…Card`、`…Chip`、`…BottomSheet` 之類者，是否繼承、組合或直接算繪該元件？形似而未使用
-  者，違反母法 S2.6，應改用命令層表中之他詞。以一個帶靜態 `build(context, …)` 之命名空間
-  類別冒充 widget 者，同。
+- **S2.1-dart A type name is ordered `<owner><concept><kind>`, and the owner is decided by
+  purpose** — Check: does the type (private ones too) begin with its owner? A type a feature
+  owns uses that feature's name; one shared across features uses the single reserved word the
+  regulation layer sets; one that exists because of a single platform API uses the platform
+  name (`Ios` / `Android`), by its purpose, not its compile scope. Where the concept noun
+  already contains the feature name, do not repeat the prefix. A misplaced or missing owner
+  violates this rule. The kind-word vocabulary is set by the regulation layer.
+- **S2.2-dart A widget whose name ends in a Material / Cupertino component name must be that
+  component** — Check: does something named `…Card`, `…Chip`, `…BottomSheet` or the like
+  inherit, compose or directly render that component? One that looks alike without using it
+  violates charter S2.6; use another word from the regulation layer's table instead. So does
+  a namespace class with a static `build(context, …)` posing as a widget.
 
-## S3 — 折疊應逐消費點證成
+## S3 — Every collapse must be justified at each consumption point
 
-- **S3.1-dart 可清除之可空欄位，`copyWith` 參數應用 `T? Function()?`** — Check: 該可空
-  欄位之 `copyWith` 是否須表達「清為空」？須而參數宣告為 `T?` 者，違反本條：「未給」與
-  「設為空」抵達時均為 `null`，而 `x ?? this.x` 一律將該歧義解為保留。僅空→有值、不回頭
-  之單調欄位維持 `T?`（無清除情形可資表達，包裹僅屬贅餘）。應用純 Dart 之函式型別，
-  不用 Flutter 之 `ValueGetter`——domain 層不得匯入 Flutter，而可清除之可空欄位正最常
-  出現於該層。
+- **S3.1-dart A clearable nullable field's `copyWith` parameter must be `T? Function()?`** —
+  Check: does the nullable field's `copyWith` need to express "clear to null"? If it does and
+  the parameter is declared `T?`, it violates this rule: "not given" and "set to null" both
+  arrive as `null`, and `x ?? this.x` always resolves that ambiguity as keep. Only monotonic
+  fields that go from null to a value and never back keep `T?` (there is no clear to express;
+  wrapping is mere noise). Use a pure Dart function type, not Flutter's `ValueGetter` — the
+  domain layer must not import Flutter, and clearable nullable fields appear most often in
+  that layer.
 
-## S4 — 持久化之值，其意義不得繫於位置或人工維護
+## S4 — A persisted value's meaning must not depend on position or manual upkeep
 
-- **S4.1-dart `enum` 持久化應用 `toString()`** — Check: 該 `enum` 寫出之形式為何？用
-  `.index` 者，違反母法 S4.1（序列位置）。用 `.name` 者，違反本條：本語言之持久化形式為
-  `toString()`（`Foo.bar`），其型別前綴使儲存值自帶 namespace，而二形式並存時，同一份
-  儲存有二種編碼，讀者非兩端俱讀不能辨其一。其代價依母法 S4.2 載於該 enum 之宣告處：
-  成員或型別更名即為一次資料遷移，且**不得覆寫 `toString()`**——覆寫即改寫儲存格式，
-  而該改寫不出聲。讀取端仍須備一 `wildcard` 分支以退回未知值。
+- **S4.1-dart Persist an `enum` with `toString()`** — Check: what form does the `enum` write
+  out? `.index` violates charter S4.1 (sequence position). `.name` violates this rule: this
+  language's persisted form is `toString()` (`Foo.bar`), whose type prefix makes the stored
+  value carry its own namespace, and with both forms in use, one store holds two encodings
+  that a reader cannot tell apart without reading both ends. Per charter S4.2 the cost is
+  stated at the enum's declaration: renaming a member or the type is a data migration, and
+  **`toString()` must not be overridden** — overriding it rewrites the storage format, and
+  silently. The reader still needs a `wildcard` branch to fall back on unknown values.
 
-## S5 — 中止流程而不出聲者，應載明觸發條件與所跳過之流程
+## S5 — Silently aborting a flow must state the trigger and the flow skipped
 
-- **S5.1-dart fire-and-forget 應以 `unawaited()` 明示** — Check: 該不等待結果之呼叫，是否
-  包在 `unawaited()` 內？裸呼叫者，違反本條——裸呼叫與「忘了 `await`」在原始碼中外觀
-  全同，而 `unawaited()` 使該決定成為一個寫下的字。其理由另依母法 S5.2 載明。
+- **S5.1-dart Fire-and-forget must be explicit with `unawaited()`** — Check: is the call
+  whose result is not awaited wrapped in `unawaited()`? A bare call violates this rule — in
+  source a bare call looks exactly like a forgotten `await`, and `unawaited()` makes the
+  decision a written word. Its reason is stated separately per charter S5.2.
 
-## S6 — 註解應答 WHY，並繫於距其最近之宣告
+## S6 — Comments answer WHY and attach to the nearest declaration
 
-- **S6.1-dart 標記之形制為 `// <tag>: <一行>`** — Check: 該標記是否為行註解、tag 為小寫
-  英數緊接冒號、其後一行同時載明理由與去處？dartdoc（`///`）內之標記違反本條：dartdoc
-  係型別對外之契約，標記係暫時狀態，二者壽命不同。白名單與其掃描器，由命令層列舉
-  （S6.7）。
+- **S6.1-dart A tag takes the form `// <tag>: <one line>`** — Check: is the tag a line
+  comment, is the tag lowercase alphanumeric directly followed by a colon, and does the one
+  line after it give both the reason and where it will be resolved? A tag inside dartdoc
+  (`///`) violates this rule: dartdoc is the type's public contract, a tag is temporary
+  state, and the two have different lifetimes. The whitelist and its scanner are listed by
+  the regulation layer (S6.7).
 
-## S7 — 失敗之處理，應與失敗之種類相稱
+## S7 — Failure handling must match the kind of failure
 
-- **S7.1-dart 邊界換型別應用 `Error.throwWithStackTrace`** — Check: 於 `catch (e, s)` 內
-  轉譯例外時，是否以 `Error.throwWithStackTrace(mapped, s)` 拋出？以 `throw mapped(e)`
-  拋出者，違反本條：`throw` 會將 stack 重設至轉譯所在之行，故 crash reporting 指向邊界，
-  而非實際出錯之 frame。
+- **S7.1-dart Change type at the boundary with `Error.throwWithStackTrace`** — Check: when
+  translating an exception inside `catch (e, s)`, is it thrown with
+  `Error.throwWithStackTrace(mapped, s)`? Throwing it with `throw mapped(e)` violates this
+  rule: `throw` resets the stack to the translation line, so crash reporting points at the
+  boundary, not the frame that actually failed.
 
-## S9 — 資源應有上界，且上界應於寫下之時載明
+## S9 — Resources must be bounded, and the bound stated when written
 
-- **S9.1-dart `compute()` 之 payload 應小於其所省之運算** — Check: 送進 isolate 之
-  payload 有多大？`compute()` 對 payload 作深拷貝，故為省一次廉價運算而運送大型物件圖
-  者，違反本條——其拷貝成本即為新的上界，且該成本不出現在被搬走的那段程式碼裡。
+- **S9.1-dart A `compute()` payload must be smaller than the work it saves** — Check: how
+  large is the payload sent to the isolate? `compute()` deep-copies its payload, so shipping a
+  large object graph to save a cheap computation violates this rule — the copy cost is the
+  new bound, and it does not appear in the code that was moved.
 
-## S10 — 編譯期已記錄之集合，不得以執行期查找繞過
+## S10 — A set recorded at compile time must not be bypassed by runtime lookup
 
-- **S10.1-dart 經 portal 算繪者，不繼承其詞法脈絡** — Check: 該經 portal 算繪之 widget
-  （`showDialog`、`showModalBottomSheet`、`Draggable.feedback`、`OverlayEntry`、任何
-  `Overlay.of(context).insert`），有無讀取一個其宿主並未供應之 `InheritedWidget`？有者，
-  違反本條：它掛在 app 根部的 `Overlay`，故呼叫端與宿主之間的每一層——`BlocProvider`、
-  `Theme`、`Material`、`MediaQuery`、`Directionality`——全數不在。其失敗**僅於執行期
-  顯現**，無編譯錯誤亦無 lint。二條出路，依序：該 widget 完全不讀自己的 `context`，
-  資料與 callback 由呼叫端傳入；或逐一顯式重橋接其子樹確實會讀到的每一層。
-  預設答案是「有」——任何非簡單的 widget 至少讀 `Theme` 與 `Material`。
+- **S10.1-dart What renders through a portal does not inherit its lexical context** — Check:
+  does the widget rendered through a portal (`showDialog`, `showModalBottomSheet`,
+  `Draggable.feedback`, `OverlayEntry`, any `Overlay.of(context).insert`) read an
+  `InheritedWidget` its host does not provide? If so, it violates this rule: it hangs off the
+  app-root `Overlay`, so every layer between the caller and the host — `BlocProvider`,
+  `Theme`, `Material`, `MediaQuery`, `Directionality` — is absent. The failure **shows only at
+  runtime**, with no compile error and no lint. Two ways out, in order: the widget does not
+  read its own `context` at all, with data and callbacks passed in by the caller; or
+  explicitly re-bridge, one by one, each layer its subtree actually reads.
+  The default answer is "yes" — any non-trivial widget reads at least `Theme` and `Material`.
 
-## S11 — 一份狀態應只有一條寫入路徑
+## S11 — A piece of state has exactly one write path
 
-- **S11.1-dart 串流之消費形式應與其壽命相符** — Check: 該串流為一次性（送完即結束）抑或
-  長壽（永不結束）？一次性而以 `.listen()` 消費者，違反本條：再次呼叫時前一個訂閱仍活著，
-  同一份狀態即有二條寫入路徑，而 `cancel` 的樣板永遠不會執行。長壽而以 `await for` 消費
-  者，亦違反本條：迴圈永不返回，其呼叫端（常為建構式）亦永不完成。
-- **S11.2-dart 具通知能力之控制器本身即一個狀態持有者** — Check: 該狀態持有者之欄位中，
-  有無框架所提供之通知型控制器（`TextEditingController`、`ScrollController`、
-  `PageController`、`FocusNode`）？有者，違反母法 S11.3——二個生命週期與二台狀態機就此
-  綁在一起，且任一個都無法單獨測試。控制器應置於擁有該畫面單位之處，隨其建立與釋放，
-  狀態持有者只保有其值。
+- **S11.1-dart How a stream is consumed must match its lifetime** — Check: is the stream
+  one-shot (ends once sent) or long-lived (never ends)? One-shot consumed with `.listen()`
+  violates this rule: on the next call the previous subscription is still alive, so the same
+  state has two write paths, and the `cancel` boilerplate never runs. Long-lived consumed with
+  `await for` also violates this rule: the loop never returns, so its caller (often a
+  constructor) never completes either.
+- **S11.2-dart A notifying controller is itself a state holder** — Check: does the state
+  holder have a framework-provided notifying controller (`TextEditingController`,
+  `ScrollController`, `PageController`, `FocusNode`) among its fields? If so, it violates
+  charter S11.3 — two lifecycles and two state machines get bound together, and neither can be
+  tested alone. The controller belongs with the screen unit that owns it, created and disposed
+  with it; the state holder keeps only its value.
 
-## S16 — 一個物件擁有一項能力，並以其介面為唯一邊界
+## S16 — An object owns one capability, and its interface is the only boundary
 
-- **S16.1-dart 視覺結構與框架元件之插槽相符者，應使用該元件** — Check: 該處是否以
-  `Row` / `Column` / `Stack` 手工拼組出某個框架元件已提供之結構（前置圖示＋標題＋副標、
-  圖示＋標籤＋點按、圓角可點按之浮起面）？是者，違反母法 S16.2——手工版必然漏掉該元件
-  內建的間距、對齊、無障礙、`dense` 模式、主題整合或點按回饋，而這些缺漏無任何工具會
-  出聲。專案設計 token 不構成手刻之理由：框架元件備有覆寫掛勾正為此而設。僅於框架無任何
-  元件容納該形狀時，方得手工拼組。
-
+- **S16.1-dart Where a visual structure matches a framework component's slots, use that
+  component** — Check: does this code hand-assemble with `Row` / `Column` / `Stack` a
+  structure a framework component already provides (leading icon + title + subtitle, icon +
+  label + tap, a rounded tappable raised surface)? If so, it violates charter S16.2 — the
+  hand-made version inevitably misses the component's built-in spacing, alignment,
+  accessibility, `dense` mode, theme integration or tap feedback, and no tool flags these
+  gaps. Project design tokens are no reason to hand-build: the component's override hooks
+  exist precisely for them. Hand-assembly may be used only when no framework component fits
+  the shape.

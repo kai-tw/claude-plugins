@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: pack-csharp
-description: --paths 依副檔名選語言檔：.cs 只帶 csharp.md，不帶 dart.md 或 js.md，母法在前。
+description: --paths picks language files by extension — .cs brings only csharp.md, not dart.md or js.md, with the charter first.
 tags: [style-pack]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: style-pack --paths src/Spins/SpinEngine.cs
   prompt: |
-    印出審查 src/Spins/SpinEngine.cs 該引用的撰寫法規則。
+    Print the style-code rules a review of src/Spins/SpinEngine.cs should cite.
 context:
   scaffold_script: fixture.sh

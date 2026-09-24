@@ -115,7 +115,7 @@ if (errors.length) {
 
 if (create) {
   for (const { name, version, tag, commit } of planned) {
-    git('tag', '-a', tag, '-m', `${name} ${version}\n\n由 plugin-tag workflow 依 plugin.json 自動建立。`, commit);
+    git('tag', '-a', tag, '-m', `${name} ${version}\n\nCreated by the plugin-tag workflow from plugin.json.`, commit);
     console.log(`  tagged ${tag} at ${commit.slice(0, 7)}`);
   }
 }

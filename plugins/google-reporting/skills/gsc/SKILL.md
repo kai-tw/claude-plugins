@@ -13,7 +13,8 @@ description: >-
   page indexed", "gsc check", "search console check", "indexing
   status", "search performance", "impressions and clicks", "sitemap
   status", "查一下 GSC", "查 search console", "這頁有沒有被收錄",
-  "收錄狀態", "搜尋成效", "曝光跟點擊", "sitemap 狀態", "GSC 週查".
+  "收錄狀態", "搜尋成效", "曝光跟點擊", "sitemap 狀態", "GSC 週查",
+  "weekly GSC check".
   NOT for: requesting indexing/recrawl of a URL — no API exists for
   this (see "What this is not" below), it is always a manual click in
   the Search Console UI; changing site verification or adding/removing

@@ -39,9 +39,9 @@ polls || exit 0
 # exit 2, not a JSON deny: only exit 2 is documented to take precedence over a
 # `permissions.allow` rule. The reason goes to stderr, which is what Claude is shown.
 cat >&2 <<'MSG'
-🛡️ guardrails — 不准 polling：反覆查外部狀態（`--watch`、`gh run watch`、`watch`、帶 `sleep` 的迴圈）會讓 agent 在等待期間一直運作、一直計費。
+🛡️ guardrails — no polling: re-checking outside state (`--watch`, `gh run watch`, `watch`, a loop with `sleep`) keeps the agent running and billed for the whole wait.
 
-- 主線：用 CronCreate 排一次性回查（`recurring: false`，挑幾分鐘後），然後結束這一輪。PR 的 CI 先用 ccd_pr 的 get_status 查一次。
-- sub-agent：無法替自己排程。在報告裡寫明在等什麼、何時該回查，然後結束，交給主線排程。
+- Main thread: schedule a one-shot re-check with CronCreate (`recurring: false`, a few minutes out), then end this turn. For a PR's CI, check once first with ccd_pr's get_status.
+- Sub-agent: cannot schedule for itself. State in the report what it is waiting on and when to re-check, then end, and leave the scheduling to the main thread.
 MSG
 exit 2

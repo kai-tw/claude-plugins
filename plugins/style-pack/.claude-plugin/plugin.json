@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "style-pack",
-  "version": "1.4.2",
-  "description": "The founder's cross-project 撰寫法: a language-neutral 母法 (S1–S16) plus Dart, C# and JS language files, printed by `style-pack` for any reviewer to grade a diff against.",
+  "version": "1.4.3",
+  "description": "The founder's cross-project style code: a language-neutral charter (S1–S16) plus Dart, C# and JS language files, printed by `style-pack` for any reviewer to grade a diff against.",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"

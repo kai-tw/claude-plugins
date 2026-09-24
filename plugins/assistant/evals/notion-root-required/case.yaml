@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: notion-root-required
-description: 沒給 --root 就拒寫，不猜預設 root、不呼叫 ntn。
+description: No --root → refuses to write, guesses no default root, never calls ntn.
 tags: [asst-notion]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-notion set tasklist 12345678123456781234567812345678 Stage=Review; echo "exit=$?"
   prompt: |
-    把 tasklist 頁 12345678123456781234567812345678 的 Stage 改成 Review（dry-run 即可）。這個專案沒有宣告 notion_root，不要自己猜；印出工具的輸出和 exit code。
+    Set the Stage of tasklist page 12345678123456781234567812345678 to Review (dry-run is fine). This project declares no notion_root; do not guess one. Print the tool's output and exit code.
 context:
   scaffold_script: fixture.sh

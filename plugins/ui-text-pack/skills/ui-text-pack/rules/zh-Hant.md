@@ -1,40 +1,51 @@
-# 使用者可見文字 — 繁體中文（台灣）語系層
+# User-visible text — Traditional Chinese (Taiwan) locale layer
 
-載入條件：`locales` 含 zh-Hant 或以其為鏡像之語系標籤。每條應掛於母法之一既有 `U<N>`
-下；掛不上者，應先修憲（`CONVENTIONS.md`）。
+Loads when: `locales` includes zh-Hant or a locale tag that mirrors it. Every item must
+attach to an existing `U<N>` of the charter; one that cannot must first amend the base
+law (`CONVENTIONS.md`).
 
-## U1 — 一個字串之寫法，由它算繪之位置決定
+## U1 — How a string is written is decided by where it renders
 
-- **U1.1-zhHant 完整句收句號，標籤不收任何句尾標點** — Check: 該值為完整句者，是否以
-  「。」收尾？為標籤、按鈕、標題、欄位名者，是否不帶句尾標點？二者互易，違反本條。
-- **U1.2-zhHant 標籤用名詞短語或動賓短語** — Check: 該標籤是否為「儲存空間不足」
-  「新增書籍」此類短語，而非主謂俱全之句子？寫成完整句者，違反母法 U1.1。
+- **U1.1-zhHant Full sentences end with 「。」; labels take no ending punctuation** —
+  Check: Where the value is a full sentence, does it end with 「。」? Where it is a label,
+  button, title or field name, does it carry no ending punctuation? Swapping the two
+  violates this rule.
+- **U1.2-zhHant Labels are noun phrases or verb-object phrases** — Check: Is the label a
+  phrase like 「儲存空間不足」 「新增書籍」, not a sentence with both subject and predicate?
+  Written as a full sentence, it violates charter U1.1.
 
-## U2 — 失敗之訊息，應載明發生何事、現處何狀態、下一步為何
+## U2 — A failure message must state what happened, the current state, and the next step
 
-- **U2.1-zhHant 失敗句之序為「發生什麼，現狀，請下一步」** — Check: 該失敗句是否以
-  「<動作>失敗」或「無法<動作>」起首，中段述現狀或原因，末段以「請<動詞>」收？三段以全形
-  逗號連接，末收句號。Example: 「登出失敗，目前仍在登入狀態，請再試一次。」
+- **U2.1-zhHant Failure sentences run: what happened, current state, 「請」 next step** —
+  Check: Does the failure sentence open with 「<動作>失敗」 or 「無法<動作>」, give the
+  current state or cause in the middle, and end with 「請<動詞>」? The three parts are
+  joined by full-width commas and end with a full stop. Example:
+  「登出失敗，目前仍在登入狀態，請再試一次。」
 
-## U3 — 每一語系各自以母語寫成
+## U3 — Each locale is written natively
 
-- **U3.1-zhHant 請求句以「請」起首，狀態句不得以「請」起首** — Check: 該句要求使用者動
-  手者，是否以「請」加動詞起首？僅報告狀態而冠以「請」者，違反母法 U1.2。
-- **U3.2-zhHant 不得留有來源語言之語序標記** — Check: 句中有無「被…所」「一個…的」
-  「對…進行」「做出…的動作」「這是一個…」此類轉寫痕跡？有者，違反母法 U3.1，應改以中文
-  慣行語序重寫。
-- **U3.3-zhHant 未完成以結果補語寫足** — Check: 所述動作已開始而未完成者，是否寫成
-  「還沒…完」「沒有…完成」，而非「還沒…」？中文以結果補語標完成，漏了即把進度講成零，
-  違反母法 U3.6。Example: 上傳到一半應為「檔案還沒上傳完」；「檔案還沒上傳」讀作一個
-  檔案都沒送出。
-- **U3.4-zhHant 動詞之受詞不得留給使用者回填** — Check: 句中動詞所需之受詞，是否寫出？
-  省略者，違反母法 U3.5。Example: 「連上網路後會繼續上傳」，非「連上網路後會繼續」。
-- **U3.5-zhHant 一句一事，同一主題之子句相鄰** — Check: 該值有無把互不相干之二事塞進
-  同一句，或把同一主題之子句拆散於句首與句尾？有者，違反母法 U3.2。Example:
-  「儲存空間不足，檔案沒有存進去。請先清出空間再試一次。」——現狀與原因同句，下一步另起。
+- **U3.1-zhHant Requests open with 「請」; state sentences must not** — Check: Where the
+  sentence asks the user to act, does it open with 「請」 plus a verb? Prefixing 「請」 to a
+  mere state report violates charter U1.2.
+- **U3.2-zhHant No source-language word-order markers** — Check: Does the sentence contain
+  transcription traces such as 「被…所」「一個…的」「對…進行」「做出…的動作」「這是一個…」?
+  Where it does, it violates charter U3.1; rewrite it in natural Chinese word order.
+- **U3.3-zhHant Unfinished is spelled out with a resultative complement** — Check: Where an
+  action has begun but not finished, is it written 「還沒…完」「沒有…完成」 rather than
+  「還沒…」? Chinese marks completion with a resultative complement; leaving it out states
+  the progress as zero, violating charter U3.6. Example: halfway through an upload, write
+  「檔案還沒上傳完」; 「檔案還沒上傳」 reads as not a single file sent.
+- **U3.4-zhHant A verb's object must not be left for the user to fill in** — Check: Is the
+  object the verb needs written out? Omitting it violates charter U3.5. Example:
+  「連上網路後會繼續上傳」, not 「連上網路後會繼續」.
+- **U3.5-zhHant One thing per sentence; clauses on one topic stay adjacent** — Check: Does
+  the value cram two unrelated things into one sentence, or split clauses on one topic
+  between the start and end of the sentence? Where it does, it violates charter U3.2.
+  Example: 「儲存空間不足，檔案沒有存進去。請先清出空間再試一次。」 — state and cause in
+  one sentence, the next step in its own.
 
-## U4 — 一個概念，全 app 一個詞
+## U4 — One concept, one word across the app
 
-- **U4.1-zhHant 引用他畫面之標籤，以「」框之** — Check: 句中援引其他畫面、設定項或分頁
-  之名稱時，是否逐字採用該畫面於本語系顯示之標籤並以「」框住？Example:
-  「請從「探索」重新嘗試。」
+- **U4.1-zhHant Quote another screen's label in 「」** — Check: When the sentence cites
+  another screen, setting or tab by name, does it use that screen's label in this locale
+  verbatim, enclosed in 「」? Example: 「請從「探索」重新嘗試。」

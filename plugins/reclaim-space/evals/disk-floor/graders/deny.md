@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-門檻過高時擋下並報出門檻。
+Blocks when the floor is too high and reports the floor.

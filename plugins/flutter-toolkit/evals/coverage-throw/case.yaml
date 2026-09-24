@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: coverage-throw
-description: throw const 沒有 DA 紀錄；branch coverage 的 BRDA 為 0 要算缺口，?? / ?: 的 throw 分支擋下，全部執行過的檔案放行。
+description: throw const has no DA record; a branch-coverage BRDA of 0 counts as a gap, throw branches in ?? / ternary expressions are blocked, and fully executed files pass.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_QA_REPORT_DIR="$PWD"; plan-coverage --files lib/a.dart lib/b.dart lib/c.dart -- bash fake_test.sh; echo "rc=$?"; rm -rf coverage; plan-coverage --files lib/c.dart -- bash fake_test.sh; echo "clean=$?"
   prompt: |
-    用一個會寫出固定 lcov 的假測試指令跑 plan-coverage：先量三個檔案，再只量全部執行過的 lib/c.dart。印出兩次的輸出與結束碼。
+    Run plan-coverage with a fake test command that writes a fixed lcov: first measure three files, then only the fully executed lib/c.dart. Print both outputs and exit codes.
 context:
   scaffold_script: fixture.sh

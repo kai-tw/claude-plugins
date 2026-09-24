@@ -4,4 +4,4 @@ pattern: '^5 rows \(all\)$'
 flags: m
 arm: with-only
 ---
-list --all 第一行先說總共幾列。
+list --all's first line states the total row count.

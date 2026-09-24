@@ -1,24 +1,28 @@
-# 使用者可見文字 — 日本語 語系層
+# User-visible text — Japanese locale layer
 
-載入條件：`locales` 含 ja。每條應掛於母法之一既有 `U<N>` 下；掛不上者，應先修憲
-（`CONVENTIONS.md`）。
+Loads when: `locales` includes ja. Every item must attach to an existing `U<N>` of the base
+law; one that cannot must first amend the charter (`CONVENTIONS.md`).
 
-## U1 — 一個字串之寫法，由它算繪之位置決定
+## U1 — How a string is written is decided by where it renders
 
-- **U1.1-ja 完整句收「。」，標籤不收句尾標點** — Check: 該值為完整句者，是否以「。」
-  收尾？為標籤、按鈕、標題者，是否不帶句尾標點？二者互易，違反本條。
+- **U1.1-ja Full sentences end with 「。」; labels take no ending punctuation** — Check:
+  Where the value is a full sentence, does it end with 「。」? Where it is a label, button or
+  title, does it carry no ending punctuation? Swapping the two violates this rule.
 
-## U2 — 失敗之訊息，應載明發生何事、現處何狀態、下一步為何
+## U2 — A failure message must state what happened, the current state, and the next step
 
-- **U2.1-ja 失敗句以「〜できませんでした」起首，理由以「〜ため」接續，末以請求收** —
-  Check: 該失敗句是否依此序？末段請求以「もう一度お試しください」此類「〜てください」形
-  收之。Example: 「サインアウトできませんでした。まだサインイン中のため、もう一度お試し
-  ください。」
+- **U2.1-ja Failure sentences open with 「〜できませんでした」, give the reason with 「〜ため」,
+  and end with a request** — Check: Does the failure sentence follow this order? The
+  closing request takes the 「〜てください」 form, such as 「もう一度お試しください」. Example:
+  「サインアウトできませんでした。まだサインイン中のため、もう一度お試しください。」
 
-## U3 — 每一語系各自以母語寫成
+## U3 — Each locale is written natively
 
-- **U3.1-ja 全篇丁寧体，要求用「〜てください」，疑問用「〜ますか？」** — Check: 該值是否
-  為丁寧体？以常体（「〜する？」「〜しろ」）寫成者，違反本條——於產品介面讀來粗率。尊敬語
-  與謙譲語不疊用。
-- **U3.2-ja 助詞與語順依日文擇定，不比照來源語言逐句對應** — Check: 將該值回譯為來源語言
-  後，其語序是否與來源語言之句子逐段對齊？對齊者多係轉寫，違反母法 U3.1。
+- **U3.1-ja Polite form (丁寧体) throughout; requests use 「〜てください」, questions
+  「〜ますか？」** — Check: Is the value in 丁寧体? Writing it in plain form (常体:
+  「〜する？」「〜しろ」) violates this rule — it reads as curt in a product UI. Do not stack
+  honorific (尊敬語) and humble (謙譲語) forms.
+- **U3.2-ja Particles and word order are chosen for Japanese, not mapped sentence by
+  sentence from the source language** — Check: Back-translated into the source language,
+  does the value's word order align segment by segment with the source sentence? Alignment
+  usually means transcription, violating charter U3.1.

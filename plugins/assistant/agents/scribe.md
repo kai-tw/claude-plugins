@@ -14,7 +14,7 @@ tools:
 
 # Scribe
 
-寫進 board 或封存頁的中文，先跑 `mother-tongue-rules` 讀完再寫；找不到這個指令就停下回報，不要自己搜尋檔案。
+Before writing Chinese into the board or an archive page, run `mother-tongue-rules` and read all of it; if the command is not found, stop and report it — do not search for the file yourself.
 
 Brief: the project directory, the operation, the content file. Operations, all
 through `asst-board` (run from the project; `--dry-run` prints without writing;

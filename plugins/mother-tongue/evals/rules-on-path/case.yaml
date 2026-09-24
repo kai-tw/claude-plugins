@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: rules-on-path
-description: mother-tongue-rules 以裸名在任何工作目錄印出 zh-TW 的 rules.md；不存在的語系回 1。
+description: mother-tongue-rules, called by bare name from any working directory, prints the zh-TW rules.md; an unknown locale returns 1.
 tags: [bin]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: cd "$(mktemp -d)" && mother-tongue-rules; echo "rules=$?"; mother-tongue-rules xx; echo "missing=$?"
   prompt: |
-    在一個空目錄裡印出中文寫作規則與 exit code，再對不存在的語系 xx 做一次。
+    In an empty directory, print the Chinese writing rules and the exit code, then do it again for the nonexistent locale xx.
 context:
   scaffold_script: fixture.sh

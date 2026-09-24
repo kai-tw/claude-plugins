@@ -42,14 +42,14 @@ while IFS=$'\t' read -r id pat msg src; do
   flag="$flagdir/gr-${sid:-nosid}-${id}.flag"
   [ -f "$flag" ] && continue           # already said this, this turn
   : > "$flag" 2>/dev/null
-  hits="${hits}⚠️  ${id} — ${msg}"$'\n'"    (踩過：${src})"$'\n\n'
+  hits="${hits}⚠️  ${id} — ${msg}"$'\n'"    (Incident: ${src})"$'\n\n'
 done < "$RULES"
 
 [ -z "$hits" ] && exit 0
 
-printf '%s' "🛡️ guardrails — 這個指令命中已知的靜默陷阱：
+printf '%s' "🛡️ guardrails — this command matches a known silent trap:
 
-${hits}不是錯誤，是提醒：這樣寫會拿到一個看起來對的錯答案。改寫，或明知故犯地繼續。" \
+${hits}Not an error, a reminder: written this way it returns a wrong answer that looks right. Rewrite it, or continue knowingly." \
   | jq -cn --rawfile ctx /dev/stdin \
       '{hookSpecificOutput:{hookEventName:"PreToolUse",additionalContext:$ctx}}' 2>/dev/null
 exit 0

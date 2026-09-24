@@ -5,9 +5,9 @@ description: >-
   and a discipline block carried at session start. Use when a correction lands
   that should change what happens next time, when a rule fired and you want to
   know why, or when a rule fires on healthy commands.
-  TRIGGER: 記一條 guardrail · 這個要記起來 · 加一條規則 · 為什麼會擋我 ·
-  add a guardrail rule · why did that fire · guardrails 是什麼 ·
-  this rule is too noisy
+  TRIGGER: add a guardrail rule · remember this · why did that fire · why was
+  I blocked · what are guardrails · this rule is too noisy · 記一條 guardrail ·
+  這個要記起來 · 加一條規則 · 為什麼會擋我 · guardrails 是什麼
 ---
 
 # Guardrails

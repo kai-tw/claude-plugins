@@ -1,426 +1,580 @@
-# 撰寫法母法
+# Style code — charter
 
-本法所收者，為機械檢查判不動、須以判斷認定之撰寫法。
+This charter covers style judgments that mechanical checks cannot decide and that must be
+made by judgment.
 
-**判定模式.** 本法**不自訂級別**——違反本法之級別，由審查程序認定。某條須定級別下限
-者，載於該條之 `Check:`（例：`違反本條者一律 proposed CRITICAL`）。
+**Severity.** This charter **defines no severity levels of its own** — the severity of a
+violation is set by the review procedure. A rule that needs a severity floor states it in its
+`Check:` (e.g. `violations of this rule are always proposed CRITICAL`).
 
-## 位階
+## Precedence
 
-三層，上位優先。**本節為位階規則之唯一版本**，下位法與程序法一律引用本節。
+Three ranks; the higher prevails. **This section is the only version of the precedence
+rules**; lower layers and the procedure file cite it.
 
-| 位階 | 所收 | 權限 |
+| Rank | Contains | Authority |
 |---|---|---|
-| 憲法 | 本法 `S<N>`：所有語言、所有專案均成立之通則 | 唯一得立母規則之處 |
-| 法律 | 語言層：該語言之具體判準，每條掛於一 `S<N>` 之下 | 僅得將母規則**具體化** |
-| 命令 | 專案層：該專案之事實（自家 helper 名、canonical entry point、路徑） | 僅得**加嚴**或**填事實** |
+| Constitution | this charter's `S<N>`: principles that hold in every language and every project | the only place a base rule may be enacted |
+| Statute | language layer: that language's concrete tests, each under one `S<N>` | may only **concretize** a base rule |
+| Regulation | project layer: that project's facts (its own helper names, canonical entry point, paths) | may only **tighten** or **supply facts** |
 
-**牴觸判準.** 二條**能否同時滿足**？能者，合法疊加；不能者，牴觸。
+**Conflict test.** Can the two rules **be satisfied at the same time**? If so, they stack
+lawfully; if not, they conflict.
 
-**無豁免條款.** 牴觸僅有三種結局，全屬修法：母規則收窄（加條件，或下移至法律層）·
-母規則廢除 · 專案改 code。自授例外，乃一項有效主張於提出前即死亡之標準路徑。
+**No exemption clauses.** A conflict has exactly three outcomes, all amendments: narrow the
+base rule (add a condition, or move it down to the statute layer) · repeal the base rule ·
+change the project's code. A self-granted exception is the standard way a valid claim dies
+before it is ever raised.
 
-**審查中遇牴觸之處置.** 該條判 **`無法判定`**，並指名應由何人於何位階修法，另行提起
-修法。非 `passed`，亦非拿作者開刀之 `critical`。
+**Conflict during review.** Grade that rule **`undeterminable`**, name who must
+amend it at which rank, and raise the amendment separately. It is not `passed`, nor a
+`critical` that punishes the author.
 
-**舉證責任.** 主張牴觸者，應**引二條規則原文，並敘明何以不能同時滿足**。「本條於此處
-不好用」係不便，非牴觸——當次仍依上位規則判，另行提起修法。
+**Burden of proof.** Whoever claims a conflict must **quote both rules and explain why they
+cannot both be satisfied**. "This rule is awkward here" is inconvenience, not conflict — grade
+by the higher rule this time and raise the amendment separately.
 
-## 母規則
+## Base rules
 
-**下位法為空，不代表該語言或該專案無規則**——母規則照樣適用。反之，本法未立法之撰寫
-偏好，審查者**不得自行發明為 finding**：無條文不等於交由自由心證。
+**An empty lower layer does not mean that language or project has no rules** — the base
+rules still apply. Conversely, a reviewer **must not invent a finding** from a style
+preference this charter does not legislate: no rule text does not mean free discretion.
 
-## S1 — 層級歸屬
+## S1 — Layer ownership
 
-**Principle:** 一段邏輯屬於何層，由其所依賴之知識決定，非由其所在目錄決定——linter
-稽核得到 import 方向，稽核不到歸屬。
+**Principle:** Which layer a piece of logic belongs to is decided by the knowledge it depends
+on, not by the directory it sits in — a linter can audit import direction, not ownership.
 
-- **S1.1 目錄不生歸屬之效** — Check: diff 新增或移動之檔案，其內容所依賴之知識與所在層
-  是否一致（`domain/` 內不得出現傳輸格式、HTTP 狀態碼、DB 欄位名、UI 語彙）？不一致
-  者，應搬層或改寫，不得以加註解代之（S6.4）。Example: 置於 `domain/` 之 use case 在做
-  HTTP 狀態碼轉譯。
-- **S1.3 orchestration 僅得置於組裝點** — Check: 跨 repository 之順序、重試、fallback，
-  是否僅出現於專案所宣告之組裝點（**組裝點置於何處，係專案事實，屬命令層**）？use case
-  內僅得有一個 domain 決策。Example: use case 依序呼叫二 repository，失敗時改走另一條。
-- **S1.4 宣告之處不得執行** — Check: 該接線檔（註冊、設定、路由表）內，有無一行實際跑起
-  某件事——首次掃描、預熱、開訂閱？有者，違反本條：接線宣告「有什麼」，執行屬啟動流程或
-  屬擁有該工作之物的建構式。
-- **S1.6 使用者可見之文案不得進入狀態層** — Check: 狀態所攜帶者，為錯誤碼／列舉，抑或
-  已成句之文案？屬後者，違反本條：文案一旦烘進狀態即無法隨語言設定重新在地化，且把文案
-  釘在錯誤的層。狀態層發代碼，呈現層翻成文字。
+- **S1.1 Directories do not confer ownership** — Check: for files the diff adds or moves,
+  does the knowledge their content depends on match their layer (no wire formats, HTTP status
+  codes, DB column names or UI vocabulary inside `domain/`)? If not, move it or rewrite it; a
+  comment must not substitute (S6.4). Example: a use case in `domain/` translating HTTP status
+  codes.
+- **S1.3 Orchestration only at the composition point** — Check: do cross-repository ordering,
+  retries and fallbacks appear only at the composition point the project declares (**where
+  that point is, is a project fact in the regulation layer**)? A use case may contain only one
+  domain decision. Example: a use case calls two repositories in order and switches to the
+  other path on failure.
+- **S1.4 Declarations must not execute** — Check: does any line in this wiring file
+  (registration, configuration, route table) actually start something — an initial scan, a
+  warm-up, opening a subscription? If so, it violates this rule: wiring declares what exists;
+  execution belongs to the startup flow or to the constructor of whatever owns the work.
+- **S1.6 User-visible copy must not enter the state layer** — Check: does the state carry an
+  error code / enum, or finished sentences of copy? If the latter, it violates this rule: copy
+  baked into state cannot be re-localized when the language setting changes, and it pins the
+  copy to the wrong layer. The state layer emits codes; the presentation layer turns them into
+  text.
 
-## S2 — 名字離開宣告後，應仍可辨其所屬、種類與分類
+## S2 — A name must still reveal its owner, kind and category once it leaves its declaration
 
-**Principle:** 名字之唯一閱讀場合，在其離開宣告之後——呼叫點、grep 結果、錯誤堆疊均無
-上下文，亦無型別可資判斷。linter 能稽核大小寫與後綴表，不能稽核該名字有無指認任何特定
-事物。型別名由所屬、概念、種類組成：所屬答「誰的」，概念答「哪一個」，種類答「是哪一類
-東西」；型別屬於某一分類之下者，其名應自帶該分類。**違反本條者一律 proposed CRITICAL**：
-更名一次之成本，遠低於一次跨功能碰撞，或一個僅於執行期始顯現之型別錯誤。
+**Principle:** A name is only ever read after it leaves its declaration — call sites, grep
+results and stack traces have no context and no type to go by. A linter can audit casing and
+suffix lists, not whether the name identifies anything specific. A type name consists of
+owner, concept and kind: the owner answers "whose", the concept "which one", the kind "what
+sort of thing"; a type that belongs under a category must carry that category in its name.
+**Violations of this rule are always proposed CRITICAL**: one rename costs far less than one
+cross-feature collision or one type error that surfaces only at runtime.
 
-- **S2.1 通用於任何處之名字，視同未命名** — Check: 將該名字移置另一模組、畫面或功能
-  之下，其所指是否隨之改變？不變者，該名字未指認任何特定事物，應補足其所屬。Example:
-  二功能各有一 `PendingConflict`，呼叫點無從分辨其所屬。
-- **S2.2 名字應述其為何物，不得述其何以重要** — Check: 僅讀名字，可否斷定其為旗標、
-  計數、集合或物件？名字所述為該值之用途或理由者，違反本條。Example: `attention` 持有
-  一徽章元件，其名所述為徽章出現之理由，非該值本身。
-- **S2.3 動作以動詞命名，值以名詞命名；框架已定之動詞，從之** — Check: 該成員是否執行
-  動作（方法、函式、以函式為型別之欄位）？是而以名詞命名者，違反本條；持有或計算值
-  者，方以名詞命名。平台或框架就該操作已定動詞者，應從之——另用同義詞，既讀如另一種
-  操作，亦無從自框架名搜得。框架所定之名（建構、序列化、進入點、運算子）非屬自選，不在
-  本條之列。Example: 一以函式為型別之欄位名為 `count`，每個呼叫點均讀之為一數字。
-- **S2.4 一後綴僅得對應一結構層級** — Check: 該批名字中，同一後綴有無為二種層級所共用？
-  有者，其中一層應改詞：分辨乃後綴存在之唯一理由，橫跨二層即不復發生分辨作用。
-  Example: 一容器與其下五個子項共用同一後綴。
-- **S2.5 形容詞不得為模組名** — Check: 該模組之名所述者，為其職司之工作，抑或其性質之
-  形容？屬後者，違反本條——形容詞不劃定工作範圍，凡性質相近者皆得主張歸入，界線即
-  不可守。
-- **S2.6 名字所宣稱之身分應為真** — Check: 該名字有無借用一個既有概念或既有型別之名
-  （`Cache`、`Queue`、`Repository`、框架元件名）？借用者，該單位是否確實是它——繼承它、
-  組合它，或直接就是它？否者，違反本條：名字立下的契約由讀者在呼叫點兌現，而它兌現不了，
-  且兌現失敗之時已是執行期。應改用一個它做得到的名字。
-- **S2.7 型別名應以種類詞收尾** — Check: 僅讀該型別名（`enum` 亦屬之），能否斷定其為何
-  種類之物（領域實體、失敗、狀態、狀態持有者、資料存取、畫面元件）？不能者，違反本條。
-  種類詞之詞彙，由下位法定之。Example: `Connection` 無從分辨其為連線實體、連線狀態或連線失敗。
-- **S2.8 子型別之名應承襲其上位分類** — Check: 屬於一封閉家族、或同一抽象之諸實作者，
-  其名是否完整保留上位型別之分類詞與種類詞，僅增其自身之區別詞？否者，違反本條——呼叫點
-  見子型別名，應能不查宣告即知其家族；以上位之分類詞搜尋，亦應能找出全家。Example:
-  `ConnectionFailure` 之子型別為 `ConnectionTimeoutFailure`，非 `TimeoutFailure`。
-- **S2.9 同一種類僅得有一個種類詞** — Check: 同一種類之物，有無以二個以上之詞稱之？有者，
-  違反本條——讀者將以為二者種類不同，搜尋其一亦找不全。本條與 S2.4 互為反面。Example:
-  失敗型別 `Failure` 與 `Exception` 並用。
+- **S2.1 A name that fits anywhere is as good as unnamed** — Check: move the name under
+  another module, screen or feature — does what it refers to change? If not, it identifies
+  nothing specific; add its owner. Example: two features each have a `PendingConflict`, and
+  call sites cannot tell whose it is.
+- **S2.2 A name must say what it is, not why it matters** — Check: from the name alone, can
+  you tell whether it is a flag, a count, a collection or an object? A name that states the
+  value's purpose or reason violates this rule. Example: `attention` holds a badge widget; its
+  name states why the badge appears, not what the value is.
+- **S2.3 Actions take verbs, values take nouns; follow verbs the framework has fixed** —
+  Check: does the member perform an action (method, function, function-typed field)? If so
+  and it has a noun name, it violates this rule; only members that hold or compute a value
+  take nouns. Where the platform or framework has fixed a verb for the operation, use it — a
+  synonym both reads as a different operation and cannot be found by searching the
+  framework's name. Names the framework dictates (constructors, serialization, entry points,
+  operators) are not chosen and are outside this rule. Example: a function-typed field named
+  `count`, which every call site reads as a number.
+- **S2.4 One suffix maps to one structural level** — Check: in this batch of names, is one
+  suffix shared by two levels? If so, one level must change its word: distinguishing is the
+  suffix's only reason to exist, and spanning two levels it no longer distinguishes. Example:
+  a container and its five children share one suffix.
+- **S2.5 Adjectives must not be module names** — Check: does the module's name state the work
+  it performs, or describe a quality? If the latter, it violates this rule — an adjective
+  draws no boundary around the work; anything with a similar quality can claim to belong, and
+  the boundary cannot be held.
+- **S2.6 The identity a name claims must be true** — Check: does the name borrow the name of
+  an existing concept or type (`Cache`, `Queue`, `Repository`, a framework component name)? If
+  so, is the unit really that — inheriting it, composing it, or being it directly? If not, it
+  violates this rule: the contract a name makes is redeemed by readers at the call site, this
+  one cannot be redeemed, and the failure comes at runtime. Rename it to something it can
+  live up to.
+- **S2.7 A type name must end in a kind word** — Check: from the type name alone (`enum`s
+  included), can you tell what kind of thing it is (domain entity, failure, state, state
+  holder, data access, UI component)? If not, it violates this rule. The kind-word vocabulary
+  is set by lower layers. Example: `Connection` cannot be told apart as a connection entity,
+  connection state or connection failure.
+- **S2.8 A subtype's name must inherit its parent's category** — Check: do members of a
+  closed family, or implementations of one abstraction, keep the parent type's category word
+  and kind word in full, adding only their own distinguishing word? If not, it violates this
+  rule — a call site seeing the subtype name must know its family without looking up the
+  declaration, and a search for the parent's category word must find the whole family.
+  Example: `ConnectionFailure`'s subtype is `ConnectionTimeoutFailure`, not `TimeoutFailure`.
+- **S2.9 One kind has exactly one kind word** — Check: is one kind of thing called by two or
+  more words? If so, it violates this rule — readers will assume the two are different kinds,
+  and a search for one will not find them all. This rule is the converse of S2.4. Example:
+  failure types using both `Failure` and `Exception`.
 
-## S3 — 折疊應逐消費點證成
+## S3 — Every collapse must be justified at each consumption point
 
-**Principle:** 本條所稱**折疊**，指將狀態多於二之值化約為二元值。折疊係一項**主張**：
-被折去之態，與其所併入之態為同一事。該主張之當否，屬**問題**之性質，非該值之性質——
-同一折疊，對一問句成立，對另一問句得不成立。補一測試不生治癒之效（測試僅凍結當下之
-決定）；一行敘述該折疊之註解僅屬陳述，非屬證成（S6.4）。諸態確不同義者，不得折：
-第三態非雜訊，乃一真實狀態。
+**Principle:** In this rule, **collapsing** means reducing a value with more than two states
+to a binary one. A collapse is a **claim**: the states folded away are the same thing as the
+state they merge into. Whether the claim holds is a property of the **question**, not of the
+value — the same collapse can hold for one question and fail for another. Adding a test does
+not cure it (a test only freezes the current decision); a comment describing the collapse is
+a statement, not a justification (S6.4). Where the states genuinely differ in meaning, they
+must not be collapsed: a third state is not noise but a real state.
 
-- **S3.1 同義性應於每一消費點各別成立** — Check: 被折去之態，在**每一**讀取該值之處，
-  是否均與其所併入之態同義？說不出、或未逐點檢視者，違反本條。Example: 「尚未取得」折為
-  「未離線」，於被動顯示處成立（不作任何宣稱），於會寫入之處則否。
-- **S3.2 折疊之合法性不及於補集** — Check: 該值之否定式有無亦受讀取？有者，否定式應
-  自行重驗，不得援引既有消費點之結論。Example: 「未離線」讀為「已連線」時，係以一無人
-  問得答案之事實，對使用者作出宣稱。
-- **S3.3 儲存與跨層傳遞者，應為未折疊之原值** — Check: 所儲存或跨層傳遞者，為原值，
-  抑或某一消費點折出之二元值？屬後者，違反本條——次一消費點即無從詢問別的問句。
-- **S3.4 面向使用者之不同因由，不得折為一句** — Check: 數個不同的失敗因由，是否共用同一
-  句文案？是者，違反本條——使用者有權知道發生何事，而一句通用文案把「離線」與「無此資料」
-  說成同一件事。亦不得逐字沿用他處之文案：那句描述的是另一個失敗。
-- **S3.5 二態用旗標，三態以上用列舉** — Check: 該狀態有幾個態？二態者，旗標為正，不必
-  為了「將來可能會多」而先改列舉。三態以上而以旗標表達者，違反本條：或漏掉一態，或
-  以數個旗標湊出——而 N 個旗標的笛卡兒積必然大於真實狀態集合，多出來的組合即不可能狀態，
-  型別不會擋它，讀的人也無從得知哪些組合是真的。列舉使不可能狀態無法被寫出來。
+- **S3.1 Equivalence must hold separately at each consumption point** — Check: at **every**
+  place that reads the value, is the collapsed state equivalent to the one it merged into? If
+  you cannot say, or did not check each point, it violates this rule. Example: collapsing "not
+  yet fetched" into "not offline" holds at a passive display (which claims nothing), but not
+  where the value drives a write.
+- **S3.2 A collapse's validity does not extend to its complement** — Check: is the value's
+  negation also read? If so, the negation must be re-verified on its own and must not borrow
+  an existing consumption point's conclusion. Example: reading "not offline" as "connected"
+  asserts to the user a fact nobody could have found out.
+- **S3.3 What is stored or passed across layers must be the uncollapsed original** — Check: is
+  what is stored or passed across layers the original value, or a binary one some consumption
+  point collapsed? If the latter, it violates this rule — the next consumption point can no
+  longer ask a different question.
+- **S3.4 Distinct user-facing causes must not be collapsed into one sentence** — Check: do
+  several distinct failure causes share one sentence of copy? If so, it violates this rule —
+  users are entitled to know what happened, and one generic sentence makes "offline" and "no
+  such data" the same thing. Copy must not be reused verbatim from elsewhere either: that
+  sentence describes a different failure.
+- **S3.5 Two states take a flag; three or more take an enum** — Check: how many states does it
+  have? With two, a flag is correct; do not switch to an enum because "there might be more
+  later". Three or more expressed with flags violates this rule: either a state is missing or
+  it is assembled from several flags — and the Cartesian product of N flags is always larger
+  than the real state set; the extra combinations are impossible states, the type will not
+  stop them, and readers cannot tell which combinations are real. An enum makes impossible
+  states unwritable.
 
-## S4 — 持久化之值，其意義不得繫於位置或人工維護
+## S4 — A persisted value's meaning must not depend on position or manual upkeep
 
-**Principle:** 持久化之值，須俟本次執行結束之後方受重新詮釋，而重新詮釋**不會失敗**
-——非編譯錯誤、非例外，亦不致有測試轉紅，舊資料僅係變為別的意思；且其症狀僅顯現於已存
-過資料之裝置，開發者本機之資料為空，跑起來一切正常。
+**Principle:** A persisted value is reinterpreted only after the current run ends, and
+reinterpretation **does not fail** — no compile error, no exception, no test turns red; old
+data just comes to mean something else. And the symptoms appear only on devices that already
+stored data; the developer's local data is empty and everything runs fine.
 
-- **S4.1 持久化之值不得為序列位置** — Check: 該欲寫出之值，是否為索引、序數或任何
-  「第幾個」？是者，違反本條，一律 proposed CRITICAL。應存與位置無涉之識別碼，讀取時再
-  映射回位置。判準非「有無人將更動該序列」，而係**更動之時有無任何事物會出聲**；尚未
-  出貨者，換格式之成本為一個檔案，出貨後則為一次資料遷移，故於 review 撞見之時，即其
-  最廉之一刻。
-- **S4.2 持久化字串應自成員衍生，不得另立對照表** — Check: 該字串係自成員本身衍生，抑或
-  出自一張手寫之對照表？出自手寫者，違反本條：該表為成員清單之第二份副本，而讀取端為
-  「未知值退回而非拋錯」必設一 wildcard 分支，故少寫一筆非編譯錯誤，而係寫出去、讀回來變為
-  別的成員。其代價應予載明，不得佯為不存在——繫於識別字者，更名即為一次資料遷移。
-- **S4.3 暫時性失敗不得寫為確定結果** — Check: 該寫入長壽儲存之否定結果（不存在／失敗／
-  空），是否僅於確定性失敗之分支寫入？各類失敗共用一次寫入者，違反本條。Example: 一次
-  連線不穩將紀錄翻為「沒有」，而足以修復之復原路徑，正為該筆紀錄所阻。
-- **S4.4 持久化格式應宣告版本，版本不符以逐版遷移解決** — Check: 該持久化格式有無版本
-  欄位？版本不符時，是逐版轉換，抑或退回預設值？以「版本不對就當作沒有」處理者，違反
-  本條，一律 proposed CRITICAL：該寫法在升級時銷毀無法重建之使用者資料，而在下一位維護者
-  讀來像是「已經處理了」。二種除外情形應各自於版本判斷處載明：該資料可自權威來源重建，
-  或所遇為**較新**之版本（較舊之讀取端應原樣放著，不得覆寫）。
-- **S4.5 已出貨之遷移步驟即凍結** — Check: 該遷移步驟有無匯入今日之型別、或改走某個共用
-  helper？有者，違反本條：它的工作是把兩年前的格式轉成**當年那個**次版本，而今日的型別
-  早已增刪過欄位；改走共用 helper 則使該步驟於 helper 變動之日靜靜改變行為——那不是重構，
-  是竄改歷史。
+- **S4.1 A persisted value must not be a sequence position** — Check: is the value to be
+  written an index, an ordinal or any "the Nth"? If so, it violates this rule, always proposed
+  CRITICAL. Store an identifier unrelated to position and map it back to position on read. The
+  test is not "will anyone change the sequence" but **whether anything will make noise when it
+  changes**; before shipping, changing the format costs one file, after shipping a data
+  migration, so the moment review catches it is the cheapest it will ever be.
+- **S4.2 Persisted strings must derive from the member, not a separate lookup table** —
+  Check: is the string derived from the member itself, or from a hand-written lookup table?
+  If hand-written, it violates this rule: the table is a second copy of the member list, and
+  because the reader must have a wildcard branch to "fall back on unknown values rather than
+  throw", a missing entry is not a compile error but a value that is written out and reads
+  back as a different member. State the cost; do not pretend it is not there — when tied to
+  identifiers, a rename is a data migration.
+- **S4.3 A transient failure must not be written as a definite result** — Check: is the
+  negative result written to long-lived storage (absent / failed / empty) written only on the
+  definite-failure branch? If all kinds of failure share one write, it violates this rule.
+  Example: one flaky connection flips a record to "none", and the recovery path that could fix
+  it is blocked by that very record.
+- **S4.4 A persisted format must declare a version; a mismatch is resolved by step-by-step
+  migration** — Check: does the persisted format have a version field? On mismatch, is it
+  converted version by version, or does it fall back to a default? Treating "wrong version" as
+  "absent" violates this rule, always proposed CRITICAL: on upgrade it destroys user data that
+  cannot be rebuilt, and to the next maintainer it reads as "already handled". Two exceptions
+  must each be stated at the version check: the data can be rebuilt from an authoritative
+  source, or the version encountered is **newer** (an older reader must leave it as is, not
+  overwrite it).
+- **S4.5 A shipped migration step is frozen** — Check: does the migration step import today's
+  types or route through a shared helper? If so, it violates this rule: its job is to turn a
+  two-year-old format into **that year's** next version, and today's types have long since
+  gained and lost fields; routing through a shared helper makes the step silently change
+  behavior the day the helper changes — that is not refactoring, it is rewriting history.
 
-## S5 — 中止流程而不出聲者，應載明觸發條件與所跳過之流程
+## S5 — Silently aborting a flow must state the trigger and the flow skipped
 
-**Principle:** 中止正常流程而不出聲之寫法，與「此處本無事可為」外觀全同，讀者無從分辨
-其為決定抑或遺漏。載明何條件觸發、何流程被跳過，乃唯一可資分辨者。
+**Principle:** Code that silently aborts the normal flow looks exactly like "nothing to do
+here"; readers cannot tell a decision from an omission. Stating which condition triggers it
+and which flow is skipped is the only way to tell them apart.
 
-- **S5.1 非終點之 `return` / `break` / `continue`，應載明條件與所跳過之流程** — Check:
-  該提早離開之上方，有無一行載明何條件觸發、跳過何事？無者，違反本條。位於終點之
-  `return value;` 不在本條之列——其後並無流程可資跳過。
-- **S5.2 fire-and-forget 應載明由誰觀察其失敗** — Check: 該不等待結果之非同步呼叫，說得
-  出由誰觀察其失敗、及何以無人等待？答不出者，應 await 之。
-- **S5.3 吞下例外之 catch 分支，應載明呼叫端尚存何種保證** — Check: 該 catch 分支是否不
-  rethrow、不更新可觀察狀態、不復原（僅記錄者屬之，空分支亦屬之）？是而未載明例外被吞下
-  後呼叫端尚有何保證者，違反本條；載不出者，應 rethrow、應更新狀態，或應刪除該分支使
-  例外 propagate。
-- **S5.4 不得以正常結果取代失敗** — Check: catch 分支是否回傳空集合、`null` 或預設物件？
-  是者，違反本條——呼叫端與使用者均無從看出曾發生失敗。使用者發起之操作失敗時，使用者
-  應得見之，僅進 log 者不算。
+- **S5.1 A non-terminal `return` / `break` / `continue` must state the condition and the flow
+  it skips** — Check: is there a line above the early exit stating what triggers it and what
+  it skips? If not, it violates this rule. A terminal `return value;` is outside this rule — no
+  flow follows it to skip.
+- **S5.2 Fire-and-forget must state who observes its failure** — Check: for this async call
+  whose result is not awaited, can you say who observes its failure and why no one waits? If
+  not, await it.
+- **S5.3 A catch branch that swallows an exception must state what guarantee the caller still
+  has** — Check: does the catch branch neither rethrow, nor update observable state, nor
+  recover (logging only counts, so does an empty branch)? If so and it does not state what
+  guarantee the caller still has once the exception is swallowed, it violates this rule; if
+  none can be stated, rethrow, update state, or delete the branch so the exception
+  propagates.
+- **S5.4 A normal result must not replace a failure** — Check: does the catch branch return
+  an empty collection, `null` or a default object? If so, it violates this rule — neither the
+  caller nor the user can tell a failure happened. When a user-initiated operation fails, the
+  user must see it; logging alone does not count.
 
-## S6 — 註解應答 WHY，並繫於距其最近之宣告
+## S6 — Comments answer WHY and attach to the nearest declaration
 
-**Principle:** 識別字已述 WHAT，故重述 WHAT 之註解僅係第二份終將失真之副本。註解所應收
-者，為**自本 repo 推不出、而漏讀即會改錯**之事：外部系統之實際行為、規格或協定之要求、
-平台限制、業務規則、不顯之不變式。既往之狀態不在其列——今日已不成立之事，讀者無從據以
-判斷今日之改動。
+**Principle:** Identifiers already state WHAT, so a comment restating WHAT is a second copy
+that will drift. A comment holds what **cannot be inferred from this repo and, if missed,
+leads to a wrong change**: the actual behavior of external systems, spec or protocol
+requirements, platform limits, business rules, non-obvious invariants. Past states are
+excluded — something no longer true today gives readers nothing to judge today's change by.
 
-- **S6.1 刪除後仍讀得出者，應刪** — Check: 將該註解刪去，讀者自識別字與型別是否仍讀得出
-  同一件事？讀得出者，應刪。**本條逐句適用**：一則之內，凡刪去而該答案不變之句，該句
-  應刪；裝飾性分隔線、重述檔案結構之區塊註解，屬之。
-- **S6.2 不得指涉本次任務，亦不得記載既往變更** — Check: 註解中有無「供 X 使用」
-  「修 #123」之類指涉，或「原本用 A，現改為 B」「v2 後已移除」「當初為 C 加此 workaround」
-  之類考古記載？有者，違反本條——前者屬 PR 內文，後者屬 git history，且二者均將於程式碼
-  尚屬正確之時即先腐爛。今日仍成立之約束，應以現在式敘該約束本身，不敘其由來。依 S6.7
-  列入白名單之標記，不在本條之列。
-- **S6.3 一則註解答一個問題，繫於距其最近之宣告** — Check: 該註解所述，是否為其所在宣告
-  本身之事？契約繫於型別，行為繫於方法，理由繫於欄位。長度係症狀，非判準。
-- **S6.4 程式碼之瑕疵，不因加註而治癒** — Check: 該註解係在**證成**一項決定，抑或僅在
-  **陳述**一個已然違規之現狀（S1 歸屬錯誤、S2 名字不當、S3 折疊未經證成）？屬後者，
-  違反本條，並依其所違反之本條以外條次各別論處：所應更改者為程式碼，非補一行說明之。
-- **S6.5 repo 外之事實，漏載即屬違反** — Check: 該段所依賴之事實，能否自本 repo 之程式碼
-  與型別讀出？不能（其來源為外部 API 之實際行為、協定或規格條文、平台限制、業務規則）
-  而未載於註解者，違反本條——讀者無此脈絡，其代價為一次看似合理而實屬錯誤之改動。diff
-  刪去此類註解而該事實今日仍成立者，同。
-- **S6.6 不繫於宣告之註解，繫於其後之區塊** — Check: 該註解是否緊接於其所述之區塊之前，
-  且所答者為讀者自該段識別字讀不出之事（此段為流程之哪一階段、此段刻意不做什麼）？
-  讀得出者，依 S6.1 應刪。
-- **S6.7 標記應列於白名單，且各有一掃描器** — Check: 該註解標記（`// <tag>:` 之類）是否
-  列於下位法之白名單，且該白名單處載明一個可一次取出全 repo 該標記之掃描器？未列者，
-  依 S6.2 論處；列而無掃描器者，違反本條——數不出來的標記，其累積無人看得見，與沒有
-  標記同義。
+- **S6.1 If it still reads after deletion, delete it** — Check: delete the comment — can
+  readers still get the same thing from identifiers and types? If so, delete it. **This rule
+  applies sentence by sentence**: within one comment, any sentence whose deletion leaves the
+  answer unchanged must be deleted; decorative dividers and block comments restating file
+  structure fall under this rule.
+- **S6.2 No reference to the current task, no record of past changes** — Check: does the
+  comment contain references like "used by X" / "fixes #123", or archaeology like "was A, now
+  B" / "removed after v2" / "added this workaround for C back then"? If so, it violates this
+  rule — the former belongs in the PR description, the latter in git history, and both rot
+  while the code is still correct. A constraint that still holds today must be stated in the
+  present tense as the constraint itself, without its origin. Tags whitelisted under S6.7 are
+  outside this rule.
+- **S6.3 One comment answers one question and attaches to the nearest declaration** — Check:
+  is what the comment says about the declaration it sits on? Contracts attach to types,
+  behavior to methods, reasons to fields. Length is a symptom, not the test.
+- **S6.4 A comment does not cure a code defect** — Check: does the comment **justify** a
+  decision, or merely **describe** an existing violation (S1 wrong ownership, S2 bad name, S3
+  unjustified collapse)? If the latter, it violates this rule, and each other rule it breaks
+  is graded separately: what must change is the code, not an added line of explanation.
+- **S6.5 Omitting an out-of-repo fact is a violation** — Check: can the fact this code depends
+  on be read from this repo's code and types? If not (its source is an external API's actual
+  behavior, a protocol or spec clause, a platform limit, a business rule) and no comment
+  states it, it violates this rule — readers lack the context, and the cost is a
+  plausible-looking but wrong change. A diff that deletes such a comment while the fact still
+  holds today violates it too.
+- **S6.6 A comment not attached to a declaration attaches to the block after it** — Check:
+  does the comment sit directly before the block it describes, and answer what readers cannot
+  get from that block's identifiers (which stage of the flow this is, what it deliberately
+  does not do)? If readers can get it, delete it per S6.1.
+- **S6.7 Tags must be whitelisted, each with a scanner** — Check: is the comment tag
+  (`// <tag>:` and the like) on a lower layer's whitelist, and does that whitelist name a scanner
+  that pulls every instance of the tag across the repo in one pass? If not listed, grade it
+  under S6.2; listed without a scanner violates this rule — a tag nobody can count accumulates
+  unseen, which is the same as no tag.
 
-## S7 — 失敗之處理，應與失敗之種類相稱
+## S7 — Failure handling must match the kind of failure
 
-**Principle:** 失敗分三種，處理方式各異：**可預測**者（外部狀態有 predicate 可資查詢）
-應以控制流處理；**環境性**者（權限遭拒、磁碟錯誤、檔案鎖、斷線）應 catch 並復原；
-**程式錯誤**者（內部資料走樣、型別錯誤、邏輯瑕疵）應任其 propagate 至最上層 handler。
-以 catch 代替 predicate，係令正常路徑為一次 throw 與 catch 付費，以換取 predicate 廉價
-即得之答案；以 catch 吞下程式錯誤，則令該瑕疵永不顯現。本條規範**何種處理為正**；其處理
-過程不得不出聲，另依 S5 論處。
+**Principle:** Failures come in three kinds, each handled differently: **predictable** ones
+(external state with a queryable predicate) are handled with control flow;
+**environmental** ones (permission denied, disk error, file lock, disconnect) are caught and
+recovered; **programming errors** (corrupted internal data, type errors, logic defects)
+propagate to the top-level handler. Using catch in place of a predicate makes the normal path
+pay for a throw and a catch to get an answer the predicate gives cheaply; swallowing a
+programming error in a catch keeps the defect from ever surfacing. This rule governs **which
+handling is correct**; handling that is silent is graded separately under S5.
 
-- **S7.1 可預測之狀態應以 predicate 判定** — Check: 該例外所對應之狀態，執行環境有無
-  predicate 可資查詢（是否存在、是否為空、鍵是否存在、是否已完成）？有而以 catch 代之
-  者，違反本條。Example: 以 catch「檔案不存在」例外，代替先查存在與否。
-- **S7.2 一個失敗模式僅得有一個處理者** — Check: 同一失敗模式，是否前置 predicate 與
-  下游 catch 二者並存？並存者，違反本條——何者實際生效，不可由讀者判定。
-- **S7.3 catch 之範圍不得寬於復原所及之範圍** — Check: 所 catch 之型別，其可能解析而得之
-  **每一**子類，該復原是否均屬正確？否者，違反本條，應縮小範圍，其餘任其 propagate。
-  本條所規範者為**具體且確可 throw** 之父類——寬 catch 所及之其餘子類若為真正瑕疵，
-  將隨之遭吞沒。
-- **S7.4 例外應於邊界換型別** — Check: 傳輸層與平台層之例外，是否於 repository 邊界轉為
-  domain 例外？直接上拋者，違反本條：呼叫端應能以型別分辨「網路壞了」與「這筆資料不
-  存在」，而平台例外之型別答不了該問題。
-- **S7.5 換型別不得遺失發生地** — Check: 轉譯時有無保留原始 stack trace？未保留者，違反
-  本條——最上層 handler 將指向轉譯所在之行，而非實際出錯之 frame。domain 例外仍不得挾帶
-  原始內層例外，所保留者僅 stack trace。
-- **S7.6 log level 由「是否應列為獨立故障」決定，非由可復原性決定** — Check: 該 level 係
-  依「是否須於 crash reporting 單獨分類追查」而定，抑或依其是否可復原而定？依後者者，
-  違反本條——因可復原而降級，將使真實異常埋於無人查看之處；可復原與應報告，係二事。
+- **S7.1 Predictable states must be checked with a predicate** — Check: for the state this
+  exception corresponds to, does the runtime offer a predicate (exists, is empty, has key, is
+  complete)? If so and catch is used instead, it violates this rule. Example: catching a "file
+  not found" exception instead of checking existence first.
+- **S7.2 One failure mode has exactly one handler** — Check: does the same failure mode have
+  both an upfront predicate and a downstream catch? If so, it violates this rule — readers
+  cannot tell which one actually takes effect.
+- **S7.3 A catch must not be wider than its recovery covers** — Check: for **every** subtype
+  the caught type can resolve to, is the recovery correct? If not, it violates this rule;
+  narrow the catch and let the rest propagate. This rule governs **concrete parent types that
+  can actually be thrown** — any other subtypes a wide catch covers that are real defects get
+  swallowed with it.
+- **S7.4 Exceptions change type at the boundary** — Check: are transport- and platform-layer
+  exceptions converted to domain exceptions at the repository boundary? Letting them
+  propagate directly violates this rule: callers must be able to tell "the network broke" from
+  "this record does not exist" by type, and platform exception types cannot answer that.
+- **S7.5 Changing type must not lose the origin** — Check: does the translation preserve the
+  original stack trace? If not, it violates this rule — the top-level handler will point at the
+  translation line, not the frame that actually failed. A domain exception still must not
+  carry the original inner exception; only the stack trace is preserved.
+- **S7.6 Log level is decided by "should this be tracked as its own fault", not by
+  recoverability** — Check: is the level chosen by whether it needs its own category in crash
+  reporting, or by whether it is recoverable? If the latter, it violates this rule —
+  downgrading because it is recoverable buries real anomalies where no one looks; recoverable
+  and reportable are two different things.
 
-## S8 — 協調不得建立於「通常會對」之上
+## S8 — Coordination must not rest on "usually right"
 
-**Principle:** 臨界區以 `bool` 旗標自製，與非同步完成以固定時長等待，係同一病灶之二相：
-以一個**通常成立**之近似，代替一個**結構上必然成立**之機制。近似在開發者之機器上恆為真
-——其失效條件是別人的裝置、別人的網路、別人的時序，故其失敗不會出現在寫下它的那次執行。
-本條規範所應採之機制。
+**Principle:** A critical section made from a `bool` flag and waiting a fixed duration for
+async completion are two faces of one disease: an approximation that **usually holds** in
+place of a mechanism that **holds by construction**. The approximation is always true on the
+developer's machine — it fails on other people's devices, networks and timings, so its
+failure never shows up in the run where it was written. This rule governs which mechanism to
+use.
 
-- **S8.1 臨界區應以能排隊之機制序列化** — Check: 該非同步臨界區（可重入之同步、單寫者之
-  檔案或網路變更），其守衛為能排隊之 mutex，抑或一個自製之 `bool` 旗標？屬後者，違反
-  本條——旗標無佇列，競爭者係遭丟棄或競速，而非等待其順位。僅驅動畫面顯示之狀態旗標非
-  臨界區守衛，不在本條之列。
-- **S8.2 完成之等待應繫於真實訊號** — Check: 等待非同步完成或動畫結束者，其**主要**路徑
-  為真實訊號（callback、completer、stream 事件、可 await 之值），抑或一個固定時長之
-  timer？屬後者，違反本條——真實時長隨裝置、內容與網路變動，固定時長係與真實完成競速。
-  得另置一安全網 timer，惟其時長應顯著長於預期、其名稱應述其 timeout 職司，且僅於真實
-  訊號遺失時方作用。
-- **S8.3 緩慢或無上界之 I/O 不得阻塞 UI thread** — Check: 該路徑上之大量讀寫、網路呼叫
-  或大型解碼，是否以阻塞形式執行於驅動畫面之 thread？是者，違反本條。廉價之 metadata
-  probe 不在本條之列——其同步形式為正。
-- **S8.4 序列化之粒度應與共享狀態之粒度一致** — Check: 該序列化機制是按**鍵**排隊（同鍵
-  依序、異鍵並行），抑或按**操作種類**排隊？按種類者，違反本條：它只擋下同種對同種
-  （上傳對上傳），而跨種類的每一組競爭全數敞開，症狀為後寫覆蓋、中途卡住的例外、以及
-  終局狀態被一個跑得慢的操作事後蓋掉。補丁不得加在佇列的 catch 或各寫入者前的臨時快取。
-- **S8.5 一次變更發一次通知** — Check: 該變更通知，是於一次寫入落地後發一次，抑或逐項
-  發？逐項者，違反本條——消費者將一次寫入當成 N 次重讀，而中間那幾次讀到的是寫到一半的
-  集合。通知應於寫入落地**之後**發出，俾接到通知即讀者看得到新狀態。
-- **S8.6 只做副作用者，不得倚賴有人來讀它才啟動** — Check: 該單位之全部工作是否為副作用
-  （驅動導向、開訂閱、盯著某個來源），且無人讀它？是而以延遲建構註冊者，違反本條，一律
-  proposed CRITICAL：沒有人解析它，建構就不會跑，功能在裝置上百分之百是死的——而單元
-  測試全綠，因為測試直接呼叫它的進入點，**結構上無法表達「這個 app 從來不呼叫它」**。
-  判定之徵兆為「找不到消費者」。
+- **S8.1 Critical sections must be serialized by a mechanism that queues** — Check: is this
+  async critical section (re-entrant sync, single-writer file or network mutation) guarded by
+  a queuing mutex, or by a hand-rolled `bool` flag? If the latter, it violates this rule — a
+  flag has no queue; contenders are dropped or race rather than waiting their turn. A state
+  flag that only drives display is not a critical-section guard and is outside this rule.
+- **S8.2 Waiting for completion must be tied to a real signal** — Check: is the **primary**
+  path for waiting on async completion or an animation's end a real signal (callback,
+  completer, stream event, awaitable value), or a fixed-duration timer? If the latter, it
+  violates this rule — real durations vary with device, content and network; a fixed duration
+  races real completion. A safety-net timer may be added, but its duration must be clearly
+  longer than expected, its name must state its timeout role, and it must act only when the
+  real signal is lost.
+- **S8.3 Slow or unbounded I/O must not block the UI thread** — Check: does heavy reading or
+  writing, a network call or a large decode on this path run blocking on the thread that
+  drives the screen? If so, it violates this rule. Cheap metadata probes are outside this rule
+  — their synchronous form is correct.
+- **S8.4 Serialization granularity must match the granularity of shared state** — Check: does
+  the serialization mechanism queue per **key** (same key in order, different keys in
+  parallel), or per **operation kind**? Per kind violates this rule: it blocks only same kind
+  against same kind (upload vs. upload) and leaves every cross-kind race wide open; the
+  symptoms are last-write-wins, exceptions stuck mid-way, and a final state overwritten after
+  the fact by a slow operation. The patch must not go into the queue's catch or into ad-hoc
+  caches in front of each writer.
+- **S8.5 One change, one notification** — Check: is the change notification sent once after a
+  write lands, or per item? Per item violates this rule — consumers treat one write as N
+  rereads, and the reads in between see a half-written collection. Notify **after** the write
+  lands, so whoever reads on notification sees the new state.
+- **S8.6 A side-effect-only unit must not depend on being read to start** — Check: is all of
+  the unit's work side effects (driving navigation, opening subscriptions, watching a source),
+  with no one reading it? If so and it is registered with lazy construction, it violates this
+  rule, always proposed CRITICAL: if nobody resolves it, construction never runs and the
+  feature is 100% dead on device — while unit tests are all green, because they call its entry
+  point directly and **structurally cannot express "this app never calls it"**. The tell is
+  "no consumer can be found".
 
-## S9 — 資源應有上界，且上界應於寫下之時載明
+## S9 — Resources must be bounded, and the bound stated when written
 
-**Principle:** 無上界之資源，其失敗不出現在寫下它的那次執行——出現在資料長大之後、在
-使用者之裝置上，且症狀為緩慢或耗盡，而非一個可追溯之錯誤。故上界應於寫下之時即予載明，
-不得俟其顯現。
+**Principle:** An unbounded resource does not fail in the run where it was written — it fails
+after the data grows, on the user's device, as slowness or exhaustion rather than a traceable
+error. So the bound must be stated when the code is written, not after it shows.
 
-- **S9.1 每個 cache 應有具名之 eviction policy** — Check: 該 cache 之 eviction policy
-  為何？答不出者，違反本條。以使用者資料為鍵而無上界之 map，即係洩漏。
-- **S9.2 每個外部呼叫應有 timeout** — Check: 該外部呼叫有無 timeout？無者，違反本條——
-  無 timeout 之等待，其上界係由對方決定。
-- **S9.3 hot path 之複雜度應推算得出且有上界** — Check: 該路徑（畫面更新、清單捲動、
-  同步、任何對使用者規模資料之迴圈）之時間複雜度，是否推算得出？對持久化狀態之 O(N²)
-  或 N+1 讀取，違反本條。
-- **S9.4 大量資料應以 stream 或分塊處理，不得整份常駐** — Check: 該大型資料（二進位
-  內容、影像 buffer、長列表）是否整份載入並常駐於記憶體？是者，違反本條。
-- **S9.5 對變更作出反應者，應宣告其所讀之欄位** — Check: 該重算或重繪之觸發條件，有無
-  逐一列出它實際讀取的欄位？未宣告（或寫成「有變就重算」之恆真式）者，違反本條——狀態中
-  任一無關欄位之變動皆觸發全量重算，其上界即整個狀態的變動頻率，而非這一塊真正依賴的。
-- **S9.6 具速率上界之輸入應載明其上界** — Check: 該由使用者逐字或逐次動作觸發之外部工作
-  （查詢、寫入、傳送），有無上界？無者，違反本條——其速率上界由使用者的手指決定，非由
-  程式決定，故該工作在開發者的機器上永遠夠快。
+- **S9.1 Every cache must have a named eviction policy** — Check: what is the cache's eviction
+  policy? If you cannot say, it violates this rule. An unbounded map keyed by user data is a
+  leak.
+- **S9.2 Every external call must have a timeout** — Check: does the external call have a
+  timeout? If not, it violates this rule — a wait without a timeout has its bound set by the
+  other side.
+- **S9.3 Hot-path complexity must be derivable and bounded** — Check: can the time complexity
+  of this path (screen update, list scroll, sync, any loop over user-scale data) be derived?
+  O(N²) or N+1 reads over persisted state violate this rule.
+- **S9.4 Large data must be streamed or chunked, not held whole** — Check: is the large data
+  (binary content, image buffers, long lists) loaded whole and kept resident in memory? If so,
+  it violates this rule.
+- **S9.5 Whatever reacts to change must declare the fields it reads** — Check: does the
+  trigger for this recompute or redraw list, one by one, the fields it actually reads? If not
+  declared (or written as the tautology "recompute on any change"), it violates this rule —
+  any unrelated field change in the state triggers a full recompute, so its bound becomes the
+  change rate of the whole state, not of what this piece really depends on.
+- **S9.6 Input with a rate bound must state its bound** — Check: does external work (query,
+  write, send) triggered per keystroke or per user action have a bound? If not, it violates
+  this rule — its rate is bounded by the user's fingers, not by the program, so the work is
+  always fast enough on the developer's machine.
 
-## S10 — 編譯期已記錄之集合，不得以執行期查找繞過
+## S10 — A set recorded at compile time must not be bypassed by runtime lookup
 
-**Principle:** 型別系統記下一個有限集合（列舉、封閉型別、具名常數）之後，凡改以字串鍵、
-`map` 查找或「非 X 即略過」之守衛取用該集合者，即把編譯器的窮盡檢查換成一次執行期查詢。
-其代價不在寫下的當時顯現，而在**日後有人加一個成員**的時候：編譯器本會指出每一處待補，
-換掉之後則無人出聲。
+**Principle:** Once the type system records a finite set (enum, closed type, named
+constants), accessing it through string keys, `map` lookups or "skip unless X" guards trades
+the compiler's exhaustiveness check for a runtime query. The cost does not show when the code
+is written but **when someone later adds a member**: the compiler would have pointed at every
+place to update; once swapped out, nothing speaks up.
 
-- **S10.1 每一成員均應有其分支** — Check: 對該有限集合之分支處理，是否每一成員均有其
-  分支？以一個「非 X 即 return」之守衛取代者，違反本條：該寫法一舉製造二個不出聲的失敗
-  ——正常路徑無回饋，且日後新增之成員不出聲即通過。刻意不作為之成員，應映射至一個
-  sentinel 並於副作用處把關，俾該不作為之決定仍留在分支表內可見。
-- **S10.2 數個分支共用同一 body，即拋棄型別之分辨** — Check: 數個分支之 body 是否相同？
-  是者，違反本條，應合併該數分支或抽出共用函式，不得以並列偽裝區別。
-- **S10.3 按鍵查找不得取代具名分派** — Check: 該依集合成員決定走向之處，是以窮盡分支
-  分派，抑或以 `map` 依鍵查出？屬後者，違反本條——查找同時交出窮盡性與非空保證，而換來
-  的只是少寫幾行。多重性本身即資料者（路由表、遷移清單）不在本條之列：本條所禁者為
-  **依鍵查找一個相依**，非真正的清單參數。
-- **S10.4 有限集合之成員不得以裸字面量指稱** — Check: 該路徑、鍵名或識別碼，是具名常數
-  抑或裸字串？裸字串者，違反本條：打錯字編譯器攔不下，更名時它也不會跟著走。
-- **S10.5 跨界之參數應具型別，不得為自由形狀之 map** — Check: 該跨越邊界（路由、訊息、
-  任務）之參數，是具名型別抑或一張 map？屬 map 者，違反本條——形狀不符之處被推遲到目的地
-  的一次執行期轉型，而錯的是出發地。
-- **S10.6 變體之入口不得容納他變體之欄位** — Check: 該單位之有限幾種形態，是各自一個
-  只收該形態所用欄位的入口（具名建構式、具名工廠），抑或共用一個入口收一個設定物件？
-  屬後者，違反本條：呼叫端得以傳入該形態根本無處可放的欄位，而型別不會擋——本應由建構
-  階段擋下的錯誤，被推遲成一個沒人會讀到的被忽略欄位。
+- **S10.1 Every member must have its branch** — Check: in branching over the finite set, does
+  every member have its own branch? Replacing that with a "return unless X" guard violates
+  this rule: that one line creates two silent failures — no feedback on the normal path, and
+  members added later pass silently. A member deliberately left without action must map to a
+  sentinel checked at the side effect, so the decision not to act stays visible in the branch
+  table.
+- **S10.2 Several branches sharing one body discard the type's distinction** — Check: are the
+  bodies of several branches identical? If so, it violates this rule; merge those branches or
+  extract a shared function, and do not disguise them as distinct by listing them side by
+  side.
+- **S10.3 Key lookup must not replace named dispatch** — Check: where the path is decided by
+  set member, is it dispatched by exhaustive branches, or looked up by key in a `map`? The
+  latter violates this rule — lookup gives up both exhaustiveness and the non-null guarantee,
+  to save a few lines. Where multiplicity is itself data (route tables, migration lists), it is
+  outside this rule: this rule forbids **looking up a dependency by key**, not genuine list
+  parameters.
+- **S10.4 Members of a finite set must not be referred to by bare literals** — Check: is the
+  path, key name or identifier a named constant or a bare string? A bare string violates this
+  rule: the compiler will not catch a typo, and it will not follow a rename.
+- **S10.5 Parameters crossing a boundary must be typed, not free-form maps** — Check: is the
+  parameter crossing this boundary (route, message, job) a named type or a map? A map violates
+  this rule — a shape mismatch is deferred to a runtime cast at the destination, while the
+  mistake is at the origin.
+- **S10.6 A variant's entry point must not accept another variant's fields** — Check: do the
+  unit's few forms each have their own entry point that accepts only that form's fields (named
+  constructor, named factory), or share one entry point that takes a config object? The latter
+  violates this rule: callers can pass fields the form has no place for, and the type will not
+  stop it — an error construction should have caught becomes an ignored field nobody will ever
+  read.
 
-## S11 — 一份狀態應只有一條寫入路徑
+## S11 — A piece of state has exactly one write path
 
-**Principle:** 同一份狀態有二處可寫時，二者各自都對，而壞掉的是它們的**交錯**——所以壞
-的那次不是任何一次改動造成的，且重現條件是時序。路徑之數目應在讀原始碼時數得出來，
-不應在除錯時量出來。
+**Principle:** When two places can write the same state, each is correct on its own and what
+breaks is their **interleaving** — so the failure is not caused by any single change, and
+reproducing it depends on timing. The number of paths must be countable by reading the
+source, not measured while debugging.
 
-- **S11.1 應訂閱自己的來源，不得訂閱他人的生命週期** — Check: 該狀態持有者所訂閱者，為
-  「我所呈現的資料變了」，抑或「某人開始／正在做某事」？屬後者，違反本條：生命週期訂閱
-  開出第二條寫入路徑，與該持有者自己的重入守衛相撞。若畫面確需呈現他人的進行中狀態，
-  應把該事實建模為**自己這邊**的一個欄位，使訂閱來源仍只有一個。
-- **S11.2 不得有全域可變狀態** — Check: 有無全域變數或靜態可變欄位？有者，違反本條——
-  它活得比每一個持有者都久，測試之間重設不掉，且是一條無人拆除的隱藏寫入路徑。
-- **S11.3 狀態持有者不得持有另一個狀態持有者** — Check: 該持有者之欄位中，有無另一個
-  狀態持有者？有者，違反本條：二個生命週期與二台狀態機就此綁在一起，且任一個都無法單獨
-  測試。二者所需之同一事實，應各自向攜帶該事實的來源訂閱。
-- **S11.4 樂觀寫入自帶回滾** — Check: 該在寫入完成前即先寫下預期結果之處，其失敗路徑有無
-  復原為原值（或重讀）？無者，違反本條——畫面將一直呈現一個從未發生的變更，而此後沒有
-  任何東西會更正它。回滾應與下注寫在同一個方法裡。
+- **S11.1 Subscribe to your own source, not someone else's lifecycle** — Check: does the state
+  holder subscribe to "the data I present changed", or to "someone started / is doing
+  something"? The latter violates this rule: a lifecycle subscription opens a second write
+  path that collides with the holder's own re-entry guard. If the screen really must show
+  someone else's in-progress state, model that fact as a field **on your own side**, so there
+  is still only one subscription source.
+- **S11.2 No global mutable state** — Check: are there global variables or static mutable
+  fields? If so, it violates this rule — it outlives every holder, cannot be reset between
+  tests, and is a hidden write path nobody dismantles.
+- **S11.3 A state holder must not hold another state holder** — Check: does the holder have
+  another state holder among its fields? If so, it violates this rule: two lifecycles and two
+  state machines get bound together, and neither can be tested alone. Where both need the same
+  fact, each subscribes to the source that carries it.
+- **S11.4 An optimistic write carries its own rollback** — Check: where the expected result is
+  written before the write completes, does the failure path restore the original value (or
+  reread)? If not, it violates this rule — the screen keeps showing a change that never
+  happened, and nothing will ever correct it. The rollback must be in the same method as the
+  bet.
 
-## S12 — 一個單位做一件事，且其控制不得由呼叫端傳入
+## S12 — A unit does one thing, and its control must not be passed in by the caller
 
-**Principle:** 二種違反長得不同而後果相同：做二件事者，日後會被呼叫來只用其中一半；
-而把「何時停」交由參數決定者，已經把呼叫端的條件搬進自己體內，於是它做的事取決於是誰在
-呼叫。二者都使「這個單位做什麼」無法只讀它自己得知。
+**Principle:** The two violations look different but end the same: a unit that does two
+things will later be called for only half of it; a unit that lets a parameter decide "when to
+stop" has moved the caller's condition into itself, so what it does depends on who calls it.
+Both make "what this unit does" impossible to know from reading the unit alone.
 
-- **S12.1 名字需要「and」者，即為二個單位** — Check: 要說清楚該單位做什麼，需不需要用到
-  「並且」？需要者，違反本條，應拆為二——名字即為判準。
-- **S12.2 控制不得以參數傳遞** — Check: 參數中有無一個旗標或述詞，是在決定該操作**何時
-  停止**或**走哪條路**？有者，違反本條：該條件屬呼叫端。二條出路——該單位自己擁有這個
-  決定，或它對外露出一根桿子（可取消、可中止），由呼叫端決定何時扳動。
-- **S12.3 一次操作之結果只走一條通道** — Check: 進度、完成與失敗，是否全數流經同一個
-  通道？另闢 `onSuccess` / `onError` / `onProgress` 之平行回呼者，違反本條——回傳值與
-  回呼二條通道之間的先後與齊備無人保證，而讀的人必須同時追兩條才知道發生了什麼。
-  需回傳之值（識別碼之類）應嵌在該通道的事件裡。
-- **S12.5 改狀態之單位不兼答問題** — Check: 該改變狀態之單位，其回傳值所報者，呼叫端能否
-  於操作前後以既有查詢自行取得（成功與否、有無命中、是否本已為空）？能者，違反本條，
-  應不回傳值——失敗依 S7 以型別拋出，狀態由查詢讀回，二者皆不得因此消音（S5.3）。將該
-  回傳值改以具名列舉表達者，不因更名而合法：判準為所報之事，非其型別。**不在本條之列**
-  者，為呼叫端無從另外取得、由該次操作所產生之值：新建實體之識別碼、原子操作所取出之
-  元素。Example: `clear…()` 回傳「有沒有東西被清掉」。
-- **S12.6 可選參數不得替代呼叫端的思考** — Check: 該參數之預設值，是否讓呼叫端得以略過
-  一個它本應回答的問題？是者，違反本條，該參數應為必填——預設值所代答的那次，答的是
-  寫下預設值的那個人所處的情形，不是這次呼叫所處的。
+- **S12.1 A name that needs "and" is two units** — Check: does saying what the unit does
+  require "and"? If so, it violates this rule; split it in two — the name is the test.
+- **S12.2 Control must not be passed as a parameter** — Check: is any parameter a flag or
+  predicate that decides **when the operation stops** or **which path it takes**? If so, it
+  violates this rule: that condition belongs to the caller. Two ways out — the unit owns the
+  decision itself, or it exposes a lever (cancellable, abortable) that the caller pulls when it
+  decides.
+- **S12.3 An operation's results travel one channel** — Check: do progress, completion and
+  failure all flow through the same channel? Separate parallel `onSuccess` / `onError` /
+  `onProgress` callbacks violate this rule — nothing guarantees ordering or completeness
+  between the return value and the callbacks, and readers must follow both to know what
+  happened. Values that must be returned (identifiers and the like) must be embedded in that
+  channel's events.
+- **S12.5 A unit that changes state does not also answer questions** — Check: can the caller
+  get what the state-changing unit's return value reports on its own, through existing queries
+  before and after the operation (success or not, hit or not, already empty or not)? If so, it
+  violates this rule, and the unit must return nothing — failure is thrown as a type per S7,
+  state is read back through queries, and neither may be silenced as a result (S5.3).
+  Expressing that return value as a named enum does not make it lawful: the test is what it
+  reports, not its type. **Outside this rule** are values the caller cannot get otherwise,
+  produced by that operation: a newly created entity's identifier, the element an atomic
+  operation took. Example: `clear…()` returning "whether anything was cleared".
+- **S12.6 Optional parameters must not replace the caller's thinking** — Check: does the
+  parameter's default let callers skip a question they ought to answer? If so, it violates
+  this rule, and the parameter must be required — the default answers for the situation of
+  whoever wrote it, not for this call.
 
-## S13 — 斷言不得超出該測試實際擁有的證據
+## S13 — Assertions must not exceed the evidence the test actually has
 
-**Principle:** 測試跑在替身之上——替身的字型、替身的時鐘、替身的網路。凡自替身量出的
-數字，量到的是替身，不是產品。而這種斷言最危險之處在於它**會過**：它凍結了一個虛構的
-數值，於是往後每一次真實的偏移都被它擋成「測試壞了」。
+**Principle:** Tests run on stand-ins — stand-in fonts, stand-in clocks, stand-in networks.
+Any number measured off a stand-in measures the stand-in, not the product. What makes such an
+assertion most dangerous is that it **passes**: it freezes a fictional value, so every later
+real shift is blocked as "the test broke".
 
-- **S13.1 自替身基底量出之數值，非屬事實** — Check: 該斷言所依據者，是測試自己擁有的
-  事實（某事發生了、走了哪個分支、相對順序成立），抑或一個自替身環境量出之數值（換行點、
-  尺寸、外觀、耗時）？屬後者，違反本條。就使用者所見者作出的主張，需要一次真實的算繪，
-  否則即為推論，而推論應標示為推論。
-- **S13.2 測試到不了之處，不得以測試綠燈作為反證** — Check: 該事實是否為測試在結構上就
-  表達不了的（「這個 app 從來不呼叫它」、「畫面卸載之後才發生的事」）？是而以「單元測試
-  全綠」主張其無誤者，違反本條——應改以真實流程驗證，並指名該驗證。
+- **S13.1 Values measured off a stand-in base are not facts** — Check: does the assertion
+  rest on a fact the test itself owns (something happened, which branch ran, a relative order
+  holds), or on a value measured from the stand-in environment (line breaks, sizes,
+  appearance, timing)? The latter violates this rule. A claim about what users see needs a
+  real render; otherwise it is inference, and inference must be labeled as inference.
+- **S13.2 Where tests cannot reach, a green run is not counter-evidence** — Check: is the fact
+  one that tests structurally cannot express ("this app never calls it", "what happens after
+  the screen is unmounted")? If so and "unit tests all green" is offered as proof it is
+  correct, it violates this rule — verify with a real flow instead, and name that
+  verification.
 
-## S14 — 援用先例，以其先決條件仍成立為限
+## S14 — Following a precedent is valid only while its preconditions still hold
 
-**Principle:** 抄一個先例，連它未言明的前提一併抄走，而「形狀看起來對」正是藏住那個
-前提已然改變的東西。故援用之前應先指名該先例所依賴之前提，再於新處查證。與既有機制
-歧異是一項違規；而在該機制從未預設過的情形下照抄它，是同一項違規的反面。
+**Principle:** Copying a precedent copies its unstated premises too, and "the shape looks
+right" is exactly what hides that the premise has changed. So before following a precedent,
+name the premises it depends on and verify them in the new place. Diverging from an existing
+mechanism is a violation; copying it into a situation it never assumed is the flip side of the
+same violation.
 
-- **S14.1 理由係先決條件，非說明** — Check: 該先例（表格的一列、既有的一種寫法）所附之
-  理由，於此處是否仍成立？未查證即援用者，違反本條。Example: 「無狀態故每次新建」這條
-  理由，遇到一個會跨呼叫留住狀態的單位即不成立，而照抄的後果是第二個取用點拿到一份狀態
-  悄悄斷開的新實例——無編譯錯誤，無紅燈測試。
-- **S14.2 尚未清償之債，不得作為新程式碼之先例** — Check: 所援用之既有寫法，當初是被迫
-  如此（歷史資料、外部格式、已出貨之相容性），抑或當初即為正解？屬前者，違反本條——它
-  今天動不了，不等於它是允許的形狀。應改抄同一處那個因**正確**而如此的先例。
+- **S14.1 The reason is a precondition, not an explanation** — Check: does the reason attached
+  to the precedent (a table row, an existing pattern) still hold here? Following it unverified
+  violates this rule. Example: the reason "stateless, so create a new one each time" fails for
+  a unit that keeps state across calls, and copying it gives the second access point a new
+  instance whose state is silently disconnected — no compile error, no red test.
+- **S14.2 Unpaid debt must not serve as precedent for new code** — Check: was the existing
+  pattern being followed forced (legacy data, an external format, shipped compatibility), or
+  correct from the start? If the former, it violates this rule — that it cannot be changed
+  today does not make it an allowed shape. Copy instead the precedent in the same place that
+  is that way because it is **correct**.
 
-## S15 — 守衛應指名其所防之狀態，其數目係設計之徵兆
+## S15 — A guard must name the state it guards against; the number of guards is a design symptom
 
-**Principle:** 守衛有三種，外觀相同而只有一種是瑕疵。**前置條件守衛**（空集合、未登入）
-表達的是真實的領域狀態，屬正常控制流。**生命週期守衛**（已關閉、已卸載）之存在，係執行
-環境確實會在拆除之後再送達回呼，屬必要。第三種是**「出過一次錯就補一個」的防禦性守衛**
-——它把一次會說話的崩潰，換成一次不說話的無事發生，於是那根指著病灶的手指被收走了。
-三者之分辨只有一個問題：**說不說得出它防的是哪個狀態，以及那個狀態何以可達。**
+**Principle:** Guards come in three kinds that look alike, and only one is a defect.
+**Precondition guards** (empty collection, not logged in) express a real domain state and are
+normal control flow. **Lifecycle guards** (closed, unmounted) exist because the runtime really
+does deliver callbacks after teardown, and are necessary. The third is the **defensive guard
+added "after it broke once"** — it trades a crash that speaks for a silent nothing-happened,
+taking away the finger that pointed at the cause. One question tells them apart: **can you
+say which state it guards against, and why that state is reachable.**
 
-- **S15.1 守衛應指名其所防之狀態及該狀態之可達路徑** — Check: 該守衛防的是哪一個狀態？
-  該狀態經由哪條路徑到達？答得出「是什麼」而答不出「何以可達」者，違反本條——該守衛所
-  掩蓋者為一個未知，而那個未知才是瑕疵。應查明其可達路徑；確認不可達者，刪去該守衛，
-  讓它壞出來。
-- **S15.2 同一狀態在一條流程中反覆受守，係入口過多之徵兆** — Check: 同一個狀態在這條
-  流程裡被守了幾次？多於一次者，應先數該流程有幾個入口與幾個續行點，並以**減少入口**
-  消去守衛，不得以增設守衛消去症狀。守衛之數目量的是這條流程有幾種進入方式，不是防護
-  有多周全。
-- **S15.3 生命週期守衛不在最少化之列** — Check: 該守衛所防者，是否為執行環境確實會在
-  拆除之後再送達之回呼？是者，不適用 S15.2 之最少化——該守衛為必要，其數目由非同步續行
-  點之數目決定，應循 S15.2 減少續行點，不得刪去守衛。
+- **S15.1 A guard must name the state it guards against and how that state is reached** —
+  Check: which state does the guard guard against? By which path is that state reached?
+  Answering "what" but not "why reachable" violates this rule — the guard is covering an
+  unknown, and the unknown is the defect. Find the path; if it is confirmed unreachable,
+  delete the guard and let it break.
+- **S15.2 Guarding the same state repeatedly in one flow is a sign of too many entry points** —
+  Check: how many times is the same state guarded in this flow? If more than once, first count
+  the flow's entry points and continuation points, and eliminate guards by **reducing entry
+  points**; do not eliminate the symptom by adding guards. The guard count measures how many
+  ways into the flow there are, not how thorough the protection is.
+- **S15.3 Lifecycle guards are not subject to minimization** — Check: does the guard protect
+  against a callback the runtime really does deliver after teardown? If so, S15.2's
+  minimization does not apply — the guard is necessary, and its count is set by the number of
+  async continuation points; reduce continuation points per S15.2, and do not delete the
+  guards.
 
-## S16 — 一個物件擁有一項能力，並以其介面為唯一邊界
+## S16 — An object owns one capability, and its interface is the only boundary
 
-**Principle:** 物件即邊界。能力歸一個擁有者所有，對外只露出它承諾的操作，內部表述留在
-界內；取用該能力者一律走它的介面，不另造一份，亦不繞道穿透。邊界之劃設、存續與廢除，
-同受本條拘束。
+**Principle:** An object is a boundary. A capability belongs to one owner, which exposes only
+the operations it promises and keeps its internal representation inside; whoever uses the
+capability goes through its interface, never building a second one or reaching around it.
+Drawing, keeping and removing a boundary are all bound by this rule.
 
-- **S16.1 邊界應以其所消除之既存複雜度證成** — Check: 該新增之層或包裝，所消除者為現已
-  存在之何項複雜度（既有之重複、既已可表達之不可能狀態、既存之分歧）？答不出、或所消除者
-  為尚未存在之情形者，違反本條。將該單位行內展開後，讀者所需知道的相同者，其為轉址而非
-  抽象，亦屬之；呼叫端已判之條件由被抽出者再判一次者，同。
-- **S16.2 能力之取用應經其擁有者所宣告之入口** — Check: 該處所用者，為既有機制之入口，
-  抑或自行手寫之簡化版？框架或本專案已提供該機制而另造者，違反本條——另造之物與原機制
-  之差異（邊界情形、無障礙、整合行為），僅於他人之裝置上顯現。以隱含通道取得他界之物，
-  而該界另有指名之入口者，同。
-- **S16.3 一個事實或一次衍生只得有一個宣告處** — Check: 該值、集合或衍生，他處有無第二
-  份？擁有者已提供之衍生值而於呼叫點重推者，違反本條；二個僅差一二成員、差異僅在改名之
-  集合，係同一集合，分立者違反本條。Example: 二個列舉之間的對照 switch，其每一臂皆為
-  更名。
-- **S16.4 內部表述不外露，他人之內部不得穿透** — Check: 該單位所露出者，為其承諾之操作，
-  抑或其內部表述（欄位形狀、集合型別、中間態）？露出內部者，或穿透他人內部取用者，違反
-  本條。共用單位認得其任一使用者之型別、狀態或實體者，亦屬之——它不是共用的，它是那個
-  使用者的；所需資料與動作應由參數進出。
-- **S16.5 跨系統之界，兩側各擁有自己的概念** — Check: 跨越該界者，為自家型別，抑或外部
-  系統之形狀、代碼或錯誤（欄位與外部 payload 一對一，或帶 raw / json / code 之類欄位者，
-  即屬之）？屬後者，違反本條——外部概念一旦越界，其變更即穿透至界內每一處，而二者型別
-  均合法，故 linter 全綠。
-- **S16.6 邊界之修正與廢除，均歸其擁有者** — Check: 這次修的是共用單位的行為，而修正落在
-  哪裡？落在使用它的那一方者，違反本條——此後每一個採用者都要自己再推導一次同一個修正；
-  消費端之差異應編碼為該單位的一個具名選項，而非另開一個同胞單位。廢除一個單位時，其體內
-  每個守衛（前置條件、冪等短路、去重、限流）應各有去處，答出「無處可去」者，該廢除尚未
-  成立——刪除不出聲，所失之保證要到被守的邊界情形發生時才顯現。
+- **S16.1 A boundary must be justified by existing complexity it removes** — Check: what
+  complexity that exists today (existing duplication, impossible states that are already
+  expressible, existing divergence) does the new layer or wrapper remove? If you cannot say, or
+  what it removes is a situation that does not exist yet, it violates this rule. If, once the
+  unit is inlined, readers need to know the same things, it is a redirection rather than an
+  abstraction and falls under this rule; so does an extracted unit re-checking a condition the
+  caller already checked.
+- **S16.2 A capability must be used through the entry point its owner declares** — Check:
+  does this code use the existing mechanism's entry point, or a hand-written simplified
+  version? Rebuilding a mechanism the framework or this project already provides violates this
+  rule — the differences between the rebuild and the original (edge cases, accessibility,
+  integration behavior) show up only on other people's devices. Obtaining something from
+  another boundary through an implicit channel, when that boundary has a named entry point,
+  violates it too.
+- **S16.3 A fact or a derivation has exactly one declaration site** — Check: does the value,
+  collection or derivation have a second copy elsewhere? Re-deriving at a call site a value the
+  owner already provides violates this rule; two collections that differ by only a member or
+  two, where the difference is only renaming, are one collection, and keeping them separate
+  violates this rule. Example: a mapping switch between two enums where every branch is a
+  rename.
+- **S16.4 Internal representation stays inside; other units' internals must not be reached
+  into** — Check: does the unit expose the operations it promises, or its internal
+  representation (field shapes, collection types, intermediate states)? Exposing internals,
+  or reaching into another unit's internals, violates this rule. So does a shared unit that
+  knows any of its users' types, state or entities — it is not shared, it belongs to that
+  user; the data and actions it needs must go in and out through parameters.
+- **S16.5 Across a system boundary, each side owns its own concepts** — Check: does what
+  crosses the boundary use your own types, or the external system's shapes, codes or errors
+  (fields one-to-one with an external payload, or fields like raw / json / code, count as
+  such)? The latter violates this rule — once an external concept crosses, its changes
+  propagate to every place inside, and both types are legal, so the linter stays green.
+- **S16.6 Fixing and removing a boundary belong to its owner** — Check: this change fixes a
+  shared unit's behavior — where does the fix land? On the consuming side violates this rule —
+  every later adopter must re-derive the same fix; consumer-side differences must be encoded
+  as a named option of that unit, not a sibling unit. When a unit is removed, every guard
+  inside it (precondition, idempotency short-circuit, dedup, rate limit) must have somewhere to
+  go; if the answer is "nowhere", the removal is not yet valid — deletion is silent, and the
+  lost guarantee shows up only when the guarded edge case happens.

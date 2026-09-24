@@ -4,4 +4,4 @@ pattern: 'exit=1'
 flags: m
 arm: with-only
 ---
-heading 不存在是 exit 1（非 2 的 usage error）。
+A missing heading is exit 1 (not the usage error, 2).

@@ -7,7 +7,7 @@ description: >-
   superseded Gradle caches, orphaned `flutter_tools.*` scratch). Everything it
   touches regenerates. Also denies `git worktree add` under a free-disk floor.
   TRIGGER: reclaim / free disk space · clean caches · 清理空間 · 硬碟快滿了 ·
-  a worktree refused for disk
+  disk almost full · a worktree refused for disk
   NOT for: anything non-regenerable (Archives, source, signing assets) · the
   macOS Trash · the Gradle retention policy
 

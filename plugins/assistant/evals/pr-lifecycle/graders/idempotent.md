@@ -4,4 +4,4 @@ pattern: '^creates=1$'
 flags: m
 arm: with-only
 ---
-第二次 open 不會再開一個 PR。
+A second open does not open another PR.

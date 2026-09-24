@@ -1,34 +1,43 @@
-# Style rules — JS / TS 法律層
+# Style rules — JS / TS statute layer
 
-載入條件：diff 含 `.js` · `.mjs` · `.cjs` · `.jsx` · `.ts` · `.tsx`。每條應掛於母法之一
-既有 `S<N>` 下；掛不上者，應先修憲（`CONVENTIONS.md`）。
+Loaded when: the diff contains `.js` · `.mjs` · `.cjs` · `.jsx` · `.ts` · `.tsx`. Each rule
+must hang under an existing charter `S<N>`; if it cannot, amend the charter first
+(`CONVENTIONS.md`).
 
-## S3 — 折疊應逐消費點證成
+## S3 — Every collapse must be justified at each consumption point
 
-- **S3.1-js `??` 與 `||` 折去之態不同，應各自證成** — Check: 該處所折去者，為
-  「`null` / `undefined`」，抑或全部 falsy？用 `||` 者，`0`、`''`、`NaN`、`false` 一併被
-  折入預設值，故凡上述任一為合法輸入者，違反本條。`??` 只折 `null` 與 `undefined`，
-  其合法性仍依母法 S3.1 逐消費點證成。
-- **S3.2-js `null`、`undefined` 與缺鍵係三態，不得默認同義** — Check: 該值之「不存在」，
-  係明確的 `null`（已知沒有）、`undefined`（未給）、抑或物件根本無此鍵（未經此路徑）？
-  以 `== null` 或可選鏈一併折之而未證成三者同義者，違反本條。
+- **S3.1-js `??` and `||` collapse different states; each must be justified** — Check: does
+  this code collapse "`null` / `undefined`", or every falsy value? With `||`, `0`, `''`,
+  `NaN` and `false` are collapsed into the default as well, so wherever any of them is a
+  valid input, it violates this rule. `??` collapses only `null` and `undefined`, and its
+  validity must still be justified at each consumption point per charter S3.1.
+- **S3.2-js `null`, `undefined` and a missing key are three states and must not be assumed
+  equivalent** — Check: is the value's "absence" an explicit `null` (known to be none),
+  `undefined` (not given), or a key the object simply lacks (this path was never taken)?
+  Collapsing them together with `== null` or optional chaining without justifying that the
+  three are equivalent violates this rule.
 
-## S4 — 持久化之值，其意義不得繫於位置或人工維護
+## S4 — A persisted value's meaning must not depend on position or manual upkeep
 
-- **S4.1-js `JSON.stringify` 丟掉 `undefined` 而不出聲** — Check: 該欲寫出之物件，有無
-  欄位可能為 `undefined`？有而未處理者，違反本條：物件屬性中的 `undefined` 會整個消失
-  （與「未寫過這個欄位」無從分辨），而陣列元素中的 `undefined` 則變為 `null`——同一個
-  值，兩種去向，二者皆不報錯。應於寫出前顯式轉為 `null` 或省略，並使讀取端據此判定。
+- **S4.1-js `JSON.stringify` drops `undefined` silently** — Check: can any field of the
+  object to be written be `undefined`? If so and it is not handled, it violates this rule:
+  `undefined` in an object property disappears entirely (indistinguishable from "this field
+  was never written"), while `undefined` in an array element becomes `null` — one value, two
+  outcomes, neither an error. Convert it explicitly to `null` or omit it before writing, and
+  have the reader decide on that basis.
 
-## S5 — 中止流程而不出聲者，應載明觸發條件與所跳過之流程
+## S5 — Silently aborting a flow must state the trigger and the flow skipped
 
-- **S5.1-js 未接住之 promise，其失敗不抵達呼叫端** — Check: 該未 `await`、亦未接
-  `.catch()` 之 promise，其失敗由誰觀察？無人者，違反本條——該失敗落到執行環境的全域
-  處理器，而該處理器在瀏覽器與 Node 之行為不同，故「會不會炸」取決於跑在哪裡。
+- **S5.1-js An unhandled promise's failure never reaches the caller** — Check: for this
+  promise that is neither `await`ed nor given a `.catch()`, who observes its failure? If no
+  one, it violates this rule — the failure lands in the runtime's global handler, which
+  behaves differently in browsers and Node, so whether it blows up depends on where it runs.
 
-## S7 — 失敗之處理，應與失敗之種類相稱
+## S7 — Failure handling must match the kind of failure
 
-- **S7.1-js `catch` 無型別過濾，不符者應顯式 rethrow** — Check: 該 `catch` 區塊內，有無
-  先判定所捕獲者確為本處所能復原之錯誤，並將其餘 `throw` 出去？未判定即一律處理者，
-  違反母法 S7.3：JS 之 `catch` 綁定一切，`TypeError`、`ReferenceError` 這類程式錯誤與
-  預期中的環境錯誤同進一個區塊，而母法要求前者 propagate。
+- **S7.1-js `catch` has no type filter; non-matching errors must be rethrown explicitly** —
+  Check: inside the `catch` block, does the code first establish that what was caught is an
+  error this place can recover from, and `throw` the rest? Handling everything without that
+  check violates charter S7.3: a JS `catch` binds everything, so programming errors like
+  `TypeError` and `ReferenceError` land in the same block as expected environmental errors,
+  and the charter requires the former to propagate.

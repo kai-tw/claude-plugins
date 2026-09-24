@@ -5,4 +5,4 @@ flags: m
 arm: with-only
 match: not_contains
 ---
-ready 不會誤報成「沒開過 PR」。
+ready does not misreport it as "PR never opened".

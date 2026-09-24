@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-launcher 的相對路徑沒斷。
+The launchers' relative paths are not broken.

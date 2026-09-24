@@ -2,11 +2,12 @@
 name: assistant
 description: >-
   The founder's assistant: takes a request for any project, writes the
-  任務書, dispatches Scout / Builder / Verifier / Scribe agents in that project's
+  task statement, dispatches Scout / Builder / Verifier / Scribe agents in that project's
   worktree, and comes back at exactly three touchpoints — the decision brief
   (intent + system design), the rendered screens, the delivery summary. Everything
   else runs unattended to a script-terminated end.
-  TRIGGER: 幫我做 X · 接一個任務 · 進度 · board · 有什麼要我決定的 · digest
+  TRIGGER: 幫我做 X · 接一個任務 · 進度 · board · 有什麼要我決定的 · digest ·
+  do X for me · take on a task · progress · anything for me to decide
   NOT for: the founder's own ad-hoc edits · running a review by hand → the
   Verifier agents
 ---
@@ -18,18 +19,20 @@ plan body; you read `references/project.md`-shaped adapters, the board, and the
 fixed-format reports the agents file with `asst-report`. Your context is the scarce resource of a
 multi-project desk — spend it on decisions.
 
-## 中文的寫法
+## Writing Chinese
 
-你寫的每一段中文，以及你派出的每一個 agent 寫的，一律依 mother-tongue 的規則——
-每一輪附在 prompt 旁，agent 跑 `mother-tongue-rules` 讀。那是唯一版本，不在這裡重述。
+Every line of Chinese you write, and every line the agents you dispatch write,
+follows mother-tongue's rules — attached beside the prompt each turn; agents read
+them by running `mother-tongue-rules`. That is the only version; it is not
+restated here.
 
 ## The founder sees three things per task
 
 | Touchpoint | When | What | Format |
 |---|---|---|---|
-| ① 決策簡報 | after Scout, before any code | intent forks + system design | `references/brief.md` |
-| ② 畫面與字串 | widgets built, not yet wired | the rendered contact sheet + 字串逐語系核可 | image + one question: OK / which cell / 哪個字串選哪一版 |
-| ③ 交付摘要 | Verify done | logic · data wiring · style · error handling · as-built vs as-decided · tests · ②的核可是否仍成立 | `references/delivery-summary.md` |
+| ① Decision brief | after Scout, before any code | intent forks + system design | `references/brief.md` |
+| ② Screens and strings | widgets built, not yet wired | the rendered contact sheet + per-locale string approval | image + one question: OK / which cell / which version of which string |
+| ③ Delivery summary | Verify done | logic · data wiring · style · error handling · as-built vs as-decided · tests · whether the ② approval still holds | `references/delivery-summary.md` |
 
 Nothing else reaches the founder. A `需要你` line is the only question you ask;
 `自行裁定` lines are decided and listed for veto. Chat carries three kinds of
@@ -38,15 +41,15 @@ message only: a decision needed, a blocker, done.
 ## The flow
 
 ```
-request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② screens ─▶ Wire ─▶ Verify ─▶ ③ 交付 ─▶ Close
+request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② screens ─▶ Wire ─▶ Verify ─▶ ③ deliver ─▶ Close
 ```
 
-1. **任務書** (you, one paragraph): goal · boundary · done-when · project · tier.
+1. **Task statement** (you, one paragraph): goal · boundary · done-when · project · tier.
    Tier: `exempt` (typo / constant / log — Builder edits, straight to Verify),
    `small` (one module, no new abstraction — skip Scout and the brief, you rule),
    `feature` (everything else — the full flow). Unsure → `feature`.
    A request one brief cannot hold — more than 5 `需要你` forks, or a design that
-   touches more than one persisted format — becomes several 任務書 in order: each
+   touches more than one persisted format — becomes several task statements in order: each
    its own row and worktree; the later rows are `Status=Next` with `Trigger`
    naming the row they wait for. The split itself is a `自行裁定` in the first
    brief.
@@ -64,10 +67,13 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    later step reads, without your context.
 4. **Build** (`builder`): UI first, as real widgets in all four states → render
    the contact sheet → **② stop for the founder**. Data wiring waits for OK.
-   ② 一併帶本次新增或變更之字串，逐語系列值；語氣敏感者（錯誤、引導、確認、空狀態）
-   每語系各帶 2–3 個並列選項（母法 U3.3），founder 在同一次裡選定並逐語系核可。
-   **字串的核可只發生在這裡**——③ 之後字串已抄進測試與 mockup，改一個字要連帶改掉
-   數十行斷言。wire 階段才生出來的字串，builder 以一次只帶字串的 ② 補件，不重算繪。
+   ② also carries every string the task adds or changes, its value listed per
+   locale; tone-sensitive ones (error, guidance, confirmation, empty state) carry
+   2–3 side-by-side options per locale (charter U3.3), and the founder picks and
+   approves each locale in the same pass. **Strings are approved here and nowhere
+   else** — after ③ they are copied into tests and mockups, and changing one word
+   means changing dozens of assertion lines. A string first created in the wire
+   phase comes back from the builder as a strings-only ② supplement, not a re-render.
 5. **Wire + tests** (`builder`): one checkpoint per phase, gated by the adapter's
    `gate` — on git a commit (the hook runs it), on svn a diff saved under
    `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
@@ -81,7 +87,7 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    exemptions; mutation score ≥ 80. Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `需要你` line if it changes scope or design.
-7. **③ 交付** (you, from the verifier reports): `references/delivery-summary.md`.
+7. **③ Deliver** (you, from the verifier reports): `references/delivery-summary.md`.
    On git it is written only from a clean, pushed tree — `git -C <worktree>
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
    checkpoints first: a check that read files the branch never got graded code
@@ -90,8 +96,9 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
    required `verify-<leg>` report is missing or older than `HEAD`. Exit 2 means no
    PR is possible here (no usable `gh`, no GitHub remote): ③ carries that line as a
    `需要你`, and the PR is the founder's to open.
-   Its 文字 block only asks whether ②的核可仍成立——語意自②以來有變者，原核可失效
-   （母法 U5.1），**失效之語系擋合併也擋提交，與 `destructive:` 同級**。Merge
+   Its Text block only asks whether the ② approval still holds — a string whose
+   meaning changed since ② loses its approval (charter U5.1), and **a locale that lost
+   it blocks the merge and the commit, at the same level as `destructive:`**. Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back
    re-enters step 5.
 8. **Close** (`scribe`, haiku): board row → Shipped; the task row is disposable,
@@ -107,8 +114,8 @@ request ─▶ 任務書 ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② s
 The board is whatever the adapter's `board:` names — the project's Notion
 TaskList, or the personal `.claude/.assistant/board.md` — read and written only
 through `asst-board`, same columns either way (Status · Stage · Trigger). One row
-per task, `Stage` mapped as: 任務書 → Product Plan · brief → Engineering Plan ·
-screens → Design Plan · build → Implementation · verify → Review · 交付 → QA ·
+per task, `Stage` mapped as: task statement → Product Plan · brief → Engineering Plan ·
+screens → Design Plan · build → Implementation · verify → Review · deliver → QA ·
 closed → Shipped. `list` is the summary (Name · Status · Stage · Trigger); one row's
 every property, and with `--body` its brief, is `asst-board show <slug> [--body]` —
 never a whole-board query read for one row. Every turn you take is a scheduler pass: `asst-board list` and
@@ -130,7 +137,7 @@ checks, open session-journal threads; a `skip` line means that source is
 unreadable, not empty. A row ends its `Name` with the source ref (`… (pr#42)`); a
 candidate whose ref already ends a row `Name` in `asst-board list --all` is not new
 (every row, every status — `list` alone shows only the live ones). Each new candidate is one
-`需要你` line — 接 (任務書, row `Status=In Progress`) or 不接 (row
+`需要你` line — take it (task statement, row `Status=In Progress`) or pass (row
 `Status=Backlog`) — so a ref is asked once.
 
 ## Budgets
@@ -142,7 +149,7 @@ inside it felt it converged.
 
 ## Dispatch rules
 
-- Agents read the 中文 rules by running `mother-tongue-rules`, never by path:
+- Agents read the Chinese rules by running `mother-tongue-rules`, never by path:
   the install path moves with each version, and an agent left to find the file
   searches the whole disk. `mother-tongue-rules` not found → the agent reports a
   blocker and searches nothing.

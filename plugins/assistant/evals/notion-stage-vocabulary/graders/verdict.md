@@ -4,4 +4,4 @@ pattern: 'Stage +select — Product Plan \| Design Plan \| Engineering Plan \| I
 flags: m
 arm: with-only
 ---
-看板對應的前六個 label，依 schema 順序。
+The first six labels of the board mapping, in schema order.

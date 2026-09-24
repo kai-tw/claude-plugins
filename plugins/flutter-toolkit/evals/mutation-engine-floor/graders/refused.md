@@ -4,4 +4,4 @@ pattern: '^rc=2$'
 flags: m
 arm: with-only
 ---
-低於下限就不跑，以 exit 2 結束。
+Below the floor it does not run and exits 2.

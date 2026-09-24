@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-全部執行過的檔案不判 FAIL。
+A fully executed file is not marked FAIL.

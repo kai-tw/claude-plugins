@@ -4,4 +4,4 @@ pattern: 'tasks/t1/brief\.md'
 flags: m
 arm: with-only
 ---
-簡報存在任務目錄。
+The brief is filed in the task directory.

@@ -1,71 +1,87 @@
-# Style rules — C# 法律層
+# Style rules — C# statute layer
 
-載入條件：diff 含 `.cs`。每條應掛於母法之一既有 `S<N>` 下；掛不上者，應先修憲
-（`CONVENTIONS.md`）。
+Loaded when: the diff contains `.cs`. Each rule must hang under an existing charter `S<N>`;
+if it cannot, amend the charter first (`CONVENTIONS.md`).
 
-## S3 — 折疊應逐消費點證成
+## S3 — Every collapse must be justified at each consumption point
 
-- **S3.1-csharp `struct` 之 `default` 繞過建構式** — Check: 該以 `struct`（`record struct`
-  亦屬之）表達之值，其全零之 `default` 是否為一個合法態？否者，違反母法 S3.5：建構式所把
-  之關，`default(T)`、`new T[n]`、未指派之欄位與反序列化全數繞過，型別不會擋，而零值讀起來
-  與一個真的值無異。應改以參考型別表達，或使 `default` 成為一個具名之合法態。
+- **S3.1-csharp A `struct`'s `default` bypasses the constructor** — Check: for a value
+  expressed as a `struct` (`record struct` included), is its all-zero `default` a valid
+  state? If not, it violates charter S3.5: `default(T)`, `new T[n]`, unassigned fields and
+  deserialization all bypass the checks the constructor enforces, the type will not stop
+  them, and the zero value reads just like a real one. Express it as a reference type
+  instead, or make `default` a named valid state.
 
-## S4 — 持久化之值，其意義不得繫於位置或人工維護
+## S4 — A persisted value's meaning must not depend on position or manual upkeep
 
-- **S4.1-csharp `enum` 持久化應為成員名** — Check: 該 enum 寫出之形式為何？
-  `System.Text.Json` 之預設形式為底層數值（`Phase.Payout` 寫出為 `2`），未掛
-  `JsonStringEnumConverter` 即寫出者，違反母法 S4.1（序列位置）：成員之間插入一個新成員，
-  既存存檔即整批位移一格，而讀回不出聲。轉 `(int)` 或 `ToString("D")` 者，同。其代價依母法
-  S4.2 載於該 enum 之宣告處：成員更名即為一次資料遷移。
-- **S4.2-csharp 時刻應以 `DateTimeOffset` 持久化** — Check: 該寫出之時刻，其型別為
-  `DateTime` 抑或 `DateTimeOffset`？屬前者，違反本條：`Kind` 不隨值寫出，讀回一律為
-  `Unspecified`，其後之時區換算即以讀取端之本地時區為準——同一筆資料於不同裝置讀出不同
-  時刻，且不報錯。
+- **S4.1-csharp Persist an `enum` as its member name** — Check: what form does the enum write
+  out? `System.Text.Json`'s default form is the underlying number (`Phase.Payout` is written
+  as `2`); writing it out without `JsonStringEnumConverter` violates charter S4.1 (sequence
+  position): inserting a new member between existing ones shifts every existing save by one,
+  and reading back is silent. Casting to `(int)` or `ToString("D")` violates it too. Per
+  charter S4.2 the cost is stated at the enum's declaration: renaming a member is a data
+  migration.
+- **S4.2-csharp Persist instants as `DateTimeOffset`** — Check: is the instant written out a
+  `DateTime` or a `DateTimeOffset`? If the former, it violates this rule: `Kind` is not written
+  with the value and always reads back as `Unspecified`, so any later time-zone conversion uses
+  the reader's local zone — the same record reads as different instants on different devices,
+  with no error.
 
-## S6 — 註解應答 WHY，並繫於距其最近之宣告
+## S6 — Comments answer WHY and attach to the nearest declaration
 
-- **S6.1-csharp `!` 應載明其保證由誰維持** — Check: 該 `= null!`、`default!` 或 `!` 抑制
-  之處，有無載明該值由誰、於何時填入（框架鉤子、序列化器、呼叫順序）？無者，違反母法
-  S6.5：`!` 關掉的是編譯器的檢查，換來的保證改由讀者維持，而該保證之來源自本 repo 之型別
-  讀不出來。建構式填得起來者，應改為建構式注入。
+- **S6.1-csharp `!` must state who upholds its guarantee** — Check: where `= null!`,
+  `default!` or a `!` suppression is used, is it stated who fills the value and when (a
+  framework hook, the serializer, call order)? If not, it violates charter S6.5: `!` turns off
+  the compiler's check, the guarantee it buys is now upheld by the reader, and where that
+  guarantee comes from cannot be read from this repo's types. If the constructor can fill it,
+  switch to constructor injection.
 
-## S7 — 失敗之處理，應與失敗之種類相稱
+## S7 — Failure handling must match the kind of failure
 
-- **S7.1-csharp 邊界換型別應接回原 stack trace** — Check: 於 `catch` 內轉譯例外時，是否以
-  `ExceptionDispatchInfo.SetRemoteStackTrace` 將原 stack trace 接上新例外後拋出？以
-  `throw new XFailure(msg, ex)` 挾帶 `InnerException` 代之者，違反母法 S7.5：新例外之 stack
-  起於轉譯所在之行，而 `InnerException` 正係母法所排除之挾帶。
+- **S7.1-csharp Changing type at the boundary must reattach the original stack trace** —
+  Check: when translating an exception inside `catch`, is the original stack trace attached
+  to the new exception with `ExceptionDispatchInfo.SetRemoteStackTrace` before it is thrown?
+  Carrying an `InnerException` via `throw new XFailure(msg, ex)` instead violates charter
+  S7.5: the new exception's stack starts at the translation line, and `InnerException` is
+  exactly the carrying the charter excludes.
 
-## S8 — 協調不得建立於「通常會對」之上
+## S8 — Coordination must not rest on "usually right"
 
-- **S8.1-csharp 非同步臨界區應以 `SemaphoreSlim(1, 1)` 序列化** — Check: 該跨 `await` 之
-  臨界區，其守衛為 `SemaphoreSlim`，抑或 `lock` 加一個 `bool`？屬後者，違反母法 S8.1：
-  `lock` 不得跨 `await`（編譯器擋在該行），故改寫之結果通常是只護住續行點之前的半段，而
-  那半段本無競爭。
+- **S8.1-csharp Async critical sections must be serialized with `SemaphoreSlim(1, 1)`** —
+  Check: is this critical section spanning an `await` guarded by a `SemaphoreSlim`, or by
+  `lock` plus a `bool`? If the latter, it violates charter S8.1: `lock` cannot span an
+  `await` (the compiler rejects that line), so the rewrite usually protects only the half
+  before the continuation point, which had no contention to begin with.
 
-## S9 — 資源應有上界，且上界應於寫下之時載明
+## S9 — Resources must be bounded, and the bound stated when written
 
-- **S9.1-csharp `event` 之訂閱清單無上界** — Check: 該 `+=` 之對稱 `-=` 位於何處？答不出
-  者，違反本條：C# 之 event 對訂閱者持強參考，發布者較訂閱者長壽時，訂閱者永不回收，且其
-  回呼於訂閱者已被拆除之後照樣送達。Example: 短命之訂閱者於建立時訂閱一個長壽單例之事件，
-  拆除時無人退訂。
+- **S9.1-csharp An `event`'s subscriber list is unbounded** — Check: where is the matching
+  `-=` for this `+=`? If you cannot say, it violates this rule: a C# event holds strong
+  references to its subscribers, so when the publisher outlives a subscriber, the subscriber
+  is never collected, and its callbacks are still delivered after it has been torn down.
+  Example: a short-lived subscriber subscribes to a long-lived singleton's event on creation,
+  and nobody unsubscribes on teardown.
 
-## S10 — 編譯期已記錄之集合，不得以執行期查找繞過
+## S10 — A set recorded at compile time must not be bypassed by runtime lookup
 
-- **S10.1-csharp `enum` 之值域為其底層整數之全域** — Check: 該自儲存、網路或 `Enum.Parse`
-  讀回之 enum，有無於邊界以 `Enum.IsDefined` 或窮盡之 `switch` 表達式把關？無者，違反母法
-  S10.1：`(Phase)99` 合法、`JsonSerializer.Deserialize<Phase>("99")` 亦原樣收下，而
-  `switch` 語句漏掉它只是靜靜跑完——`switch` 表達式由編譯器之 CS8524 擋下，語句無此保護。
+- **S10.1-csharp An `enum`'s range is its underlying integer's entire range** — Check: is an
+  enum read back from storage, the network or `Enum.Parse` checked at the boundary with
+  `Enum.IsDefined` or an exhaustive `switch` expression? If not, it violates charter S10.1:
+  `(Phase)99` is legal, `JsonSerializer.Deserialize<Phase>("99")` accepts it as is, and a
+  `switch` statement that misses it just runs through silently — a `switch` expression is
+  caught by the compiler's CS8524; a statement has no such protection.
 
-## S15 — 守衛應指名其所防之狀態，其數目係設計之徵兆
+## S15 — A guard must name the state it guards against; the number of guards is a design symptom
 
-- **S15.1-csharp `?.` 係一個未具名之守衛** — Check: 該 `?.` 或 `??` 所防之 `null`，來自
-  哪一條路徑？答不出者，違反母法 S15.1：整串運算式靜靜求值為 `null` 或整個不執行，呼叫端與
-  使用者皆無回饋，而那個不明的 `null` 才是瑕疵。
+- **S15.1-csharp `?.` is an unnamed guard** — Check: which path does the `null` that this
+  `?.` or `??` guards against come from? If you cannot say, it violates charter S15.1: the
+  whole expression silently evaluates to `null` or does not run at all, with no feedback to
+  caller or user, and that unexplained `null` is the defect.
 
-## S16 — 一個物件擁有一項能力，並以其介面為唯一邊界
+## S16 — An object owns one capability, and its interface is the only boundary
 
-- **S16.1-csharp 露出之唯讀集合應為真正唯讀** — Check: 宣告為 `IReadOnlyList<T>` 之回傳
-  值，其背後實體是否即為擁有者所持之 `List<T>`？是者，違反母法 S16.4：該介面僅是視角，
-  呼叫端一次 `as List<T>` 即取得擁有者之內部集合。`AsReadOnly()` 擋下該轉型；呼叫端所需為
-  當下之快照者，應回傳一份拷貝。
+- **S16.1-csharp An exposed read-only collection must really be read-only** — Check: is the
+  object behind a return value declared `IReadOnlyList<T>` the owner's own `List<T>`? If so,
+  it violates charter S16.4: the interface is only a view, and a single `as List<T>` gives the
+  caller the owner's internal collection. `AsReadOnly()` blocks that cast; if the caller needs
+  a snapshot of the current state, return a copy.

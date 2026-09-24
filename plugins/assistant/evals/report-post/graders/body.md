@@ -4,4 +4,4 @@ pattern: '^finding-A$'
 flags: m
 arm: with-only
 ---
-comment 帶著報告全文。
+The comment carries the full report.

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-engine-notice
-description: lock 檔在下限以上、但 kai-packages 已有更新的 dart_mutants 時，plan-mutation 提醒升級並照常跑；指令依專案類型給 flutter pub get 或 dart pub get；已是最新就不出聲。
+description: When the lock file is at or above the floor but kai-packages has a newer dart_mutants, plan-mutation suggests upgrading and runs as usual; the command is flutter pub get or dart pub get by project type; quiet when already current.
 tags: [plan-mutation]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0; w=$PWD; for p in flutter dart same; do r=engine; [ $p = same ] && r=engine-same; (cd $p && PLAN_MUTATION_ENGINE_REPO="$w/$r" plan-mutation --files lib/a.dart -- flutter test 2>&1; echo "rc=$?") | sed "s/^/$p: /"; done
   prompt: |
-    對三個 lock 檔解析到 dart_mutants 0.3.1 的專案跑 plan-mutation：Flutter 與純 Dart 專案各落後一版，另一個已是最新。印出輸出與結束碼。
+    Run plan-mutation on three projects whose lock files resolve dart_mutants 0.3.1: a Flutter and a pure Dart project each one version behind, and one already current. Print the output and exit codes.
 context:
   scaffold_script: fixture.sh

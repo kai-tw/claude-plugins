@@ -4,4 +4,4 @@ pattern: '^flutter: plan-mutation: dart_mutants 0\.3\.2 is out; this project res
 flags: m
 arm: with-only
 ---
-Flutter 專案落後一版時提醒升到 0.3.2。
+A Flutter project one version behind is told to upgrade to 0.3.2.

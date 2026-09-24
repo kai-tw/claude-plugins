@@ -4,4 +4,4 @@ pattern: 'exit=1'
 flags: m
 arm: with-only
 ---
-cap hit 以 exit 1 終止呼叫端。
+A cap hit stops the caller with exit 1.

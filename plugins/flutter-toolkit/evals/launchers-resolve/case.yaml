@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: launchers-resolve
-description: 三個 launcher 都解析到 skills/test-gates/scripts 下的實作，--help 不占 slot。
+description: All three launchers resolve to the implementations under skills/test-gates/scripts; --help takes no slot.
 tags: [launchers]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: plan-test --help | head -1; plan-coverage --help 2>&1 | head -1; plan-mutation --help 2>&1 | head -1; echo "exit=$?"
   prompt: |
-    印出 plan-test、plan-coverage、plan-mutation 各自 --help 的第一行。
+    Print the first line of --help for each of plan-test, plan-coverage and plan-mutation.
 context:
   scaffold_script: fixture.sh

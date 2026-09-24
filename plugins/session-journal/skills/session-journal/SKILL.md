@@ -17,7 +17,7 @@ description: >-
   start, to reconcile it against reality. TRIGGER: session journal · update the
   journal · record this task · track this thread · what's in flight · where was I
   · note where this lives · 記一下這個 task · 更新 journal · 在飛的 task 有哪些 ·
-  我剛在哪個 worktree · 這個 thread 記一下
+  我剛在哪個 worktree · 這個 thread 記一下 · which worktree was I in
 allowed-tools:
   - Bash
   - Read
@@ -169,7 +169,7 @@ tight:
   session (the language to answer in, what to stop asking before doing, a scope
   boundary), verbatim. WHY: said once and in passing, they read to the summarizer
   as chat rather than as contract, so this is the class it reliably drops — one
-  three-compaction session had 「請用中文解釋」 re-issued twice and a scope
+  three-compaction session had "explain it in Chinese" re-issued twice and a scope
   boundary told three times, the third time visibly out of patience. Hearing a
   directive a second time is proof the last compaction dropped it — write it in
   then, not later.

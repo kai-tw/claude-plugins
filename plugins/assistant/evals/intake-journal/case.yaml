@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: intake-journal
-description: 沒有 GitHub remote 時印 skip github；journal 的每個未關 thread 各一行，模板註解不算。
+description: With no GitHub remote it prints skip github; one line per open journal thread, template comments excluded.
 tags: [asst-intake]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-intake; echo "exit=$?"
   prompt: |
-    列出這個專案 board 以外的待辦候選（GitHub 與 session journal），印出工具的原始輸出和 exit code。
+    List this project's to-do candidates not yet on the board (GitHub and session journal), and print the tool's raw output and exit code.
 context:
   scaffold_script: fixture.sh

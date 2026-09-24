@@ -4,4 +4,4 @@ pattern: '^the local brief$'
 flags: m
 arm: with-only
 ---
-檔案型任務版的 --body 帶回歸檔的 brief。
+--body on the file task board brings back the filed brief.

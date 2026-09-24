@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: lang-from-mother-tongue
-description: 中文規則只有 mother-tongue 一個版本——assistant 依賴它、agent 跑 mother-tongue-rules 讀，自己不再帶一份。
+description: The Chinese rules exist in one version only, mother-tongue's — assistant depends on it, agents read it by running mother-tongue-rules, and assistant carries no copy of its own.
 tags: [lang]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: jq -r ".dependencies[].name" "$root/.claude-plugin/plugin.json"; grep -L mother-tongue-rules "$root"/agents/*.md | sed "s/^/unread=/"; ls "$root/bin/asst-lang" "$root/skills/assistant/references/language.md" 2>/dev/null || echo own=gone
   prompt: |
-    列出 assistant 的依賴、沒叫 mother-tongue-rules 的 agent，以及 assistant 自己那份中文規則還在不在。
+    List assistant's dependencies, the agents that do not call mother-tongue-rules, and whether assistant's own copy of the Chinese rules still exists.
 context:
   scaffold_script: fixture.sh

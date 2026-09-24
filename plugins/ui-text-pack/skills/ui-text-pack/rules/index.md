@@ -1,106 +1,146 @@
-# 使用者可見文字撰寫法母法
+# Charter of user-visible text
 
-本法所收者，為機械檢查判不動、須以判斷認定之文字撰寫法。
+This law holds the rules for writing user-visible text that mechanical checks cannot
+decide and that need judgment.
 
-**所管.** app 執行時算繪於畫面、使用者讀得到之文字：標籤、標題、按鈕、欄位名、提示、
-錯誤訊息、空狀態。log、僅進 crash report 之 exception message、商店介紹與行銷素材，不在
-本法之列。
+**Scope.** Text the app renders on screen at runtime for users to read: labels, titles,
+buttons, field names, hints, error messages, empty states. Logs, exception messages that
+only reach crash reports, store listings and marketing material are outside this law.
 
-**判定模式.** 本法**不自訂級別**——違反本法之級別，由審查程序認定。
+**Severity.** This law **sets no severity levels** — the review procedure assigns the
+severity of a violation.
 
-## 位階
+## Precedence
 
-三層，上位優先。**本節為位階規則之唯一版本**，下位法與程序法一律引用本節。
+Three layers; the higher prevails. **This section is the only version of the precedence
+rules**; lower layers and procedural files cite it.
 
-| 位階 | 所收 | 權限 |
+| Rank | Contains | Authority |
 |---|---|---|
-| 憲法 | 本法 `U<N>`：所有語系、所有專案均成立之通則 | 唯一得立母規則之處 |
-| 法律 | 語系層：該語系之具體判準，每條掛於一 `U<N>` 之下 | 僅得將母規則**具體化** |
-| 命令 | 專案層：該專案之事實（術語表、各畫面之標籤、字串之存放格式、自家檢查腳本） | 僅得**加嚴**或**填事實** |
+| Constitution | this law's `U<N>`: general rules that hold in every locale and every project | the only place a base rule may be made |
+| Statute | locale layer: that locale's concrete criteria, each attached to one `U<N>` | may only **make a base rule concrete** |
+| Regulation | project layer: that project's facts (glossary, each screen's labels, string storage format, its own check scripts) | may only **tighten** or **supply facts** |
 
-**牴觸判準.** 二條**能否同時滿足**？能者，合法疊加；不能者，牴觸。
+**Conflict test.** Can the two rules **be satisfied at once**? If yes, they stack
+lawfully; if not, they conflict.
 
-**無豁免條款.** 牴觸僅有三種結局，全屬修法：母規則收窄（加條件，或下移至語系層）·
-母規則廢除 · 專案改字串。
+**No exemption clauses.** A conflict has only three outcomes, all amendments: narrow the
+base rule (add a condition, or move it down to the locale layer) · repeal the base rule ·
+the project changes the string.
 
-**審查中遇牴觸之處置.** 該條判 **`無法判定`**，並指名應由何人於何位階修法，另行提起
-修法。非 `passed`，亦非拿作者開刀之 `critical`。
+**Conflict found during review.** That item is ruled **`undeterminable`**,
+naming who must amend at which layer; the amendment is filed separately. It is not
+`passed`, nor a `critical` aimed at the author.
 
-**舉證責任.** 主張牴觸者，應**引二條規則原文，並敘明何以不能同時滿足**。
+**Burden of proof.** Whoever claims a conflict must **quote both rules verbatim and state
+why they cannot both be satisfied**.
 
-## 母規則
+## Base rules
 
-**下位法為空，不代表該語系無規則**——母規則照樣適用。反之，本法未立法之文字偏好，
-審查者**不得自行發明為 finding**：無條文不等於交由自由心證。
+**An empty lower layer does not mean the locale has no rules** — the base rules still
+apply. Conversely, reviewers **must not invent a finding** from a text preference this law
+does not legislate: no provision does not mean free discretion.
 
-## U1 — 一個字串之寫法，由它算繪之位置決定
+## U1 — How a string is written is decided by where it renders
 
-**Principle:** 同一件事寫成標籤或寫成句子，取決於使用者在該位置是在掃描，還是在閱讀
-——脫離位置寫出來的，是說明書，不是介面。
+**Principle:** Whether the same thing is written as a label or as a sentence depends on
+whether the user is scanning or reading at that spot — text written without its position
+is a manual, not an interface.
 
-- **U1.1 標籤與句子分流** — Check: 該字串算繪為供掃描之標籤（按鈕、標題、欄位名、分頁），
-  抑或使用者會逐字讀之完整句（提示、錯誤、空狀態說明）？以完整句充當標籤，或以殘句充當
-  說明者，違反本條。二者之句尾標點與句型，由語系層定之。
-- **U1.2 狀態以陳述寫，要求以請求寫** — Check: 該句所述，為系統目前之狀態，抑或使用者
-  應做之事？狀態而寫成請求句者，違反本條——畫面尚未要求使用者做任何事。Example:
-  「目前離線」為狀態，「請檢查網路後再試一次」為要求，二者得同句並列，不得互相冒充。
-- **U1.3 出現位置與可用寬度，應隨字串記錄** — Check: 該字串算繪於何元件、可用幾字幾行，
-  是否記於寫字串之人與寫其他語系之人都讀得到之處（記於何處，屬命令層）？未記而該處會截斷
-  者，違反本條：截斷在哪一個語系發生，只寫來源語言的人看不到。
+- **U1.1 Labels and sentences are separate** — Check: Does the string render as a label
+  for scanning (button, title, field name, tab), or as a full sentence the user reads word
+  by word (hint, error, empty-state text)? Using a full sentence as a label, or a fragment
+  as an explanation, violates this rule. The locale layer sets the ending punctuation and
+  sentence pattern of each.
+- **U1.2 A state is stated; a request is requested** — Check: Does the sentence describe
+  the system's current state, or something the user must do? A state written as a request
+  violates this rule — the screen has not yet asked the user to do anything. Example:
+  「目前離線」 is a state, 「請檢查網路後再試一次」 a request; the two may share a sentence
+  but must not pass for each other.
+- **U1.3 Position and available width must be recorded with the string** — Check: Is the
+  component the string renders in, and how many characters and lines it has, recorded
+  where both the string's writer and other locales' writers can read it (where is a
+  regulation-layer matter)? Where it is not recorded and the spot truncates, this violates
+  this rule: a writer of only the source language cannot see which locale truncates.
 
-## U2 — 失敗之訊息，應載明發生何事、現處何狀態、下一步為何
+## U2 — A failure message must state what happened, the current state, and the next step
 
-**Principle:** 使用者讀失敗訊息只為一件事——現在該怎麼辦。三者缺一，該訊息即把判斷丟回
-給使用者。
+**Principle:** Users read a failure message for one thing — what to do now. Missing any of
+the three hands the judgment back to the user.
 
-- **U2.1 三事齊備** — Check: 該失敗字串是否說出發生什麼、系統現處於什麼狀態、使用者下
-  一步做什麼？無下一步可給者，應說明何以無，不得以通用句填充。三事之外另添安撫或保證者，
-  亦違反本條——那是在回答使用者沒有問的問題。Example: 「登出失敗，目前仍在登入狀態，請再
-  試一次。」
-- **U2.2 一句只述一種失敗** — Check: 二個成因不同之失敗，是否共用同一字串？共用者，違反
-  本條：使用者據以採取之行動不同。亦不得逐字沿用他處之失敗訊息——那句描述的是另一個失敗。
+- **U2.1 All three present** — Check: Does the failure string say what happened, what
+  state the system is in now, and what the user does next? Where no next step can be
+  given, it must say why, not fill in a generic line. Adding reassurance or guarantees
+  beyond the three also violates this rule — that answers a question the user did not
+  ask. Example: 「登出失敗，目前仍在登入狀態，請再試一次。」
+- **U2.2 One failure per string** — Check: Do two failures with different causes share
+  one string? Sharing violates this rule: users take different actions for each. Nor may
+  a failure message be copied verbatim from elsewhere — that sentence describes another
+  failure.
 
-## U3 — 每一語系各自以母語寫成
+## U3 — Each locale is written natively
 
-**Principle:** 翻譯係在另一個語系裡把同一件事重講一次，非把來源語言之句子換字。一句原文
-逐字轉寫至數個語系，至少有一半讀起來不像人話。
+**Principle:** Translation retells the same thing in another locale; it is not swapping
+words in a source-language sentence. When one source sentence is transcribed word for word
+into several locales, at least half of them read unlike anything a person would say.
 
-- **U3.1 非逐字轉寫** — Check: 將該語系之值回譯為來源語言，語意是否改變？未改變，而語序、
-  句型、標點不合該語系慣行者，仍違反本條。
-- **U3.2 句型由語系定，不由來源語言定** — Check: 請求、疑問、敬體之句型，是否各依其語系
-  慣行擇定，而非比照來源語言逐句對應？句子之切分與子句之排序，亦依該語系慣行，不隨來源語言
-  斷句。Example: 同一批字串，英文以祈使句直述、日文以「〜てください」、繁中以「請」起首，
-  三者出現之處本不相互對應。
-- **U3.3 提案時各語系並列產出** — Check: 提出選項供核可者，是否逐語系各自產出選項？先定
-  一句來源語言、再由該句翻出其餘語系者，違反本條。
-- **U3.4 無來源語言之值者，本母規則照樣適用** — Check: 該值係直接以該語系寫成、字串檔內
-  別無他語系之來源者，其語序、連接詞與斷句，是否為該語系自有？來源不以字串為限——型別名、
-  程式碼註解與寫字串之人的思考語言同屬來源，逐句對回該來源而恰好通順者，違反本條。
-- **U3.5 詞性與搭配，依該語系** — Check: 句中各詞之詞性，及其所搭配之詞，是否合該語系
-  慣行？沿用來源語言之詞性或搭配者，違反本條；該語系要求補足之成分（受詞、量詞、時貌標記）
-  省略者，亦同。
-- **U3.6 未完成，不得寫成未發生** — Check: 所述動作已開始而未完成者，該值是否以該語系
-  標記「未完成」之方式寫成？於該語系讀作「未發生」者，違反本條——使用者據以認定既有進度
-  不存在。
+- **U3.1 No word-for-word transcription** — Check: Back-translated into the source
+  language, does the locale's value change meaning? Where it does not, but its word order,
+  sentence pattern or punctuation do not follow that locale's usage, it still violates
+  this rule.
+- **U3.2 The locale sets the sentence pattern, not the source language** — Check: Are the
+  patterns for requests, questions and polite register each chosen by their own locale's
+  usage, rather than mapped sentence by sentence from the source language? Sentence
+  splitting and clause order also follow the locale, not the source's sentence breaks.
+  Example: in one batch of strings, English uses a plain imperative, Japanese
+  「〜てください」, Traditional Chinese an opening 「請」 — the three need not appear at
+  corresponding places.
+- **U3.3 Proposals are produced per locale in parallel** — Check: When offering options
+  for approval, are options produced separately for each locale? Fixing one
+  source-language sentence and translating the other locales from it violates this rule.
+- **U3.4 This base rule applies to values with no source-language value** — Check: Where
+  a value is written directly in its locale, with no other locale's source in the string
+  file, are its word order, conjunctions and sentence breaks the locale's own? The source
+  is not limited to strings — type names, code comments and the language the string's
+  writer thinks in are sources too; a value that maps sentence by sentence back to such a
+  source and happens to read smoothly violates this rule.
+- **U3.5 Part of speech and collocation follow the locale** — Check: Do each word's part of
+  speech and the words it pairs with follow the locale's usage? Carrying over the source
+  language's part of speech or collocation violates this rule; so does omitting elements
+  the locale requires (objects, measure words, aspect markers).
+- **U3.6 Unfinished must not read as not started** — Check: Where an action has begun but
+  not finished, is the value written the way the locale marks "unfinished"? Reading as
+  "not happened" in that locale violates this rule — users conclude that existing
+  progress does not exist.
 
-## U4 — 一個概念，全 app 一個詞
+## U4 — One concept, one word across the app
 
-**Principle:** 使用者靠詞認路。同一概念換了詞，使用者以為那是另一件事。
+**Principle:** Users find their way by words. When a concept changes its word, users
+think it is a different thing.
 
-- **U4.1 術語不得於畫面間漂移** — Check: 該概念在本次改動所涉之各畫面，是否用同一詞？
-  專案定有術語表者，以表為準（表屬命令層）。
-- **U4.2 指涉他畫面者，應引用該畫面在同一語系之實際標籤** — Check: 該字串提及之分頁、
-  頁面、按鈕、設定項，是否逐字採用該語系中那個畫面實際顯示之標籤？留用來源語言之名稱，
-  或另造一個說法者，違反本條：使用者會照著字面去找。
-- **U4.3 所指之物，應用使用者看得到的名字** — Check: 該字串是否以內部識別（類別名、錯誤
-  碼、檔案路徑、版本號、內部代號、內部流程之階段與單位名）指稱某物？以之指稱者，違反本條——那些是給 log 的。
+- **U4.1 Terms must not drift between screens** — Check: Does the concept use the same
+  word on every screen this change touches? Where the project has a glossary, the glossary
+  governs (it belongs to the regulation layer).
+- **U4.2 A reference to another screen must use that screen's actual label in the same
+  locale** — Check: Do the tabs, pages, buttons and settings the string mentions use,
+  verbatim, the label that screen actually shows in that locale? Keeping the
+  source-language name, or coining another phrasing, violates this rule: users search for
+  the literal words.
+- **U4.3 Refer to things by names users can see** — Check: Does the string refer to
+  something by an internal identifier (class name, error code, file path, version number,
+  internal code name, stage or unit names of an internal process)? Doing so violates this
+  rule — those are for logs.
 
-## U5 — key 為重譯之觸發器
+## U5 — The key triggers retranslation
 
-**Principle:** 文字之新舊，系統唯一分辨得出來的憑據是 key。key 不動而值之語意已變，其餘
-語系即靜默地停在舊語意，且無任何檢查會報。
+**Principle:** The key is the only evidence the system has of whether text is new or old.
+When the key stays while the value's meaning changes, the other locales silently stay on
+the old meaning, and no check reports it.
 
-- **U5.1 語意改變者，應改 key** — Check: 該次改動有無變更某字串之語意？有而沿用原 key
-  者，違反本條。未改語意之錯字修正，不在本條之列。
-- **U5.2 一次寫齊所有語系** — Check: 該次改動新增或變更之 key，是否於同一次改動內備齊
-  所有語系之值？留待後補者，違反本條：缺值之語系會靜默回退至來源語言，而畫面不會報錯。
+- **U5.1 A change of meaning must change the key** — Check: Does the change alter a
+  string's meaning? Where it does and keeps the original key, it violates this rule. Typo
+  fixes that do not change meaning are outside this rule.
+- **U5.2 Write all locales at once** — Check: Does every key the change adds or alters
+  have values for all locales within that same change? Leaving them for later violates
+  this rule: a locale missing a value silently falls back to the source language, and the
+  screen shows no error.

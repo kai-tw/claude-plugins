@@ -4,4 +4,4 @@ pattern: '^zh-reply=\[\]$'
 flags: m
 arm: with-only
 ---
-英文對話裡的中文回覆不擋：prompt 可能是被貼上的英文 log 誤判。
+A Chinese reply in an English conversation is not blocked: the prompt may be a pasted English log misdetected.
