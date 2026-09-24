@@ -1,13 +1,12 @@
 #!/bin/bash
 # Cloud-environment setup for a Claude Code session — project-agnostic.
 #
-# Paste into the environment's "Setup script" field (claude.ai → Settings →
-# Claude Code → the environment). It provisions the three things a fresh
+# Run by the environment's "Setup script" field, which holds only
+# scripts/cloud-setup-field.sh: it fetches this file from main and runs it.
+# Never paste this file itself. It provisions the three things a fresh
 # container lacks: the Flutter toolchain, this marketplace's Claude plugins and
 # the plugins they depend on from other marketplaces (seeded for every session —
 # see the plugin block for why a seed and not an install), and the `ntn` CLI the assistant's scribe reaches Notion through.
-# One file rather than several, because that field takes exactly one script and
-# a two-paste instruction is how half of it silently never gets pasted.
 #
 # Reusable across every project because it bootstraps whatever the environment
 # actually cloned and whatever that project's settings declare, instead of
@@ -15,8 +14,10 @@
 #
 # Why the Setup script field and not a SessionStart hook: this field's
 # filesystem result is SNAPSHOTTED, so the ~1.5 GB SDK download is paid once per
-# cache generation instead of once per session. The snapshot rebuilds when this
-# script changes, when the allowed hosts change, or after ~7 days.
+# cache generation instead of once per session. The snapshot rebuilds when the
+# FIELD's text changes (not this file — bump the version in
+# cloud-setup-field.sh and paste it again), when the allowed hosts change, or
+# after ~7 days.
 #
 # Three constraints it is written around:
 #   * A non-zero exit makes the SESSION FAIL TO START, so every step is
