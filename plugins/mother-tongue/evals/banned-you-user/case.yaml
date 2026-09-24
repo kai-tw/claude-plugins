@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-you-user
+description: The Stop hook blocks a reply that writes 你（使用者） ("you (the user)", a literal translation) and offers 你; a bare （使用者） label and the formal term 核實 are not blocked.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed stop.sh three zh-TW replies (one writing 你（使用者）, one using （使用者） as a label, one using 核實 in its formal sense) and print what it says to each.
+context:
+  scaffold_script: fixture.sh
