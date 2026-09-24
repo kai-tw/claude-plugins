@@ -3,9 +3,9 @@
 #
 # Paste into the environment's "Setup script" field (claude.ai → Settings →
 # Claude Code → the environment). It provisions the three things a fresh
-# container lacks: the Flutter toolchain, this marketplace's Claude plugins
-# (seeded for every session — see the plugin block for why a seed and not an
-# install), and the `ntn` CLI the assistant's scribe reaches Notion through.
+# container lacks: the Flutter toolchain, this marketplace's Claude plugins and
+# the plugins they depend on from other marketplaces (seeded for every session —
+# see the plugin block for why a seed and not an install), and the `ntn` CLI the assistant's scribe reaches Notion through.
 # One file rather than several, because that field takes exactly one script and
 # a two-paste instruction is how half of it silently never gets pasted.
 #
@@ -220,22 +220,35 @@ them and say so; do not improvise a substitute for a gate."
 # ~/.claude/plugins (known_marketplaces.json, marketplaces/, cache/) and is read
 # by every session whose process carries CLAUDE_CODE_PLUGIN_SEED_DIR. Built
 # beside the target and swapped in, so a failed copy leaves the old seed intact.
+#
+# EVERY marketplace a plugin was installed from, not only this one: a
+# dependency from another marketplace that is missing from the seed fails the
+# plugin that declares it, exactly as if it had never been installed.
 seed_plugins() {
-  local src="$HOME/.claude/plugins" new="$SEED_DIR.new" loc
-  loc="$(jq -r --arg n "$MARKETPLACE_NAME" '.[$n].installLocation // empty' \
-    "$src/known_marketplaces.json" 2>/dev/null)"
+  local src="$HOME/.claude/plugins" new="$SEED_DIR.new" m loc
   rm -rf "$new"
-  if [ -z "$loc" ] || ! mkdir -p "$new/marketplaces" "$new/cache" \
-     || ! cp -a "$loc" "$new/marketplaces/$MARKETPLACE_NAME" \
-     || ! cp -a "$src/cache/$MARKETPLACE_NAME" "$new/cache/" \
-     || ! jq -n --arg n "$MARKETPLACE_NAME" --arg repo "$MARKETPLACE_REPO" \
-            --arg loc "$SEED_DIR/marketplaces/$MARKETPLACE_NAME" \
-            '{($n): {source: {source: "github", repo: $repo}, installLocation: $loc,
-                     lastUpdated: (now | todate)}}' > "$new/known_marketplaces.json"; then
-    rm -rf "$new"
-    log "WARNING: seed not built at $SEED_DIR"
-    return 1
-  fi
+  mkdir -p "$new/marketplaces" "$new/cache" || return 1
+  printf '{}\n' > "$new/known_marketplaces.json"
+  for m in $MARKETPLACES; do
+    loc="$(jq -r --arg n "$m" '.[$n].installLocation // empty' \
+      "$src/known_marketplaces.json" 2>/dev/null)"
+    if [ -z "$loc" ] \
+       || ! cp -a "$loc" "$new/marketplaces/$m" \
+       || ! cp -a "$src/cache/$m" "$new/cache/" \
+       || ! jq --arg n "$m" --arg loc "$SEED_DIR/marketplaces/$m" \
+              --arg own "$MARKETPLACE_NAME" --arg repo "$MARKETPLACE_REPO" \
+              --slurpfile known "$src/known_marketplaces.json" \
+              '.[$n] = ($known[0][$n] + {installLocation: $loc, lastUpdated: (now | todate)}
+                       # ours may have been registered from a local checkout;
+                       # the seed points at the published repo instead
+                       + (if $n == $own then {source: {source: "github", repo: $repo}} else {} end))' \
+              "$new/known_marketplaces.json" > "$new/km.json" \
+       || ! mv "$new/km.json" "$new/known_marketplaces.json"; then
+      rm -rf "$new"
+      log "WARNING: seed not built at $SEED_DIR (marketplace $m)"
+      return 1
+    fi
+  done
   rm -rf "$SEED_DIR" && mv "$new" "$SEED_DIR" || return 1
 
   # The user-settings copy of the variable (the environment dialog carries the
@@ -271,23 +284,32 @@ not improvise a substitute for a gate."
     return 0
   fi
 
-  # --scope user, never project: project scope writes enabledPlugins back into
-  # the repo's tracked .claude/settings.json, so every session would open on a
-  # modified file it did not touch.
   local p missing=""
-  for p in $wanted; do
-    claude plugin install "$p@$MARKETPLACE_NAME" --scope user -y >/dev/null 2>&1
-    # Ask the registry, not the exit status: `install` prints `already
-    # installed` and exits 0 having done nothing, so its status cannot tell an
-    # install from a no-op — and an install that reported success while leaving
-    # nothing loadable is the whole reason this script exists.
-    if jq -e --arg p "$p@$MARKETPLACE_NAME" '(.plugins // {}) | has($p)' \
-         "$HOME/.claude/plugins/installed_plugins.json" >/dev/null 2>&1; then
-      log "installed $p@$MARKETPLACE_NAME"
-    else
-      log "WARNING: not installed: $p@$MARKETPLACE_NAME"
-      missing="${missing} $p@$MARKETPLACE_NAME"
+  for p in $wanted; do install_one "$p@$MARKETPLACE_NAME" || missing="$missing $p@$MARKETPLACE_NAME"; done
+
+  # Dependencies our plugins declare on OTHER marketplaces. Measured: the
+  # assistant declares `security-guidance@claude-plugins-official`, nothing
+  # installed it, and the CLI then skipped the assistant whole — no bin/ on
+  # PATH, no skills — while it still read as installed and enabled. Read from
+  # the installed manifests, so a dependency added later needs no edit here.
+  local deps
+  deps="$(jq -r --arg m "$MARKETPLACE_NAME" \
+      '.plugins | to_entries[] | select(.key | endswith("@" + $m)) | .value[0].installPath' \
+      "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null \
+    | while IFS= read -r dir; do
+        jq -r --arg m "$MARKETPLACE_NAME" \
+          '(.dependencies // [])[] | select((.marketplace // $m) != $m) | "\(.name)@\(.marketplace)"' \
+          "$dir/.claude-plugin/plugin.json" 2>/dev/null
+      done | sort -u)"
+  MARKETPLACES="$MARKETPLACE_NAME"
+  for p in $deps; do
+    if ! jq -e --arg n "${p#*@}" 'has($n)' "$HOME/.claude/plugins/known_marketplaces.json" >/dev/null 2>&1; then
+      log "WARNING: marketplace ${p#*@} is not registered; cannot install $p"
+      missing="$missing $p"
+      continue
     fi
+    install_one "$p" || { missing="$missing $p"; continue; }
+    case " $MARKETPLACES " in *" ${p#*@} "*) ;; *) MARKETPLACES="$MARKETPLACES ${p#*@}" ;; esac
   done
 
   seed_plugins || report "The plugins installed but the seed at \`$SEED_DIR\` was not built, so a
@@ -297,8 +319,28 @@ plugin. Check with \`type -a plan-lint\`; if absent, work without them and say s
   [ -z "$missing" ] && return 0
   report "These plugins did NOT install:$missing
 
-Their skills, hooks and commands are absent. Work without them and say so; do
-not improvise a substitute for a gate."
+Their skills, hooks and commands are absent — and so is every \`@$MARKETPLACE_NAME\`
+plugin that declares one of them as a dependency, which the CLI skips whole even
+though it reads as installed and enabled. Work without them and say so; do not
+improvise a substitute for a gate."
+}
+
+# --scope user, never project: project scope writes enabledPlugins back into
+# the repo's tracked .claude/settings.json, so every session would open on a
+# modified file it did not touch.
+install_one() {
+  claude plugin install "$1" --scope user -y >/dev/null 2>&1
+  # Ask the registry, not the exit status: `install` prints `already
+  # installed` and exits 0 having done nothing, so its status cannot tell an
+  # install from a no-op — and an install that reported success while leaving
+  # nothing loadable is the whole reason this script exists.
+  if jq -e --arg p "$1" '(.plugins // {}) | has($p)' \
+       "$HOME/.claude/plugins/installed_plugins.json" >/dev/null 2>&1; then
+    log "installed $1"
+  else
+    log "WARNING: not installed: $1"
+    return 1
+  fi
 }
 
 # The scribe's transport to Notion. A fresh container has neither the binary
