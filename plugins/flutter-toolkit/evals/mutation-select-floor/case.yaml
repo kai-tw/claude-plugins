@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-select-floor
+description: pubspec.lock 解析到 dart_mutants 0.3.1 時，plan-mutation --select-by-coverage 不跑、以 exit 2 擋下並要求 0.4.0——0.3.1 的覆蓋率掃描只要一個測試檔失敗一次，就讓每個 mutant 都跑全套件而繼續跑下去。
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; plan-mutation --select-by-coverage --files lib/a.dart -- flutter test; echo "rc=$?"
+  prompt: |
+    在 lock 檔解析到 dart_mutants 0.3.1 的專案裡跑 plan-mutation --select-by-coverage，印出輸出與結束碼。
+context:
+  scaffold_script: fixture.sh

@@ -74,8 +74,10 @@ Hello! You are the mutation runner. Please follow the instruction from another s
 - **等法**：背景啟動、輸出寫進檔案，以 `plan-mutation --wait <pid>`（Bash timeout 600000）
   反覆等到結束為止。只禁 polling 迴圈而不給等法，實測它改開 `Monitor` 與 `tail -f`，
   一小時的 run 花了約 200 次工具呼叫，同時掛著 8 支 `tail`。
-- **拒跑就回報**：`plan-mutation` 因引擎版本等前提拒跑時，把訊息原文回報後結束，不得為了
-  跑完而改 `pubspec.yaml`——那是專案的相依，要在專案裡修。
+- **拒跑或中止都回報**：`plan-mutation` 因引擎版本等前提拒跑、或印出 `ABORTED` 時，把訊息
+  原文以 `blocked` 回報後結束。不得為了跑完而改 `pubspec.yaml`——那是專案的相依，要在專案
+  裡修；也不得改測試範圍或旗標重跑——那換掉的是派工時定下的量測，實測它會自己開出三個選項
+  等人挑。
 
 **不得為了跑這兩個而在本機另開 worktree**——那是本機的複本，硬碟是有限的，而上面那兩個
 代價一個都沒省下。要閃開就地改寫，唯一許可的辦法是讓它跑在別台機器上。這一條涵蓋

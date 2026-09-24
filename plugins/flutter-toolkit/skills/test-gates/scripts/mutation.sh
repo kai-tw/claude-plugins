@@ -38,7 +38,10 @@
 #   actually used. --baseline-timeout bounds the cold baseline itself (default
 #   10× --timeout). --select-by-coverage runs each mutant only against the test
 #   files that reach it, gives each test selection its own baseline-derived
-#   budget, and scores a mutant no test reaches as undetected.
+#   budget, and scores a mutant no test reaches as undetected. It needs engine
+#   0.4.0: a coverage run that fails is run once more, and a selection that
+#   still cannot be made stops the run (`selection-unavailable`) instead of
+#   sending every mutant through the full suite.
 #
 #   --workers n (default 1) runs n mutants at once, each in a symlinked copy of
 #   the package, and holds n plan-test slots for the whole run — every worker is
@@ -121,6 +124,7 @@ MIN_MUTANTS=5       # below this a percentage is arithmetic, not evidence
 MUTANT_TIMEOUT=30
 EXPLICIT_FILES=""
 ENGINE_EXTRA=()      # 0.2.7 flags, forwarded only when the caller asks for them
+SELECT_BY_COVERAGE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -130,7 +134,7 @@ while [ $# -gt 0 ]; do
     # it now defaults to 10× --timeout. Forwarded, not re-derived here.
     --baseline-timeout) ENGINE_EXTRA+=("--baseline-timeout" "${2:?--baseline-timeout needs seconds}"); shift 2 ;;
     --baseline-factor)  ENGINE_EXTRA+=("--baseline-factor" "${2:?--baseline-factor needs a number}"); shift 2 ;;
-    --select-by-coverage) ENGINE_EXTRA+=("--select-by-coverage"); shift ;;
+    --select-by-coverage) SELECT_BY_COVERAGE=1; ENGINE_EXTRA+=("--select-by-coverage"); shift ;;
     # The launcher reads the same value to take that many slots.
     --workers)  case "${2:-}" in
                   ''|*[!0-9]*|0) echo "plan-mutation: --workers needs a positive integer" >&2; exit 2 ;;
@@ -373,6 +377,30 @@ $MIN_ENGINE or newer. Nothing was measured.
 $why
 
 Update the ref in pubspec.yaml to dart_mutants-v$target, then \`$PUB\`.
+EOF
+  exit 2
+fi
+
+# --select-by-coverage has a floor of its own. Through 0.3.1 one test file that
+# failed once in the coverage pass — `flutter test` runs it once per test file —
+# sent every mutant through the full suite, and the run went on with one stderr
+# note: measured, 41 of 831 mutants in 4 h 17 min.
+SELECT_MIN_ENGINE=0.4.0
+select_target=$SELECT_MIN_ENGINE
+older_than "$select_target" "$target" && select_target=$target
+if [ -n "$SELECT_BY_COVERAGE" ] && [ -n "$lock_ver" ] \
+   && older_than "$lock_ver" "$SELECT_MIN_ENGINE"; then
+  cat >&2 <<EOF
+plan-mutation: --select-by-coverage needs dart_mutants $SELECT_MIN_ENGINE or newer; this
+project resolves $lock_ver. Nothing was measured.
+
+On $lock_ver, one test file that fails once in the coverage pass sends every
+mutant through the full test command, and the run goes on — measured, 41 of 831
+mutants in over four hours. $SELECT_MIN_ENGINE runs a failed file once more, and
+stops the run rather than go on without the selection.
+
+Update the ref in pubspec.yaml to dart_mutants-v$select_target, then \`$PUB\` — or
+run without --select-by-coverage.
 EOF
   exit 2
 fi
@@ -677,6 +705,16 @@ plan-mutation: the engine's compile-safety gate rejected a file BEFORE mutating
 it — the file as it stands does not pass the gate. Neither the budget nor the
 tests are the problem, so raising --timeout or editing tests will not move this.
 The engine's reason above names the file.
+EOF
+      ;;
+    selection-unavailable)
+      cat >&2 <<EOF
+plan-mutation: --select-by-coverage could not be applied, so the engine stopped
+before the first mutant rather than send every mutant through the full suite.
+NO FILE IN THIS DIFF HAS A SCORE. The engine's reason above names the cause: a
+test file that "failed twice" under coverage fails on its own — run it with
+plan-test — and a refused command shape is fixed in the command. Or run without
+--select-by-coverage: one full test run per mutant.
 EOF
       ;;
     *)
