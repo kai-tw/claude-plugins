@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launcher — the script lives with the skill that owns it; bin/ is on PATH while the plugin is enabled.
+# Launcher — the script lives with the skill that owns it; libexec/ is put on PATH by hooks/path.sh at SessionStart.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 exec node "$here/../skills/scribe/scripts/notion_payload.mjs" "$@"

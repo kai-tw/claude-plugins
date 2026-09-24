@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: jq -r ".dependencies[].name" "$root/.claude-plugin/plugin.json"; grep -L mother-tongue-rules "$root"/agents/*.md | sed "s/^/unread=/"; ls "$root/bin/asst-lang" "$root/skills/assistant/references/language.md" 2>/dev/null || echo own=gone
+    EVAL_CMD: jq -r ".dependencies[].name" "$root/.claude-plugin/plugin.json"; grep -L mother-tongue-rules "$root"/agents/*.md | sed "s/^/unread=/"; ls "$root/bin/asst-lang" "$root/libexec/asst-lang" "$root/skills/assistant/references/language.md" 2>/dev/null || echo own=gone
   prompt: |
     列出 assistant 的依賴、沒叫 mother-tongue-rules 的 agent，以及 assistant 自己那份中文規則還在不在。
 context:

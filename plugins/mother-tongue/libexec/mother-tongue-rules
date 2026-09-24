@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prints a locale's rules.md — the text UserPromptSubmit attaches — for sub-agents, which never see that hook.
-# bin/ is on PATH while the plugin is enabled.   Usage: mother-tongue-rules [locale]   (default $MOTHER_TONGUE_ZH, else zh-TW)
+# libexec/ is put on PATH by hooks/path.sh at SessionStart.   Usage: mother-tongue-rules [locale]   (default $MOTHER_TONGUE_ZH, else zh-TW)
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 loc=${1:-${MOTHER_TONGUE_ZH:-zh-TW}}

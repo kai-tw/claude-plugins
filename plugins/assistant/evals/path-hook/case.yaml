@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: path-hook
+description: SessionStart 的 path.sh 把 libexec/ 加進 PATH，`asst-report` 以裸名找得到；plugin 沒有最上層 bin/（claude.ai Customize 會拒收）。
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: f=$PWD/env; CLAUDE_ENV_FILE=$f CLAUDE_PLUGIN_ROOT=$root bash $root/hooks/path.sh; PATH=/usr/bin:/bin; . $f; command -v asst-report | sed "s#^$root/##"; [ -e $root/bin ] && echo bin=present || echo bin=absent
+  prompt: |
+    模擬 SessionStart：跑 path.sh、載入它寫的環境檔，看 asst-report 是否以裸名找得到，以及 plugin 是否還有最上層 bin/。
+context:
+  scaffold_script: fixture.sh

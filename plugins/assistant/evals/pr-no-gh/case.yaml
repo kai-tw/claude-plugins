@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export EVAL_WS="$PWD"; PATH="$PWD/nogh" "$root/bin/asst-pr" open y wt; echo "missing=$?"; echo "pushed=$(git -C wt rev-parse HEAD | cut -c1-7) $(git -C origin.git rev-parse task/y | cut -c1-7)"; PATH="$PWD/nogh" "$root/bin/asst-pr" ready y wt; echo "ready_missing=$?"; GH_AUTH=no PATH="$PWD/stub:$PATH" "$root/bin/asst-pr" ready y wt; echo "noauth=$?"; GH_REPO=no PATH="$PWD/stub:$PATH" "$root/bin/asst-pr" open y wt; echo "norepo=$?"; echo "gh_calls=$(cat gh.log 2>/dev/null | wc -l | tr -d " ")"
+    EVAL_CMD: export EVAL_WS="$PWD"; PATH="$PWD/nogh" "$root/libexec/asst-pr" open y wt; echo "missing=$?"; echo "pushed=$(git -C wt rev-parse HEAD | cut -c1-7) $(git -C origin.git rev-parse task/y | cut -c1-7)"; PATH="$PWD/nogh" "$root/libexec/asst-pr" ready y wt; echo "ready_missing=$?"; GH_AUTH=no PATH="$PWD/stub:$PATH" "$root/libexec/asst-pr" ready y wt; echo "noauth=$?"; GH_REPO=no PATH="$PWD/stub:$PATH" "$root/libexec/asst-pr" open y wt; echo "norepo=$?"; echo "gh_calls=$(cat gh.log 2>/dev/null | wc -l | tr -d " ")"
   prompt: |
     分別在沒有 gh、gh 沒登入、remote 不在 GitHub 三種情況下跑 asst-pr open 與 ready，印出訊息與結束碼，並確認分支仍有 push。
 context:

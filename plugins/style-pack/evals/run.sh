@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The deterministic half of evals/: per case, scaffold fixture.sh in a fresh workspace, run
-# execution.env.EVAL_CMD with this plugin's bin/ on PATH, apply every `type: regex` grader to
+# execution.env.EVAL_CMD with this plugin's libexec/ on PATH, apply every `type: regex` grader to
 # the output. `type: llm` graders need the official runner (early access as of 2026-09):
 #   claude plugin eval . --scaffold --allow-tools Bash --trust-plugin
 # Usage: evals/run.sh [case …]      Exit: 0 = every regex grader passed, 1 otherwise.
@@ -12,7 +12,7 @@ fail=0
 for c in "${cases[@]}"; do
   dir="$root/evals/$c"; [ -f "$dir/case.yaml" ] || continue
   ws=$(mktemp -d); cmd=$(val EVAL_CMD "$dir/case.yaml"); sc=$(val scaffold_script "$dir/case.yaml")
-  out=$(cd "$ws" && bash "$dir/$sc" >/dev/null 2>&1 && PATH="$root/bin:$PATH" eval "$cmd" 2>&1)
+  out=$(cd "$ws" && bash "$dir/$sc" >/dev/null 2>&1 && PATH="$root/libexec:$PATH" eval "$cmd" 2>&1)
   rm -rf "$ws"
   for g in "$dir"/graders/*.md; do
     [ "$(val type "$g")" = regex ] || continue
