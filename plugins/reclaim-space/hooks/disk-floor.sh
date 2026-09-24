@@ -6,13 +6,14 @@
 #   The macOS swapfile volume (/System/Volumes/VM) shares an APFS container with
 #   the checkouts — same free pool. A new worktree's build output eats swap
 #   headroom, and swap is what stands between memory pressure and a watchdog
-#   reboot.
+#   reboot. No such volume (Linux, a cloud VM) → the premise is absent → allow.
 #
 # WHY EVERY SURPRISE ALLOWS
 #   This runs on every Bash call. A missing helper, an unreadable payload or an
 #   unparsable `df` exits 0.
 
 set -uo pipefail
+[ -d "${RECLAIM_SWAP_VOLUME:-/System/Volumes/VM}" ] || exit 0
 command -v jq >/dev/null 2>&1 || exit 0
 input=$(cat)
 cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)

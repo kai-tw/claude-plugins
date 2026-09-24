@@ -55,7 +55,8 @@ shares an APFS container with these checkouts (same `/dev/disk3s6`, same free
 pool). **Free disk is swap headroom**, and on a 16G machine swap is what stands
 between several concurrent test suites and a watchdog reboot. The
 `disk-floor` hook refuses a new worktree below a free-space floor for that
-reason, and points here.
+reason, and points here — only where `/System/Volumes/VM` exists; elsewhere
+(Linux, a cloud VM) there is no shared swap volume and it allows.
 
 ## Orphaned build scratch in TMPDIR
 
