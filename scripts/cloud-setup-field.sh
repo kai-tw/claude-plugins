@@ -1,5 +1,5 @@
 #!/bin/bash
-# cloud-setup v1 — bump this number after merging a change to scripts/cloud-setup.sh
+# cloud-setup v2 — bump this number after merging a change to scripts/cloud-setup.sh
 #
 # The whole content of the environment's "Setup script" field (claude.ai →
 # Settings → Claude Code → the environment). It fetches and runs

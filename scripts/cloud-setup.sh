@@ -285,8 +285,11 @@ not improvise a substitute for a gate."
     return 0
   fi
 
-  local p missing=""
-  for p in $wanted; do install_one "$p@$MARKETPLACE_NAME" || missing="$missing $p@$MARKETPLACE_NAME"; done
+  local p m missing=""
+  for p in $wanted; do
+    install_one "$p@$MARKETPLACE_NAME" || missing="$missing
+  - $p@$MARKETPLACE_NAME (install failed)"
+  done
 
   # Dependencies our plugins declare on OTHER marketplaces. Measured: the
   # assistant declares `security-guidance@claude-plugins-official`, nothing
@@ -304,13 +307,23 @@ not improvise a substitute for a gate."
       done | sort -u)"
   MARKETPLACES="$MARKETPLACE_NAME"
   for p in $deps; do
-    if ! jq -e --arg n "${p#*@}" 'has($n)' "$HOME/.claude/plugins/known_marketplaces.json" >/dev/null 2>&1; then
-      log "WARNING: marketplace ${p#*@} is not registered; cannot install $p"
-      missing="$missing $p"
+    m="${p#*@}"
+    # The official marketplace is built into the CLI, and sessions see it as
+    # known, but this script runs before any session has started. That is the
+    # likeliest reason the dependency came up missing on the first run — not
+    # confirmed, which is why each line of the report now names its reason.
+    if ! known_marketplace "$m" && [ "$m" = claude-plugins-official ]; then
+      claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1
+    fi
+    if ! known_marketplace "$m"; then
+      log "WARNING: marketplace $m is not registered; cannot install $p"
+      missing="$missing
+  - $p (marketplace $m is not registered here)"
       continue
     fi
-    install_one "$p" || { missing="$missing $p"; continue; }
-    case " $MARKETPLACES " in *" ${p#*@} "*) ;; *) MARKETPLACES="$MARKETPLACES ${p#*@}" ;; esac
+    install_one "$p" || { missing="$missing
+  - $p (install failed)"; continue; }
+    case " $MARKETPLACES " in *" $m "*) ;; *) MARKETPLACES="$MARKETPLACES $m" ;; esac
   done
 
   seed_plugins || report "The plugins installed but the seed at \`$SEED_DIR\` was not built, so a
@@ -324,6 +337,10 @@ Their skills, hooks and commands are absent — and so is every \`@$MARKETPLACE_
 plugin that declares one of them as a dependency, which the CLI skips whole even
 though it reads as installed and enabled. Work without them and say so; do not
 improvise a substitute for a gate."
+}
+
+known_marketplace() {
+  jq -e --arg n "$1" 'has($n)' "$HOME/.claude/plugins/known_marketplaces.json" >/dev/null 2>&1
 }
 
 # --scope user, never project: project scope writes enabledPlugins back into
