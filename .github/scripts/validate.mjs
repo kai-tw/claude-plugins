@@ -101,6 +101,14 @@ for (const entry of entries) {
     fail(where, `name disagrees with its plugin.json ("${entry.name}" vs "${plugin.name}")`);
   }
 
+  // claude.ai refuses a plugin with a top-level bin/ ("Plugin contains a
+  // top-level bin/ directory"), so it never appears in Customize — measured:
+  // only the plugins without one were listed. Commands go in libexec/, put on
+  // PATH by hooks/path.sh.
+  if (existsSync(join(dir, 'bin'))) {
+    fail(where, 'has a top-level `bin/` — claude.ai Customize refuses it; move the commands to `libexec/` and add hooks/path.sh');
+  }
+
   checkSkills(plugin, dir, entry.source);
 }
 
@@ -213,16 +221,16 @@ for (const entry of entries) {
 
 // ------------------------------------------------------- README install docs
 
-// GAP 7 — `hooks/stale-check.sh` is deliberately duplicated into every plugin:
-// it reports the version of the install it is running from, so it can only do
-// that from INSIDE that install. Nothing else in the repo is copied like this,
-// and a copy that drifts fails in the quietest possible way — the plugin simply
-// never reports itself, indistinguishable from being up to date. So the copies
-// must stay byte-identical, and that is checkable, unlike the drift itself.
-{
+// GAP 7 — `hooks/stale-check.sh` and `hooks/path.sh` are deliberately
+// duplicated into every plugin that uses them: each acts on the install it runs
+// from, so it can only do that from INSIDE that install. A copy that drifts
+// fails in the quietest possible way — the plugin never reports itself, or its
+// commands are simply not found. So the copies must stay byte-identical, and
+// that is checkable, unlike the drift itself.
+for (const shared of ['hooks/stale-check.sh', 'hooks/path.sh']) {
   const copies = [];
   for (const entry of entries) {
-    const p = join(resolve(root, entry.source ?? ''), 'hooks/stale-check.sh');
+    const p = join(resolve(root, entry.source ?? ''), shared);
     if (existsSync(p)) copies.push([p.slice(root.length + 1), readFileSync(p, 'utf8')]);
   }
   const [, reference] = copies[0] ?? [];

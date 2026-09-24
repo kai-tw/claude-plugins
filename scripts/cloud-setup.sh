@@ -130,7 +130,9 @@ bootstrap_projects() {
 #     writes one. Silently: a skill that never loaded cannot announce itself.
 #   * A plugin seed dir (CLAUDE_CODE_PLUGIN_SEED_DIR) needs no install record
 #     and no workspace trust: the CLI resolves the project's `enabledPlugins`
-#     against the seed's cache and puts their bin/ on PATH. It lives outside
+#     against the seed's cache and loads them (measured when commands lived in
+#     bin/; libexec/ reaches PATH through each plugin's SessionStart hook,
+#     measured from ~/.claude but not yet from the seed). It lives outside
 #     $HOME, so it survives whatever the launcher does to ~/.claude.
 #
 # The seed variable must reach the CLI PROCESS. Measured: the environment's
@@ -293,7 +295,7 @@ not improvise a substitute for a gate."
 
   # Dependencies our plugins declare on OTHER marketplaces. Measured: the
   # assistant declares `security-guidance@claude-plugins-official`, nothing
-  # installed it, and the CLI then skipped the assistant whole — no bin/ on
+  # installed it, and the CLI then skipped the assistant whole — no command on
   # PATH, no skills — while it still read as installed and enabled. Read from
   # the installed manifests, so a dependency added later needs no edit here.
   local deps

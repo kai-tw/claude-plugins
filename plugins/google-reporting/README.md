@@ -88,7 +88,7 @@ message parsing) lands once, not twice.
 They stay **thin fetch layers only** — no product-specific judgment (which
 GA4 events matter, which SEO signals are worth acting on) lives here. That
 judgment belongs in each consuming project's own skill, layered on top by
-calling `ga4`/`gsc` as a bare command (this plugin's `bin/` is on `PATH`
+calling `ga4`/`gsc` as a bare command (this plugin's `libexec/` is on `PATH`
 whenever it's enabled) — keeping business-specific reasoning out of a shared,
 public plugin.
 

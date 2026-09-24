@@ -8,7 +8,7 @@
 //   • a suite fails;
 //   • a suite passes having graded nothing (no case, or no regex grader) — an
 //     empty suite exits 0 exactly like a clean one;
-//   • a changed plugin carries code (bin/ or libexec/, its own hooks, a scripts/ dir) but no
+//   • a changed plugin carries code (libexec/, its own hooks, a scripts/ dir) but no
 //     evals/run.sh. Plugins that have none are only held to this when they are
 //     next changed, so the rule ratchets instead of reddening CI all at once.
 //
@@ -66,7 +66,7 @@ if (!targets.length) {
 // they are carries no code of its own.
 const sharedHooks = new Set(['hooks.json', 'stale-check.sh', 'path.sh']);
 const hasCode = (dir) => {
-  if (existsSync(join(dir, 'bin')) || existsSync(join(dir, 'libexec'))) return true;
+  if (existsSync(join(dir, 'libexec'))) return true;
   const hooks = join(dir, 'hooks');
   if (existsSync(hooks) && readdirSync(hooks).some((n) => !sharedHooks.has(n))) return true;
   const walk = (d) =>
