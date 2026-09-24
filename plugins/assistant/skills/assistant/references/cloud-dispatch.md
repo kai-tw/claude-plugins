@@ -70,6 +70,13 @@ Hello! You are the mutation runner. Please follow the instruction from another s
 它立的是那一端的角色與權限：對方問不了你（見開頭），所以「不用做決定、不用問」不是客套，
 是唯一跑得完的前提——一個停在原地等答覆的 cloud session，從你這裡看跟還在跑一模一樣。
 
+工作本體裡再寫兩件事，缺了它就自己想辦法：
+- **等法**：背景啟動、輸出寫進檔案，以 `plan-mutation --wait <pid>`（Bash timeout 600000）
+  反覆等到結束為止。只禁 polling 迴圈而不給等法，實測它改開 `Monitor` 與 `tail -f`，
+  一小時的 run 花了約 200 次工具呼叫，同時掛著 8 支 `tail`。
+- **拒跑就回報**：`plan-mutation` 因引擎版本等前提拒跑時，把訊息原文回報後結束，不得為了
+  跑完而改 `pubspec.yaml`——那是專案的相依，要在專案裡修。
+
 **不得為了跑這兩個而在本機另開 worktree**——那是本機的複本，硬碟是有限的，而上面那兩個
 代價一個都沒省下。要閃開就地改寫，唯一許可的辦法是讓它跑在別台機器上。這一條涵蓋
 `Agent` 的 `isolation`，**兩個值都不得用於此**：`"worktree"` 明定為本機，而 `"remote"`

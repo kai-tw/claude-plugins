@@ -28,6 +28,9 @@ allowed-tools:
   tree holds live mutants; read files via `git show HEAD:<path>`. The plan line
   estimates the run and each mutant line says how long is left; `--max-minutes n`
   stops one that will not fit, scoring nothing — that is an abort, not a score.
+  A long run goes in the background with output to a file; wait on it with
+  `plan-mutation --wait <pid>` (Bash timeout 600000, repeat while it exits 1),
+  never `Monitor` or `tail -f` — each copy lives until the run ends.
 
 Coverage grades the reach, mutation grades what was reached; neither replaces
 the other. Slot state: `$HOME/.claude/.flutter-toolkit/slots` (`PLAN_TEST_DIR`).
