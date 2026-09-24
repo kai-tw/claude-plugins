@@ -113,7 +113,10 @@ bootstrap_projects() {
 }
 
 # Install this marketplace's plugins and SEED them for every session in the
-# environment. Three facts, each measured in a cloud container, shape the block:
+# environment. This is the ONLY installer a cloud session has: plugins added
+# through claude.ai Customize do not reach it (measured — Customize listed the
+# assistant while a cloud session saw no account-level plugin at all).
+# Three facts, each measured in a cloud container, shape the block:
 #   * The snapshot is built by whichever repo's session first runs this script,
 #     then reused for every repo. Reading the plugin list from the cloned
 #     project installed nothing when the cache was rebuilt from a session on the
