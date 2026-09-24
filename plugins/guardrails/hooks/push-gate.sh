@@ -42,7 +42,10 @@ PROTECTED='^(main|master)$'
 deny() { printf '%s\n' "$1" >&2; exit 2; }
 
 # One statement per line, so a push buried after && or ; is still examined.
-mapfile -t segs < <(printf '%s' "$cmd" | sed 's/&&/\n/g; s/||/\n/g; s/[;|]/\n/g')
+# Written for bash 3.2 (macOS's /bin/bash): no `mapfile`, and awk rather than
+# sed, whose BSD build writes a literal `n` for `\n` in a replacement.
+segs=()
+while IFS= read -r line; do segs+=("$line"); done < <(printf '%s\n' "$cmd" | awk '{ gsub(/&&|\|\||[;|]/, "\n"); print }')
 
 for seg in "${segs[@]}"; do
   printf '%s' "$seg" | grep -qE '^[[:space:]]*(sudo[[:space:]]+)?git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+push([[:space:]]|$)' || continue

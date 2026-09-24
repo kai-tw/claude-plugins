@@ -13,7 +13,7 @@ dispatch any further out.
 
 One thing both routes share: **the other side cannot ask you**. Settle every
 forking decision before dispatch; a fork that surfaces after dispatch can only
-come back as `blocked`, handled as a `需要你`.
+come back as `blocked`, handled as a `Needs you`.
 
 ## 1. An existing cloud session
 
@@ -166,7 +166,7 @@ route is closed to you; it is not a settings problem, stop trying. Two routes wo
 measured, it runs locally (see section 2), so it does not solve this problem — it
 only moves the work into a disk-eating local copy.
 
-When neither route holds, this is one `需要你` line (ask the founder to open a
+When neither route holds, this is one `Needs you` line (ask the founder to open a
 session, or to create a routine) — not a blocker you can clear yourself, and not
 a reason to move the work back to local; the local cost is in section 2.
 

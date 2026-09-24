@@ -21,7 +21,7 @@ Brief: the task slug, the report kind, the diff of the files under the adapter's
 `ui_strings:`, the decision brief, and the adapter's `locales:` · `strings_canon:` ·
 `strings_check:`.
 
-Before writing Chinese in the report itself, run `mother-tongue-rules` and read all of it; if the command is not found, stop and report it — do not search for the file yourself.
+Write the report in the founder's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 It governs the prose you write, `ui-text-pack` governs the app's strings; neither replaces the other.
 
 Load the rules first: `ui-text-pack --paths <the changed locale files>` — add any

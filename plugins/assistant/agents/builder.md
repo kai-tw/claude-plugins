@@ -32,7 +32,7 @@ side-by-side options per locale, listed in the report with a one-line trade-off
 translated. The file gets the one you think best; the founder picks at ②. A string
 first created in the `wire` phase follows the same rule, listed in that phase's report.
 
-Before writing Chinese in the report or a commit message, run `mother-tongue-rules` and read all of it; if the command is not found, stop and report it — do not search for the file yourself.
+Write the report or a commit message in the founder's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
 Phases (run only the one named):
 

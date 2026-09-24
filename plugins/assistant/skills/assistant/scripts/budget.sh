@@ -17,7 +17,7 @@ case "$op" in
   spend)
     [ "$(cap "$kind")" -gt 0 ] || { echo "asst-budget: kind must be review|fix|upload" >&2; exit 2; }
     n=$(( $(grep -c "^$kind$" "$f") + 1 )); echo "$kind" >> "$f"; c=$(cap "$kind")
-    if [ "$n" -gt "$c" ]; then echo "asst-budget: $kind $n/$c — CAP HIT. Stop: record the residue as debt, cut scope, or raise it as 需要你."; exit 1; fi
+    if [ "$n" -gt "$c" ]; then echo "asst-budget: $kind $n/$c — CAP HIT. Stop: record the residue as debt, cut scope, or raise it as a `Needs you` line."; exit 1; fi
     echo "asst-budget: $kind $n/$c" ;;
   show)  for k in review fix upload; do echo "$k $(grep -c "^$k$" "$f")/$(cap $k)"; done ;;
   reset) rm -f "$f"; echo "asst-budget: $slug reset" ;;

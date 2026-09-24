@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: discipline-language
+description: The discipline block injected into every session carries no rule for one language — Traditional Chinese punctuation belongs to mother-tongue's zh-TW rules, which reach only sessions written in Chinese.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: grep -c -i "full-width" "$root/rules/discipline.md" | sed "s/^/zh=/"
+  prompt: |
+    Count the lines of rules/discipline.md that set a rule for full-width punctuation.
+context:
+  scaffold_script: fixture.sh

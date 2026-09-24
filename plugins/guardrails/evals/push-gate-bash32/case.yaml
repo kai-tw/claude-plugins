@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: push-gate-bash32
+description: Under /bin/bash (3.2 on macOS) push-gate blocks a force-push onto main — bare on the current branch, named, and chained after && — and lets a force onto a feature branch through.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed push-gate.sh four push commands under /bin/bash in a repo on main and print each exit code.
+context:
+  scaffold_script: fixture.sh

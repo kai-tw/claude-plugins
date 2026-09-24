@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: founder-language
+description: Everything the founder reads follows the founder's language — SKILL.md states it, the brief template carries English labels to be written in that language rather than fixed Chinese ones, and every agent writes its output in the locale the dispatch names.
+tags: [language]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: grep -c "in the language the founder writes to you" "$root/skills/assistant/SKILL.md" | sed "s/^/rule=/"; perl -CSD -ne "\$n++ if /\p{Han}/; END { print qq(han=), \$n+0, qq(\n) }" "$root/skills/assistant/references/brief.md"; grep -L "in the founder.s language" "$root"/agents/*.md | sed "s/^/fixed=/"
+  prompt: |
+    Check that assistant writes in the founder's language: SKILL.md states the rule, the brief template has no fixed Chinese labels, and every agent writes in the locale the dispatch names.
+context:
+  scaffold_script: fixture.sh

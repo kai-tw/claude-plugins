@@ -43,14 +43,14 @@ case "$op" in
     default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); default=${default#origin/}
     [ "$branch" != "${default:-main}" ] || { echo "asst-pr: $branch is the default branch — a task PR comes from its own branch" >&2; exit 2; }
     g push --quiet -u origin HEAD || { echo "asst-pr: push failed" >&2; exit 1; }
-    github "$branch is pushed; the PR is the founder's to open — report it as 需要你."
+    github "$branch is pushed; the PR is the founder's to open — report it as a `Needs you` line."
     url=$(cd "$wt" && gh pr view "$branch" --json url --jq .url 2>/dev/null) && { echo "$url"; exit 0; }
     case " $* " in *" --title "*|*" -t "*|*" --fill "*) ;; *) set -- "$@" --fill ;; esac
     (cd "$wt" && gh pr create --draft --head "$branch" "$@") ;;
   ready)
     [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — checkpoint first"
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed — run asst-pr open first"
-    github "Nothing was checked — ③ goes to the founder with this line as 需要你."
+    github "Nothing was checked — ③ goes to the founder with this line as a `Needs you` line."
     pr=$(cd "$wt" && gh pr view "$branch" --json number,isDraft,baseRefName --jq '"\(.number) \(.isDraft) \(.baseRefName)"' 2>/dev/null) \
       || refuse "no PR for $branch — asst-pr open never ran"
     read -r num draft base <<< "$pr"
