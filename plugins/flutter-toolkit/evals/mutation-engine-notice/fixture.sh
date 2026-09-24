@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
+# engine/ stands in for kai-packages with tags up to 0.3.2. Three projects on
+# the floor (0.3.1): a Flutter one and a Dart one, each one release behind, and
+# a Flutter one whose "latest" is its own version (engine-same/ tops out at 0.3.1).
+set -euo pipefail
+g() { git -c user.name=e -c user.email=e@e "$@"; }
+mkrepo() { mkdir -p "$1" && (cd "$1" && git init -q && touch .keep && git add -A && g commit -qm init); }
+mkrepo engine; for v in 0.3.0 0.3.1 0.3.2; do git -C engine tag "dart_mutants-v$v"; done
+mkrepo engine-same; git -C engine-same tag dart_mutants-v0.3.1
+lock='packages:\n  dart_mutants:\n    dependency: "direct dev"\n    version: "0.3.1"\n'
+for p in flutter dart same; do
+  mkdir -p "$p"
+  case $p in
+    dart) printf 'name: app\ndev_dependencies:\n  dart_mutants:\n    git: x\n' > "$p/pubspec.yaml" ;;
+    *)    printf 'name: app\ndependencies:\n  flutter:\n    sdk: flutter\ndev_dependencies:\n  dart_mutants:\n    git: x\n' > "$p/pubspec.yaml" ;;
+  esac
+  printf "$lock" > "$p/pubspec.lock"
+  (cd "$p" && git init -q && git add -A && g commit -qm init)
+done

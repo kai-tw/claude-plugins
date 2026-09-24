@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0; plan-mutation --files lib/a.dart -- flutter test; echo "rc=$?"
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; plan-mutation --files lib/a.dart -- flutter test; echo "rc=$?"
   prompt: |
     在 lock 檔解析到 dart_mutants 0.3.0 的專案裡跑 plan-mutation，印出輸出與結束碼。
 context:
