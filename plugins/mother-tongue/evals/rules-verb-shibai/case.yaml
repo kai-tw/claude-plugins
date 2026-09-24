@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: rules-verb-shibai
+description: 中文 prompt 附上的規則要求動作失敗寫成「verb + 失敗」，不寫「沒有 + verb」。
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    對 remind.sh 餵一則中文 prompt，印出附上的規則。
+context:
+  scaffold_script: fixture.sh
