@@ -1,5 +1,6 @@
 {
   "enabledPlugins": {
-    "mother-tongue@kai-tw": true
+    "mother-tongue@kai-tw": true,
+    "guardrails@kai-tw": true
   }
 }
