@@ -75,8 +75,42 @@
 #   author's. `.mutation-in-progress` at the repo root is the probe: it names the
 #   pid, the sha, and the files. Read those paths with `git show <sha>:<path>`
 #   while it exists. Exit 3 means the tree was NOT restored.
+#
+# WAITING FOR A RUN
+#   Start it in the background with its output in a file (`plan-mutation … >
+#   <log> 2>&1 & echo $!`), then `plan-mutation --wait [<pid>]` — one call
+#   blocks until the run ends, at most 540 s (`PLAN_MUTATION_WAIT`), so give the
+#   Bash call timeout 600000; the default 120 s cuts it short. No pid → the one
+#   `.mutation-in-progress` names. Exit 0 = ended (the result is in <log>),
+#   1 = still running (call it again), 3 = killed before it restored.
+#   Not `Monitor` or `tail -f`: each copy lives until the run ends, re-arming
+#   stacks copies, and every progress line costs a turn — measured, a sub-agent
+#   spent ~200 tool calls and 8 live `tail -f` on one 60-minute run.
 
 set -uo pipefail
+
+# One bounded block, not a poll the caller writes: see WAITING FOR A RUN.
+wait_for_run() {
+  local pid="$1" root marker mpid limit="${PLAN_MUTATION_WAIT:-540}"
+  root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "plan-mutation: not in a git repo" >&2; exit 2; }
+  marker="$root/.mutation-in-progress"
+  [ -n "$pid" ] || pid=$(sed -n 's/^pid:[[:space:]]*//p' "$marker" 2>/dev/null | head -1)
+  [ -n "$pid" ] || { echo "plan-mutation: no run is mutating this tree."; exit 0; }
+  local deadline=$(( SECONDS + limit ))
+  while kill -0 "$pid" 2>/dev/null && [ "$SECONDS" -lt "$deadline" ]; do sleep 2; done
+  if kill -0 "$pid" 2>/dev/null; then
+    echo "plan-mutation: run $pid still running after ${limit}s — call \`plan-mutation --wait $pid\` again."
+    exit 1
+  fi
+  mpid=$(sed -n 's/^pid:[[:space:]]*//p' "$marker" 2>/dev/null | head -1)
+  if [ -n "$mpid" ] && ! kill -0 "$mpid" 2>/dev/null; then
+    echo "plan-mutation: run $mpid is gone but left $marker — it was killed before it restored the tree:" >&2
+    cat "$marker" >&2
+    exit 3
+  fi
+  echo "plan-mutation: run $pid has ended; its result is in the output it wrote."
+  exit 0
+}
 
 MIN_SCORE=80        # every changed file must kill this share of its own mutants
 MIN_MUTANTS=5       # below this a percentage is arithmetic, not evidence
@@ -110,7 +144,11 @@ while [ $# -gt 0 ]; do
                 done
                 [ "${1:-}" = "--" ] && shift ;;
     --)         shift; break ;;
-    -h|--help)  sed -n '2,77p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --wait)     case "${2:-}" in
+                  *[!0-9]*) echo "plan-mutation: --wait takes a pid, not \"$2\"" >&2; exit 2 ;;
+                esac
+                wait_for_run "${2:-}" ;;
+    -h|--help)  sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # An unrecognised FLAG is refused, never treated as the start of the test
     # command. Measured: `--yes --budget 60 --files x -- flutter test …` (two
     # flags this script had dropped) fell through the old catch-all, so the
