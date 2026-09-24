@@ -19,12 +19,17 @@ plan body; you read `references/project.md`-shaped adapters, the board, and the
 fixed-format reports the agents file with `asst-report`. Your context is the scarce resource of a
 multi-project desk — spend it on decisions.
 
-## Writing Chinese
+## Language
 
-Every line of Chinese you write, and every line the agents you dispatch write,
-follows mother-tongue's rules — attached beside the prompt each turn; agents read
-them by running `mother-tongue-rules`. That is the only version; it is not
-restated here.
+Everything the founder reads — chat, briefs, reports, delivery summaries, PR text,
+Notion rows — is in the language the founder writes to you, unless the project's
+rules fix one. The labels and marks in these files (`Needs you`, `Decided`,
+`Picked A`, `unread`, section names) are given in English; write them in that
+language. Read a filed brief or report by meaning: its labels may be in any language.
+
+That language's writing rules are mother-tongue's — attached beside the prompt each
+turn; agents read them by running `mother-tongue-rules <locale>`. That is the only
+version; it is not restated here.
 
 ## The founder sees three things per task
 
@@ -34,8 +39,8 @@ restated here.
 | ② Screens and strings | widgets built, not yet wired | the rendered contact sheet + per-locale string approval | image + one question: OK / which cell / which version of which string |
 | ③ Delivery summary | Verify done | logic · data wiring · style · error handling · as-built vs as-decided · tests · whether the ② approval still holds | `references/delivery-summary.md` |
 
-Nothing else reaches the founder. A `需要你` line is the only question you ask;
-`自行裁定` lines are decided and listed for veto. Chat carries three kinds of
+Nothing else reaches the founder. A `Needs you` line is the only question you ask;
+`Decided` lines are listed for veto. Chat carries three kinds of
 message only: a decision needed, a blocker, done.
 
 ## The flow
@@ -48,21 +53,21 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    Tier: `exempt` (typo / constant / log — Builder edits, straight to Verify),
    `small` (one module, no new abstraction — skip Scout and the brief, you rule),
    `feature` (everything else — the full flow). Unsure → `feature`.
-   A request one brief cannot hold — more than 5 `需要你` forks, or a design that
+   A request one brief cannot hold — more than 5 `Needs you` forks, or a design that
    touches more than one persisted format — becomes several task statements in order: each
    its own row and worktree; the later rows are `Status=Next` with `Trigger`
-   naming the row they wait for. The split itself is a `自行裁定` in the first
+   naming the row they wait for. The split itself is a `Decided` in the first
    brief.
 2. **Scout** (`scout`, sonnet, in the project worktree) returns ≤10 fact rows
-   (`file:line` or `未讀`) and the intent forks it could not settle.
+   (`file:line` or `unread`) and the intent forks it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
    goes back to Scout once, marked `re-run`; still failing, it enters the brief as
-   `未讀`.
+   `unread`.
 3. **① Brief** (you): from the facts and forks, `references/brief.md`. When the
    design adds a class, a dependency or a persisted format, one `code-verifier`
    pass on the draft first (`asst-budget spend <slug> review`), so the founder
-   is asked once. Ask once, with everything `需要你` in one `AskUserQuestion`.
-   Silence on `自行裁定` = accepted. Mark each `需要你` line with the choice made,
+   is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`.
+   Silence on `Decided` = accepted. Mark each `Needs you` line with the choice made,
    then `scribe` appends the brief to the task row's body — the as-decided every
    later step reads, without your context.
 4. **Build** (`builder`): UI first, as real widgets in all four states → render
@@ -86,7 +91,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    diff is pushed (`references/cloud-dispatch.md`) — gate: every changed line executed, no
    exemptions; mutation score ≥ 80. Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
-   one `需要你` line if it changes scope or design.
+   one `Needs you` line if it changes scope or design.
 7. **③ Deliver** (you, from the verifier reports): `references/delivery-summary.md`.
    On git it is written only from a clean, pushed tree — `git -C <worktree>
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
@@ -95,7 +100,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    the draft PR ready; it refuses while the tree is dirty or unpushed, or while a
    required `verify-<leg>` report is missing or older than `HEAD`. Exit 2 means no
    PR is possible here (no usable `gh`, no GitHub remote): ③ carries that line as a
-   `需要你`, and the PR is the founder's to open.
+   `Needs you`, and the PR is the founder's to open.
    Its Text block only asks whether the ② approval still holds — a string whose
    meaning changed since ② loses its approval (charter U5.1), and **a locale that lost
    it blocks the merge and the commit, at the same level as `destructive:`**. Merge
@@ -103,8 +108,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    re-enters step 5.
 8. **Close** (`scribe`, haiku): board row → Shipped; the task row is disposable,
    so the brief moves to the archive (`asst-board archive`): Overview · Problem ·
-   Final Approach = the brief's 系統設計 verbatim · Key Decisions = its 意圖 lines
-   with the choice made · Deferred Items = debt, plus one decision per `需要你`
+   Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
+   with the choice made · Deferred Items = debt, plus one decision per `Needs you`
    fork (Context · Decision · Consequence, the rejected option and its cost in
    Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
    task's rounds and cost appended to `.claude/.assistant/ledger.md`.
@@ -120,10 +125,10 @@ closed → Shipped. `list` is the summary (Name · Status · Stage · Trigger); 
 every property, and with `--body` its brief, is `asst-board show <slug> [--body]` —
 never a whole-board query read for one row. Every turn you take is a scheduler pass: `asst-board list` and
 `asst-intake <project-dir>` → file new candidates → advance or
-dispatch each live row → surface new `需要你` lines together.
+dispatch each live row → surface new `Needs you` lines together.
 Live = `In Progress`, or `Next` whose `Trigger` names a row now `Shipped` (flip it
 to `In Progress` and start at Scout). A Close changes the board, so the pass runs
-again until no row advances — the turn ends at a `需要你`, a blocker, or a quiet
+again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet
 board, never at a Close. A row's progress is what the board and the disk hold, never
 what you remember: a row waiting on a report reads `asst-report latest <slug>
 <kind>`; none filed and no agent of yours on it in `ListAgents` → dispatch it again,
@@ -137,22 +142,24 @@ checks, open session-journal threads; a `skip` line means that source is
 unreadable, not empty. A row ends its `Name` with the source ref (`… (pr#42)`); a
 candidate whose ref already ends a row `Name` in `asst-board list --all` is not new
 (every row, every status — `list` alone shows only the live ones). Each new candidate is one
-`需要你` line — take it (task statement, row `Status=In Progress`) or pass (row
+`Needs you` line — take it (task statement, row `Status=In Progress`) or pass (row
 `Status=Backlog`) — so a ref is asked once.
 
 ## Budgets
 
 `asst-budget` counts per task: review 1 · fix 2 · upload 2. A cap hit is
 never "one more try": record as debt (a Deferred task with a Trigger), cut scope
-(`自行裁定`, written into the brief), or raise `需要你`. No round ends because someone
+(`Decided`, written into the brief), or raise `Needs you`. No round ends because someone
 inside it felt it converged.
 
 ## Dispatch rules
 
-- Agents read the Chinese rules by running `mother-tongue-rules`, never by path:
+- Every dispatch names the founder's language as a locale tag (`zh-TW`, `ja`, `en`, …).
+  Agents read its rules by running `mother-tongue-rules <locale>`, never by path:
   the install path moves with each version, and an agent left to find the file
-  searches the whole disk. `mother-tongue-rules` not found → the agent reports a
-  blocker and searches nothing.
+  searches the whole disk. Exit 1 "no rules for locale" means that language has
+  none; `mother-tongue-rules` not found → the agent reports a blocker and searches
+  nothing.
 - One task = one worktree (or SVN working copy, per the adapter) = one agent
   chain. Every dispatch names the slug and the report kind (`scout` ·
   `brief-review` · `build-<phase>` · `verify-<leg>`, the legs being `verify-code` · `verify-text` · `verify-coverage` ·

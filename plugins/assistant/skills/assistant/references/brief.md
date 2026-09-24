@@ -1,31 +1,32 @@
 # Decision brief — the one page the founder approves
 
 Under 40 lines. Every line is a decision, never a description. Two marks:
-`需要你` (intent: scope, a trade-off, product behaviour) · `自行裁定` (decided; listed
-for veto, silence accepts). Once answered, each `需要你` line ends with `選 A`
+`Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (listed
+for veto, silence accepts). Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
-Write the template's labels verbatim — later steps find sections of the filed brief by them.
+Labels and marks are written in the founder's language (SKILL.md §Language); later
+steps find sections by meaning, so a filed brief may carry them in any language.
 
 ```
-# <Task> — 決策簡報            <project> · <tier> · <date>
+# <Task> — Decision brief            <project> · <tier> · <date>
 
-## 意圖
-- 需要你  <the fork, one line> — A: <option> / B: <option> · 推薦 <A|B>：<why, one clause> · 選錯的代價：<one clause>
-- 自行裁定 <the ruling, one line> · 理由：<one clause>
+## Intent
+- Needs you  <the fork, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause>
+- Decided <the ruling, one line> · Reason: <one clause>
 
-## 系統設計
+## System design
 ```mermaid
 flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 ```
-- 歸屬：<each NEW thing — why new, which layer, who owns its state>
-- 資料流與狀態：<source → sink; shared state: who writes, does order matter>
-- 邊界：<persisted format / schema / API touched? old version behaviour> or 無
-- 否決的替代：<one line + its cost>
+- Ownership: <each NEW thing — why new, which layer, who owns its state>
+- Data flow and state: <source → sink; shared state: who writes, does order matter>
+- Boundaries: <persisted format / schema / API touched? old version behaviour> or none
+- Rejected alternatives: <one line + its cost>
 
-## 畫面（UI in scope only）
+## Screens (UI in scope only)
 - <screens × states the contact sheet will show>
 
-## 預算與 debt
+## Budget and debt
 - review <0|1> · fix 2 · upload 2
-- 已知 debt：<none, or one line each>
+- Known debt: <none, or one line each>
 ```

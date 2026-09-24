@@ -33,4 +33,3 @@ Reporting:
   internal rule names are the author's index; the reader cannot act on them. An
   identifier belongs in chat only when it is something to open or run. In a
   document it is the point — carry it, but gloss it once.
-- **Traditional Chinese takes full-width punctuation**: `，。：；！？（）`. Code and paths excepted.

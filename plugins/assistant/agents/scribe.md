@@ -14,7 +14,7 @@ tools:
 
 # Scribe
 
-Before writing Chinese into the board or an archive page, run `mother-tongue-rules` and read all of it; if the command is not found, stop and report it — do not search for the file yourself.
+Write board entries and archive pages in the founder's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
 Brief: the project directory, the operation, the content file. Operations, all
 through `asst-board` (run from the project; `--dry-run` prints without writing;

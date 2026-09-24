@@ -15,7 +15,7 @@ reports. Anything a linter or a passed check already settled is one line.
 ## Error handling
 | Failure event | Caught at | User sees | log |
 ## As built vs as decided
-- <deviation from the brief's 系統設計 + reason> or no deviation
+- <deviation from the brief's System design + reason> or no deviation
 ## Tests
 - <scenario> → <test file:line> · missing: <scenario or failure event with no test> or none
 

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: rules-full-width
+description: The zh-TW rules carry the full-width punctuation rule, so it reaches every session written in Chinese and no other.
+tags: [bin]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: mother-tongue-rules zh-TW | grep -c "全形標點" | sed "s/^/rule=/"
+  prompt: |
+    Print the zh-TW writing rules and count the lines that set the full-width punctuation rule.
+context:
+  scaffold_script: fixture.sh
