@@ -16,14 +16,14 @@
   而且不追蹤安裝——同一個 session 的 transcript 裡依序出現 `0.15.1` → `0.17.0` →
   `0.19.0`（沒重開、沒跑 `update`，而且跳過了 `0.18.0`），且 `0.19.1` 已進 cache 後它
   仍解析到 `0.19.0`。刷新的觸發條件不明，從 session 內部看不到。
-  這件事會發生是因為 `bin/`、`libexec/` 的 wrapper 是 `exec "$here/../skills/…"`，`$here` 是**它
+  這件事會發生是因為 `bin/` 的 wrapper 是 `exec "$here/../skills/…"`，`$here` 是**它
   自己的安裝目錄**，不是任何工作目錄——所以解析到哪個版本目錄，就跑哪一版的實作，
   **腳本、schema、skill 內文、frontmatter 都跟著那一版**，沒有哪一半是即時的。
   推論的兩條路都不通：安裝紀錄不代表某個 session 吃得到，而 `ListAgents` 的「N 分鐘前
   啟動」是**重新連線**時間、不是 session 起始（實測：`ListAgents` 說 25 分鐘，transcript
   的 `birth` 是 17 小時前）。cache 目錄的 mtime 也不是安裝紀錄——裝新版時會連帶動到既有
   版本目錄的 mtime。
-  最陰的是 wrapper 幾乎不會改：兩版 wrapper 的 md5 相同、底下的腳本不同，所以 `cmp` wrapper 看起來永遠沒事。**所以一律實查、且要驗實作**
+  最陰的是 wrapper 幾乎不會改：兩版 `bin/<name>` 的 md5 相同、底下的腳本不同，所以 `cmp` wrapper 看起來永遠沒事。**所以一律實查、且要驗實作**
   （`type -a <name>` 看解析到哪個版本目錄，或看輸出裡的自報版本）。要確定性就重開
   session。
 - **在 PR 分支上跑 `release.mjs`，第 6–8 步會自己跳過.** marketplace 服務的是預設分支，
@@ -43,9 +43,7 @@
 - **新增 `dependencies` 的版本，消費端要先補裝依賴.** `update` 不會裝新宣告的依賴，
   缺一個 plugin 就在所有 scope 載入失敗。補裝後以
   `claude plugin list` 的 `Status` 為準；`release.mjs` 第 8 步只查得到新版本號的安裝。
-- **裸名呼叫自己的腳本.** plugin 的 `bin/` 在啟用時就在 PATH 上，`libexec/` 則由該 plugin
-  的 SessionStart hook `hooks/path.sh` 加進 PATH；要能從 claude.ai Customize 安裝的 plugin
-  不能有最上層 `bin/`（會被拒），只能用後者。安裝路徑不可從專案
+- **裸名呼叫自己的腳本.** plugin 的 `bin/` 在啟用時就在 PATH 上；安裝路徑不可從專案
   相對位置推得、且每次 bump 都會變。寫 `asst-budget`，不要寫 `bash .claude/hooks/…`——
   後者失敗時只印一行 `No such file or directory`，和「這次沒事做」長得一樣。
 - **Tag 不是人打的，也不要試.** 版本一進 `main`，`plugin-tag` workflow 就照 `plugin.json`
