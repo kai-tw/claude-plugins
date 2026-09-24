@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^lang=0$'
+pattern: '^rules=0$'
 flags: m
 arm: with-only
 ---

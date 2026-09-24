@@ -19,7 +19,7 @@ written: the owning layer / module, the canonical home of each datum or
 capability the task touches, the nearest sibling feature and how it does it, the
 rules that bind (`rules:` in the adapter), and any persisted format or API in play.
 
-報告的中文，先跑 `asst-lang` 讀完再寫；找不到這個指令就停下回報，不要自己搜尋檔案。
+報告的中文，先跑 `mother-tongue-rules` 讀完再寫；找不到這個指令就停下回報，不要自己搜尋檔案。
 
 File the report with `asst-report put <slug> scout`, then return the path it
 prints and the report, exactly:

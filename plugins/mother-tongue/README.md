@@ -10,6 +10,10 @@ the latest prompt and blocks what a word list can catch.
 | `Stop` | Blocks a reply written in English when the conversation is not, and asks for it in the conversation's locale; otherwise detects the reply's locale and, if it uses a term from that locale's `banned.tsv`, blocks and asks for the sentences to be rewritten |
 | `PreToolUse` (Bash) | Same check on the text of `git commit` and `gh pr\|issue create\|edit\|comment` |
 
+Sub-agents never see `UserPromptSubmit`, so `bin/mother-tongue-rules [locale]`
+prints the same `rules.md` (default `$MOTHER_TONGUE_ZH`) for an agent to read
+before it writes; an unknown locale exits 1.
+
 Detection is by script (`hooks/detect.sh`): Hangul → `ko`, kana → `ja`, other
 Han → `$MOTHER_TONGUE_ZH` (default `zh-TW`), mostly Latin → `en`. A prompt too
 short to tell keeps the session's previous locale. Code blocks, `backtick

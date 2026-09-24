@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Prints a locale's rules.md — the text UserPromptSubmit attaches — for sub-agents, which never see that hook.
+# bin/ is on PATH while the plugin is enabled.   Usage: mother-tongue-rules [locale]   (default $MOTHER_TONGUE_ZH, else zh-TW)
+set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+loc=${1:-${MOTHER_TONGUE_ZH:-zh-TW}}
+f="$here/../locales/$loc/rules.md"
+[ -r "$f" ] || { echo "mother-tongue-rules: no rules for locale '$loc'" >&2; exit 1; }
+exec cat "$f"
