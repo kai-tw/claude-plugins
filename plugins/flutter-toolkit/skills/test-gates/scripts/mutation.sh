@@ -250,7 +250,12 @@ done
 # longer a descendant of anything this script can see. And the remedy this gate
 # prints for a timeout is a LARGER --timeout, which multiplies the exposure,
 # because a mutant allocates for the whole window.
-MIN_ENGINE=0.3.0
+#
+# 0.3.1 because through 0.3.0 every test run left what `flutter test` does not
+# clean up — a `flutter_tools.*` directory, ~270 MB — in the system temp dir,
+# once per mutant. Measured on one host: 111 of them filled the disk before the
+# run could write its report, so the run failed after all its work was done.
+MIN_ENGINE=0.3.1
 
 # A older than B. Used by the gate and again by its explanation, which differs
 # by how far back the resolved version is.
@@ -271,6 +276,11 @@ if [ -n "$lock_ver" ] && older_than "$lock_ver" "$MIN_ENGINE"; then
 scores and prints a normal-looking table over half the mutation space: statement
 deletion, condition negation, &&/|| and arithmetic produce nothing, and no row
 says which engine produced the number."
+  elif ! older_than "$lock_ver" 0.3.0; then
+    why="$lock_ver measures correctly and FILLS THE DISK. Every test run leaves a
+\`flutter_tools.*\` directory of about 270 MB in the system temp dir, once per
+mutant, and nothing removes them — 111 of them filled one host's disk, and the
+run failed writing its report after all its work was done."
   elif ! older_than "$lock_ver" 0.2.9; then
     why="$lock_ver measures correctly and says nothing about TIME. It prints no estimate
 and no remaining time, and it has no --max-minutes — so a run that will take
@@ -324,10 +334,11 @@ Add it to pubspec.yaml under dev_dependencies:
       git:
         url: https://github.com/kai-tw/kai-packages.git
         path: packages/dart_mutants
-        ref: dart_mutants-v0.3.0
+        ref: dart_mutants-v0.3.1
 
-then `flutter pub get`. Take the ref above verbatim: v0.3.0 is where a run says
-how long it will take and where --max-minutes can stop one; below v0.2.9 there
+then `flutter pub get`. Take the ref above verbatim: v0.3.1 is where a test run
+stops leaving ~270 MB in the system temp dir per mutant; below v0.3.0 a run
+does not say how long it will take and has no --max-minutes; below v0.2.9 there
 is no `--output` report for this script to read; below v0.2.3 a timed-out
 mutant orphans a test process that outlives the run and eats the machine; below
 v0.2.0 half the operators do not exist and the score still looks normal.
