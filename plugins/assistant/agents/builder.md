@@ -30,7 +30,7 @@ source one (U3), and none of them is approved by you.
 報告（母法 U3.3）——選項逐語系各自寫成，不是先定一句再翻。寫進檔案的是你認為最好的那
 一個；founder 在 ② 選定。`wire` 階段才生出來的字串同此，列進該階段的報告。
 
-報告與 commit message 的中文，先讀 brief 附上的 `language.md` 再寫。
+報告與 commit message 的中文，先跑 `asst-lang` 讀完再寫；找不到這個指令就停下回報，不要自己搜尋檔案。
 
 Phases (run only the one named):
 

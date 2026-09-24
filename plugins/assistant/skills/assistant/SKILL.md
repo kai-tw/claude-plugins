@@ -142,9 +142,10 @@ inside it felt it converged.
 
 ## Dispatch rules
 
-- Every dispatch carries the absolute path of `references/language.md`; an agent
-  writes no Chinese before reading it. A fresh context has no other way to reach
-  it, and its path moves with each install.
+- Agents read `references/language.md` by running `asst-lang`, never by path:
+  the install path moves with each version, and an agent left to find the file
+  searches the whole disk. `asst-lang` not found → the agent reports a blocker
+  and searches nothing.
 - One task = one worktree (or SVN working copy, per the adapter) = one agent
   chain. Every dispatch names the slug and the report kind (`scout` ·
   `brief-review` · `build-<phase>` · `verify-<leg>`, the legs being `verify-code` · `verify-text` · `verify-coverage` ·

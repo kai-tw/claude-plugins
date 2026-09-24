@@ -14,7 +14,7 @@ tools:
 
 # Scribe
 
-寫進 board 或封存頁的中文，先讀 brief 附上的 `language.md` 再寫。
+寫進 board 或封存頁的中文，先跑 `asst-lang` 讀完再寫；找不到這個指令就停下回報，不要自己搜尋檔案。
 
 Brief: the project directory, the operation, the content file. Operations, all
 through `asst-board` (run from the project; `--dry-run` prints without writing;
