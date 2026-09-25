@@ -441,7 +441,9 @@ function buildRow(dbKey, def, row, mode) {
   const apiBody = { parent: { type: 'data_source_id', data_source_id: def.ds }, properties };
   if (row.icon) apiBody.icon = row.icon;
   if (row.cover) apiBody.cover = row.cover;
-  return { title: String(rowLabel), apiBody, markdown };
+  // A bodiless row (a fresh task card) still gets the marker: `trash` refuses
+  // any page without it.
+  return { title: String(rowLabel), apiBody, markdown: markdown ?? `${MARKER}\n` };
 }
 
 // ── manifest → payload ─────────────────────────────────────────────────────────
@@ -565,14 +567,12 @@ function commitCreate(dbKey, built) {
     const id = created.id;
     const url = created.url || created.public_url || '';
     if (!id) fail(`create "${title}": response had no page id`);
-    if (markdown) ntn(['pages', 'edit', id], markdown);
-    // Verify: confirm the row exists and (if a body was written) landed whole.
-    let state = '(none)';
-    if (markdown) state = verifyBody(markdown, id);
-    else ntn(['api', `v1/pages/${id}`]);
-    if (state !== 'ok' && state !== '(none)') bad++;
+    ntn(['pages', 'edit', id], markdown);
+    // Verify: the body (at least the marker) landed whole.
+    const state = verifyBody(markdown, id);
+    if (state !== 'ok') bad++;
     results.push({ title, id, url, body: state });
-    console.error(`✓ ${dbKey}: ${title} → ${url}${state === 'ok' || state === '(none)' ? '' : `  ⚠ ${state}`}`);
+    console.error(`✓ ${dbKey}: ${title} → ${url}${state === 'ok' ? '' : `  ⚠ ${state}`}`);
   }
   console.log(JSON.stringify(results, null, 2));
   reportVerifyFailures(bad, built.length);
