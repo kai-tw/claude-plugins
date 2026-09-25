@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-stop
-description: plan-mutation --stop ends a running mutation run through its engine, and the run reports STOPPED with exit 1, restores the tree and removes its marker. With dart_mutants 0.5.0 the engine is given a journal outside the repo and the run says the finished mutants are kept; with 0.4.0 it gets none and says they start over.
+description: plan-mutation --stop ends a running mutation run through its engine, and the run reports STOPPED with exit 1, restores the tree and removes its marker. The engine is given a journal outside the repo and the run says the finished mutants are kept.
 tags: [plan-mutation]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; w=$PWD; PATH="$w/fake:$PATH"; for p in new old; do (cd $p && { plan-mutation --files lib/a.dart -- flutter test > run.log 2>&1 & r=$!; n=0; until [ -f args.txt ] || [ $n -gt 100 ]; do sleep 0.1; n=$((n+1)); done; plan-mutation --stop; echo "stop: rc=$?"; wait $r; echo "run: rc=$?"; cat run.log; echo "args: $(cat args.txt)"; [ -e .mutation-in-progress ] && echo "marker left"; git status --porcelain | xargs echo "dirty:"; }) | sed "s/^/$p: /"; done
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; w=$PWD; PATH="$w/fake:$PATH"; for p in new; do (cd $p && { plan-mutation --files lib/a.dart -- flutter test > run.log 2>&1 & r=$!; n=0; until [ -f args.txt ] || [ $n -gt 100 ]; do sleep 0.1; n=$((n+1)); done; plan-mutation --stop; echo "stop: rc=$?"; wait $r; echo "run: rc=$?"; cat run.log; echo "args: $(cat args.txt)"; [ -e .mutation-in-progress ] && echo "marker left"; git status --porcelain | xargs echo "dirty:"; }) | sed "s/^/$p: /"; done
   prompt: |
-    Start plan-mutation in the background in two repos, stop it with plan-mutation --stop, and print both outputs, exit codes, the engine's arguments and git status.
+    Start plan-mutation in the background in a repo, stop it with plan-mutation --stop, and print its output, exit codes, the engine's arguments and git status.
 context:
   scaffold_script: fixture.sh

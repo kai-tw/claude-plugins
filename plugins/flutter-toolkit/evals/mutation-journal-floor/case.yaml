@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-journal-floor
+description: When pubspec.lock resolves dart_mutants 0.4.0, plan-mutation does not run and blocks with exit 2, explaining that the old version keeps no journal so a stopped run or a lost cloud VM starts every mutant over, and requires 0.5.0.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; plan-mutation --files lib/a.dart -- flutter test; echo "rc=$?"
+  prompt: |
+    Run plan-mutation in a project whose lock file resolves dart_mutants 0.4.0; print the output and exit code.
+context:
+  scaffold_script: fixture.sh
