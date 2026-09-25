@@ -105,8 +105,51 @@
 #   Not `Monitor` or `tail -f`: each copy lives until the run ends, re-arming
 #   stacks copies, and every progress line costs a turn — measured, a sub-agent
 #   spent ~200 tool calls and 8 live `tail -f` on one 60-minute run.
+#
+# STOPPING AND RESUMING
+#   `plan-mutation --stop [<pid>]` stops a run: the engine restores the tree and
+#   keeps every mutant that finished, and the run prints STOPPED and exits 1,
+#   scoring nothing. It then waits like --wait. Run the same command again and
+#   only the unfinished mutants run — Dart through dart_mutants' journal (0.5.0
+#   or newer), JS/TS through Stryker's incremental file, both kept under
+#   $TMPDIR and reused only while the code and tests are unchanged. A finished
+#   run started again reuses every result, timeouts excepted. There is no
+#   pause: a frozen run's budgets keep counting, and the tree stays mutated.
 
 set -uo pipefail
+
+# Every process below <pid>.
+descendants() {
+  local c
+  for c in $(pgrep -P "$1" 2>/dev/null); do
+    printf '%s\n' "$c"
+    descendants "$c"
+  done
+}
+
+# SIGTERM to the engines only — each restores its files and keeps what
+# finished on that signal. The marker line tells the run it was stopped, so it
+# says STOPPED instead of "the engine did not run", and starts no next engine.
+stop_run() {
+  local pid="$1" root marker p hit=""
+  root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "plan-mutation: not in a git repo" >&2; exit 2; }
+  marker="$root/.mutation-in-progress"
+  [ -n "$pid" ] || pid=$(sed -n 's/^pid:[[:space:]]*//p' "$marker" 2>/dev/null | head -1)
+  if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
+    echo "plan-mutation: no run is mutating this tree."
+    exit 0
+  fi
+  echo "stop: requested $(date '+%H:%M:%S')" >> "$marker"
+  # Stryker sets its process title to a bare `stryker`, which `ps` pads with
+  # spaces; its workers keep a path, which must not match — they are its to stop.
+  for p in $(descendants "$pid"); do
+    case "$(ps -o command= -p "$p" 2>/dev/null | sed 's/[[:space:]]*$//')" in
+      *dart_mutants*|stryker|*"stryker run"*) kill -TERM "$p" 2>/dev/null && hit=1 ;;
+    esac
+  done
+  [ -n "$hit" ] || echo "plan-mutation: run $pid is between engines; it stops before starting the next."
+  wait_for_run "$pid"
+}
 
 # One bounded block, not a poll the caller writes: see WAITING FOR A RUN.
 wait_for_run() {
@@ -171,6 +214,10 @@ while [ $# -gt 0 ]; do
                   *[!0-9]*) echo "plan-mutation: --wait takes a pid, not \"$2\"" >&2; exit 2 ;;
                 esac
                 wait_for_run "${2:-}" ;;
+    --stop)     case "${2:-}" in
+                  *[!0-9]*) echo "plan-mutation: --stop takes a pid, not \"$2\"" >&2; exit 2 ;;
+                esac
+                stop_run "${2:-}" ;;
     -h|--help)  sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # An unrecognised FLAG is refused, never treated as the start of the test
     # command. Measured: `--yes --budget 60 --files x -- flutter test …` (two
@@ -617,6 +664,31 @@ snap=$(mktemp -d) || exit 2
 # lesson about what a stale report at a canonical in-repo path does to a reader.
 REPORT_KEEP="${TMPDIR:-/tmp}/plan-mutation-report.json"
 
+# WHAT A STOPPED RUN KEEPS — see STOPPING AND RESUMING. One set per repo root,
+# so two worktrees never share one; the engines themselves decide when a kept
+# result still holds, from the code and tests, not from this path.
+KEEP_BASE="${TMPDIR:-/tmp}/plan-mutation-$(printf '%s' "$root" | cksum | cut -d' ' -f1)"
+JOURNAL_MIN_ENGINE=0.5.0
+if [ -n "$dart_files" ] && ! older_than "$lock_ver" "$JOURNAL_MIN_ENGINE"; then
+  ENGINE_EXTRA+=("--journal" "$KEEP_BASE-dart.jsonl")
+fi
+
+stop_requested() { grep -q '^stop:' "$MARKER" 2>/dev/null; }
+
+# The end of a run `--stop` ended. Nothing is scored: part of a file's mutants
+# is not that file's score.
+stopped() {
+  local resume="The mutants that finished are kept: run the same command again and only the rest run."
+  if [ -n "$dart_files" ] && older_than "$lock_ver" "$JOURNAL_MIN_ENGINE"; then
+    resume="dart_mutants $lock_ver keeps no journal, so its mutants start over next time; $JOURNAL_MIN_ENGINE resumes them.${js_pkgs:+ The JS/TS mutants that finished are kept.}"
+  fi
+  cat >&2 <<EOF
+plan-mutation: STOPPED by \`plan-mutation --stop\`. Nothing is scored this time —
+not a pass, not a low score. $resume
+EOF
+  exit 1
+}
+
 # MUTATED SOURCE MUST NEVER OUTLIVE THE RUN.
 #
 # The engine restores on SIGINT/SIGTERM, which its authors verified against a
@@ -729,10 +801,12 @@ echo "plan-mutation: WHILE THIS RUNS the source on disk may be a live mutant. Re
 started=$(date +%s)
 KEPT=""   # the raw reports this run leaves outside the repo
 if [ -n "$dart_files" ]; then
+  stop_requested && stopped
   # shellcheck disable=SC2086
   { dart run dart_mutants --test-command "$TEST_CMD" --mutant-timeout "$MUTANT_TIMEOUT" \
       ${ENGINE_EXTRA[@]+"${ENGINE_EXTRA[@]}"} --output "$out/report.json" $dart_files \
       2>&1 1>&3 3>&- | tee "$out/err" >&2; } 3>&1
+  stop_requested && stopped
   # Preserved BEFORE the parse check, not after: a report this script cannot read
   # is exactly the one somebody needs the bytes of, and the check below exits.
   [ -s "$out/report.json" ] && cp "$out/report.json" "$REPORT_KEEP" 2>/dev/null
@@ -886,11 +960,17 @@ while IFS= read -r pkg; do
   ver=$(jq -r '.version // "?"' "$(find_up "$pkg" node_modules/@stryker-mutator/core/package.json)" 2>/dev/null)
   echo "plan-mutation: Stryker $ver in $pkg, concurrency $WORKERS: $mutate"
   rm -f "$js_report"
+  stop_requested && stopped
+  # --incremental: Stryker keeps each result in its incremental file, saves the
+  # finished ones on SIGTERM, and reuses those whose code and tests are
+  # unchanged — see STOPPING AND RESUMING.
   # shellcheck disable=SC2046
   ( cd "$pkg" && "$stryker" run --mutate "$mutate" --reporters json,progress-append-only \
       --concurrency "$WORKERS" --cleanTempDir always \
+      --incremental --incrementalFile "$KEEP_BASE-stryker-$slug.json" \
       $([ -n "$TIMEOUT_GIVEN" ] && printf -- '--timeoutMS %s' "$(( MUTANT_TIMEOUT * 1000 ))") ) 2>&1 \
     | tee "$out/stryker.log"
+  stop_requested && stopped
   if [ ! -s "$js_report" ]; then
     # From its first ERROR line, not the tail: a failed dry run ends in a stack
     # trace that names Stryker's internals, while the cause (the test error) is

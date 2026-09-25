@@ -31,6 +31,9 @@ allowed-tools:
   A long run goes in the background with output to a file; wait on it with
   `plan-mutation --wait <pid>` (Bash timeout 600000, repeat while it exits 1),
   never `Monitor` or `tail -f` — each copy lives until the run ends.
+  `plan-mutation --stop [<pid>]` stops a run (STOPPED, exit 1, nothing scored)
+  and keeps the finished mutants: the same command again runs only the rest,
+  while the code and tests are unchanged (Dart needs dart_mutants 0.5.0).
   Changed JS/TS package source (`<package>/src|lib/**`) goes to StrykerJS in
   that package — `@stryker-mutator/core` installed there, tests from its
   Stryker config, so no test command is needed when no Dart file changed.
