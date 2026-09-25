@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: charter-s16-6
+description: S16.6 decides a fix by why the code exists, not by how its author framed the change, and says where the fix lands when the wrong unit lives in another repository.
+tags: [style-pack]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: style-pack dart
+  prompt: |
+    Print the style-code rules, then quote charter rule S16.6 in full.
+context:
+  scaffold_script: fixture.sh
