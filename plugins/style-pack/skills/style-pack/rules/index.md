@@ -571,10 +571,15 @@ Drawing, keeping and removing a boundary are all bound by this rule.
   (fields one-to-one with an external payload, or fields like raw / json / code, count as
   such)? The latter violates this rule — once an external concept crosses, its changes
   propagate to every place inside, and both types are legal, so the linter stays green.
-- **S16.6 Fixing and removing a boundary belong to its owner** — Check: this change fixes a
-  shared unit's behavior — where does the fix land? On the consuming side violates this rule —
-  every later adopter must re-derive the same fix; consumer-side differences must be encoded
-  as a named option of that unit, not a sibling unit. When a unit is removed, every guard
-  inside it (precondition, idempotency short-circuit, dedup, rate limit) must have somewhere to
-  go; if the answer is "nowhere", the removal is not yet valid — deletion is silent, and the
-  lost guarantee shows up only when the guarded edge case happens.
+- **S16.6 A fix lands in the unit that is wrong; a removal takes its guards along** — Check: if
+  the unit this code calls behaved correctly, would this code still need to exist? If not, it
+  is a fix of that unit, and placing it outside that unit violates this rule — call sites
+  without it stay exposed, and every later adopter must re-derive it. When the unit's source is
+  under this project's owner, in any repository, the fix lands there; when it is not, it lands
+  once, in the single adapter this project calls the unit through. Consumer-side differences
+  must be encoded as a named option of that unit, not a sibling unit. When a unit is removed,
+  every guard inside it (precondition, idempotency short-circuit, dedup, rate limit) must have
+  somewhere to go; if the answer is "nowhere", the removal is not yet valid — deletion is
+  silent, and the lost guarantee shows up only when the guarded edge case happens. Example:
+  every caller checks an input's size before handing it to a decoder, because the decoder
+  itself sets no limit.
