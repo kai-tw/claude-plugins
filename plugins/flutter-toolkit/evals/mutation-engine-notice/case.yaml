@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0; w=$PWD; PATH="$w/fake:$PATH"; for p in flutter dart same; do r=engine; [ $p = same ] && r=engine-same; (cd $p && PLAN_MUTATION_ENGINE_REPO="$w/$r" plan-mutation --files lib/a.dart -- flutter test 2>&1; echo "rc=$?") | sed "s/^/$p: /"; done
   prompt: |
-    Run plan-mutation on three projects whose lock files resolve dart_mutants 0.3.1: a Flutter and a pure Dart project each one version behind, and one already current. Print the output and exit codes.
+    Run plan-mutation on three projects whose lock files resolve dart_mutants 0.5.0: a Flutter and a pure Dart project each one version behind, and one already current. Print the output and exit codes.
 context:
   scaffold_script: fixture.sh

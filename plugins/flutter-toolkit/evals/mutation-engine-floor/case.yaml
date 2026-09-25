@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-engine-floor
-description: When pubspec.lock resolves dart_mutants 0.3.0, plan-mutation does not run and blocks with exit 2, explaining that the old version leaves flutter_tools scratch directories in the system temp area until the disk fills, and requires 0.3.1.
+description: When pubspec.lock resolves dart_mutants 0.3.0, plan-mutation does not run and blocks with exit 2, explaining that the old version leaves flutter_tools scratch directories in the system temp area until the disk fills, and requires 0.5.0.
 tags: [plan-mutation]
 plugins: ["../.."]
 runs: 1

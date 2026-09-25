@@ -54,10 +54,10 @@
 #   actually used. --baseline-timeout bounds the cold baseline itself (default
 #   10× --timeout). --select-by-coverage runs each mutant only against the test
 #   files that reach it, gives each test selection its own baseline-derived
-#   budget, and scores a mutant no test reaches as undetected. It needs engine
-#   0.4.0: a coverage run that fails is run once more, and a selection that
-#   still cannot be made stops the run (`selection-unavailable`) instead of
-#   sending every mutant through the full suite.
+#   budget, and scores a mutant no test reaches as undetected. A coverage run
+#   that fails is run once more, and a selection that still cannot be made
+#   stops the run (`selection-unavailable`) instead of sending every mutant
+#   through the full suite.
 #
 #   --workers n (default 1) runs n mutants at once, each in a symlinked copy of
 #   the package, and holds n plan-test slots for the whole run — every worker is
@@ -109,8 +109,8 @@
 #   keeps every mutant that finished, and the run prints STOPPED and exits 1,
 #   scoring nothing. --stop returns once the run has exited (0), or 3 when it
 #   was killed before it restored the tree. Run the same command again and
-#   only the unfinished mutants run — Dart through dart_mutants' journal (0.5.0
-#   or newer), JS/TS through Stryker's incremental file, both kept under
+#   only the unfinished mutants run — Dart through dart_mutants' journal, JS/TS
+#   through Stryker's incremental file, both kept under
 #   $TMPDIR and reused only while the code and tests are unchanged. A finished
 #   run started again reuses every result, timeouts excepted. There is no
 #   pause: a frozen run's budgets keep counting, and the tree stays mutated.
@@ -183,7 +183,6 @@ WORKERS=1
 EXPLICIT_FILES=""
 ENGINE_EXTRA=()      # 0.2.7 flags, forwarded only when the caller asks for them
 DART_ONLY=""         # the Dart-only flags typed, named when JS files are in scope
-SELECT_BY_COVERAGE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -193,7 +192,7 @@ while [ $# -gt 0 ]; do
     # it now defaults to 10× --timeout. Forwarded, not re-derived here.
     --baseline-timeout) ENGINE_EXTRA+=("--baseline-timeout" "${2:?--baseline-timeout needs seconds}"); DART_ONLY+=" $1"; shift 2 ;;
     --baseline-factor)  ENGINE_EXTRA+=("--baseline-factor" "${2:?--baseline-factor needs a number}"); DART_ONLY+=" $1"; shift 2 ;;
-    --select-by-coverage) SELECT_BY_COVERAGE=1; ENGINE_EXTRA+=("--select-by-coverage"); DART_ONLY+=" $1"; shift ;;
+    --select-by-coverage) ENGINE_EXTRA+=("--select-by-coverage"); DART_ONLY+=" $1"; shift ;;
     # The launcher reads the same value to take that many slots.
     --workers)  case "${2:-}" in
                   ''|*[!0-9]*|0) echo "plan-mutation: --workers needs a positive integer" >&2; exit 2 ;;
@@ -434,7 +433,11 @@ files=$( { printf '%s\n' "$dart_files"
 # clean up — a `flutter_tools.*` directory, ~270 MB — in the system temp dir,
 # once per mutant. Measured on one host: 111 of them filled the disk before the
 # run could write its report, so the run failed after all its work was done.
-MIN_ENGINE=0.3.1
+#
+# 0.5.0 because below it there is no journal: a run that is stopped, killed or
+# loses its cloud VM starts every mutant over, and a run longer than the VM
+# lives never finishes.
+MIN_ENGINE=0.5.0
 
 # A older than B. Used by the gate and again by its explanation, which differs
 # by how far back the resolved version is.
@@ -488,6 +491,11 @@ if [ -n "$lock_ver" ] && older_than "$lock_ver" "$MIN_ENGINE"; then
 scores and prints a normal-looking table over half the mutation space: statement
 deletion, condition negation, &&/|| and arithmetic produce nothing, and no row
 says which engine produced the number."
+  elif ! older_than "$lock_ver" 0.3.1; then
+    why="$lock_ver measures correctly and KEEPS NO JOURNAL. A run that is stopped,
+killed or loses its cloud VM starts every mutant over, so a run longer than the
+VM lives never finishes. With a journal the same command runs only the mutants
+that had not finished."
   elif ! older_than "$lock_ver" 0.3.0; then
     why="$lock_ver measures correctly and FILLS THE DISK. Every test run leaves a
 \`flutter_tools.*\` directory of about 270 MB in the system temp dir, once per
@@ -521,30 +529,6 @@ EOF
   exit 2
 fi
 
-# --select-by-coverage has a floor of its own. Through 0.3.1 one test file that
-# failed once in the coverage pass — `flutter test` runs it once per test file —
-# sent every mutant through the full suite, and the run went on with one stderr
-# note: measured, 41 of 831 mutants in 4 h 17 min.
-SELECT_MIN_ENGINE=0.4.0
-select_target=$SELECT_MIN_ENGINE
-older_than "$select_target" "$target" && select_target=$target
-if [ -n "$SELECT_BY_COVERAGE" ] && [ -n "$lock_ver" ] \
-   && older_than "$lock_ver" "$SELECT_MIN_ENGINE"; then
-  cat >&2 <<EOF
-plan-mutation: --select-by-coverage needs dart_mutants $SELECT_MIN_ENGINE or newer; this
-project resolves $lock_ver. Nothing was measured.
-
-On $lock_ver, one test file that fails once in the coverage pass sends every
-mutant through the full test command, and the run goes on — measured, 41 of 831
-mutants in over four hours. $SELECT_MIN_ENGINE runs a failed file once more, and
-stops the run rather than go on without the selection.
-
-Update the ref in pubspec.yaml to dart_mutants-v$select_target, then \`$PUB\` — or
-run without --select-by-coverage.
-EOF
-  exit 2
-fi
-
 if [ -n "$dart_files" ] && [ -z "$lock_ver" ] && grep -q '^  dart_mutants:' pubspec.yaml 2>/dev/null; then
   cat >&2 <<EOF
 plan-mutation: pubspec.yaml declares \`dart_mutants\` but pubspec.lock does not
@@ -571,7 +555,8 @@ Add it to pubspec.yaml under dev_dependencies:
         path: packages/dart_mutants
         ref: dart_mutants-v$target
 
-then \`$PUB\`. Take the ref above verbatim: v0.3.1 is where a test run
+then \`$PUB\`. Take the ref above verbatim: v0.5.0 is where a stopped run
+resumes instead of starting every mutant over; v0.3.1 is where a test run
 stops leaving ~270 MB in the system temp dir per mutant; below v0.3.0 a run
 does not say how long it will take and has no --max-minutes; below v0.2.9 there
 is no \`--output\` report for this script to read; below v0.2.3 a timed-out
@@ -661,23 +646,16 @@ REPORT_KEEP="${TMPDIR:-/tmp}/plan-mutation-report.json"
 # so two worktrees never share one; the engines themselves decide when a kept
 # result still holds, from the code and tests, not from this path.
 KEEP_BASE="${TMPDIR:-/tmp}/plan-mutation-$(printf '%s' "$root" | cksum | cut -d' ' -f1)"
-JOURNAL_MIN_ENGINE=0.5.0
-if [ -n "$dart_files" ] && ! older_than "$lock_ver" "$JOURNAL_MIN_ENGINE"; then
-  ENGINE_EXTRA+=("--journal" "$KEEP_BASE-dart.jsonl")
-fi
+[ -n "$dart_files" ] && ENGINE_EXTRA+=("--journal" "$KEEP_BASE-dart.jsonl")
 
 stop_requested() { grep -q '^stop:' "$MARKER" 2>/dev/null; }
 
 # The end of a run `--stop` ended. Nothing is scored: part of a file's mutants
 # is not that file's score.
 stopped() {
-  local resume="The mutants that finished are kept: run the same command again and only the rest run."
-  if [ -n "$dart_files" ] && older_than "$lock_ver" "$JOURNAL_MIN_ENGINE"; then
-    resume="dart_mutants $lock_ver keeps no journal, so its mutants start over next time; $JOURNAL_MIN_ENGINE resumes them.${js_pkgs:+ The JS/TS mutants that finished are kept.}"
-  fi
   cat >&2 <<EOF
 plan-mutation: STOPPED by \`plan-mutation --stop\`. Nothing is scored this time —
-not a pass, not a low score. $resume
+not a pass, not a low score. The mutants that finished are kept: run the same command again and only the rest run.
 EOF
   exit 1
 }

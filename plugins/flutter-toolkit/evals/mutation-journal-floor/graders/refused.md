@@ -4,4 +4,4 @@ pattern: '^rc=2$'
 flags: m
 arm: with-only
 ---
-Blocks with exit 2 without starting measurement.
+Below the journal floor it does not run and exits 2.
