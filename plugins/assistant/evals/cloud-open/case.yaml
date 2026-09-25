@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: cloud-open
+description: asst-cloud lists its profiles (default opus/high, mutation-runner sonnet/medium), opens a cloud session through claude --cloud with the profile's model, effort and preamble (the runner's includes a 50-minute ScheduleWakeup rule), lets a flag override the profile, prints the session id and a clean URL, and refuses an unpushed HEAD, a check interval over 60 minutes and a failed open with exit 1.
+tags: [cloud]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export ARGS="$PWD/args.txt"; PATH="$PWD/fake:$PATH"; (cd solo && asst-cloud profiles) 2>&1 | sed "s/^/profiles: /"; (cd solo && asst-cloud open "Do the thing"; echo "rc=$?") 2>&1 | sed "s/^/default: /"; echo "default-args: $(tr "\n" "|" < args.txt)"; (cd solo && asst-cloud open --profile mutation-runner "Run it"; echo "rc=$?") 2>&1 | sed "s/^/runner: /"; echo "runner-args: $(tr "\n" "|" < args.txt)"; (cd solo && asst-cloud open --profile mutation-runner --effort high "x"; echo "rc=$?") 2>&1 | sed "s/^/override: /"; : > args.txt; (cd ahead && asst-cloud open "x"; echo "rc=$?") 2>&1 | sed "s/^/ahead: /"; [ -s args.txt ] && echo "ahead-claude-ran"; (cd solo && asst-cloud open --check-every 90 "x"; echo "rc=$?") 2>&1 | sed "s/^/cap: /"; (cd solo && FAKE_FAIL=1 asst-cloud open "x"; echo "rc=$?") 2>&1 | sed "s/^/fail: /"
+  prompt: |
+    List asst-cloud's profiles, open cloud sessions with the default and the mutation-runner profile and with an effort override, then try an unpushed repo, a 90-minute check interval and a failing claude; print every output, exit code and the arguments claude received.
+context:
+  scaffold_script: fixture.sh
