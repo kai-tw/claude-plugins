@@ -92,11 +92,11 @@ to the end — a cloud session stopped waiting for an answer looks, from here,
 exactly like one still running.
 
 The work also states two things; without them it improvises:
-- **How to wait**: start in the background with output written to a file, and
-  wait with `plan-mutation --wait <pid>` (Bash timeout 600000), repeated until it
-  ends. Measured: forbidding polling loops without giving a way to wait, it
-  opened `Monitor` and `tail -f` instead — a one-hour run took about 200 tool
-  calls, with 8 `tail`s hanging at once.
+- **How to wait**: start it with the Bash tool's `run_in_background: true`
+  (never `&`, `nohup`, `disown` or `setsid`), then end the turn — the session
+  is woken when it exits. Measured: forbidding polling loops without giving a
+  way to wait, it opened `Monitor` and `tail -f` instead — a one-hour run took
+  about 200 tool calls, with 8 `tail`s hanging at once.
 - **Report a refusal or an abort**: when `plan-mutation` refuses to run over a
   precondition such as the engine version, or
   prints `ABORTED`, report the message verbatim as `blocked` and stop.

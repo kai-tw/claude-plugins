@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: detach-gate
+description: detach-gate blocks nohup, disown, setsid and a `&` never waited for (exit 2) — the harness cannot see such a process; redirections, `&&`, a `&` the same command waits for, and mentions only inside a message or heredoc all pass.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the detach-gate hook several detaching commands and several healthy ones, and print the exit code of each.
+context:
+  scaffold_script: fixture.sh

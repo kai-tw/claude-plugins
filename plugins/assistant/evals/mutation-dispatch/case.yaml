@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-dispatch
-description: The rules for dispatching a mutation runner state how to wait (plan-mutation --wait) and to report a refusal or an abort, neither editing pubspec.yaml nor rerunning with a changed scope — forbidding polling without giving a way to wait, the runner opens Monitor and tail -f on its own.
+description: The rules for dispatching a mutation runner state how to wait (Bash run_in_background, never nohup or &) and to report a refusal or an abort, neither editing pubspec.yaml nor rerunning with a changed scope — forbidding polling without giving a way to wait, the runner opens Monitor and tail -f on its own.
 tags: [cloud]
 plugins: ["../.."]
 runs: 1
@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: f="$root/skills/assistant/references/cloud-dispatch.md"; grep -c "plan-mutation --wait" "$f" | sed "s/^/wait=/"; grep -c "edit .pubspec.yaml. to get the run through" "$f" | sed "s/^/pubspec=/"; grep -c "prints .ABORTED., report the message" "$f" | sed "s/^/abort=/"
+    EVAL_CMD: f="$root/skills/assistant/references/cloud-dispatch.md"; grep -c "run_in_background: true" "$f" | sed "s/^/wait=/"; grep -c "edit .pubspec.yaml. to get the run through" "$f" | sed "s/^/pubspec=/"; grep -c "prints .ABORTED., report the message" "$f" | sed "s/^/abort=/"
   prompt: |
     Check whether the section of cloud-dispatch.md on dispatching a mutation runner states how to wait, whether it forbids editing pubspec.yaml on a refusal, and whether it requires a report on an abort.
 context:

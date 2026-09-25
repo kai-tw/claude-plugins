@@ -28,9 +28,10 @@ allowed-tools:
   tree holds live mutants; read files via `git show HEAD:<path>`. The plan line
   estimates the run and each mutant line says how long is left; `--max-minutes n`
   stops one that will not fit, scoring nothing — that is an abort, not a score.
-  A long run goes in the background with output to a file; wait on it with
-  `plan-mutation --wait <pid>` (Bash timeout 600000, repeat while it exits 1),
-  never `Monitor` or `tail -f` — each copy lives until the run ends.
+  Start a long run with the Bash tool's `run_in_background: true` — never `&`,
+  `nohup`, `disown` or `setsid`, which the harness cannot see — then end the
+  turn: the session is woken when it exits. Never `Monitor`, `tail -f` or a
+  blocking wait on it.
   `plan-mutation --stop [<pid>]` stops a run (STOPPED, exit 1, nothing scored)
   and keeps the finished mutants: the same command again runs only the rest,
   while the code and tests are unchanged (Dart needs dart_mutants 0.5.0).

@@ -19,7 +19,7 @@ impl="$here/../skills/test-gates/scripts/mutation.sh"
 # one per mutant — `plan-test --exec` exports PLAN_TEST_SLOT_HELD, so the inner
 # runs pass straight through instead of thrashing the semaphore.
 case "${1:-}" in
-  --help|-h|--wait|--stop) exec bash "$impl" "$@" ;;   # none runs a test, so none needs a slot
+  --help|-h|--stop) exec bash "$impl" "$@" ;;   # none runs a test, so none needs a slot
 esac
 slots=1 prev=""
 for a in "$@"; do

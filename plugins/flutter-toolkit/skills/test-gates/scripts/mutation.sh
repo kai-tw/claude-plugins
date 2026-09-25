@@ -95,21 +95,20 @@
 #   pid, the sha, and the files. Read those paths with `git show <sha>:<path>`
 #   while it exists. Exit 3 means the tree was NOT restored.
 #
-# WAITING FOR A RUN
-#   Start it in the background with its output in a file (`plan-mutation … >
-#   <log> 2>&1 & echo $!`), then `plan-mutation --wait [<pid>]` — one call
-#   blocks until the run ends, at most 540 s (`PLAN_MUTATION_WAIT`), so give the
-#   Bash call timeout 600000; the default 120 s cuts it short. No pid → the one
-#   `.mutation-in-progress` names. Exit 0 = ended (the result is in <log>),
-#   1 = still running (call it again), 3 = killed before it restored.
-#   Not `Monitor` or `tail -f`: each copy lives until the run ends, re-arming
-#   stacks copies, and every progress line costs a turn — measured, a sub-agent
-#   spent ~200 tool calls and 8 live `tail -f` on one 60-minute run.
+# RUNNING IT IN THE BACKGROUND
+#   A run outlives any one Bash call. Start it with the Bash tool's
+#   `run_in_background: true`, never `&`, `nohup`, `disown` or `setsid`: only
+#   the former is tracked — listed in the session's background tasks, and the
+#   session is woken when it exits. Then end the turn; nothing needs waiting
+#   on. Not `Monitor`, `tail -f` or a blocking wait either: each look costs a
+#   turn or holds the conversation — measured, a sub-agent spent ~200 tool
+#   calls and 8 live `tail -f` on one 60-minute run.
 #
 # STOPPING AND RESUMING
 #   `plan-mutation --stop [<pid>]` stops a run: the engine restores the tree and
 #   keeps every mutant that finished, and the run prints STOPPED and exits 1,
-#   scoring nothing. It then waits like --wait. Run the same command again and
+#   scoring nothing. --stop returns once the run has exited (0), or 3 when it
+#   was killed before it restored the tree. Run the same command again and
 #   only the unfinished mutants run — Dart through dart_mutants' journal (0.5.0
 #   or newer), JS/TS through Stryker's incremental file, both kept under
 #   $TMPDIR and reused only while the code and tests are unchanged. A finished
@@ -151,17 +150,15 @@ stop_run() {
   wait_for_run "$pid"
 }
 
-# One bounded block, not a poll the caller writes: see WAITING FOR A RUN.
+# --stop returns once the stopped run has restored the tree and exited.
 wait_for_run() {
   local pid="$1" root marker mpid limit="${PLAN_MUTATION_WAIT:-540}"
   root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "plan-mutation: not in a git repo" >&2; exit 2; }
   marker="$root/.mutation-in-progress"
-  [ -n "$pid" ] || pid=$(sed -n 's/^pid:[[:space:]]*//p' "$marker" 2>/dev/null | head -1)
-  [ -n "$pid" ] || { echo "plan-mutation: no run is mutating this tree."; exit 0; }
   local deadline=$(( SECONDS + limit ))
   while kill -0 "$pid" 2>/dev/null && [ "$SECONDS" -lt "$deadline" ]; do sleep 2; done
   if kill -0 "$pid" 2>/dev/null; then
-    echo "plan-mutation: run $pid still running after ${limit}s — call \`plan-mutation --wait $pid\` again."
+    echo "plan-mutation: run $pid still stopping after ${limit}s — call \`plan-mutation --stop $pid\` again."
     exit 1
   fi
   mpid=$(sed -n 's/^pid:[[:space:]]*//p' "$marker" 2>/dev/null | head -1)
@@ -170,7 +167,7 @@ wait_for_run() {
     cat "$marker" >&2
     exit 3
   fi
-  echo "plan-mutation: run $pid has ended; its result is in the output it wrote."
+  echo "plan-mutation: run $pid has stopped; its result is in the output it wrote."
   exit 0
 }
 
@@ -210,10 +207,6 @@ while [ $# -gt 0 ]; do
                 done
                 [ "${1:-}" = "--" ] && shift ;;
     --)         shift; break ;;
-    --wait)     case "${2:-}" in
-                  *[!0-9]*) echo "plan-mutation: --wait takes a pid, not \"$2\"" >&2; exit 2 ;;
-                esac
-                wait_for_run "${2:-}" ;;
     --stop)     case "${2:-}" in
                   *[!0-9]*) echo "plan-mutation: --stop takes a pid, not \"$2\"" >&2; exit 2 ;;
                 esac
