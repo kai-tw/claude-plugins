@@ -1,12 +1,11 @@
 # Dispatching off the machine — two routes, collected differently
 
-Applies when this session's tool list has `SendMessage` and `ListAgents`. Without
-them, you are the cloud end — this section does not apply, and you must not
-dispatch any further out.
+Applies in a local session and in a cloud one alike. A session whose task carries
+a dispatch ID `<slug>#<n>` is itself a dispatch and does not dispatch further.
 
 | | An existing cloud session | A new cloud session |
 |---|---|---|
-| How to start it | `SendMessage`, or `claude -p "<message>" --cloud <session-id>` | `claude --cloud "<task>"` |
+| How to start it | `SendMessage`, or `claude -p "<message>" --cloud <session-id>` | `asst-cloud open --profile <name> "<task>"` |
 | How it comes back | It writes to the report address you name; you file it | Same |
 | What it sees | That session's own working directory and context | The GitHub remote's content on the current branch, not the local checkout |
 | Fits | Work already running, with its context | Stateless, long-running work whose output is one text report |
@@ -63,13 +62,17 @@ dispatch again.
 
 ## 2. A new cloud session for long work
 
-`claude --cloud "<task>"` opens a new cloud session that runs in the background;
-the result stays in that session. It clones **the repo's GitHub remote on the
-current branch, not your local checkout**, so push before dispatching; it cannot
-see unpushed commits. Exception: when the repo has no git remote, or the Claude
-GitHub App is not installed on it, a local bundle is uploaded instead (with
-uncommitted changes to tracked files, without untracked files). Neither carries
-`.claude/.assistant/`.
+`asst-cloud open [--profile <name>] "<task>"` opens a new cloud session that runs
+in the background and prints its session id and URL — the handle you record on
+the board. It runs `claude --cloud` under `script`, since `claude --cloud` refuses
+`--print` and needs a TTY. The profile sets model, effort and a preamble
+(`asst-cloud profiles` lists them): `default` is opus / high, `mutation-runner`
+sonnet / medium; `--model` / `--effort` override it. The session clones **the
+repo's GitHub remote on the current branch, not your local checkout**, so
+`asst-cloud` refuses an unpushed HEAD. Exception: when the repo has no git remote,
+or the Claude GitHub App is not installed on it, a local bundle is uploaded
+instead (with uncommitted changes to tracked files, without untracked files).
+Neither carries `.claude/.assistant/`.
 
 **What belongs here is a check that runs long and outputs only a report** —
 `mutation:`, and wide `coverage:`. Two reasons: they hold the local test slot,
@@ -78,32 +81,17 @@ file read has to detour through `git show`. Sent out, neither cost exists. The
 same scope must never run locally and in the cloud at once — that is paying twice
 for one answer.
 
-**The one running `mutation:` gets this paragraph verbatim at the start of its
-task**, followed by the dispatch message's four things (ID, the work, report
-address, report format):
-
-```
-Hello! You are the mutation runner. Please follow the instruction from another session. Basically, you don't need to do any decision or ask the user any question.
-```
-
-It sets that end's role and authority: the other side cannot ask you (see the
-top), so "no decisions, no questions" is not politeness but the only way it runs
-to the end — a cloud session stopped waiting for an answer looks, from here,
-exactly like one still running.
-
-The work also states two things; without them it improvises:
-- **How to wait**: start it with the Bash tool's `run_in_background: true`
-  (never `&`, `nohup`, `disown` or `setsid`), then end the turn — the session
-  is woken when it exits. Measured: forbidding polling loops without giving a
-  way to wait, it opened `Monitor` and `tail -f` instead — a one-hour run took
-  about 200 tool calls, with 8 `tail`s hanging at once.
-- **Report a refusal or an abort**: when `plan-mutation` refuses to run over a
-  precondition such as the engine version, or
-  prints `ABORTED`, report the message verbatim as `blocked` and stop.
-  Never edit `pubspec.yaml` to get the run through — it is the project's
-  dependency, fixed in the project; nor rerun with a changed test scope or
-  flags — that replaces the measurement fixed at dispatch, and measured, it
-  opens three options of its own and waits for someone to pick.
+**`mutation:` goes out with `--profile mutation-runner`**, the task being the
+dispatch message's four things (ID, the work, report address, report format).
+The profile (`cloud-profiles/mutation-runner.md`) carries what the runner
+improvises without: its role — no decisions, no questions, because a cloud
+session stopped waiting for an answer looks, from here, exactly like one still
+running; how to wait — `run_in_background: true`, since forbidding polling
+without giving a way to wait, it opened `Monitor` and `tail -f` (about 200 tool
+calls in a one-hour run); and the refusal rule — `plan-mutation`'s refusal or
+`ABORTED` reported verbatim as `blocked`, never `pubspec.yaml` edited or the run
+retried with other flags (measured: it opened three options of its own and
+waited for someone to pick). Change these in the profile, not in a task.
 
 **Never open another local worktree just to run these two** — it is a local
 copy, disk is finite, and neither cost above is saved. The only permitted way
@@ -121,6 +109,13 @@ commands) **is not restored**. So long work still gets a report address and an
 `ack`; you judge from them that it is alive, never assuming that no news means
 still running.
 
+**Long background Bash keeps its session awake.** A profile's `check_every`, or
+`--check-every <minutes>`, adds a rule to the task: while a `run_in_background`
+command runs, never end a turn without a `ScheduleWakeup` that many minutes out.
+An idle cloud session was measured alive at one hour, so the ceiling is 60;
+`mutation-runner` uses 50. Set it for a task whose Bash may run past an hour;
+any other task needs none.
+
 **Availability is conditional; check it the first time.** Cloud sessions are a
 research preview, limited to Pro / Max / Team, and Enterprise with a premium seat
 or a Chat + Claude Code seat; they require signing in with an Anthropic account
@@ -130,13 +125,13 @@ Data Retention enabled cannot use them. An ineligible one **fails on the spot an
 prints the reason**, it does not run long — do not read the failure as still
 running.
 
-## 3. A non-interactive shell cannot open `--cloud` — go this way
+## 3. When `asst-cloud` cannot open one
 
-`claude --cloud "<task>"` needs a TTY, and your Bash is non-interactive — this
-route is closed to you; it is not a settings problem, stop trying. Two routes work:
+`asst-cloud` exits 1 with `claude`'s own message — an ineligible account, or an
+environment with no `claude` login. Two other routes:
 
-1. **A routine's API trigger**, the only fully non-interactive, documented route.
-   Once, create the routine at claude.ai/code/routines and generate a token
+1. **A routine's API trigger.** Model and effort come from the routine, not a
+   profile. Once, create the routine at claude.ai/code/routines and generate a token
    (**the CLI can neither create nor revoke a token**; it is shown once); after
    that, any shell can open a cloud session:
 
@@ -162,9 +157,8 @@ route is closed to you; it is not a settings problem, stop trying. Two routes wo
    scripts). It needs a session to exist; get the id from the founder or from
    route 1's response.
 
-`Agent`'s `isolation: "remote"` is not one of them: it has no TTY problem, but
-measured, it runs locally (see section 2), so it does not solve this problem — it
-only moves the work into a disk-eating local copy.
+`Agent`'s `isolation: "remote"` is not one of them: measured, it runs locally (see
+section 2), so it only moves the work into a disk-eating local copy.
 
 When neither route holds, this is one `Needs you` line (ask the founder to open a
 session, or to create a routine) — not a blocker you can clear yourself, and not

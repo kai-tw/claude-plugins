@@ -172,7 +172,7 @@ inside it felt it converged.
 - Pin the model at dispatch: scout / scribe sonnet · haiku; builder opus for
   `feature`, sonnet for `small` / `exempt`; code-verifier and text-verifier opus.
 - Work sent off this machine — a message into a cloud session the founder has
-  running, or a new one from `claude --cloud` — follows
+  running, or a new one from `asst-cloud open --profile <name>` — follows
   `references/cloud-dispatch.md`: neither can ask you a question, both report to
   an address you name, and a new session clones the pushed branch, not your
   checkout. Long checks (`mutation:`, wide `coverage:`) belong there; they hold a
