@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: board-card-trashable
+description: notion backend: a card made by asst-board create carries the generated marker, so asst-notion trash accepts it.
+tags: [asst-board, asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export NTN_BIN=$PWD/ntn; asst-board create t1 Name=Sync >/dev/null 2>&1; asst-notion trash $(cat .claude/.assistant/tasks/t1/page)
+  prompt: |
+    The adapter says the board is in Notion; ./ntn stands in for the Notion CLI (export NTN_BIN=$PWD/ntn). Create task t1 (Sync) with asst-board, then dry-run asst-notion trash on the page id asst-board recorded for it.
+context:
+  scaffold_script: fixture.sh
