@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-js-grade
+description: In a repo with no pubspec, plan-mutation with no test command takes the diff's JS/TS package source (not a .d.ts, a test, a file outside src/ or one in no package), runs Stryker in the package with concurrency 1, grades its report per file (Timeout counts as detected, CompileError as invalid, a file the report omits as NO-MUTANTS), blocks the file under 80% with exit 1, and leaves no report in the repo.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0; plan-mutation 2>&1; echo "rc=$?"; echo "args: $(cat stryker-args.txt)"; echo "dirty: $(git status --porcelain | xargs)"
+  prompt: |
+    Run plan-mutation on a branch that changed JS/TS files in a package with Stryker installed; print the output, the exit code, the arguments Stryker received and git status.
+context:
+  scaffold_script: fixture.sh
