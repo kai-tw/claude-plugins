@@ -152,6 +152,19 @@ never "one more try": record as debt (a Deferred task with a Trigger), cut scope
 (`Decided`, written into the brief), or raise `Needs you`. No round ends because someone
 inside it felt it converged.
 
+## Disclosure
+
+Before a task's first write to a GitHub repo — a file, a commit, a PR body or
+comment, an issue — run `gh repo view <owner/repo> --json visibility`; anything but
+`PRIVATE` or `INTERNAL`, unknown included, is public, and what lands there cannot be
+taken back. A public repo receives only what it already shows: no other repo's
+code, paths, identifiers, issue or PR refs, call sites, copy or rules — write "a
+consumer" in their place — and no reproduction of a flaw in a released version.
+The rest stays in the report files and the task's board row. A dispatch into a
+public repo quotes this paragraph verbatim. `asst-pr` refuses to push or turn
+ready what names a private repo, a home-directory path or a `#<n>` that is not
+this repo's; anything else on the list is caught by no script.
+
 ## Dispatch rules
 
 - Every dispatch names the founder's language as a locale tag (`zh-TW`, `ja`, `en`, …).
@@ -167,7 +180,8 @@ inside it felt it converged.
   with `asst-report put <slug> <kind>` before returning, and the output of a
   command you run yourself (`coverage:` / `mutation:`) is filed the same way, with
   `--worktree <worktree>`. A `verify-<leg>` report is also posted to the task's PR,
-  so a leg missing there is visible before the merge. A report is passed on by
+  so a leg missing there is visible before the merge — in full on a private repo,
+  its first line only on any other (§Disclosure). A report is passed on by
   its path, never pasted.
 - Pin the model at dispatch: scout / scribe sonnet · haiku; builder opus for
   `feature`, sonnet for `small` / `exempt`; code-verifier and text-verifier opus.

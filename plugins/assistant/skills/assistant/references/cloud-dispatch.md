@@ -36,10 +36,11 @@ A dispatch message carries four things:
 2. **The work**: the task statement and the approved decisions, written in the
    message or pointing to a **pushed** path the other side can clone. An `@path`
    in a cross-session message attaches nothing; the other side reads only the string.
-3. **The report address, exactly one**: for a task with a PR, a comment on
-   `owner/repo#<n>`; without a PR, the task's Notion row (`asst-notion … --root
-   <notion_root>`). Giving both means polling both, and the report lands on the
-   side you are not watching.
+3. **The report address, exactly one**: for a task with a PR on a private repo
+   (SKILL.md §Disclosure), a comment on `owner/repo#<n>`; otherwise the task's
+   Notion row (`asst-notion … --root <notion_root>`); neither → a `Needs you` line
+   for a private address. Giving both means polling both, and the report lands on
+   the side you are not watching.
 4. **The report format**: first line `assistant-report <slug>#<n> <ack|done|blocked>`,
    then the report body, in the same format as that report kind's local one.
 
@@ -50,9 +51,9 @@ write" — the latter does not change however long you wait.
 
 **Collection.** The cloud cannot write to `.claude/.assistant/`. Once `done`
 arrives, you file it locally with
-`asst-report put <slug> <kind> --worktree <worktree> --no-post` so later steps can
-read it — the cloud's report is not a report but its source; it is already on the
-PR, so it is not posted again.
+`asst-report put <slug> <kind> --worktree <worktree>` so later steps can read it,
+adding `--no-post` when the address was the PR — the cloud's report is not a
+report but its source, and one already on the PR is not posted again.
 
 **Cadence.** Polling folds into the existing scheduler pass: read the task's
 report address once per pass, no separate mechanism. One cloud session per slug

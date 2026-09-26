@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-public-leak
+description: On a public repo, asst-pr open refuses to push while a commit message, the diff or the PR body names a private repo, a home-directory path or a bare issue number that is not this repo's, and asst-pr ready refuses a PR body that does; a clean branch, or the same branch on a private repo, goes through.
+tags: [asst-pr, disclosure]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; pushed() { git -C origin.git rev-parse -q --verify "refs/heads/$1" >/dev/null && echo yes || echo no; }; git -C wt switch -q t1; asst-pr open x wt; echo "t1=$? pushed=$(pushed t1)"; git -C wt switch -q t2; asst-pr open x wt; echo "t2=$? pushed=$(pushed t2)"; git -C wt switch -q t3; asst-pr open x wt --title T --body "Reads the Diary-Notes export"; echo "t3body=$? pushed=$(pushed t3)"; asst-pr open x wt --title T --body "Parses faster."; echo "t3=$? pushed=$(pushed t3)"; GH_BODY="Ported from acme/secret-app" asst-pr ready x wt; echo "readyleak=$?"; GH_BODY="Parses faster." asst-pr ready x wt; echo "readyclean=$?"; git -C wt switch -q t1; GH_VIS=PRIVATE asst-pr open x wt; echo "private=$? pushed=$(pushed t1)"
+  prompt: |
+    On a public repo with a fake gh, run asst-pr open on branches whose commits, diff or PR body leak something from outside the repo, then a clean one, then ready with a leaking and a clean PR body, then the leaking branch on a private repo.
+context:
+  scaffold_script: fixture.sh

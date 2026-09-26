@@ -8,3 +8,12 @@ gh_unusable() {
   elif ! (cd "$1" && gh repo view --json name >/dev/null 2>&1); then echo "no GitHub remote"
   fi
 }
+
+# gh_private <dir> — succeeds only when GitHub reports <dir>'s repo private or
+# internal. An unknown answer counts as public: a leak cannot be taken back.
+gh_private() {
+  case "$(cd "$1" && gh repo view --json visibility --jq .visibility 2>/dev/null)" in
+    PRIVATE|INTERNAL) return 0 ;;
+    *) return 1 ;;
+  esac
+}

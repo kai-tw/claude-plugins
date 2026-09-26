@@ -12,6 +12,8 @@
 # A verify-<leg> report is also posted to the task's PR as a comment: the founder
 # merges from the PR page, so a leg missing there is seen before the merge, not
 # found in a directory nobody opens. The file stays the record the gates read.
+# A repo not known to be private gets the first line only: a report carries what
+# its verifier read outside the repo, and how to break code already released.
 # --worktree names the task's checkout when the caller is not in it; --no-post
 # is for a report that is already on the PR (a cloud session's). When nothing is
 # posted, stderr says why — the file is filed either way.
@@ -47,10 +49,13 @@ post_to_pr() {
   git -C "$wt" rev-parse --verify --quiet '@{u}' >/dev/null || { skip "$branch has no upstream, so no PR"; return; }
   why=$(gh_unusable "$wt"); [ -z "$why" ] || { skip "$why"; return; }
   num=$(cd "$wt" && gh pr view "$branch" --json number --jq .number 2>/dev/null) || { skip "no PR for $branch"; return; }
-  { printf 'assistant-report %s %s @ %s\n\n' "$slug" "$name" "$(git -C "$wt" rev-parse --short HEAD)"; cat "$f"; } \
-    | (cd "$wt" && gh pr comment "$num" --body-file - >/dev/null) \
+  local full=1 note=""
+  gh_private "$wt" || { full=0; note=" (first line only — repo not known private)"; }
+  { printf 'assistant-report %s %s @ %s\n\n' "$slug" "$name" "$(git -C "$wt" rev-parse --short HEAD)"
+    if [ $full = 1 ]; then cat "$f"; else echo "Filed, not posted: this repo is not known to be private."; fi
+  } | (cd "$wt" && gh pr comment "$num" --body-file - >/dev/null) \
     || { skip "gh pr comment failed on #$num"; return; }
-  echo "asst-report: $name posted to #$num" >&2
+  echo "asst-report: $name posted to #$num$note" >&2
 }
 
 case "$op" in
