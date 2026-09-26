@@ -161,7 +161,9 @@ taken back. A public repo receives only what it already shows: no other repo's
 code, paths, identifiers, issue or PR refs, call sites, copy or rules — write "a
 consumer" in their place — and no reproduction of a flaw in a released version.
 The rest stays in the report files and the task's board row. A dispatch into a
-public repo quotes this paragraph verbatim.
+public repo quotes this paragraph verbatim. `asst-pr` refuses to push or turn
+ready what names a private repo, a home-directory path or a `#<n>` that is not
+this repo's; anything else on the list is caught by no script.
 
 ## Dispatch rules
 
