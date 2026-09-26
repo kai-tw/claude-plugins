@@ -3,7 +3,10 @@
 - **Changes go on a branch + draft PR, never a direct commit to `main`.** A plugin change
   carries an eval case that fails on the old version; run `gh pr ready` only after CI's
   `Evals` (`.github/scripts/run-evals.mjs`) is green and the version is bumped — the draft
-  state is what stops a merge while the agent is still working.
+  state is what stops a merge while the agent is still working. Right after `gh pr ready`,
+  start `node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>` with
+  `run_in_background: true`: it waits for the merge and does everything after it, and its
+  exit wakes the session, so nobody has to report the merge.
 
 - **Changing anything under `plugins/<plugin>/` means bumping `version` in `plugin.json`.**
   Consumers install into `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` — **a
@@ -12,11 +15,10 @@
   "already at the latest version". A bug fix is a patch (0.4.0 → 0.4.1); adding or changing
   behaviour is a minor.
 - **Pushed is not live, and "updated" is not live either.** The marketplace reads
-  `kai-tw/claude-plugins` on GitHub, so after a push first refresh the index with
-  `claude plugin marketplace update kai-tw` (without it, `claude plugin update` compares
-  against the old index and truthfully reports "already at the latest version" with the old
-  number), then have each consumer run `claude plugin update` to copy the content into the
-  cache. But **which version PATH points at cannot be predicted from outside**: it changes
+  `kai-tw/claude-plugins`' default branch on GitHub; `after-merge.mjs` (or `release.mjs` run
+  on the default branch) refreshes the index and updates and verifies every install in
+  `~/.claude/plugins/installed_plugins.json`. But **which version PATH points at cannot be
+  predicted from outside**: it changes
   during a session and does not follow installs — one session's transcript shows `0.15.1` →
   `0.17.0` → `0.19.0` in turn (no restart, no `update`, and `0.18.0` skipped), and it still
   resolved to `0.19.0` after `0.19.1` was in the cache. What triggers the refresh is
@@ -38,25 +40,11 @@
 - **On a PR branch, `release.mjs` skips steps 6–8 by itself.** The marketplace serves the
   default branch, so a new version on a branch cannot be installed anywhere until it merges.
   When HEAD is not the default branch the script stops after step 5, prints
-  `✔ … committed and pushed on <branch> — install after merge` and lists the two commands
-  to run after the merge — **that is success, not failure**. After the merge, update each
-  consumer as the next rule says.
-- **`release.mjs` updates one consumer, and its `✔ … installed and verified` speaks for that
-  one only.** Steps 6 and 7 target the project the cwd resolves to; every other project
-  with the plugin enabled stays where it was, and the closing line does not mention them —
-  one release printed all green while another consumer sat two versions behind.
-  **Update every consumer once**:
-  ```
-  cd <project> && claude plugin update <plugin>@<marketplace> --scope project
-  ```
-  `install` on an installed plugin prints `already installed` and does nothing (a second
-  "failure that looks like success"), and `--scope project` cannot be dropped — without it
-  the command looks in user scope and fails. Finish by reading each `projectPath`'s
-  `version` in `~/.claude/plugins/installed_plugins.json`.
+  `✔ … committed and pushed on <branch> — install after merge` and names `after-merge.mjs`
+  — **that is success, not failure**.
 - **A version that adds `dependencies` needs the consumer to install them first.** `update`
   does not install newly declared dependencies, and one missing plugin fails the load in
-  every scope. After installing, trust the `Status` column of `claude plugin list`;
-  `release.mjs` step 8 only sees installs of the new version number.
+  every scope; `after-merge.mjs` and `release.mjs` report it as `FAILS TO LOAD`.
 - **Call your own scripts by bare name.** A plugin's `bin/` is on PATH once it is enabled;
   the install path cannot be derived from the project and changes with every bump. Write
   `asst-budget`, not `bash .claude/hooks/…` — the latter fails with a single

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Release a plugin: evals → bump → validate → commit → push → update → VERIFY cache → VERIFY load.
+// Release a plugin: evals → bump → validate → commit → push → update and VERIFY every install.
 // The TAG is CI's (`.github/workflows/plugin-tag.yml`), not this script's.
 //
 // The verify step is the point. A bump that is not installed is invisible, and
@@ -13,9 +13,10 @@
 // Usage: node .claude/skills/plugin-release/scripts/release.mjs <plugin> <major|minor|patch> [--commit]
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { marketplaceSource, slug, updateConsumers } from './consumers.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const [plugin, level] = process.argv.slice(2);
@@ -118,165 +119,47 @@ step(5, 'push');
 // to do and the version would ship untagged.
 run('git', ['push', 'origin', 'HEAD']);
 
-step(6, 'update the locally installed copy');
-// FIRST: does this machine install FROM this repo at all? The marketplace is a
-// `github` source pointing here, so the installer reads what step 5 just pushed
-// — but only after the marketplace index is refreshed. `claude plugin update`
-// compares against the index it already has, so without this it truthfully
-// answers "already at the latest version" with the OLD number, and step 7 then
-// dies on a cache directory that was never going to exist. That reads as a
-// failed release when nothing failed, which trains the reader to ignore the one
-// check that catches a real stale install.
-// A marketplace pointing somewhere else entirely (another checkout, a mirror)
-// cannot show this release at all; say so and stop rather than failing.
-const marketplacesPath = join(process.env.HOME, '.claude/plugins/known_marketplaces.json');
-const known = existsSync(marketplacesPath)
-  ? JSON.parse(readFileSync(marketplacesPath, 'utf8'))[marketplace.name]
-  : null;
-const src = known?.source ?? {};
-// The recorded shape differs per source kind — `{source:'git', url}` for a
-// clone, `{source:'github', repo}` for the shorthand, `{source:'directory',
-// path}` for a local tree. Compare on the slug, which all three can produce.
-const slug = (s) => String(s ?? '').replace(/^.*github\.com[/:]/, '').replace(/\.git$/, '');
+step(6, 'update every install');
+// FIRST: does this machine install FROM this repo at all? A marketplace pointing
+// somewhere else (another checkout, a mirror) cannot show this release; say so
+// and stop rather than failing a check that could not have passed.
+const src = marketplaceSource(marketplace.name);
 const originSlug = slug(run('git', ['remote', 'get-url', 'origin']));
 const servesThisTree =
-  ((src.source === 'git' || src.source === 'github') &&
-    slug(src.url ?? src.repo) === originSlug) ||
-  (src.source === 'directory' && !relative(root, resolve(src.path)).startsWith('..'));
+  ((src?.source === 'git' || src?.source === 'github') && slug(src.url ?? src.repo) === originSlug) ||
+  (src?.source === 'directory' && !relative(root, resolve(src.path)).startsWith('..'));
 
-if (known && !servesThisTree) {
-  const where =
-    src.source === 'directory' ? resolve(src.path) : `${src.source}:${src.url ?? src.repo ?? '?'}`;
+if (src && !servesThisTree) {
+  const where = src.source === 'directory' ? resolve(src.path) : `${src.source}:${src.url ?? src.repo ?? '?'}`;
   console.log(`  ⚠ "${marketplace.name}" installs from ${where}, not from this repo (${originSlug}).`);
   console.log(`    Nothing here can show ${next}, and there is nothing local to verify.`);
   console.log(`\n✔ ${plugin} ${next} pushed — NOT installed anywhere from this run.`);
   process.exit(0);
 }
 
-// A git/github marketplace serves the repo's DEFAULT branch, so a release
-// pushed on any other branch is invisible to the installer until it merges.
-// Steps 6 and 7 would then fail for the most confusing possible reason: step 6
-// truthfully reports "already at the latest version" with the OLD number
-// (correct — on the default branch it IS the latest), and step 7 dies on a
-// cache directory that was never going to exist. Both reasonable, and together
-// they read as a broken release when nothing is broken.
-//
-// This is not an edge case here. The repo's own release rule requires exactly
-// one bump per PR, run at close-out — i.e. on the PR branch — so the prescribed
-// workflow guarantees this collision. A `directory` marketplace is exempt: it
-// serves the working tree, so the checked-out branch is what it already reads.
-if (src.source === 'git' || src.source === 'github') {
+// A git/github marketplace serves the repo's DEFAULT branch, so a release pushed
+// on any other branch cannot be installed until it merges — and this repo's rule
+// of one bump per PR, at close-out, puts the release commit on the PR branch
+// every time. A `directory` marketplace is exempt: it serves the working tree.
+if (src?.source === 'git' || src?.source === 'github') {
   let defaultBranch = null;
   try {
-    // Offline: the remote HEAD symref is set by clone / `git remote set-head`.
-    defaultBranch = run('git', ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD'])
-      .replace(/^origin\//, '');
+    defaultBranch = run('git', ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']).replace(/^origin\//, '');
   } catch {
-    // No symref recorded — cannot tell, so don't block. Fall through and let
-    // steps 6-8 run exactly as they did before this check existed.
+    // No symref recorded — cannot tell, so don't block.
   }
   const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
-
   if (defaultBranch && branch !== defaultBranch) {
     console.log(`  ⚠ on branch "${branch}", but "${marketplace.name}" serves ${originSlug}@${defaultBranch}.`);
     console.log(`    ${next} is pushed and cannot be installed until it merges — nothing is wrong.`);
-    console.log(`\n    After the merge, on THIS machine and once per consuming project:`);
-    console.log(`      claude plugin marketplace update ${marketplace.name}`);
-    console.log(`      cd <project> && claude plugin update ${plugin}@${marketplace.name} --scope project`);
-    console.log(`    Then confirm every projectPath's version in`);
-    console.log(`      ~/.claude/plugins/installed_plugins.json`);
+    console.log(`\n    Once the PR is ready, start with run_in_background — it waits for the merge,`);
+    console.log(`    then updates and verifies every install:`);
+    console.log(`      node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>`);
     console.log(`\n✔ ${plugin} ${next} committed and pushed on ${branch} — install after merge.`);
     process.exit(0);
   }
 }
 
-// Refresh the index before asking for the update — see the note above.
-try {
-  run('claude', ['plugin', 'marketplace', 'update', marketplace.name]);
-} catch (e) {
-  die(`marketplace refresh failed — the release is pushed, but this machine\n` +
-      `    cannot see it yet:\n    ${(e.stderr ?? e.message).trim()}`);
-}
-
-// `claude plugin update` defaults to user scope and errors out if the plugin
-// lives anywhere else, so read the scope back rather than assuming it. A plugin
-// may also be released without being installed here at all — that is a normal
-// state, not a failure, but it means nothing local can be verified. The file
-// itself can also be absent (no plugin ever installed on this machine), not
-// just empty of this plugin — same non-failure, so treat it the same way.
-const installedPath = join(process.env.HOME, '.claude/plugins/installed_plugins.json');
-const installed = existsSync(installedPath) ? JSON.parse(readFileSync(installedPath, 'utf8')) : {};
-const scopes = [
-  ...new Set((installed.plugins?.[`${plugin}@${marketplace.name}`] ?? []).map((e) => e.scope)),
-];
-
-if (scopes.length === 0) {
-  console.log(`  ⚠ not installed locally — released, but nothing here to update or verify`);
-  console.log(`\n✔ ${plugin} ${next} released (not installed locally)`);
-  process.exit(0);
-}
-
-for (const scope of scopes) {
-  try {
-    console.log(run('claude', ['plugin', 'update', `${plugin}@${marketplace.name}`, '--scope', scope]));
-  } catch (e) {
-    die(
-      `update failed at scope "${scope}" — the release is pushed, but\n` +
-        `    this machine still runs the old copy:\n    ${(e.stderr ?? e.message).trim()}`,
-    );
-  }
-}
-
-step(7, 'VERIFY the installed cache matches source');
-const cache = join(
-  process.env.HOME,
-  `.claude/plugins/cache/${marketplace.name}/${plugin}/${next}`,
-);
-if (!existsSync(cache)) die(`nothing installed at ${cache} — the update did not land`);
-
-const list = (dir, base = dir) =>
-  readdirSync(dir).flatMap((n) => {
-    if (n === '.in_use' || n === '.orphaned_at' || n === '.DS_Store') return [];
-    const p = join(dir, n);
-    return statSync(p).isDirectory() ? list(p, base) : [relative(base, p)];
-  });
-
-const inSource = new Set(list(join(root, `plugins/${plugin}`)));
-const inCache = new Set(list(cache));
-const missing = [...inSource].filter((f) => !inCache.has(f));
-
-if (missing.length) {
-  die(
-    `installed copy is missing ${missing.length} file(s) that exist in source:\n` +
-      missing.map((f) => `      ${f}`).join('\n') +
-      `\n    the release did not reach the cache at ${cache}`,
-  );
-}
-
-console.log(`  ✔ ${inCache.size} file(s) match source`);
-
-step(8, 'VERIFY the plugin loads');
-// A full cache can still fail to load — `claude plugin update` does not install
-// newly declared `dependencies`, so a release can pass step 7 while failing to
-// load in every scope. `--json` carries no load status, so read the
-// text form, and fail if the plugin is absent from it: a changed format must
-// not pass silently.
-const id = `${plugin}@${marketplace.name}`;
-const field = (b, k) => b.match(new RegExp(`^\\s*${k}:\\s*(.*)$`, 'm'))?.[1]?.trim() ?? '?';
-const blocks = run('claude', ['plugin', 'list'])
-  .split(/^\s*❯\s+/m)
-  .slice(1)
-  .filter((b) => b.split('\n')[0].trim() === id && field(b, 'Version') === next);
-if (blocks.length === 0) die(`\`claude plugin list\` shows no ${id} at ${next} — cannot confirm it loads`);
-
-const failed = blocks.filter((b) => /Status:.*fail/i.test(b));
-if (failed.length) {
-  const detail = failed.map((b) => `      [${field(b, 'Scope')}] ${field(b, 'Error')}`).join('\n');
-  die(
-    `${id} ${next} is installed but FAILS TO LOAD in ${failed.length} of ${blocks.length} install(s) at ${next}:\n` +
-      `${detail}\n    missing \`dependencies\` are not installed by \`claude plugin update\` — install them, then re-check`,
-  );
-}
-console.log(`  ✔ loads in all ${blocks.length} install(s) at ${next}`);
-
-console.log(`\n✔ ${plugin} ${next} released, installed and verified`);
+const failures = updateConsumers({ root, marketplace: marketplace.name, plugin, version: next, ref: 'HEAD' });
+if (failures.length) die(`${plugin} ${next} is pushed, but:\n${failures.map((f) => `    ${f}`).join('\n')}`);
+console.log(`\n✔ ${plugin} ${next} released, installed and verified everywhere`);

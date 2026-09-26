@@ -67,16 +67,18 @@ unrelated edits. Commit or stash those first.
    tree, and the check would compare the still-unbumped `HEAD` and fail every
    release by construction.
 5. **Push.**
-6. **Refresh the marketplace index, then update the local install.** The refresh
-   is not optional: `claude plugin update` compares against the index it already
-   holds, so without it the update truthfully reports "already at the latest
-   version" with the OLD number. If the marketplace points somewhere other than
-   this repo, the script says so and stops at a clean success rather than
-   failing a check that could not have passed.
-7. **Verify** the installed cache contains every file that exists in source.
-8. **Verify it loads** in every install `claude plugin list` shows.
-   `claude plugin update` does not install newly declared `dependencies`, so a
-   complete cache can still fail to load everywhere.
+6. **Refresh the marketplace index, then update every install** in
+   `~/.claude/plugins/installed_plugins.json`, each from its own `projectPath`
+   and scope (`consumers.mjs`). The refresh is not optional: `claude plugin
+   update` compares against the index it already holds, so without it the update
+   truthfully reports "already at the latest version" with the OLD number. If the
+   marketplace points somewhere other than this repo, the script says so and
+   stops at a clean success rather than failing a check that could not have passed.
+7. **Verify** every install's recorded version, and that the cache holds every
+   file the release commit has for the plugin.
+8. **Verify it loads** in each install's project. `claude plugin update` does
+   not install newly declared `dependencies`, so a complete cache can still fail
+   to load everywhere.
 
 Step 4 is downstream of the commit because anything that inspects committed
 history has to wait for the commit.
@@ -94,24 +96,22 @@ release pushed and installed nowhere — report that, never "installed and
 verified": the marketplace points somewhere other than this repo, or **HEAD is
 not the repo's default branch**. The second is the ordinary case here, since one
 bump per PR at close-out means the release commit lands on the PR branch while
-the marketplace serves `main`; the script says so and prints the two commands to
-run after the merge.
+the marketplace serves `main`; the script says so and names the script below.
 
-## After a release
+## After the merge
 
-The marketplace reads this repo directly, so a pushed release is installable as
-soon as the index is refreshed. `release.mjs` does that for **this machine's own
-install only** — every other project that has the plugin needs its own update:
+Once the PR is ready, start this with the Bash tool's `run_in_background: true`:
 
 ```bash
-cd <consumer> && claude plugin update <plugin>@<marketplace> --scope project
+node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 ```
 
-`--scope project` is not optional (omitted, it looks in user scope and fails),
-and `install` on an already-installed plugin prints `already installed` and does
-nothing. Confirm by reading each `projectPath`'s `version` in
-`~/.claude/plugins/installed_plugins.json`.
+It asks GitHub every minute until the PR merges, then runs steps 6–8 for every
+plugin the PR changed, syncs the main checkout and removes the PR's worktree and
+branch. Its exit wakes the session, so a merge needs no one to report it — the
+app's PR monitor wakes a session on CI failures, conflicts and review comments,
+never on a merge. Exit 1 (closed unmerged, 24 h without a merge, or a failed
+check) prints why; report it as it stands.
 
-LSP servers and hooks from the updated plugin take effect on the **next
-session**, not this one — if the user expects to see the change immediately,
-tell them to restart.
+LSP servers, hooks and scripts from the updated plugin take effect on the **next
+session**, not this one — tell the user which running sessions need a restart.
