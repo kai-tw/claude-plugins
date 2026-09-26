@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: report-public-repo
+description: A verify-* report goes to the PR in full only when GitHub says the repo is private or internal; a public repo, or one whose visibility comes back unknown, gets the first line and a note, and every report is filed in full either way.
+tags: [asst-report, disclosure]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; git -C wt switch -q task/r; echo LEAK-public | GH_VIS=PUBLIC asst-report put r verify-code --worktree wt; echo LEAK-unknown | GH_VIS= asst-report put r verify-text --worktree wt; echo kept-internal | GH_VIS=INTERNAL asst-report put r verify-coverage --worktree wt; echo "filed=$(cat wt/.claude/.assistant/reports/r/*.md | paste -sd, -)"; echo "comments=$(grep -c "^--- comment" comments.log)"; cat comments.log
+  prompt: |
+    On a task branch with a fake gh, file verify reports while GitHub reports the repo public, unknown and internal; see what each PR comment carries and what is filed.
+context:
+  scaffold_script: fixture.sh
