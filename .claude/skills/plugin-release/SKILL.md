@@ -106,12 +106,13 @@ Once the PR is ready, start this with the Bash tool's `run_in_background: true`:
 node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 ```
 
-It asks GitHub every minute until the PR merges, then runs steps 6–8 for every
+It waits on `gh webhook forward` (the `cli/gh-webhook` extension), which GitHub
+pushes each pull_request event to — no polling — then runs steps 6–8 for every
 plugin the PR changed, syncs the main checkout and removes the PR's worktree and
 branch. Its exit wakes the session, so a merge needs no one to report it — the
 app's PR monitor wakes a session on CI failures, conflicts and review comments,
-never on a merge. Exit 1 (closed unmerged, 24 h without a merge, or a failed
-check) prints why; report it as it stands.
+never on a merge. Exit 1 (closed unmerged, the forwarder failed or stopped, or a
+failed check) prints why; report it as it stands.
 
 LSP servers, hooks and scripts from the updated plugin take effect on the **next
 session**, not this one — tell the user which running sessions need a restart.

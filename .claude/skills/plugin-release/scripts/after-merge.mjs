@@ -6,53 +6,72 @@
 // Start it with the Bash tool's `run_in_background: true` once the PR is ready:
 // it exits when the PR merges or closes, and the exit wakes the session — nobody
 // has to say "merged". The app's PR monitor wakes a session on CI failures,
-// conflicts and review comments, never on a merge.
+// conflicts and review comments, never on a merge. The wait is a push, not
+// polling: `gh webhook forward` (the cli/gh-webhook extension) streams GitHub's
+// pull_request events over a websocket.
 //
-// Usage: node .claude/skills/plugin-release/scripts/after-merge.mjs <pr> [--every <seconds>] [--hours <n>]
-//   --every  how often to ask GitHub (default 60)   --hours  give up after (default 24)
+// Usage: node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 // Exit: 0 merged and every install verified (or no plugin to install) · 1 closed
-// unmerged, gave up, or a check failed — the reason on stderr.
+// unmerged, the forwarder failed or stopped, or a check failed — the reason on stderr.
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
+import { createInterface } from 'node:readline';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marketplaceSource, slug, updateConsumers } from './consumers.mjs';
 
-const arg = (k, d) => {
-  const i = process.argv.indexOf(k);
-  return i > 0 ? Number(process.argv[i + 1]) : d;
-};
 const pr = process.argv[2];
-const every = arg('--every', 60);
-const hours = arg('--hours', 24);
 const die = (msg) => {
   console.error(`✘ ${msg}`);
   process.exit(1);
 };
-if (!/^\d+$/.test(pr ?? '') || !(every > 0) || !(hours > 0)) {
-  die('usage: after-merge.mjs <pr> [--every <seconds>] [--hours <n>]');
-}
+if (!/^\d+$/.test(pr ?? '')) die('usage: after-merge.mjs <pr>');
 
 const here = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const git = (args, cwd = main) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 // The main checkout, never the worktree this may run from — the worktree is removed below.
 const main = git(['worktree', 'list', '--porcelain'], here).match(/^worktree (.*)$/m)[1];
-const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
-
-// 1. Wait. A few failed reads in a row are the network; many are a real fault.
-let pull;
-for (let t = Date.now(), misses = 0; ; ) {
+const view = () => {
   try {
-    pull = JSON.parse(execFileSync('gh', ['pr', 'view', pr, '--json', 'state,mergeCommit,headRefName,files,url'], { cwd: main, encoding: 'utf8' }));
-    misses = 0;
+    return JSON.parse(execFileSync('gh', ['pr', 'view', pr, '--json', 'state,mergeCommit,headRefName,files,url'], { cwd: main, encoding: 'utf8' }));
   } catch (e) {
-    if (++misses >= 10) die(`gh pr view ${pr} failed ${misses} times in a row — ${(e.stderr || e.message).trim()}`);
+    die(`gh pr view ${pr} failed — ${(e.stderr || e.message).trim()}`);
   }
-  if (pull?.state === 'MERGED') break;
-  if (pull?.state === 'CLOSED') die(`${pull.url} was closed without merging — nothing to install`);
-  if (Date.now() - t > hours * 3600e3) die(`#${pr} not merged after ${hours} h — gave up; start me again to keep waiting`);
-  await sleep(every);
+};
+try {
+  execFileSync('gh', ['webhook', '--help'], { stdio: 'ignore' });
+} catch {
+  die('gh webhook not installed — gh extension install cli/gh-webhook');
 }
+
+// 1. Wait. Connected first, then one state check, so a merge in between still
+// arrives as an event and a merge before the start is not waited for forever.
+const repo = slug(git(['remote', 'get-url', 'origin']));
+const fwd = spawn('gh', ['webhook', 'forward', '--events=pull_request', `--repo=${repo}`], {
+  cwd: main, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
+});
+// Stop the whole group: killing only `gh` leaves the extension under it running.
+const stop = () => { try { process.kill(-fwd.pid, 'SIGTERM'); } catch {} };
+process.on('exit', stop);
+let err = '';
+const closed = await new Promise((settle) => {
+  fwd.stderr.on('data', (d) => {
+    const was = /^Forwarding/m.test(err);
+    err += d;
+    if (!was && /^Forwarding/m.test(err) && view().state !== 'OPEN') settle(true);
+  });
+  createInterface({ input: fwd.stdout }).on('line', (line) => {
+    try {
+      const ev = JSON.parse(line);
+      if (ev.action === 'closed' && String(ev.number) === pr) settle(true);
+    } catch {}
+  });
+  fwd.on('exit', () => settle(false));
+});
+stop();
+if (!closed) die(`webhook forwarder for ${repo} stopped — ${err.trim().split('\n').slice(-2).join(' ')}`);
+const pull = view();
+if (pull.state !== 'MERGED') die(`${pull.url} was closed without merging — nothing to install`);
 const ref = pull.mergeCommit.oid;
 console.log(`✔ ${pull.url} merged as ${ref.slice(0, 7)}`);
 
