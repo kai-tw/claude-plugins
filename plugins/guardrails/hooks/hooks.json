@@ -30,6 +30,15 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/poll-gate.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash|Glob|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/search-gate.sh"
+          }
+        ]
       }
     ],
     "Stop": [
