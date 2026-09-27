@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^default-args: --cloud\|Do the thing\|--model\|opus\|--effort\|high\|$'
+pattern: '^default-args: --cloud\|Do the thing\|--model\|opus\|--effort\|high\|--name\|solo · main\|$'
 flags: m
 arm: with-only
 ---

@@ -75,6 +75,11 @@ or the Claude GitHub App is not installed on it, a local bundle is uploaded
 instead (with uncommitted changes to tracked files, without untracked files).
 Neither carries `.claude/.assistant/`.
 
+**The session is titled `PR# <n> <PR title>`** after the branch's PR, else
+`<repo> · <branch>`, since a session list shows only titles; `--name <title>`
+overrides it and, when the branch has a PR, starts with `PR# <n>` too.
+`asst-cloud` prints the title the session got.
+
 **What belongs here is a check that runs long and outputs only a report** —
 `mutation:`, and wide `coverage:`. Two reasons: they hold the local test slot,
 and `plan-mutation` rewrites `lib/` in place, so until it finishes every local

@@ -3,9 +3,10 @@
 # preamble, from a local shell or from inside a cloud session.
 #
 # Usage: asst-cloud open [--profile <name>] [--model <m>] [--effort <e>] [--permission-mode <p>]
-#                        [--check-every <minutes>|none] [--dry-run] <task…|->
-#          open a cloud session on the pushed branch → prints its session id and URL;
+#                        [--check-every <minutes>|none] [--name <title>] [--dry-run] <task…|->
+#          open a cloud session on the pushed branch → prints its session id, URL and title;
 #          `-` reads the task from stdin; --dry-run prints the command and the text
+#          The title is --name, else `PR# <n> <PR title>` for the branch's PR, else `<repo> · <branch>`.
 #        asst-cloud profiles
 #          list the profiles and what each sets
 # A profile is `cloud-profiles/<name>.md`: frontmatter model / effort /
@@ -20,7 +21,7 @@
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"
-usage() { sed -n '5,16p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '5,17p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 die() { echo "asst-cloud: $1" >&2; exit 1; }
 
 profile_file() {
@@ -46,7 +47,7 @@ case "${1:-}" in
   *) usage ;;
 esac
 
-profile=default model="" effort="" perm="" every="" dry=""
+profile=default model="" effort="" perm="" every="" name="" dry=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --profile)     profile=${2:?--profile needs a name}; shift 2 ;;
@@ -54,6 +55,7 @@ while [ $# -gt 0 ]; do
     --effort)      effort=${2:?--effort needs a level}; shift 2 ;;
     --permission-mode) perm=${2:?--permission-mode needs a mode}; shift 2 ;;
     --check-every) every=${2:?--check-every needs minutes or none}; shift 2 ;;
+    --name)        name=${2:?--name needs a title}; shift 2 ;;
     --dry-run)     dry=1; shift ;;
     --)            shift; break ;;
     -)             break ;;
@@ -87,9 +89,19 @@ if [ -z "$dry" ] && git rev-parse --git-dir >/dev/null 2>&1 && [ -n "$(git remot
   [ "$(git rev-parse HEAD)" = "$up" ] || die "HEAD is not pushed — push first; the session clones the pushed branch, not this checkout"
 fi
 
+# The session list shows only titles, and claude's own title is a summary of the
+# text — which, behind a profile's preamble, says nothing about which PR it serves.
+if [ -z "$name" ] && git rev-parse --git-dir >/dev/null 2>&1; then
+  read -r num title < <(gh pr view --json number,title --jq '"\(.number) \(.title)"' 2>/dev/null)
+  if [ -n "${num:-}" ]; then name="PR# $num $title"
+  else name="$(basename "$(git rev-parse --show-toplevel)") · $(git branch --show-current | grep . || git rev-parse --short HEAD)"; fi
+fi
+
 cmd=(claude --cloud "$text" --model "$model" --effort "$effort")
 [ -z "$perm" ] || [ "$perm" = default ] || cmd+=(--permission-mode "$perm")
+[ -z "$name" ] || cmd+=(--name "$name")
 if [ -n "$dry" ]; then
+  printf 'title %s\n' "$name"
   printf 'profile %s · model %s · effort %s · permissions %s · check every %s\n' "$profile" "$model" "$effort" "${perm:-default}" "$every"
   printf '%s\n' "$text"
   exit 0
@@ -106,5 +118,6 @@ out=$(tr -d '\r\004\010' <"$log" | sed $'s/\x1b\\[[0-9;?<>=]*[A-Za-z]//g; s/\x1b
 rm -f "$log"
 id=$(printf '%s\n' "$out" | grep -o 'session_[A-Za-z0-9]*' | head -1)
 url=$(printf '%s\n' "$out" | grep -o 'https://claude\.ai/code/session_[^[:space:]]*' | head -1)
+shown=$(printf '%s\n' "$out" | sed -n 's/^.*Created cloud session: //p' | head -1)
 [ -n "$id" ] || { printf 'asst-cloud: no session was opened. claude said:\n%s\n' "$(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -8)" >&2; exit 1; }
-printf 'session %s\nurl %s\nprofile %s · model %s · effort %s · permissions %s · check every %s\n' "$id" "${url%%\?*}" "$profile" "$model" "$effort" "${perm:-default}" "$every"
+printf 'session %s\nurl %s\ntitle %s\nprofile %s · model %s · effort %s · permissions %s · check every %s\n' "$id" "${url%%\?*}" "$shown" "$profile" "$model" "$effort" "${perm:-default}" "$every"
