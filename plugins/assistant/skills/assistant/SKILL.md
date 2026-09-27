@@ -105,7 +105,13 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    meaning changed since ② loses its approval (charter U5.1), and **a locale that lost
    it blocks the merge and the commit, at the same level as `destructive:`**. Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back
-   re-enters step 5.
+   re-enters step 5. Nobody reports a merge: after `asst-pr ready`, run
+   `asst-watch <worktree>…` over every row at QA with the Bash tool's
+   `run_in_background: true` — one watch per session, stopped (`TaskStop`) and
+   started again whenever that set changes, since a second forwarder on the same
+   repo fails. Its exit wakes you: `merged <ref>` → step 8 for that row; `closed
+   <ref>` → one `Needs you` line (send back or drop); exit 1 → its stderr line
+   as a blocker, and the row waits for the next pass.
 8. **Close** (`scribe`, haiku): board row → Shipped; the task row is disposable,
    so the brief moves to the archive (`asst-board archive`): Overview · Problem ·
    Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
@@ -133,7 +139,8 @@ board, never at a Close. A row's progress is what the board and the disk hold, n
 what you remember: a row waiting on a report reads `asst-report latest <slug>
 <kind>`; none filed and no agent of yours on it in `ListAgents` → dispatch it again,
 marked `re-run` so no one calls `asst-budget spend` for it, since that round
-produced nothing. `digest` prints one line per row plus this week's cost from the
+produced nothing; a row at QA reads `gh pr view --json state` once, catching a
+merge that landed while no `asst-watch` ran. `digest` prints one line per row plus this week's cost from the
 ledger.
 
 `asst-intake` lists work not yet on the board: GitHub issues assigned to the
