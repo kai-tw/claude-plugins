@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^order: ③ is'
+pattern: '^order: write ③ only once'
 flags: m
 arm: with-only
 ---

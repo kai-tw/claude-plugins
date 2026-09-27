@@ -75,10 +75,10 @@ or the Claude GitHub App is not installed on it, a local bundle is uploaded
 instead (with uncommitted changes to tracked files, without untracked files).
 Neither carries `.claude/.assistant/`.
 
-**The session is titled `PR# <n> <PR title>`** after the branch's PR, else
-`<repo> · <branch>`, since a session list shows only titles; `--name <title>`
-overrides it and, when the branch has a PR, starts with `PR# <n>` too.
-`asst-cloud` prints the title the session got.
+**Each session is titled after its PR** — `PR# <n> <PR title>`, or
+`<repo> · <branch>` when the branch has none — because session lists show only
+titles. `--name <title>` overrides it; on a branch with a PR, start yours with
+`PR# <n>` too. `asst-cloud` prints the title the session actually got.
 
 **What belongs here is a check that runs long and outputs only a report** —
 `mutation:`, and wide `coverage:`. Two reasons: they hold the local test slot,

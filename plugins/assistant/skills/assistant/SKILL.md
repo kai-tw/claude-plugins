@@ -97,12 +97,13 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
    checkpoints first: a check that read files the branch never got graded code
    that does not ship — and `gh pr checks` shows no check pending or failed on it.
-   Then `asst-pr ready <slug> <worktree>` turns the draft PR ready, and ③ is
-   written only after it exits 0, its header saying `PR #<n> ready`:
-   a draft means work is still running, so a ③ over a draft tells the founder
-   it is done while the PR cannot be merged. It refuses while the tree is dirty or
-   unpushed, or while a required `verify-<leg>` report is missing or older than
-   `HEAD` — that refusal is the work still to finish, never delivered around.
+   Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft, and
+   write ③ only once it exits 0, with `PR #<n> ready` in its header. A draft
+   means work is still in progress, so a ③ sent while the PR is a draft tells
+   the founder it's done when it can't be merged yet. `asst-pr ready` refuses
+   while the tree is dirty or unpushed, or while a required `verify-<leg>`
+   report is missing or older than `HEAD` — whatever it refuses on is
+   unfinished work: finish it, don't deliver around it.
    Exit 2 means no PR is possible here (no usable `gh`, no GitHub remote): ③
    carries that line as a `Needs you`, and the PR is the founder's to open.
    Its Text block only asks whether the ② approval still holds — a string whose
@@ -148,8 +149,8 @@ fails). Its exit wakes you: `ci passed <ref>` → the row's next step; `ci faile
 <ref>` → a builder fix round naming the checks `gh pr checks` lists as failed;
 `merged <ref>` → step 8; `closed <ref>` → one `Needs you` line (send back or
 drop); exit 1 → its stderr line as a blocker. A row at QA also reads `gh pr view
---json state,isDraft` once per pass: a merge that landed while nothing watched →
-step 8; still a draft → `asst-pr ready` now.
+--json state,isDraft` once per pass: merged while nothing was watching → step 8;
+still a draft → run `asst-pr ready` now.
 
 `asst-intake` lists work not yet on the board: GitHub issues assigned to the
 founder, PRs awaiting their review or theirs with changes requested / failing

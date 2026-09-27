@@ -49,7 +49,7 @@ done < "$RULES"
 
 printf '%s' "🛡️ guardrails — this command matches a known silent trap:
 
-${hits}Not an error, a reminder: written this way it returns a wrong answer that looks right. Rewrite it, or continue knowingly." \
+${hits}This isn't an error, just a reminder: written this way, the command returns a wrong answer that looks right. Rewrite it, or go ahead if that's what you mean." \
   | jq -cn --rawfile ctx /dev/stdin \
       '{hookSpecificOutput:{hookEventName:"PreToolUse",additionalContext:$ctx}}' 2>/dev/null
 exit 0

@@ -6,7 +6,7 @@
 #                        [--check-every <minutes>|none] [--name <title>] [--dry-run] <task…|->
 #          open a cloud session on the pushed branch → prints its session id, URL and title;
 #          `-` reads the task from stdin; --dry-run prints the command and the text
-#          The title is --name, else `PR# <n> <PR title>` for the branch's PR, else `<repo> · <branch>`.
+#          The title is --name if given, else `PR# <n> <PR title>` for the branch's PR, else `<repo> · <branch>`.
 #        asst-cloud profiles
 #          list the profiles and what each sets
 # A profile is `cloud-profiles/<name>.md`: frontmatter model / effort /
@@ -89,8 +89,8 @@ if [ -z "$dry" ] && git rev-parse --git-dir >/dev/null 2>&1 && [ -n "$(git remot
   [ "$(git rev-parse HEAD)" = "$up" ] || die "HEAD is not pushed — push first; the session clones the pushed branch, not this checkout"
 fi
 
-# The session list shows only titles, and claude's own title is a summary of the
-# text — which, behind a profile's preamble, says nothing about which PR it serves.
+# Session lists show only the title, and the one claude picks summarizes the
+# text — which, after a profile's preamble, says nothing about which PR it's for.
 if [ -z "$name" ] && git rev-parse --git-dir >/dev/null 2>&1; then
   read -r num title < <(gh pr view --json number,title --jq '"\(.number) \(.title)"' 2>/dev/null)
   if [ -n "${num:-}" ]; then name="PR# $num $title"

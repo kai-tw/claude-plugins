@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
-# godot.sh — PreToolUse(Bash|Monitor): refuse polling.
+# godot.sh — PreToolUse(Bash|Monitor): block polling.
 #
-# Vladimir and Estragon wait by the tree, asking now and then whether Godot has
-# come; the curtain falls and they are still waiting. Re-checking outside state
-# — `gh pr checks --watch`, `gh run watch`, `watch`, a loop that sleeps — keeps
-# the agent on that stage, running and billed, for as long as the wait lasts.
-# The replacement is a one-shot schedule that wakes the session later.
+# Vladimir and Estragon wait by the tree, asking every so often whether Godot
+# has come; the curtain falls and they're still waiting. Re-checking outside
+# state — `gh pr checks --watch`, `gh run watch`, `watch`, a loop that sleeps —
+# keeps the agent on that stage, running and billed, for as long as the wait
+# lasts. The fix is a one-off schedule that wakes the session later.
 #
 # WHY A HOOK AND NOT A `permissions` PATTERN
-#   A deny pattern refuses without saying what to do instead, and the agent's
-#   next reflex is another form of the same wait. The refusal has to name the
-#   replacement — and a sub-agent's replacement differs, since it cannot
-#   schedule for itself.
+#   A deny pattern blocks without saying what to do instead, and the agent's
+#   next reflex is another way of waiting. The message has to name the
+#   alternative — and a sub-agent's is different, since it can't schedule
+#   anything itself.
 #
-# WHAT IT DOES NOT SEE
+# WHAT IT DOESN'T SEE
 #   Only the command itself. Quoted strings and heredoc bodies are dropped
-#   before matching, so a commit message that mentions `--watch` passes — and so
-#   does a loop hidden in `bash -c '…'` or a script file. This catches the
-#   reflex of typing a wait, it is not a firewall on waiting.
+#   before matching, so a commit message that mentions `--watch` gets through —
+#   and so does a loop hidden in `bash -c '…'` or a script file. This catches
+#   the reflex of typing a wait; it isn't a firewall on waiting.
 
 set -uo pipefail
 [ "${GUARDRAILS:-on}" = "off" ] && exit 0
@@ -39,12 +39,12 @@ polls() {
 }
 polls || exit 0
 
-# exit 2, not a JSON deny: only exit 2 is documented to take precedence over a
-# `permissions.allow` rule. The reason goes to stderr, which is what Claude is shown.
+# exit 2, not a JSON deny: only exit 2 is documented to override a
+# `permissions.allow` rule. The reason goes to stderr, which is what Claude sees.
 cat >&2 <<'MSG'
-🛡️ guardrails · godot — no polling: re-checking outside state (`--watch`, `gh run watch`, `watch`, a loop with `sleep`) is waiting for Godot on stage — the agent stays running, and billed, for the whole wait.
+🛡️ guardrails · godot — no polling. Re-checking something outside (`--watch`, `gh run watch`, `watch`, a loop with `sleep`) is Waiting for Godot: the agent stays running, and billed, the whole time.
 
-- Main thread: schedule a one-shot re-check with CronCreate (`recurring: false`, a few minutes out), then end this turn. For a PR's CI, check once first with ccd_pr's get_status.
-- Sub-agent: cannot schedule for itself. State in the report what it is waiting on and when to re-check, then end, and leave the scheduling to the main thread.
+- Main thread: schedule a one-off re-check with CronCreate (`recurring: false`, a few minutes out), then end the turn. For a PR's CI, check once first with ccd_pr's get_status.
+- Sub-agent: you can't schedule anything yourself. Say in your report what you're waiting on and when to check again, then finish and let the main thread schedule it.
 MSG
 exit 2

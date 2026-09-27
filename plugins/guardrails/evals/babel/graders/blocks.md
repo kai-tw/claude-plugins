@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-Every whole-disk or whole-home search is refused with exit 2.
+Every whole-disk or whole-home search is blocked with exit 2.

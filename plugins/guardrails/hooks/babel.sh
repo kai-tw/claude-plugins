@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-# babel.sh — PreToolUse(Bash|Glob|Grep): refuse a recursive search rooted at the
-# whole disk or the whole home directory.
+# babel.sh — PreToolUse(Bash|Glob|Grep): block a recursive search that starts at
+# the root of the disk or the home folder.
 #
-# Borges' Library of Babel holds every book and no catalogue; its librarians
-# walk the hexagons for a lifetime and die before finding the one they want.
-# `find / -name …` is that walk: every volume, the system tree and every
-# project's build output, for minutes, while the agent waits — to answer what
-# one known directory, `command -v` or the Spotlight index answers at once.
-# Nothing breaks, so a warning is read past; hence a refusal, and one that names
-# the catalogue to use instead.
+# Borges' Library of Babel holds every possible book and no catalogue; its
+# librarians spend their lives walking the shelves and die without finding the
+# one they want. `find / -name …` is that walk: every volume, the system folders
+# and every project's build output, for minutes, while the agent sits blocked —
+# to answer something one known folder, `command -v` or the Spotlight index
+# answers instantly. Nothing breaks, so a warning gets skimmed past; hence a
+# block, with a message that says where to look instead.
 #
 # Roots: `/`, `~`, `$HOME` and its expanded path, `/Users`, `/home`, `/Volumes`,
-# `/System/Volumes/Data` — also as `.` after a `cd` to one of them in the same
-# command, or when the session's cwd is one. A directory below them
-# (`~/.claude`, `/Users/me/proj`) is a single shelf and passes; so does a depth
-# of 2 or less. Searchers: find, fd, rg, ag, `grep -r`, `ls -R`, tree; the Grep
-# tool, and the Glob tool when its pattern holds `**`.
+# `/System/Volumes/Data` — also `.` after a `cd` to one of them in the same
+# command, or when the session's cwd is one. A folder below them (`~/.claude`,
+# `/Users/me/proj`) counts as targeted and passes; so does a depth limit of 2 or
+# less. Searchers: find, fd, rg, ag, `grep -r`, `ls -R`, tree; the Grep tool,
+# and the Glob tool when its pattern contains `**`.
 #
-# WHAT IT DOES NOT SEE
+# WHAT IT DOESN'T SEE
 #   A search inside `bash -c '…'`, a script file or a heredoc body.
 
 set -uo pipefail
-set -f   # paths such as `~/*` are data here, never globs to expand
+set -f   # a path like `~/*` is data here, not a glob to expand
 [ "${GUARDRAILS:-on}" = "off" ] && exit 0
 
 payload="$(cat 2>/dev/null)"
@@ -54,13 +54,13 @@ wide() {
 }
 
 deny() {
-  # exit 2, not a JSON deny: only exit 2 is documented to take precedence over a
-  # `permissions.allow` rule. The reason goes to stderr, which is what Claude is shown.
+  # exit 2, not a JSON deny: only exit 2 is documented to override a
+  # `permissions.allow` rule. The reason goes to stderr, which is what Claude sees.
   cat >&2 <<MSG
-🛡️ guardrails · babel — \`$1\` walks the Library of Babel: every volume, system tree and build output, shelf by shelf, for minutes.
+🛡️ guardrails · babel — \`$1\` would crawl the whole disk or home folder (every volume, system folder and build directory) and take minutes. It's Borges' Library of Babel: everything is in there, and walking the shelves won't find it.
 
-Go to the shelf the thing belongs on: the project (\`.\`), or its one directory (\`~/.claude\`, \`~/Library/Application Support/<app>\`, \`/opt/homebrew\`, …). A binary: \`command -v\` / \`type -a\`. A file by name on macOS: \`mdfind -name <name>\`, the Spotlight catalogue, instant. To glance at the top of a tree, cap the depth at 2. Not found where it should be? Doubt the name before widening the search.
-If the user asked in so many words for a whole-disk search, give them the command to run themselves.
+Look where the file should be instead: the project (\`.\`) or the one folder it belongs in (\`~/.claude\`, \`~/Library/Application Support/<app>\`, \`/opt/homebrew\`, …). For a program, use \`command -v\` or \`type -a\`. For a file by name on macOS, \`mdfind -name <name>\` queries the Spotlight index and answers instantly. To peek at the top of a tree, limit the depth to 2. If it isn't where you expected, check the name before you search wider.
+If the user explicitly asked for a whole-disk search, give them the command to run themselves.
 MSG
   exit 2
 }
@@ -108,7 +108,7 @@ words="$(printf '%s' "$cmd" | awk '
     }
   }')"
 
-# check <prog> <args…> — deny when the search is rooted at a root and not capped.
+# check <prog> <args…> — block when the search starts at a root with no depth limit.
 check() {
   local prog="${1##*/}" a v depth='' pattern=1 paths=() recursive=0 i=0
   shift
@@ -178,7 +178,7 @@ check() {
   [ $recursive = 1 ] || return 0
   shallow "$depth" && return 0
   for a in "${paths[@]}"; do
-    wide "$a" && deny "$prog … $a"
+    wide "$a" && deny "$prog $a"
   done
   return 0
 }

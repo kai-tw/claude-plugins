@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-No single-directory, shallow or non-recursive command is refused.
+No single-directory, shallow or non-recursive command is blocked.

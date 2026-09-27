@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-# charon.sh — PreToolUse(Bash): every deletion crosses by the ferry this machine
-# actually runs, and the other boat is turned away.
+# charon.sh — PreToolUse(Bash): make deletion go through whichever tool this
+# machine actually has, and block the other one.
 #
-# Charon rows the dead across the Styx, one way. `rm` is that crossing; `trash`
-# is a ferry a file can still be called back from — where it runs at all.
+# Named after Charon, who ferries the dead across the Styx — one way. `rm` is
+# that trip; from `trash`, a file can still come back, on machines that have it.
 #
-# WHY THIS IS SEPARATE FROM intercept.sh
-#   intercept.sh promises "never blocks" — that promise is why it can speak on
-#   every Bash command without becoming noise. This one DENIES, so it lives
-#   apart and carries exactly one rule.
+# WHY IT'S SEPARATE FROM intercept.sh
+#   intercept.sh promises never to block — that's what lets it speak up on every
+#   Bash command without turning into noise. This hook blocks, so it lives on
+#   its own and holds exactly one rule.
 #
-# WHY IT ASKS THE MACHINE RATHER THAN THE ENVIRONMENT
+# WHY IT ASKS THE MACHINE, NOT THE ENVIRONMENT
 #   `trash` keeps deletions recoverable and is the founder's rule where it
-#   exists; it does not exist everywhere — a cloud container has no `trash` at
-#   all. Branching on a "am I in the cloud" flag would encode a proxy for the
+#   exists, but it doesn't exist everywhere — a cloud container has no `trash`
+#   at all. Branching on an "am I in the cloud" flag would test a proxy for the
 #   real question. Asking whether the binary is here answers it directly, stays
-#   correct when either side changes, and anyone can check it with
+#   right when either side changes, and anyone can check it with
 #   `command -v trash`.
 #
-#   The silent failure this closes: `trash X 2>/dev/null` on a machine without
-#   it deletes nothing and looks exactly like success. Measured 2026-09-02 — a
-#   tamper test read as "passed" because the file it was supposed to delete was
-#   never deleted.
+#   The silent failure this closes: on a machine without it, `trash X
+#   2>/dev/null` deletes nothing and looks exactly like success. Seen on
+#   2026-09-02 — a tamper test "passed" because the file it was supposed to
+#   delete was never deleted.
 
 set -uo pipefail
 [ "${GUARDRAILS:-on}" = "off" ] && exit 0
@@ -35,10 +35,11 @@ cmd="$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null
 POS='(^|[;&|(]|&&|\|\|)[[:space:]]*(sudo[[:space:]]+)?((/usr)?/bin/)?'
 BIN='((/usr)?/bin/)?'
 
-# Three ways a command actually invokes rm. NOT exhaustive over "ways to unlink
-# a file" — `find -delete`, a node `fs.rmSync`, a python unlink all pass. This
-# gate exists to catch the reflex of typing `rm`, not to be an unlink firewall;
-# claiming the latter would be the false confidence it is meant to remove.
+# Three ways a command actually runs rm. This does NOT cover every way to delete
+# a file — `find -delete`, node's `fs.rmSync` and a python unlink all get
+# through. The hook is here to catch the reflex of typing `rm`, not to act as an
+# unlink firewall; claiming otherwise would be the false confidence it exists to
+# remove.
 uses_rm() {
   printf '%s' "$1" | grep -qE "${POS}rm[[:space:]]"                                    && return 0
   printf '%s' "$1" | grep -qE "${POS}xargs[[:space:]]+(-[^[:space:]]+[[:space:]]+)*${BIN}rm([[:space:]]|$)" && return 0
@@ -47,23 +48,24 @@ uses_rm() {
 }
 
 # exit 2, not a JSON `permissionDecision: "deny"`: only exit 2 is documented to
-# take precedence over a `permissions.allow` rule, and both consumer projects
-# carry an allow that covers the commands this gate judges. The reason goes to
-# stderr, which is what Claude is shown.
+# override a `permissions.allow` rule, and both consumer projects have an allow
+# rule that covers the commands this hook checks. The reason goes to stderr,
+# which is what Claude sees.
 deny() { printf '%s\n' "$1" >&2; exit 2; }
 
 if command -v trash >/dev/null 2>&1 || [ -x /usr/bin/trash ]; then
   uses_rm "$cmd" && deny \
-"🛡️ guardrails · charon — this shore has \`trash\`, so deletion crosses by it: \`/usr/bin/trash -v <targets…>\`.
+"🛡️ guardrails · charon — this machine has \`trash\`, so delete with it: \`/usr/bin/trash -v <targets…>\`.
 
-\`rm\` is the one-way crossing; from \`trash\` a file can still be called back. (Trash on the same volume frees no disk space until
-emptied; to actually free space, the last step is a human pressing ⌘⇧⌫ in Finder — the shell cannot.)"
+\`rm\` is a one-way trip across the Styx; anything sent to the Trash can still come back. (Trash on the
+same volume doesn't free any disk space until it's emptied, and only a person can empty it — ⌘⇧⌫ in
+Finder. The shell can't.)"
 else
   printf '%s' "$cmd" | grep -qE "${POS}trash[[:space:]]" && deny \
-"🛡️ guardrails · charon — this shore has **no** \`trash\` (\`command -v trash\` is empty); cross with \`rm\`.
+"🛡️ guardrails · charon — this machine has **no** \`trash\` (\`command -v trash\` prints nothing), so use \`rm\`.
 
-Blocked rather than run because \`trash … 2>/dev/null\` ferries nothing here yet looks
-exactly like a crossing — on 2026-09-02 that made a tamper test read as passed."
+This is blocked instead of run because here \`trash … 2>/dev/null\` deletes nothing and still
+looks like it worked — on 2026-09-02 that made a tamper test look like it had passed."
 fi
 
 exit 0

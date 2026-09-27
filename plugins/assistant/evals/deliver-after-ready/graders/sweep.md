@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^sweep: still a draft'
+pattern: '^sweep: still a draft → run'
 flags: m
 arm: with-only
 ---

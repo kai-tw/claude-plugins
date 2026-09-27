@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
-# check.sh feeds babel.sh whole-disk / whole-home searches and single-shelf ones
-# and prints each exit code. HOME and the session cwd are pinned.
+# check.sh feeds babel.sh wide searches (from the disk or home root) and targeted
+# ones, and prints each exit code. HOME and the session cwd are pinned.
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1
