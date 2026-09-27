@@ -105,7 +105,7 @@
     },
     {
       "name": "mother-tongue",
-      "description": "Per-locale writing rules for the agent's own prose — detects the conversation's language each turn, carries that locale's rules next to the prompt, and blocks replies and commit messages that use its banned terms",
+      "description": "Per-locale writing rules for the agent's own prose — detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies and commit messages that use its banned terms",
       "source": "./plugins/mother-tongue",
       "category": "productivity",
       "author": {
