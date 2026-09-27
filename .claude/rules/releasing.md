@@ -3,7 +3,9 @@
 - **Changes go on a branch + draft PR, never a direct commit to `main`.** A plugin change
   carries an eval case that fails on the old version; run `gh pr ready` only after CI's
   `Evals` (`.github/scripts/run-evals.mjs`) is green and the version is bumped — the draft
-  state is what stops a merge while the agent is still working. Right after `gh pr ready`,
+  state is what stops a merge while the agent is still working. CI's result arrives by
+  push, not by asking: after each push, start `plugins/assistant/bin/asst-watch <worktree>`
+  with `run_in_background: true` and act on its `ci passed` / `ci failed` line. Right after `gh pr ready`,
   start `node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>` with
   `run_in_background: true`: it waits for the merge and does everything after it, and its
   exit wakes the session, so nobody has to report the merge.
