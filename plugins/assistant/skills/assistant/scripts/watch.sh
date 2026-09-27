@@ -43,7 +43,7 @@ exec 3<>"$tmp/events"   # read-write, so the reader never sees EOF between write
 stop() {
   # Stop the extension itself: killing only the `gh` in front of it leaves it running.
   for r in "${repos[@]}"; do pkill -TERM -f "webhook forward --events=pull_request,check_suite --repo=$r" 2>/dev/null; done
-  { wait; } 2>/dev/null   # reap them without bash's `Terminated` notices
+  wait
   rm -rf "$tmp"
 }
 trap stop EXIT
@@ -60,7 +60,7 @@ for r in "${repos[@]}"; do
             "suite \(.repository.full_name) \(.check_suite.head_branch)"
           else empty end'
     echo "stopped $r"
-  } >&3 &
+  } >&3 2>/dev/null &   # its stderr carries only bash's `Terminated` notice for the forwarder
 done
 
 # Connected first, then the state check: whatever happens in between sends an event.
