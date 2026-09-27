@@ -37,7 +37,7 @@ version; it is not restated here.
 |---|---|---|---|
 | ① Decision brief | after Scout, before any code | intent forks + system design | `references/brief.md` |
 | ② Screens and strings | widgets built, not yet wired | the rendered contact sheet + per-locale string approval | image + one question: OK / which cell / which version of which string |
-| ③ Delivery summary | Verify done | logic · data wiring · style · error handling · as-built vs as-decided · tests · whether the ② approval still holds | `references/delivery-summary.md` |
+| ③ Delivery summary | Verify done, PR turned ready | logic · data wiring · style · error handling · as-built vs as-decided · tests · whether the ② approval still holds | `references/delivery-summary.md` |
 
 Nothing else reaches the founder. A `Needs you` line is the only question you ask;
 `Decided` lines are listed for veto. Chat carries three kinds of
@@ -97,11 +97,14 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
    checkpoints first: a check that read files the branch never got graded code
    that does not ship — and `gh pr checks` shows no check pending or failed on it.
-   Once it is written, `asst-pr ready <slug> <worktree>` turns
-   the draft PR ready; it refuses while the tree is dirty or unpushed, or while a
-   required `verify-<leg>` report is missing or older than `HEAD`. Exit 2 means no
-   PR is possible here (no usable `gh`, no GitHub remote): ③ carries that line as a
-   `Needs you`, and the PR is the founder's to open.
+   Then `asst-pr ready <slug> <worktree>` turns the draft PR ready, and ③ is
+   written only after it exits 0, its header saying `PR #<n> ready`:
+   a draft means work is still running, so a ③ over a draft tells the founder
+   it is done while the PR cannot be merged. It refuses while the tree is dirty or
+   unpushed, or while a required `verify-<leg>` report is missing or older than
+   `HEAD` — that refusal is the work still to finish, never delivered around.
+   Exit 2 means no PR is possible here (no usable `gh`, no GitHub remote): ③
+   carries that line as a `Needs you`, and the PR is the founder's to open.
    Its Text block only asks whether the ② approval still holds — a string whose
    meaning changed since ② loses its approval (charter U5.1), and **a locale that lost
    it blocks the merge and the commit, at the same level as `destructive:`**. Merge
@@ -145,7 +148,8 @@ fails). Its exit wakes you: `ci passed <ref>` → the row's next step; `ci faile
 <ref>` → a builder fix round naming the checks `gh pr checks` lists as failed;
 `merged <ref>` → step 8; `closed <ref>` → one `Needs you` line (send back or
 drop); exit 1 → its stderr line as a blocker. A row at QA also reads `gh pr view
---json state` once per pass, for a merge that landed while nothing watched.
+--json state,isDraft` once per pass: a merge that landed while nothing watched →
+step 8; still a draft → `asst-pr ready` now.
 
 `asst-intake` lists work not yet on the board: GitHub issues assigned to the
 founder, PRs awaiting their review or theirs with changes requested / failing

@@ -4,7 +4,7 @@ Built from the verifier reports; the founder reads this, not the diff and not th
 reports. Anything a linter or a passed check already settled is one line.
 
 ```
-# <Task> — <PR #n | r<rev> pending>   <project> · <sha | working copy>
+# <Task> — <PR #n ready | r<rev> pending>   <project> · <sha | working copy>
 
 ## Logic
 - <user scenario>: <entry file:line> → <decision point file:line> → <outcome>
