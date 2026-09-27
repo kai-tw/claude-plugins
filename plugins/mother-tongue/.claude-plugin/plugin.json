@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "mother-tongue",
-  "version": "0.7.0",
-  "description": "Per-locale writing rules for the agent's own prose — detects the conversation's language each turn, carries that locale's rules next to the prompt, and blocks replies and commit messages that use its banned terms.",
+  "version": "0.8.0",
+  "description": "Per-locale writing rules for the agent's own prose — detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies and commit messages that use its banned terms.",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"

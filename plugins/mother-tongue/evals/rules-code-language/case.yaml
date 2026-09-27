@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: rules-code-language
+description: A Chinese prompt gets both the zh-TW rules and the English ones, since comments, commits and PRs are written in English whatever the conversation language; an English prompt gets the English rules once; MOTHER_TONGUE_CODE set empty turns the extra set off.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the UserPromptSubmit hook a Chinese prompt, an English one, and a Chinese one with MOTHER_TONGUE_CODE empty, and count which rule sets each one attaches.
+context:
+  scaffold_script: fixture.sh

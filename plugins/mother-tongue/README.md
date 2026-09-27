@@ -6,13 +6,18 @@ the latest prompt and blocks what a word list can catch.
 
 | Hook | Does |
 | --- | --- |
-| `UserPromptSubmit` | Detects the prompt's locale and attaches that locale's `rules.md` to it |
+| `UserPromptSubmit` | Detects the prompt's locale and attaches that locale's `rules.md` to it, plus the `rules.md` for the language code is written in (`$MOTHER_TONGUE_CODE`) |
 | `Stop` | Blocks a reply written in English when the conversation is not, and asks for it in the conversation's locale; otherwise detects the reply's locale and, if it uses a term from that locale's `banned.tsv`, blocks and asks for the sentences to be rewritten |
 | `PreToolUse` (Bash) | Same check on the text of `git commit` and `gh pr\|issue create\|edit\|comment` |
 
+Comments, commit messages and PRs are usually written in English whatever
+language the conversation is in, so the English rules (`locales/en/rules.md`)
+ride along with every prompt, not just English ones.
+
 Sub-agents never see `UserPromptSubmit`, so `bin/mother-tongue-rules [locale]`
 prints the same `rules.md` (default `$MOTHER_TONGUE_ZH`) for an agent to read
-before it writes; an unknown locale exits 1.
+before it writes — `mother-tongue-rules en` for one that writes code; an
+unknown locale exits 1.
 
 Detection is by script (`hooks/detect.sh`): Hangul → `ko`, kana → `ja`, other
 Han → `$MOTHER_TONGUE_ZH` (default `zh-TW`), mostly Latin → `en`. A prompt too
@@ -42,3 +47,4 @@ Create `locales/<tag>/` with either file:
 | --- | --- | --- |
 | `MOTHER_TONGUE` | `on` | `off` disables every hook |
 | `MOTHER_TONGUE_ZH` | `zh-TW` | Locale that Chinese text maps to |
+| `MOTHER_TONGUE_CODE` | `en` | Locale whose rules are attached to every prompt as well, for code, commits and PRs; empty turns this off |
