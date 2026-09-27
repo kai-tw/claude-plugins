@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-# push-gate.sh — PreToolUse(Bash): refuse a force-push or a delete aimed at a
-# protected branch. Force onto an ordinary branch stays allowed — a generated
-# branch that is rebuilt every run needs it.
+# palimpsest.sh — PreToolUse(Bash): refuse a force-push or a delete aimed at a
+# protected branch.
+#
+# A palimpsest is a manuscript scraped clean and written over; the old text
+# survives only as a ghost under the new. A force onto `main` scrapes the
+# history everyone else has copied from. Force onto an ordinary branch stays
+# allowed — a generated branch that is rebuilt every run needs it.
 #
 # WHY A HOOK AND NOT A `permissions` PATTERN
 #   A permission pattern matches the command STRING, and the destination is
@@ -12,7 +16,7 @@
 #
 # WHAT IT DOES NOT SEE
 #   Only the command itself. A script invoked from it pushes without passing
-#   through here — same limit as `deletion-gate.sh`, and for the same reason:
+#   through here — same limit as `charon.sh`, and for the same reason:
 #   this catches the reflex of typing the command, it is not a firewall on
 #   remote writes. Claiming otherwise would be the false confidence it exists
 #   to remove.
@@ -82,7 +86,7 @@ for seg in "${segs[@]}"; do
   refs=(); [ ${#targets[@]} -gt 1 ] && refs=("${targets[@]:1}")
 
   if [ "$wildcard" = 1 ] && [ -n "$force" ]; then
-    deny "🛡️ guardrails — \`--all\` / \`--mirror\` rewrites \`main\` too, so it is blocked here. Name the branch you mean to push."
+    deny "🛡️ guardrails · palimpsest — \`--all\` / \`--mirror\` rewrites \`main\` too, so it is blocked here. Name the branch you mean to push."
   fi
 
   if [ ${#refs[@]} -eq 0 ]; then
@@ -90,12 +94,12 @@ for seg in "${segs[@]}"; do
     # pattern is blind to.
     cur="$(git -C "${repo:-$cwd}" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
     if [ -z "$cur" ]; then
-      deny "🛡️ guardrails — this push has no refspec and the current branch cannot be read here (not a git repo, or detached HEAD), so whether it hits \`main\` cannot be judged. Name the branch: \`git push --force origin <branch>\`."
+      deny "🛡️ guardrails · palimpsest — this push has no refspec and the current branch cannot be read here (not a git repo, or detached HEAD), so whether it hits \`main\` cannot be judged. Name the branch: \`git push --force origin <branch>\`."
     fi
     printf '%s' "$cur" | grep -qE "$PROTECTED" && deny \
-"🛡️ guardrails — this command would force onto \`$cur\`.
+"🛡️ guardrails · palimpsest — this command would scrape \`$cur\` and write over it.
 
-\`$cur\` appears nowhere in the command string: with no refspec, git pushes the **current branch**, and you are on it. Forcing a branch is fine; forcing \`main\` is not."
+\`$cur\` appears nowhere in the command string: with no refspec, git pushes the **current branch**, and you are on it. Forcing a branch is fine; rewriting the manuscript everyone copies from is not."
     continue
   fi
 
@@ -104,13 +108,13 @@ for seg in "${segs[@]}"; do
     dst="${ref##*:}"
     case "$dst" in *'$'*|*'`'*)
       [ -n "$force$plus" ] && deny \
-"🛡️ guardrails — this push forces, but its target \`$dst\` is a variable that cannot be expanded here, so whether it is \`main\` cannot be judged.
+"🛡️ guardrails · palimpsest — this push forces, but its target \`$dst\` is a variable that cannot be expanded here, so whether it is \`main\` cannot be judged.
 
 Write the branch name literally and run it again. Letting an unjudgeable push through would make this gate pointless." ;;
     esac
     printf '%s' "$dst" | grep -qE "$PROTECTED" || continue
-    [ -n "$deleting" ] && deny "🛡️ guardrails — this command would **delete** \`$dst\` on the remote. Deleting a feature branch is fine; \`main\` is not."
-    deny "🛡️ guardrails — this command would force onto \`$dst\`. Forcing a branch is fine; forcing \`main\` is not."
+    [ -n "$deleting" ] && deny "🛡️ guardrails · palimpsest — this command would **delete** \`$dst\` on the remote. Deleting a feature branch is fine; burning the manuscript is not."
+    deny "🛡️ guardrails · palimpsest — this command would scrape \`$dst\` and write over it. Forcing a branch is fine; rewriting the manuscript everyone copies from is not."
   done
 done
 

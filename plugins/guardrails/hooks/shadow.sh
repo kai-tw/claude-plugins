@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# detach-gate.sh — PreToolUse(Bash): refuse a process detached from the call.
-# `nohup`, `disown`, `setsid`, or a `&` whose job the same command never
-# `wait`s for, leaves a process the harness cannot see: it is missing from the
+# shadow.sh — PreToolUse(Bash): refuse a process detached from the call.
+#
+# In Andersen's "The Shadow" a man's shadow walks off on its own and comes back
+# years later as a master he cannot command. `nohup`, `disown`, `setsid`, or a
+# `&` whose job the same command never `wait`s for, cuts such a shadow loose: a
+# process the harness cannot see — it is missing from the
 # session's background tasks, nothing wakes the session when it exits, and the
 # agent's next reflex is a blocking wait or a sleep to find out. Measured: a
 # mutation run launched with `nohup … & disown`, then waited on with 540-second
@@ -37,7 +40,7 @@ detaches || exit 0
 # exit 2, not a JSON deny: only exit 2 is documented to take precedence over a
 # `permissions.allow` rule. The reason goes to stderr, which is what Claude is shown.
 cat >&2 <<'MSG'
-🛡️ guardrails — no detached processes: `nohup`, `disown`, `setsid` or a `&` never `wait`ed for hides the process from the harness — it is missing from background tasks and nothing wakes the session when it exits.
+🛡️ guardrails · shadow — no detached processes: `nohup`, `disown`, `setsid` or a `&` never `wait`ed for cuts the process loose like a shadow gone off on its own — missing from background tasks, and nothing wakes the session when it exits.
 
 Run the same command with the Bash tool's `run_in_background: true` (no `&`), then end the turn: the session is woken when it exits. Do not block or poll on it.
 MSG

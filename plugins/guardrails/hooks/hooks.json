@@ -10,15 +10,15 @@
           },
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/deletion-gate.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/charon.sh"
           },
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/push-gate.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/palimpsest.sh"
           },
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/detach-gate.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/shadow.sh"
           }
         ]
       },
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/poll-gate.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/godot.sh"
           }
         ]
       },
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/search-gate.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/babel.sh"
           }
         ]
       }

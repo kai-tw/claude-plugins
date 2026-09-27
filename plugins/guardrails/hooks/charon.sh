@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# deletion-gate.sh — PreToolUse(Bash): route deletion to whichever tool this
-# machine actually has, and refuse the other one.
+# charon.sh — PreToolUse(Bash): every deletion crosses by the ferry this machine
+# actually runs, and the other boat is turned away.
+#
+# Charon rows the dead across the Styx, one way. `rm` is that crossing; `trash`
+# is a ferry a file can still be called back from — where it runs at all.
 #
 # WHY THIS IS SEPARATE FROM intercept.sh
 #   intercept.sh promises "never blocks" — that promise is why it can speak on
@@ -51,16 +54,16 @@ deny() { printf '%s\n' "$1" >&2; exit 2; }
 
 if command -v trash >/dev/null 2>&1 || [ -x /usr/bin/trash ]; then
   uses_rm "$cmd" && deny \
-"🛡️ guardrails — this machine has \`trash\`, so deletion goes through it: \`/usr/bin/trash -v <targets…>\`.
+"🛡️ guardrails · charon — this shore has \`trash\`, so deletion crosses by it: \`/usr/bin/trash -v <targets…>\`.
 
-\`rm\` cannot be undone; \`trash\` can. (Trash on the same volume frees no disk space until
+\`rm\` is the one-way crossing; from \`trash\` a file can still be called back. (Trash on the same volume frees no disk space until
 emptied; to actually free space, the last step is a human pressing ⌘⇧⌫ in Finder — the shell cannot.)"
 else
   printf '%s' "$cmd" | grep -qE "${POS}trash[[:space:]]" && deny \
-"🛡️ guardrails — this machine has **no** \`trash\` (\`command -v trash\` is empty); use \`rm\`.
+"🛡️ guardrails · charon — this shore has **no** \`trash\` (\`command -v trash\` is empty); cross with \`rm\`.
 
-Blocked rather than run because \`trash … 2>/dev/null\` deletes nothing here yet looks
-exactly like success — on 2026-09-02 that made a tamper test read as passed."
+Blocked rather than run because \`trash … 2>/dev/null\` ferries nothing here yet looks
+exactly like a crossing — on 2026-09-02 that made a tamper test read as passed."
 fi
 
 exit 0

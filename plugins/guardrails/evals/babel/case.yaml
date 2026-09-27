@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: babel
+description: babel blocks a recursive search (find, fd, rg, ag, grep -r, ls -R, tree, the Grep tool, the Glob tool with `**`) rooted at /, the home directory, /Users, /home or /Volumes (exit 2) — quoted, as `.` after a cd there, or from a session cwd there; a search under one directory, a depth of 2 or less, a non-recursive look, a `/` that is the pattern, and mentions inside a message or heredoc all pass.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the babel hook several whole-disk and whole-home searches and several single-directory ones, and print the exit code of each.
+context:
+  scaffold_script: fixture.sh

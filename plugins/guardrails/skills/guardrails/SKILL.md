@@ -23,13 +23,13 @@ Five more rules are in neither set because they **deny** rather than warn. Each
 is its own file so `intercept.sh` keeps its "never blocks" promise — that
 promise is what lets it speak on every command without becoming noise.
 
-| Gate | Refuses |
-|---|---|
-| `hooks/deletion-gate.sh` | deleting through whichever of `rm` / `trash` this machine does NOT have |
-| `hooks/push-gate.sh` | a force-push or a delete aimed at `main` / `master` — force onto any other branch is fine |
-| `hooks/poll-gate.sh` | polling — `gh pr checks --watch`, `gh run watch`, `watch`, a loop that sleeps — in Bash or Monitor; the wait belongs to a one-shot schedule |
-| `hooks/detach-gate.sh` | a process detached from the call — `nohup`, `disown`, `setsid`, or a `&` never `wait`ed for; the harness cannot see it, so it belongs to Bash's `run_in_background` |
-| `hooks/search-gate.sh` | a recursive search — `find`, `fd`, `rg`, `grep -r`, `ls -R`, the Grep / Glob tools — rooted at `/`, the home directory, `/Users` or `/home` deeper than 2 levels; search the one directory the thing lives in |
+| Gate | Named for | Refuses |
+|---|---|---|
+| `hooks/charon.sh` | the ferryman of the Styx — one crossing, no return | deleting through whichever of `rm` / `trash` this machine does NOT have |
+| `hooks/palimpsest.sh` | a manuscript scraped and written over | a force-push or a delete aimed at `main` / `master` — force onto any other branch is fine |
+| `hooks/godot.sh` | Beckett's pair, waiting by the tree | polling — `gh pr checks --watch`, `gh run watch`, `watch`, a loop that sleeps — in Bash or Monitor; the wait belongs to a one-shot schedule |
+| `hooks/shadow.sh` | Andersen's shadow that walks off on its own | a process detached from the call — `nohup`, `disown`, `setsid`, or a `&` never `wait`ed for; the harness cannot see it, so it belongs to Bash's `run_in_background` |
+| `hooks/babel.sh` | Borges' library with every book and no catalogue | a recursive search — `find`, `fd`, `rg`, `ag`, `grep -r`, `ls -R`, `tree`, the Grep tool, the Glob tool with `**` — rooted at `/`, the home directory, `/Users`, `/home` or `/Volumes`, deeper than 2 levels; search the one directory the thing belongs in |
 
 A gate earns its place only where a `permissions` pattern cannot do the job:
 the decision needs something the command string does not carry (which binary

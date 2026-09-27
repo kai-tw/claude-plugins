@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# poll-gate.sh — PreToolUse(Bash|Monitor): refuse polling. Waiting on outside
-# state by re-checking it — `gh pr checks --watch`, `gh run watch`, `watch`, a
-# loop that sleeps — keeps the agent running and billed for as long as the wait
-# lasts. The replacement is a one-shot schedule that wakes the session later.
+# godot.sh — PreToolUse(Bash|Monitor): refuse polling.
+#
+# Vladimir and Estragon wait by the tree, asking now and then whether Godot has
+# come; the curtain falls and they are still waiting. Re-checking outside state
+# — `gh pr checks --watch`, `gh run watch`, `watch`, a loop that sleeps — keeps
+# the agent on that stage, running and billed, for as long as the wait lasts.
+# The replacement is a one-shot schedule that wakes the session later.
 #
 # WHY A HOOK AND NOT A `permissions` PATTERN
 #   A deny pattern refuses without saying what to do instead, and the agent's
@@ -39,7 +42,7 @@ polls || exit 0
 # exit 2, not a JSON deny: only exit 2 is documented to take precedence over a
 # `permissions.allow` rule. The reason goes to stderr, which is what Claude is shown.
 cat >&2 <<'MSG'
-🛡️ guardrails — no polling: re-checking outside state (`--watch`, `gh run watch`, `watch`, a loop with `sleep`) keeps the agent running and billed for the whole wait.
+🛡️ guardrails · godot — no polling: re-checking outside state (`--watch`, `gh run watch`, `watch`, a loop with `sleep`) is waiting for Godot on stage — the agent stays running, and billed, for the whole wait.
 
 - Main thread: schedule a one-shot re-check with CronCreate (`recurring: false`, a few minutes out), then end this turn. For a PR's CI, check once first with ccd_pr's get_status.
 - Sub-agent: cannot schedule for itself. State in the report what it is waiting on and when to re-check, then end, and leave the scheduling to the main thread.
