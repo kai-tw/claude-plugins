@@ -1,26 +1,31 @@
 #!/usr/bin/env bash
-# push-gate.sh — PreToolUse(Bash): refuse a force-push or a delete aimed at a
-# protected branch. Force onto an ordinary branch stays allowed — a generated
-# branch that is rebuilt every run needs it.
+# palimpsest.sh — PreToolUse(Bash): block a force-push or a delete aimed at a
+# protected branch.
+#
+# A palimpsest is a manuscript scraped clean and written over, the old text
+# left only as a ghost underneath. Force-pushing `main` does that to history
+# everyone else has built on. Force-pushing an ordinary branch is still allowed
+# — a generated branch that's rebuilt on every run needs it.
 #
 # WHY A HOOK AND NOT A `permissions` PATTERN
-#   A permission pattern matches the command STRING, and the destination is
-#   frequently not in it: on `main`, a bare `git push --force` rewrites `main`
-#   while containing no "main" anywhere, because push.default sends the CURRENT
-#   branch. Measured 2026-09-02 — the remote moved, the command said nothing.
-#   Deciding this needs the repo's state, which a pattern cannot read.
+#   A permission pattern matches the command STRING, and the destination often
+#   isn't in it: on `main`, a bare `git push --force` rewrites `main` without
+#   "main" appearing anywhere, because push.default sends the CURRENT branch.
+#   Seen on 2026-09-02 — the remote moved and the command never said so.
+#   Deciding this needs the repo's state, which a pattern can't read.
 #
-# WHAT IT DOES NOT SEE
-#   Only the command itself. A script invoked from it pushes without passing
-#   through here — same limit as `deletion-gate.sh`, and for the same reason:
-#   this catches the reflex of typing the command, it is not a firewall on
-#   remote writes. Claiming otherwise would be the false confidence it exists
-#   to remove.
+# WHAT IT DOESN'T SEE
+#   Only the command itself. A script it calls can push without passing
+#   through here — the same limit as `charon.sh`, for the same reason: it
+#   catches the reflex of typing the command; it isn't a firewall on remote
+#   writes. Claiming otherwise would be the false confidence it exists to
+#   remove.
 #
 # WHERE IT FAILS CLOSED
-#   A force whose destination cannot be resolved — a shell variable, a detached
-#   HEAD, `--all`/`--mirror` — is denied rather than guessed at. Naming the
-#   branch is one word; a rewritten `main` is not recoverable from here.
+#   A force whose destination can't be worked out — a shell variable, a
+#   detached HEAD, `--all`/`--mirror` — is blocked rather than guessed at.
+#   Naming the branch costs one word; a rewritten `main` can't be recovered
+#   from here.
 
 set -uo pipefail
 [ "${GUARDRAILS:-on}" = "off" ] && exit 0
@@ -36,9 +41,9 @@ cwd="$(printf '%s' "$payload" | jq -r '.cwd // empty' 2>/dev/null || true)"
 PROTECTED='^(main|master)$'
 
 # exit 2, not a JSON `permissionDecision: "deny"`: only exit 2 is documented to
-# take precedence over a `permissions.allow` rule, and both consumer projects
-# carry an allow that covers the commands this gate judges. The reason goes to
-# stderr, which is what Claude is shown.
+# override a `permissions.allow` rule, and both consumer projects have an allow
+# rule that covers the commands this hook checks. The reason goes to stderr,
+# which is what Claude sees.
 deny() { printf '%s\n' "$1" >&2; exit 2; }
 
 # One statement per line, so a push buried after && or ; is still examined.
@@ -82,7 +87,7 @@ for seg in "${segs[@]}"; do
   refs=(); [ ${#targets[@]} -gt 1 ] && refs=("${targets[@]:1}")
 
   if [ "$wildcard" = 1 ] && [ -n "$force" ]; then
-    deny "🛡️ guardrails — \`--all\` / \`--mirror\` rewrites \`main\` too, so it is blocked here. Name the branch you mean to push."
+    deny "🛡️ guardrails · palimpsest — \`--all\` / \`--mirror\` would overwrite \`main\` too, so it's blocked. Name the branch you mean to push."
   fi
 
   if [ ${#refs[@]} -eq 0 ]; then
@@ -90,12 +95,12 @@ for seg in "${segs[@]}"; do
     # pattern is blind to.
     cur="$(git -C "${repo:-$cwd}" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
     if [ -z "$cur" ]; then
-      deny "🛡️ guardrails — this push has no refspec and the current branch cannot be read here (not a git repo, or detached HEAD), so whether it hits \`main\` cannot be judged. Name the branch: \`git push --force origin <branch>\`."
+      deny "🛡️ guardrails · palimpsest — this push has no refspec and the current branch can't be read here (not a git repo, or a detached HEAD), so there's no telling whether it hits \`main\`. Name the branch: \`git push --force origin <branch>\`."
     fi
     printf '%s' "$cur" | grep -qE "$PROTECTED" && deny \
-"🛡️ guardrails — this command would force onto \`$cur\`.
+"🛡️ guardrails · palimpsest — this would force-push over \`$cur\`.
 
-\`$cur\` appears nowhere in the command string: with no refspec, git pushes the **current branch**, and you are on it. Forcing a branch is fine; forcing \`main\` is not."
+\`$cur\` isn't anywhere in the command: with no refspec, git pushes the **current branch**, and you're on it. Force-pushing a branch is fine; scraping \`$cur\` clean and writing over the history everyone else has built on is not."
     continue
   fi
 
@@ -104,13 +109,13 @@ for seg in "${segs[@]}"; do
     dst="${ref##*:}"
     case "$dst" in *'$'*|*'`'*)
       [ -n "$force$plus" ] && deny \
-"🛡️ guardrails — this push forces, but its target \`$dst\` is a variable that cannot be expanded here, so whether it is \`main\` cannot be judged.
+"🛡️ guardrails · palimpsest — this push forces, but its target \`$dst\` is a variable that can't be expanded here, so there's no telling whether it's \`main\`.
 
-Write the branch name literally and run it again. Letting an unjudgeable push through would make this gate pointless." ;;
+Write the branch name out and run it again. Letting a push through unchecked would defeat the point of this hook." ;;
     esac
     printf '%s' "$dst" | grep -qE "$PROTECTED" || continue
-    [ -n "$deleting" ] && deny "🛡️ guardrails — this command would **delete** \`$dst\` on the remote. Deleting a feature branch is fine; \`main\` is not."
-    deny "🛡️ guardrails — this command would force onto \`$dst\`. Forcing a branch is fine; forcing \`main\` is not."
+    [ -n "$deleting" ] && deny "🛡️ guardrails · palimpsest — this would **delete** \`$dst\` on the remote. Deleting a feature branch is fine; deleting \`$dst\` is not."
+    deny "🛡️ guardrails · palimpsest — this would force-push over \`$dst\`. Force-pushing a branch is fine; rewriting the history everyone else has built on is not."
   done
 done
 

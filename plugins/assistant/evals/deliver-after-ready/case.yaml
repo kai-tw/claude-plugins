@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: deliver-after-ready
+description: ③ is written only once asst-pr ready has turned the PR ready, its header names the PR as ready, and a row at QA whose PR is still a draft is turned ready on the next pass.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: tr "\n" " " < "$root/skills/assistant/SKILL.md" | grep -o "write ③ only once it exits 0" | sed "s/^/order: /"; grep -o "PR #n ready" "$root/skills/assistant/references/delivery-summary.md" | sed "s/^/header: /"; tr "\n" " " < "$root/skills/assistant/SKILL.md" | grep -o "still a draft → run .asst-pr ready. now" | sed "s/^/sweep: /"
+  prompt: |
+    Check that assistant turns a PR ready before delivering ③: SKILL.md writes ③ only after asst-pr ready succeeds, the delivery summary header names the PR as ready, and a row at QA whose PR is still a draft is turned ready on the next pass.
+context:
+  scaffold_script: fixture.sh

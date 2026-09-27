@@ -78,7 +78,7 @@
     },
     {
       "name": "guardrails",
-      "description": "Rules that fire on their own — a PreToolUse check on every Bash command and a discipline block carried at session start",
+      "description": "Rules that fire on their own: hooks that warn about or block known mistakes as a command runs, and a short discipline loaded at session start",
       "source": "./plugins/guardrails",
       "category": "productivity",
       "author": {
