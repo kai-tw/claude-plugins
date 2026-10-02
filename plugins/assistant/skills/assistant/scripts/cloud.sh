@@ -43,6 +43,8 @@ profile_file() {
 front() { awk -v k="$1" 'NR==1&&/^---$/{f=1;next} f&&/^---$/{exit} f&&$0~"^"k":"{sub("^"k":[[:space:]]*","");print;exit}' "$2"; }
 # One line `as of <time>`, then `<id>\t<name>\t<kind>` per environment.
 envs_file="${XDG_CACHE_HOME:-$HOME/.cache}/asst-cloud/environments"
+# For a troubleshoot message: the saved list, indented, under its `as of` line.
+env_list() { awk -F'\t' 'NR==1{print "  environments, " $0 ":";next}{printf "    %-18s %-30s %s\n",$2,$1,$3}' "$envs_file" 2>/dev/null; }
 env_label() { local n; n=$(awk -F'\t' -v i="$1" 'NR>1&&$1==i{print $2;exit}' "$envs_file" 2>/dev/null); echo "${n:+$n (}$1${n:+)}"; }
 body() { awk 'NR==1&&/^---$/{f=1;next} f==1&&/^---$/{f=2;next} f!=1' "$1"; }
 
@@ -100,7 +102,8 @@ case "$env" in
   '') ;;
   env_*|ccpool_*) env_id=$env ;;
   *) env_id=$(awk -F'\t' -v n="$env" 'NR>1&&tolower($2)==tolower(n){print $1;exit}' "$envs_file" 2>/dev/null)
-     [ -n "$env_id" ] || die "no environment named \`$env\` — \`asst-cloud envs\` lists them, or pass its env_… id" ;;
+     [ -n "$env_id" ] || die "no environment named \`$env\`
+$([ -s "$envs_file" ] && env_list || echo "  no list yet — open once without --env to save it, or pass the env_… id (\`/remote-env\` in claude shows them)")" ;;
 esac
 case "$env_id" in *[!A-Za-z0-9_]*) die "\`$env_id\` is not an environment id" ;; esac
 
@@ -159,4 +162,9 @@ url=$(printf '%s\n' "$out" | grep -o 'https://claude\.ai/code/session_[^[:space:
 shown=$(printf '%s\n' "$out" | sed -n 's/^.*Created cloud session: //p' | head -1)
 [ -n "$id" ] || { printf 'asst-cloud: no session was opened. claude said:\n%s\n' "$(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -8)" >&2; exit 1; }
 printf 'session %s\nurl %s\ntitle %s\nenvironment %s\nprofile %s · model %s · effort %s · permissions %s · check every %s\n' "$id" "${url%%\?*}" "$shown" "$([ -n "$picked" ] && env_label "$picked" || echo unknown)" "$profile" "$model" "$effort" "${perm:-default}" "$every"
-[ -z "$env_id" ] || [ "$picked" = "$env_id" ] || die "asked for environment $(env_label "$env_id"), but the session opened in $([ -n "$picked" ] && env_label "$picked" || echo 'one claude did not name') — archive it if it must not run there"
+[ -z "$env_id" ] || [ "$picked" = "$env_id" ] || {
+  [ -n "$picked" ] || die "asked for environment $(env_label "$env_id"), but claude did not log the one it picked — its debug log may have changed ($(claude --version 2>/dev/null)); check $id's environment on its page before using it, or open without --env"
+  die "asked for environment $(env_label "$env_id"), but the session opened in $(env_label "$picked") — claude has no environment with that id and fell back
+  archive $id if it must not run there, then open again with one of these
+$(env_list)"
+}
