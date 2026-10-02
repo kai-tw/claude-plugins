@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^pr-args: .*\|--name\|PR# 42 Fix the login\|$'
+pattern: '^pr-args: .*\|--name\|PR# 42 Fix the login\|--debug-file\|[^|]+\|$'
 flags: m
 arm: with-only
 ---

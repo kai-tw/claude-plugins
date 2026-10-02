@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^profiles: mutation-runner +model sonnet +effort medium +permissions default +check every 50$'
+pattern: '^profiles: mutation-runner +model sonnet +effort medium +permissions default +environment default +check every 50$'
 flags: m
 arm: with-only
 ---
