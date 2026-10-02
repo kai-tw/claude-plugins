@@ -80,6 +80,13 @@ Neither carries `.claude/.assistant/`.
 titles. `--name <title>` overrides it; on a branch with a PR, start yours with
 `PR# <n>` too. `asst-cloud` prints the title the session actually got.
 
+**The environment is `--env <name|id>`, or a profile's `environment:`**; neither
+means the account's default. `asst-cloud envs` lists the environments as the last
+`open` saw them (`claude` has no command that lists them), so a name works only
+after one open; an `env_…` id always works. `asst-cloud` prints the environment
+the session actually got, and exits 1 when it is not the one asked for — the
+session is open anyway, in the wrong environment: archive it, do not use it.
+
 **What belongs here is a check that runs long and outputs only a report** —
 `mutation:`, and wide `coverage:`. Two reasons: they hold the local test slot,
 and `plan-mutation` rewrites `lib/` in place, so until it finishes every local

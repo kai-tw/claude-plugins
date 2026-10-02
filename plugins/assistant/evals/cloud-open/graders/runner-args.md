@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^runner-args: --cloud\|Hello! You are the mutation runner\..*delaySeconds 3000 .*\|Run it\|--model\|sonnet\|--effort\|medium\|--name\|solo · main\|$'
+pattern: '^runner-args: --cloud\|Hello! You are the mutation runner\..*delaySeconds 3000 .*\|Run it\|--model\|sonnet\|--effort\|medium\|--name\|solo · main\|--debug-file\|[^|]+\|$'
 flags: m
 arm: with-only
 ---
