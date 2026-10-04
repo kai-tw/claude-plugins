@@ -19,9 +19,9 @@ if it cannot, amend the charter first (`CONVENTIONS.md`).
   is written as `2`), which violates charter S4.1 (sequence position): inserting a new member
   between existing ones shifts every existing save by one, and reading back is silent.
   Casting to `(int)` or `ToString("D")` violates it too. `JsonStringEnumConverter`,
-  `ToString()` and `nameof` write the member name and violate charter S4.2. Encode is one
-  `switch` expression with an arm per member and no discard arm, so a missing member raises
-  CS8509; for `System.Text.Json` it lives in a `JsonConverter<T>`; decode walks
+  `ToString()` and `nameof` write the member name and violate charter S4.2. The charter
+  S4.2 mapping is one `switch` expression with an arm per member and no discard arm, so a
+  missing member raises CS8509; for `System.Text.Json` it lives in a `JsonConverter<T>`; decode walks
   `Enum.GetValues<T>()` through that `switch` and falls back on an unknown code. Adopting
   codes: a store that already holds member names takes codes equal to them, so nothing
   migrates; a store that held numbers needs a frozen number→member table (charter S4.5) and a

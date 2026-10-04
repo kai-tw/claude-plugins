@@ -33,10 +33,12 @@ Loaded when: the diff contains `.dart`. Each rule must hang under an existing ch
 
 - **S4.1-dart Persist an `enum` with a hand-written code** — Check: what form does the
   `enum` write out? `.index` violates charter S4.1 (sequence position); `.name` and
-  `toString()` violate charter S4.2 (the member's identifier). Encode is one `switch`
-  expression over the members with no `_` or `default` branch, so a missing member is a
-  compile error; it lives in the store's own serialization, where charter S1.1 puts wire
-  formats; decode walks `values` through that `switch` and falls back on an unknown code.
+  `toString()` violate charter S4.2 (the member's identifier). The charter S4.2 mapping must
+  be one `switch` expression over the members with no `_` or `default` branch, so a missing
+  member is a compile error; a `Map` literal violates this rule, since a missing key reads
+  back `null` only at runtime. It lives in the store's own serialization, where charter S1.1
+  puts wire formats; decode walks `values` through that `switch` and falls back on an unknown
+  code.
   Adopting codes: a store that already holds `.name` or `toString()` strings takes codes
   equal to today's stored strings, so nothing migrates; a store that held `.index` needs a
   frozen index→member table (charter S4.5) and a migration (charter S4.4).

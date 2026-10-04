@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: charter-s4-2
-description: S4.2 and its Dart / C# sub-checks persist a set member as a hand-written code per member, never its identifier or position, and contain the code table's risk with an exhaustive encode, one place per store and a round-trip test.
+description: S4.2 and its Dart / C# sub-checks persist a set member through a custom member→string mapping, never its identifier or position; the charter leaves the missing-member check to the language layer, and Dart allows only an exhaustive switch.
 tags: [style-pack]
 plugins: ["../.."]
 runs: 1
