@@ -166,17 +166,24 @@ stored data; the developer's local data is empty and everything runs fine.
 
 - **S4.1 A persisted value must not be a sequence position** — Check: is the value to be
   written an index, an ordinal or any "the Nth"? If so, it violates this rule, always proposed
-  CRITICAL. Store an identifier unrelated to position and map it back to position on read. The
-  test is not "will anyone change the sequence" but **whether anything will make noise when it
-  changes**; before shipping, changing the format costs one file, after shipping a data
-  migration, so the moment review catches it is the cheapest it will ever be.
-- **S4.2 Persisted strings must derive from the member, not a separate lookup table** —
-  Check: is the string derived from the member itself, or from a hand-written lookup table?
-  If hand-written, it violates this rule: the table is a second copy of the member list, and
-  because the reader must have a wildcard branch to "fall back on unknown values rather than
-  throw", a missing entry is not a compile error but a value that is written out and reads
-  back as a different member. State the cost; do not pretend it is not there — when tied to
-  identifiers, a rename is a data migration.
+  CRITICAL. Store a key unrelated to position (for a set member, its S4.2 code) and map it
+  back to position on read. The test is not "will anyone change the sequence" but **whether
+  anything will make noise when it changes**; before shipping, changing the format costs one
+  file, after shipping a data migration, so the moment review catches it is the cheapest it
+  will ever be.
+- **S4.2 A persisted member is written as a hand-written code, one per member** — Check:
+  when a member of a closed set is persisted or sent outside the process (local storage,
+  synced files, a wire protocol, analytics parameters), is it written as a code written by
+  hand for that member? Writing the member's identifier violates this rule: a rename of the
+  member or its type silently becomes a data migration, while with a code a rename is a
+  refactor and only an explicit code change is a migration. A code table's real risk — a
+  missing entry written out and read back as another member — must be contained three ways:
+  the encode direction is one exhaustive branch table over the members (a missing member is a
+  compile error, S10.1); the codes are written in exactly one place per store, so decode walks
+  the members through encode instead of keeping a second table; a round-trip test walks every
+  member. Decode must fall back on an unknown code (corruption, or data a newer version wrote)
+  rather than throw. State the cost; do not pretend it is not there — adding a member means
+  adding its code.
 - **S4.3 A transient failure must not be written as a definite result** — Check: is the
   negative result written to long-lived storage (absent / failed / empty) written only on the
   definite-failure branch? If all kinds of failure share one write, it violates this rule.
@@ -398,7 +405,9 @@ place to update; once swapped out, nothing speaks up.
   parameters.
 - **S10.4 Members of a finite set must not be referred to by bare literals** — Check: is the
   path, key name or identifier a named constant or a bare string? A bare string violates this
-  rule: the compiler will not catch a typo, and it will not follow a rename.
+  rule: the compiler will not catch a typo, and it will not follow a rename. A store's S4.2
+  codes are outside this rule: they are written once, a round-trip test catches their typos,
+  and not following a rename is their purpose.
 - **S10.5 Parameters crossing a boundary must be typed, not free-form maps** — Check: is the
   parameter crossing this boundary (route, message, job) a named type or a map? A map violates
   this rule — a shape mismatch is deferred to a runtime cast at the destination, while the
