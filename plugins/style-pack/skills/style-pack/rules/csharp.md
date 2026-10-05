@@ -14,13 +14,18 @@ if it cannot, amend the charter first (`CONVENTIONS.md`).
 
 ## S4 — A persisted value's meaning must not depend on position or manual upkeep
 
-- **S4.1-csharp Persist an `enum` as its member name** — Check: what form does the enum write
-  out? `System.Text.Json`'s default form is the underlying number (`Phase.Payout` is written
-  as `2`); writing it out without `JsonStringEnumConverter` violates charter S4.1 (sequence
-  position): inserting a new member between existing ones shifts every existing save by one,
-  and reading back is silent. Casting to `(int)` or `ToString("D")` violates it too. Per
-  charter S4.2 the cost is stated at the enum's declaration: renaming a member is a data
-  migration.
+- **S4.1-csharp Persist an `enum` with a hand-written code** — Check: what form does the
+  enum write out? `System.Text.Json`'s default form is the underlying number (`Phase.Payout`
+  is written as `2`), which violates charter S4.1 (sequence position): inserting a new member
+  between existing ones shifts every existing save by one, and reading back is silent.
+  Casting to `(int)` or `ToString("D")` violates it too. `JsonStringEnumConverter`,
+  `ToString()` and `nameof` write the member name and violate charter S4.2. The charter
+  S4.2 mapping is one `switch` expression with an arm per member and no discard arm, so a
+  missing member raises CS8509; for `System.Text.Json` it lives in a `JsonConverter<T>`; decode walks
+  `Enum.GetValues<T>()` through that `switch` and falls back on an unknown code. Adopting
+  codes: a store that already holds member names takes codes equal to them, so nothing
+  migrates; a store that held numbers needs a frozen number→member table (charter S4.5) and a
+  migration (charter S4.4).
 - **S4.2-csharp Persist instants as `DateTimeOffset`** — Check: is the instant written out a
   `DateTime` or a `DateTimeOffset`? If the former, it violates this rule: `Kind` is not written
   with the value and always reads back as `Unspecified`, so any later time-zone conversion uses

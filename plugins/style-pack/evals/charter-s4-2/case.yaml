@@ -1,0 +1,16 @@
+schema_version: "1.1"
+name: charter-s4-2
+description: S4.2 and its Dart / C# sub-checks persist a set member through a custom member→string mapping, never its identifier or position; the charter leaves the missing-member check to the language layer, and Dart allows only an exhaustive switch.
+tags: [style-pack]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: style-pack dart csharp
+  prompt: |
+    Print the style-code rules for Dart and C#, then quote charter rule S4.2, S4.1-dart and
+    S4.1-csharp in full.
+context:
+  scaffold_script: fixture.sh
