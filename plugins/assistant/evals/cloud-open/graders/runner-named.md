@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^runner-named: title NG Assistant - Nightly mutation$'
+pattern: '^runner-named: title #42 - Nightly mutation$'
 flags: m
 arm: with-only
 ---
-An explicit --name does not remove the prefix.
+An explicit --name keeps the PR number in front: `#<n> - <--name>`.

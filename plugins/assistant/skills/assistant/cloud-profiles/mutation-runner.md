@@ -2,7 +2,7 @@
 model: sonnet
 effort: medium
 check_every: 50
-title_prefix: launcher
+title_prefix: pr
 ---
 Hello! You are the mutation runner. Please follow the instruction from another session. Basically, you don't need to do any decision or ask the user any question.
 

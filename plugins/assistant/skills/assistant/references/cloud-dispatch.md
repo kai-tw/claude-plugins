@@ -79,9 +79,8 @@ Neither carries `.claude/.assistant/`.
 `<repo> · <branch>` when the branch has none — because session lists show only
 titles. `--name <title>` overrides it; on a branch with a PR, start yours with
 `PR# <n>` too. A `mutation-runner` session's title is
-`<launching session's name> - <title>`, `--name` included — the profile's
-`title_prefix: launcher` — so the list shows which session each runner reports
-to. `asst-cloud` prints the title the session actually got.
+`#<n> - <PR title>`, or `#<n> - <title>` under `--name` — the profile's
+`title_prefix: pr` — so a runner's `--name` needs no PR number. `asst-cloud` prints the title the session actually got.
 
 **The environment is `--env <name|id>`, or a profile's `environment:`**; neither
 means the account's default. `asst-cloud envs` lists the environments as the last

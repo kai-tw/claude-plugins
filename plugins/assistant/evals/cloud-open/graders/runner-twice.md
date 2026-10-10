@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^runner-twice: title NG Assistant - Nightly mutation$'
+pattern: '^runner-twice: title #42 - Nightly mutation$'
 flags: m
 arm: with-only
 ---

@@ -7,7 +7,7 @@
 #          open a cloud session on the pushed branch → prints its session id, URL, title and environment;
 #          `-` reads the task from stdin; --dry-run prints the command and the text
 #          The title is --name if given, else `PR# <n> <PR title>` for the branch's PR, else `<repo> · <branch>`;
-#          a profile's `title_prefix: launcher` makes it `<this session's name> - <title>`, --name included.
+#          a profile's `title_prefix: pr` makes it `#<n> - <PR title>`, or `#<n> - <--name>`.
 #          No --env = the account's default environment.
 #        asst-cloud profiles
 #          list the profiles and what each sets
@@ -121,21 +121,19 @@ fi
 
 # Session lists show only the title, and the one claude picks summarizes the
 # text — which, after a profile's preamble, says nothing about which PR it's for.
-if [ -z "$name" ] && git rev-parse --git-dir >/dev/null 2>&1; then
-  read -r num title < <(gh pr view --json number,title --jq '"\(.number) \(.title)"' 2>/dev/null)
-  if [ -n "${num:-}" ]; then name="PR# $num $title"
+# `title_prefix: pr` puts the PR number first whatever the title, --name included.
+prefix=$(front title_prefix "$pf") num="" title=""
+case "$prefix" in ''|pr) ;; *) die "title_prefix \`$prefix\` is not \`pr\`" ;; esac
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  [ -n "$name" ] && [ -z "$prefix" ] || read -r num title < <(gh pr view --json number,title --jq '"\(.number) \(.title)"' 2>/dev/null)
+  if [ -n "$name" ]; then :
+  elif [ -n "$num" ]; then [ -n "$prefix" ] && name=$title || name="PR# $num $title"
   else name="$(basename "$(git rev-parse --show-toplevel)") · $(git branch --show-current | grep . || git rev-parse --short HEAD)"; fi
 fi
-# `title_prefix: launcher` names the session that opened this one, --name or not —
-# a title alone does not say which session the report goes back to.
-case "$(front title_prefix "$pf")" in
-  '') ;;
-  launcher)
-    who=$(jq -r '.name // empty' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/sessions/${CLAUDE_PID:-}.json" 2>/dev/null)
-    if [ -z "$who" ]; then echo "asst-cloud: this session's name could not be read — the title carries no prefix" >&2
-    else case "$name" in "$who - "*) ;; *) name="$who${name:+ - $name}" ;; esac; fi ;;
-  *) die "title_prefix \`$(front title_prefix "$pf")\` is not \`launcher\`" ;;
-esac
+if [ -n "$prefix" ]; then
+  if [ -z "$num" ]; then echo "asst-cloud: this branch has no PR — the title carries no \`#<n>\` prefix" >&2
+  else case "$name" in "#$num - "*) ;; *) name="#$num - $name" ;; esac; fi
+fi
 
 cmd=(claude --cloud "$text" --model "$model" --effort "$effort")
 [ -z "$perm" ] || [ "$perm" = default ] || cmd+=(--permission-mode "$perm")

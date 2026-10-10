@@ -8,7 +8,6 @@
 # set it leaves out the pick. fake/gh answers `pr view` with
 # $FAKE_PR, or fails like a branch with no PR. solo/ has no remote (a bundle
 # upload, nothing to push); ahead/ has an upstream it is one commit ahead of.
-# cfg/sessions/4242.json is the launching session's record, named `NG Assistant`.
 set -euo pipefail
 g() { git -c user.name=e -c user.email=e@e "$@"; }
 mkdir -p fake
@@ -37,7 +36,6 @@ cat > fake/gh <<'GH'
 echo "no pull requests found" >&2; exit 1
 GH
 chmod +x fake/claude fake/gh
-mkdir -p cfg/sessions && echo '{"pid":4242,"name":"NG Assistant"}' > cfg/sessions/4242.json
 mkdir solo && (cd solo && git init -q -b main && touch a && g add -A && g commit -qm init)
 mkdir -p solo/.claude/assistant/cloud-profiles
 printf -- '---\nmodel: sonnet\neffort: low\nenvironment: Flutter\ncheck_every: none\n---\n' > solo/.claude/assistant/cloud-profiles/flutter.md
