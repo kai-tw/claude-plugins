@@ -6,14 +6,15 @@
 #                        [--env <name|id>] [--check-every <minutes>|none] [--name <title>] [--dry-run] <task…|->
 #          open a cloud session on the pushed branch → prints its session id, URL, title and environment;
 #          `-` reads the task from stdin; --dry-run prints the command and the text
-#          The title is --name if given, else `PR# <n> <PR title>` for the branch's PR, else `<repo> · <branch>`.
+#          The title is --name if given, else `PR# <n> <PR title>` for the branch's PR, else `<repo> · <branch>`;
+#          a profile's `title_prefix: launcher` makes it `<this session's name> - <title>`, --name included.
 #          No --env = the account's default environment.
 #        asst-cloud profiles
 #          list the profiles and what each sets
 #        asst-cloud envs
 #          list the account's cloud environments, as the last `open` saw them
 # A profile is `cloud-profiles/<name>.md`: frontmatter model / effort /
-# permission_mode / environment / check_every,
+# permission_mode / environment / check_every / title_prefix,
 # body prepended to the task. The project's `.claude/assistant/cloud-profiles/`
 # wins over the plugin's. Flags win over the profile; no --profile = `default`.
 # Exit: 0 opened · 1 refused or failed (the reason on stderr; a session opened in
@@ -30,7 +31,7 @@
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"
-usage() { sed -n '5,20p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '5,21p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 die() { echo "asst-cloud: $1" >&2; exit 1; }
 
 profile_file() {
@@ -125,6 +126,16 @@ if [ -z "$name" ] && git rev-parse --git-dir >/dev/null 2>&1; then
   if [ -n "${num:-}" ]; then name="PR# $num $title"
   else name="$(basename "$(git rev-parse --show-toplevel)") · $(git branch --show-current | grep . || git rev-parse --short HEAD)"; fi
 fi
+# `title_prefix: launcher` names the session that opened this one, --name or not —
+# a title alone does not say which session the report goes back to.
+case "$(front title_prefix "$pf")" in
+  '') ;;
+  launcher)
+    who=$(jq -r '.name // empty' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/sessions/${CLAUDE_PID:-}.json" 2>/dev/null)
+    if [ -z "$who" ]; then echo "asst-cloud: this session's name could not be read — the title carries no prefix" >&2
+    else case "$name" in "$who - "*) ;; *) name="$who${name:+ - $name}" ;; esac; fi ;;
+  *) die "title_prefix \`$(front title_prefix "$pf")\` is not \`launcher\`" ;;
+esac
 
 cmd=(claude --cloud "$text" --model "$model" --effort "$effort")
 [ -z "$perm" ] || [ "$perm" = default ] || cmd+=(--permission-mode "$perm")
