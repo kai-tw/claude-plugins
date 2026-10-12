@@ -21,7 +21,7 @@ authority), not which file carries each rank: once a file is named, renaming or 
 breaks the charter.
 
 Which files carry which rank is stated here: the statute layer is `dart.md` / `csharp.md` /
-`js.md`, the regulation layer is each project's `.claude/rules/`.
+`js.md`, the regulation layer is each project's `.claude/rules/` and `.claude/.assistant/style-rules/`.
 The landing procedure is stated here too — when a conflict is graded `undeterminable`,
 its evidence format is in this pack's `references/evidence.md`.
 

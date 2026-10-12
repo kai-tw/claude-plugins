@@ -120,6 +120,10 @@ cross-feature collision or one type error that surfaces only at runtime.
   more words? If so, it violates this rule — readers will assume the two are different kinds,
   and a search for one will not find them all. This rule is the converse of S2.4. Example:
   failure types using both `Failure` and `Exception`.
+- **S2.10 A named constant must have more than one use site** — Check: how many sites read
+  this named constant? One: it violates this rule — inline the literal at the use site with
+  its explanation. Outside this rule: a constant declared in one file and used in another,
+  multi-line data tables, and enumerations another unit reads.
 
 ## S3 — Every collapse must be justified at each consumption point
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# style-pack — print the style-code charter (rules/index.md) plus the language files a diff
-# needs, to stdout, so a reviewer in any plugin loads one version of the rules.
+# style-pack — print the style-code charter (rules/index.md), the language files a diff
+# needs, and ./.claude/.assistant/style-rules/*.md, to stdout, so a reviewer in any plugin
+# loads one version of the rules.
 #
 # Usage: style-pack [dart|js …]            charter + the named language files
 #        style-pack --paths <file…>        charter + the languages those extensions map to
@@ -9,7 +10,7 @@
 # Exit 2 = unknown language or extension, nothing printed.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd); rules="$here/../rules"
-case "${1:-}" in --help|-h) sed -n '2,9p' "$0"; exit 0 ;; esac
+case "${1:-}" in --help|-h) sed -n '2,10p' "$0"; exit 0 ;; esac
 langs=()
 if [ "${1:-}" = --paths ]; then
   shift
@@ -29,3 +30,4 @@ else
 fi
 cat "$rules/index.md"
 printf '%s\n' ${langs[@]+"${langs[@]}"} | awk 'NF && !seen[$0]++' | while read -r l; do echo; cat "$rules/$l.md"; done
+for f in "$PWD"/.claude/.assistant/style-rules/*.md; do [ -f "$f" ] && { echo; cat "$f"; }; done

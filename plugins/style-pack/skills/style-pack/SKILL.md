@@ -14,8 +14,9 @@ allowed-tools:
 # Style pack
 
 - `style-pack --paths <file…>` — the charter + the language files those extensions map
-  to (the map lives in the script). `style-pack dart csharp js` names them directly.
+  to (the map lives in the script) + `./.claude/.assistant/style-rules/*.md`.
+  `style-pack dart csharp js` names the languages directly.
 - `§Precedence` in `rules/index.md` is the one version of how the three ranks order:
   constitution (the charter) · statute (language files) · regulation (a project's
-  `.claude/rules/`).
+  `.claude/rules/` and `.claude/.assistant/style-rules/`).
 - Legislating: `${CLAUDE_PLUGIN_ROOT}/skills/style-pack/rules/CONVENTIONS.md`.

@@ -3,6 +3,7 @@
 One file per project; the flow is one, the differences live here. Missing entry →
 the assistant asks once and writes it. `asst-*` scripts key their state on the
 directory holding this file (`.claude/.assistant/`, personal and unversioned).
+`style-rules/*.md` under it: personal style rules, loaded by `style-pack`.
 
 ```
 vcs:        git | svn                      # git: worktree per task, checkpoint = commit, hook runs `gate`; svn: working copy per task, checkpoint = saved diff, builder runs `gate`, nothing committed before ③
