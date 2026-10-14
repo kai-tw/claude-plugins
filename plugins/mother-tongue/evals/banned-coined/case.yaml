@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-coined
+description: The Stop hook blocks the coined or Mainland terms 源碼, 跑中, 建法, 兩態 and 出碼 and offers the Taiwanese wording; 跑中獎 does not count.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed stop.sh two zh-TW replies (one written with 源碼, 跑中, 建法, 兩態 and 出碼, one about running the 中獎 build) and print the output.
+context:
+  scaffold_script: fixture.sh
