@@ -36,6 +36,9 @@ Create `locales/<tag>/` with either file:
 - `banned.tsv` — `wrong<TAB>right[<TAB>exceptions]` per line. Exceptions are
   `、`-separated strings that contain `wrong` across a word boundary (`內存在`
   in `體內存在`); a match inside one does not count. Longer terms match first.
+  A `wrong` written `/…/` is a Perl regex, matched after every literal term and
+  reported as the text it matched: zh-TW's last row catches `eslint 綠` but
+  not `CI 綠燈`.
   Only terms with no legitimate use in that locale belong here (`數據`, `代碼`
   and `當前` are correct Taiwanese in other senses; judging those is left to
   `rules.md`), and a term earns an entry only after a scan of real zh-TW text

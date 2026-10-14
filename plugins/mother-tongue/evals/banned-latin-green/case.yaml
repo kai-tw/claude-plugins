@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-latin-green
+description: The Stop hook blocks 綠 used to mean "passed" after an English word (eslint 綠, gate 綠) and reports each matched text; 綠 as a real colour (綠燈, 綠框) does not count.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed stop.sh two zh-TW replies (one saying eslint 綠 and gate 綠, one about a CI 綠燈 and a debug 綠框) and print the output.
+context:
+  scaffold_script: fixture.sh
