@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-chu-bao
+description: The Stop hook blocks a reply that writes 出包流程 (Mainland term for the release/packaging process) and offers the Taiwanese term; 出包 in its Taiwanese sense (a screw-up) does not count.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed stop.sh two zh-TW replies (one using 出包流程, one saying a release went wrong with 出包) and print the output.
+context:
+  scaffold_script: fixture.sh
