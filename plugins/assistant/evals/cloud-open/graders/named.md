@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^named: title Nightly mutation$'
+pattern: '^named: title Nightly run$'
 flags: m
 arm: with-only
 ---

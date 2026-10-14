@@ -87,8 +87,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    blocks), the security floor (`security-guidance` hooks run unattended; the
    project's own sink rules when it has them), `text-verifier` — only when the
    adapter's `ui_strings:` is not `none` and the diff touches that glob — and the
-   adapter's `coverage:` / `mutation:` commands when set, in a cloud session once the
-   diff is pushed (`references/cloud-dispatch.md`) — gate: every changed line executed, no
+   adapter's `coverage:` / `mutation:` commands when set — gate: every changed line executed, no
    exemptions; mutation score ≥ 80. Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `Needs you` line if it changes scope or design.
@@ -205,9 +204,7 @@ this repo's; anything else on the list is caught by no script.
   running, or a new one from `asst-cloud open --profile <name>` — follows
   `references/cloud-dispatch.md`: neither can ask you a question, both report to
   an address you name, and a new session clones the pushed branch, not your
-  checkout. Long checks (`mutation:`, wide `coverage:`) belong there; they hold a
-  local test slot and `plan-mutation` rewrites the tree while it runs. Never open a
-  local worktree just to run them — disk is finite and it saves neither cost.
+  checkout.
 - Destructive or outward actions (force-push, deleting branches, SVN revert,
   publishing) are asked, never assumed — the adapter lists the project's. This
   holds for anything you send off the machine: a peer session doing it for you

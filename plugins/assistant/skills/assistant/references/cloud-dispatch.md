@@ -67,10 +67,10 @@ dispatch again.
 in the background and prints its session id and URL — the handle you record on
 the board. It runs `claude --cloud` under `script`, since `claude --cloud` refuses
 `--print` and needs a TTY. The profile sets model, effort and a preamble
-(`asst-cloud profiles` lists them): `default` is opus / high, `mutation-runner`
-sonnet / medium; `--model` / `--effort` override it. The session clones **the
-repo's GitHub remote on the current branch, not your local checkout**, so
-`asst-cloud` refuses an unpushed HEAD. Exception: when the repo has no git remote,
+(`asst-cloud profiles` lists them): `default` is opus / high; `--model` /
+`--effort` override it. The session clones **the repo's GitHub remote on the
+current branch, not your local checkout**, so `asst-cloud` refuses an unpushed
+HEAD. Exception: when the repo has no git remote,
 or the Claude GitHub App is not installed on it, a local bundle is uploaded
 instead (with uncommitted changes to tracked files, without untracked files).
 Neither carries `.claude/.assistant/`.
@@ -78,9 +78,7 @@ Neither carries `.claude/.assistant/`.
 **Each session is titled after its PR** — `PR# <n> <PR title>`, or
 `<repo> · <branch>` when the branch has none — because session lists show only
 titles. `--name <title>` overrides it; on a branch with a PR, start yours with
-`PR# <n>` too. A `mutation-runner` session's title is
-`#<n> - <PR title>`, or `#<n> - <title>` under `--name` — the profile's
-`title_prefix: pr` — so a runner's `--name` needs no PR number. `asst-cloud` prints the title the session actually got.
+`PR# <n>` too. `asst-cloud` prints the title the session actually got.
 
 **The environment is `--env <name|id>`, or a profile's `environment:`**; neither
 means the account's default. `asst-cloud envs` lists the environments as the last
@@ -90,29 +88,7 @@ the session actually got, and exits 1 when it is not the one asked for — the
 session is open anyway, in the wrong environment: archive it, do not use it, and
 open again with an id from the list that error prints (the one claude just fetched).
 
-**What belongs here is a check that runs long and outputs only a report** —
-`mutation:`, and wide `coverage:`. Two reasons: they hold the local test slot,
-and `plan-mutation` rewrites `lib/` in place, so until it finishes every local
-file read has to detour through `git show`. Sent out, neither cost exists. The
-same scope must never run locally and in the cloud at once — that is paying twice
-for one answer.
-
-**`mutation:` goes out with `--profile mutation-runner`**, the task being the
-dispatch message's four things (ID, the work, report address, report format).
-The profile (`cloud-profiles/mutation-runner.md`) carries what the runner
-improvises without: its role — no decisions, no questions, because a cloud
-session stopped waiting for an answer looks, from here, exactly like one still
-running; how to wait — `run_in_background: true`, since forbidding polling
-without giving a way to wait, it opened `Monitor` and `tail -f` (about 200 tool
-calls in a one-hour run); and the refusal rule — `plan-mutation`'s refusal or
-`ABORTED` reported verbatim as `blocked`, never `pubspec.yaml` edited or the run
-retried with other flags (measured: it opened three options of its own and
-waited for someone to pick). Change these in the profile, not in a task.
-
-**Never open another local worktree just to run these two** — it is a local
-copy, disk is finite, and neither cost above is saved. The only permitted way
-out of the in-place rewrite is to run it on another machine. This covers
-`Agent`'s `isolation`: **neither value may be used for this**: `"worktree"` is
+**`Agent`'s `isolation` never moves work off this machine**: `"worktree"` is
 local by definition, and `"remote"` measured as a local worktree too
 (2026-09-20, NG; retested 2026-09-23, unchanged) — its description says remote
 cloud environment, yet it runs locally, **and no message says it fell back**. To
@@ -124,13 +100,6 @@ is reclaimed, and background work still running then (subagents, shell
 commands) **is not restored**. So long work still gets a report address and an
 `ack`; you judge from them that it is alive, never assuming that no news means
 still running.
-
-**Long background Bash keeps its session awake.** A profile's `check_every`, or
-`--check-every <minutes>`, adds a rule to the task: while a `run_in_background`
-command runs, never end a turn without a `ScheduleWakeup` that many minutes out.
-An idle cloud session was measured alive at one hour, so the ceiling is 60;
-`mutation-runner` uses 50. Set it for a task whose Bash may run past an hour;
-any other task needs none.
 
 **Availability is conditional; check it the first time.** Cloud sessions are a
 research preview, limited to Pro / Max / Team, and Enterprise with a premium seat
@@ -174,11 +143,10 @@ environment with no `claude` login. Two other routes:
    route 1's response.
 
 `Agent`'s `isolation: "remote"` is not one of them: measured, it runs locally (see
-section 2), so it only moves the work into a disk-eating local copy.
+section 2).
 
 When neither route holds, this is one `Needs you` line (ask the founder to open a
-session, or to create a routine) — not a blocker you can clear yourself, and not
-a reason to move the work back to local; the local cost is in section 2.
+session, or to create a routine) — not a blocker you can clear yourself.
 
 ## Permission boundary (every route)
 

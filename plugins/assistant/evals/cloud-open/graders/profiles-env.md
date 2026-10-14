@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^profiles: flutter +model sonnet +effort low +permissions default +environment Flutter +check every none$'
+pattern: '^profiles: flutter +model sonnet +effort low +permissions default +environment Flutter$'
 flags: m
 arm: with-only
 ---

@@ -3,18 +3,17 @@
 # preamble, from a local shell or from inside a cloud session.
 #
 # Usage: asst-cloud open [--profile <name>] [--model <m>] [--effort <e>] [--permission-mode <p>]
-#                        [--env <name|id>] [--check-every <minutes>|none] [--name <title>] [--dry-run] <task…|->
+#                        [--env <name|id>] [--name <title>] [--dry-run] <task…|->
 #          open a cloud session on the pushed branch → prints its session id, URL, title and environment;
 #          `-` reads the task from stdin; --dry-run prints the command and the text
-#          The title is --name if given, else `PR# <n> <PR title>` for the branch's PR, else `<repo> · <branch>`;
-#          a profile's `title_prefix: pr` makes it `#<n> - <PR title>`, or `#<n> - <--name>`.
+#          The title is --name if given, else `PR# <n> <PR title>` for the branch's PR, else `<repo> · <branch>`.
 #          No --env = the account's default environment.
 #        asst-cloud profiles
 #          list the profiles and what each sets
 #        asst-cloud envs
 #          list the account's cloud environments, as the last `open` saw them
 # A profile is `cloud-profiles/<name>.md`: frontmatter model / effort /
-# permission_mode / environment / check_every / title_prefix,
+# permission_mode / environment,
 # body prepended to the task. The project's `.claude/assistant/cloud-profiles/`
 # wins over the plugin's. Flags win over the profile; no --profile = `default`.
 # Exit: 0 opened · 1 refused or failed (the reason on stderr; a session opened in
@@ -31,7 +30,7 @@
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"
-usage() { sed -n '5,21p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '5,20p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 die() { echo "asst-cloud: $1" >&2; exit 1; }
 
 profile_file() {
@@ -55,7 +54,7 @@ case "${1:-}" in
       for f in "$d"/*.md; do [ -f "$f" ] && basename "$f" .md; done
     done | awk '!seen[$0]++' | while IFS= read -r n; do
       f=$(profile_file "$n")
-      printf '%-18s model %-7s effort %-7s permissions %-12s environment %-12s check every %s\n' "$n" "$(front model "$f")" "$(front effort "$f")" "$(p=$(front permission_mode "$f"); echo "${p:-default}")" "$(e=$(front environment "$f"); echo "${e:-default}")" "$(front check_every "$f")"
+      printf '%-18s model %-7s effort %-7s permissions %-12s environment %s\n' "$n" "$(front model "$f")" "$(front effort "$f")" "$(p=$(front permission_mode "$f"); echo "${p:-default}")" "$(e=$(front environment "$f"); echo "${e:-default}")"
     done
     exit 0 ;;
   envs)
@@ -66,7 +65,7 @@ case "${1:-}" in
   *) usage ;;
 esac
 
-profile=default model="" effort="" perm="" env="" every="" name="" dry=""
+profile=default model="" effort="" perm="" env="" name="" dry=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --profile)     profile=${2:?--profile needs a name}; shift 2 ;;
@@ -74,7 +73,6 @@ while [ $# -gt 0 ]; do
     --effort)      effort=${2:?--effort needs a level}; shift 2 ;;
     --permission-mode) perm=${2:?--permission-mode needs a mode}; shift 2 ;;
     --env)         env=${2:?--env needs a name or id}; shift 2 ;;
-    --check-every) every=${2:?--check-every needs minutes or none}; shift 2 ;;
     --name)        name=${2:?--name needs a title}; shift 2 ;;
     --dry-run)     dry=1; shift ;;
     --)            shift; break ;;
@@ -92,12 +90,7 @@ model=${model:-$(front model "$pf")}
 effort=${effort:-$(front effort "$pf")}
 perm=${perm:-$(front permission_mode "$pf")}
 env=${env:-$(front environment "$pf")}
-every=${every:-$(front check_every "$pf")}
 case "$effort" in low|medium|high|xhigh|max) ;; *) die "effort \`$effort\` is not one of low medium high xhigh max" ;; esac
-# At most 60: ScheduleWakeup clamps to 3600 s, and an idle cloud session was
-# measured alive at one hour, not beyond.
-case "$every" in none|'') every=none ;; *[!0-9]*|0) die "--check-every takes whole minutes or none, not \`$every\`" ;; esac
-[ "$every" = none ] || [ "$every" -le 60 ] || die "--check-every is at most 60 minutes, not $every"
 env_id=""
 case "$env" in
   '') ;;
@@ -109,9 +102,6 @@ esac
 case "$env_id" in *[!A-Za-z0-9_]*) die "\`$env_id\` is not an environment id" ;; esac
 
 text=$(body "$pf")
-[ "$every" = none ] || text+="
-
-Long Bash work: while a command you started with \`run_in_background: true\` is still running, never end a turn without a wakeup scheduled — call ScheduleWakeup with delaySeconds $((every * 60)) (or CronCreate, one-shot, $every minutes out), check the command when it fires, and schedule the next. An idle session loses its VM, and background commands are not restored. Once the command has exited, schedule nothing more."
 text=$(printf '%s\n\n%s' "$text" "$task" | sed '/./,$!d')
 
 if [ -z "$dry" ] && git rev-parse --git-dir >/dev/null 2>&1 && [ -n "$(git remote)" ]; then
@@ -121,18 +111,10 @@ fi
 
 # Session lists show only the title, and the one claude picks summarizes the
 # text — which, after a profile's preamble, says nothing about which PR it's for.
-# `title_prefix: pr` puts the PR number first whatever the title, --name included.
-prefix=$(front title_prefix "$pf") num="" title=""
-case "$prefix" in ''|pr) ;; *) die "title_prefix \`$prefix\` is not \`pr\`" ;; esac
-if git rev-parse --git-dir >/dev/null 2>&1; then
-  [ -n "$name" ] && [ -z "$prefix" ] || read -r num title < <(gh pr view --json number,title --jq '"\(.number) \(.title)"' 2>/dev/null)
-  if [ -n "$name" ]; then :
-  elif [ -n "$num" ]; then [ -n "$prefix" ] && name=$title || name="PR# $num $title"
+if [ -z "$name" ] && git rev-parse --git-dir >/dev/null 2>&1; then
+  read -r num title < <(gh pr view --json number,title --jq '"\(.number) \(.title)"' 2>/dev/null)
+  if [ -n "${num:-}" ]; then name="PR# $num $title"
   else name="$(basename "$(git rev-parse --show-toplevel)") · $(git branch --show-current | grep . || git rev-parse --short HEAD)"; fi
-fi
-if [ -n "$prefix" ]; then
-  if [ -z "$num" ]; then echo "asst-cloud: this branch has no PR — the title carries no \`#<n>\` prefix" >&2
-  else case "$name" in "#$num - "*) ;; *) name="#$num - $name" ;; esac; fi
 fi
 
 cmd=(claude --cloud "$text" --model "$model" --effort "$effort")
@@ -142,7 +124,7 @@ cmd=(claude --cloud "$text" --model "$model" --effort "$effort")
 if [ -n "$dry" ]; then
   printf 'title %s\n' "$name"
   printf 'environment %s\n' "$([ -n "$env_id" ] && env_label "$env_id" || echo default)"
-  printf 'profile %s · model %s · effort %s · permissions %s · check every %s\n' "$profile" "$model" "$effort" "${perm:-default}" "$every"
+  printf 'profile %s · model %s · effort %s · permissions %s\n' "$profile" "$model" "$effort" "${perm:-default}"
   printf '%s\n' "$text"
   exit 0
 fi
@@ -170,7 +152,7 @@ id=$(printf '%s\n' "$out" | grep -o 'session_[A-Za-z0-9]*' | head -1)
 url=$(printf '%s\n' "$out" | grep -o 'https://claude\.ai/code/session_[^[:space:]]*' | head -1)
 shown=$(printf '%s\n' "$out" | sed -n 's/^.*Created cloud session: //p' | head -1)
 [ -n "$id" ] || { printf 'asst-cloud: no session was opened. claude said:\n%s\n' "$(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -8)" >&2; exit 1; }
-printf 'session %s\nurl %s\ntitle %s\nenvironment %s\nprofile %s · model %s · effort %s · permissions %s · check every %s\n' "$id" "${url%%\?*}" "$shown" "$([ -n "$picked" ] && env_label "$picked" || echo unknown)" "$profile" "$model" "$effort" "${perm:-default}" "$every"
+printf 'session %s\nurl %s\ntitle %s\nenvironment %s\nprofile %s · model %s · effort %s · permissions %s\n' "$id" "${url%%\?*}" "$shown" "$([ -n "$picked" ] && env_label "$picked" || echo unknown)" "$profile" "$model" "$effort" "${perm:-default}"
 [ -z "$env_id" ] || [ "$picked" = "$env_id" ] || {
   [ -n "$picked" ] || die "asked for environment $(env_label "$env_id"), but claude did not log the one it picked — its debug log may have changed ($(claude --version 2>/dev/null)); check $id's environment on its page before using it, or open without --env"
   die "asked for environment $(env_label "$env_id"), but the session opened in $(env_label "$picked") — claude has no environment with that id and fell back

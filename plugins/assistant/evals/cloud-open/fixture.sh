@@ -38,7 +38,7 @@ GH
 chmod +x fake/claude fake/gh
 mkdir solo && (cd solo && git init -q -b main && touch a && g add -A && g commit -qm init)
 mkdir -p solo/.claude/assistant/cloud-profiles
-printf -- '---\nmodel: sonnet\neffort: low\nenvironment: Flutter\ncheck_every: none\n---\n' > solo/.claude/assistant/cloud-profiles/flutter.md
+printf -- '---\nmodel: sonnet\neffort: low\nenvironment: Flutter\n---\n' > solo/.claude/assistant/cloud-profiles/flutter.md
 git init -q --bare up.git
 git clone -q up.git ahead 2>/dev/null
 (cd ahead && touch a && g add -A && g commit -qm one && g push -q origin HEAD 2>/dev/null \
