@@ -1,13 +1,14 @@
 ---
 name: test-gates
 description: >-
-  Three bare-name commands for Flutter/Dart test runs on a shared machine:
+  Bare-name commands for Flutter/Dart test runs on a shared machine:
   `plan-test` (run a suite inside a machine-wide slot budget), `plan-coverage`
   (every changed line executed, no exemptions), `plan-mutation` (mutation
   score over the changed Dart and JS/TS files, or review mode over the changed
-  lines) and `plan-mutation-review` (post review mode's survivors on a PR).
+  lines), `plan-mutation-review` (post review mode's survivors on a PR) and
+  `plan-ci-runner` (run this repo's self-hosted Actions runner until it's idle).
   `<cmd> --help` for flags; `references/pr-checks.md` wires them into CI.
-  TRIGGER: run tests · coverage · mutation · Stryker · who is holding a test slot · PR checks
+  TRIGGER: run tests · coverage · mutation · Stryker · who is holding a test slot · PR checks · CI runner
 allowed-tools:
   - Bash
 ---
@@ -45,6 +46,10 @@ allowed-tools:
   that package — `@stryker-mutator/core` installed there, tests from its
   Stryker config, so no test command is needed when no Dart file changed.
   `--workers n` is its concurrency; the other engine flags are Dart-only.
+- `plan-ci-runner [--idle <min>]` — after pushing to a PR, start it with
+  `run_in_background: true`: it runs this repo's registered runner (under
+  `~/actions-runners/`) and stops it once no workflow has been queued or
+  running for `--idle` minutes (default 5). No runner is installed as a service.
 
 Coverage grades the reach, mutation grades what was reached; neither replaces
 the other. Slot state: `$HOME/.claude/.flutter-toolkit/slots` (`PLAN_TEST_DIR`).
