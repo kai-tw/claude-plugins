@@ -47,7 +47,19 @@
 #   plan-mutation [--min <pct>] [--timeout <s>] [--baseline-timeout <s>]
 #                 [--baseline-factor <n>] [--select-by-coverage]
 #                 [--workers <n>] [--max-minutes <n>] [--history <file>]
-#                 [--keep-dir <dir>] [--files a.dart b.ts …] [-- <test-command…>]
+#                 [--diff <ref> [--per-line <n>] [--review <file>]]
+#                 [--files a.dart b.ts …] [-- <test-command…>]
+#
+#   --diff <ref> is review mode, after Google's: mutate only the lines this
+#   branch changed since its merge base with <ref> (uncommitted edits to
+#   tracked files too),
+#   at most --per-line (default 1) mutants a line, in the Dart files that
+#   changed. JS/TS files are mutated whole. --review <file> writes the
+#   survivors a test reaches but doesn't catch as a JSON list of
+#   {path, line, body} for plan-mutation-review to post on the PR, and the
+#   run exits 0 whatever the scores — a survivor is a question for the
+#   reviewer, not a failed check. Survivors no test reaches are left out:
+#   that's line coverage's finding (plan-coverage), not mutation's.
 #
 #   --timeout is the FLOOR on a mutant's budget; the engine raises it to
 #   --baseline-factor × the measured baseline, and the report prints what it
@@ -111,9 +123,7 @@
 #   was killed before it restored the tree. Run the same command again and
 #   only the unfinished mutants run — Dart through dart_mutants' journal, JS/TS
 #   through Stryker's incremental file, both kept under
-#   $TMPDIR (or --keep-dir <dir>, for a run another machine resumes: the Dart
-#   journal is `<dir>/plan-mutation-dart.jsonl`, written as each mutant
-#   finishes) and reused only while the code and tests are unchanged. A finished
+#   $TMPDIR and reused only while the code and tests are unchanged. A finished
 #   run started again reuses every result, timeouts excepted. There is no
 #   pause: a frozen run's budgets keep counting, and the tree stays mutated.
 
@@ -183,7 +193,9 @@ MUTANT_TIMEOUT=30
 TIMEOUT_GIVEN=""     # Stryker keeps its own timeout unless --timeout is typed
 WORKERS=1
 EXPLICIT_FILES=""
-KEEP_DIR=""
+DIFF_BASE=""
+PER_LINE=""
+REVIEW_OUT=""
 ENGINE_EXTRA=()      # 0.2.7 flags, forwarded only when the caller asks for them
 DART_ONLY=""         # the Dart-only flags typed, named when JS files are in scope
 
@@ -203,7 +215,12 @@ while [ $# -gt 0 ]; do
                 WORKERS=$2; ENGINE_EXTRA+=("--workers" "$2"); shift 2 ;;
     --max-minutes) ENGINE_EXTRA+=("--max-minutes" "${2:?--max-minutes needs a number of minutes}"); DART_ONLY+=" $1"; shift 2 ;;
     --history)  ENGINE_EXTRA+=("--history" "${2:?--history needs a file}"); DART_ONLY+=" $1"; shift 2 ;;
-    --keep-dir) KEEP_DIR="${2:?--keep-dir needs a directory}"; shift 2 ;;
+    --diff)     DIFF_BASE="${2:?--diff needs a ref}"; shift 2 ;;
+    --per-line) case "${2:-}" in
+                  ''|*[!0-9]*|0) echo "plan-mutation: --per-line needs a positive integer" >&2; exit 2 ;;
+                esac
+                PER_LINE=$2; DART_ONLY+=" $1"; shift 2 ;;
+    --review)   REVIEW_OUT="${2:?--review needs a file}"; shift 2 ;;
     --files)    shift
                 while [ $# -gt 0 ] && [ "$1" != "--" ]; do
                   EXPLICIT_FILES="${EXPLICIT_FILES}${1}"$'\n'; shift
@@ -341,6 +358,7 @@ else
   base=${base#origin/}
   [ -n "$base" ] || base=main
   tried="origin/$base $base origin/main main"
+  [ -n "$DIFF_BASE" ] && tried=$DIFF_BASE
   resolved=
   for cand in $tried; do
     git rev-parse --verify --quiet "$cand" >/dev/null 2>&1 && { resolved=$cand; break; }
@@ -487,6 +505,14 @@ dart_mutants-v$target, then \`$PUB\`. What changed:
 EOF
 fi
 
+# Review mode narrows mutants to changed lines, which the engine does from
+# 0.7.0 (--lines, --per-line). Below it the run would mutate every line of
+# every changed file — the cost review mode exists to avoid.
+if [ -n "$DIFF_BASE" ] && [ -n "$dart_files" ] && [ -n "$lock_ver" ] && older_than "$lock_ver" 0.7.0; then
+  echo "plan-mutation: --diff needs dart_mutants 0.7.0 or later (--lines, --per-line); this project resolves $lock_ver. Set the ref in pubspec.yaml to dart_mutants-v0.7.0 or later, then \`$PUB\`." >&2
+  exit 2
+fi
+
 if [ -n "$lock_ver" ] && older_than "$lock_ver" "$MIN_ENGINE"; then
   # Two different defects live below the floor, and naming the wrong one sends
   # the reader after the wrong thing. Branch on which it actually is.
@@ -622,6 +648,27 @@ js_rows=$(printf '%s' "$js_rows" | while IFS=$'\t' read -r p r; do
 js_pkgs=$(printf '%s\n' "$js_rows" | cut -f1 | grep -v '^$' | sort -u)
 [ -z "$dart_files" ] || [ -n "$TEST_CMD" ] || {
   echo "plan-mutation: Dart files need a test command (e.g. plan-mutation -- flutter test test/features/trash)" >&2; exit 2; }
+# Review mode: each Dart file's changed lines, from the merge base to the
+# working tree, as the engine's `--lines <file>:<ranges>`. A file whose change
+# only deleted lines has none, so nothing in it is new to ask about.
+if [ -n "$DIFF_BASE" ] && [ -n "$dart_files" ]; then
+  mbase=$(git merge-base "$base" HEAD 2>/dev/null) || mbase=$base
+  kept_dart=""
+  while IFS= read -r f; do
+    ranges=$(git diff -U0 "$mbase" -- "$f" 2>/dev/null \
+      | sed -nE 's/^@@ -[0-9,]+ \+([0-9]+)(,([0-9]+))? @@.*/\1 \3/p' \
+      | awk '{ n = ($2 == "") ? 1 : $2; if (n > 0) printf "%s%d-%d", (c++ ? "," : ""), $1, $1 + n - 1 }')
+    [ -n "$ranges" ] || continue
+    ENGINE_EXTRA+=("--lines" "$f:$ranges")
+    kept_dart="$kept_dart$f"$'\n'
+  done <<< "$dart_files"
+  ENGINE_EXTRA+=("--per-line" "${PER_LINE:-1}")
+  dart_files=$(printf '%s' "$kept_dart" | grep -v '^$')
+  files=$( { printf '%s\n' "$dart_files"; printf '%s\n' "$files" | grep -vE '\.dart$'; } | grep -v '^$')
+  [ -n "$files" ] || { echo "plan-mutation: the diff since $base only deletes lines — nothing new to mutate."; [ -n "$REVIEW_OUT" ] && echo '[]' > "$REVIEW_OUT"; exit 0; }
+elif [ -n "$PER_LINE" ]; then
+  ENGINE_EXTRA+=("--per-line" "$PER_LINE")
+fi
 count_files=$(printf '%s\n' "$files" | grep -c .)
 count_dart=$(printf '%s\n' "$dart_files" | grep -c .)
 
@@ -650,7 +697,6 @@ REPORT_KEEP="${TMPDIR:-/tmp}/plan-mutation-report.json"
 # so two worktrees never share one; the engines themselves decide when a kept
 # result still holds, from the code and tests, not from this path.
 KEEP_BASE="${TMPDIR:-/tmp}/plan-mutation-$(printf '%s' "$root" | cksum | cut -d' ' -f1)"
-if [ -n "$KEEP_DIR" ]; then mkdir -p "$KEEP_DIR" || exit 2; KEEP_BASE="$KEEP_DIR/plan-mutation"; fi
 [ -n "$dart_files" ] && ENGINE_EXTRA+=("--journal" "$KEEP_BASE-dart.jsonl")
 
 stop_requested() { grep -q '^stop:' "$MARKER" 2>/dev/null; }
@@ -1225,6 +1271,19 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 # pointers` keeps navigation out of the KB: the artefact has to stand alone.
 echo "plan-mutation: report section — $REPORT"
 echo "plan-mutation: raw engine report(s) — $KEPT"
+
+# Review mode reports and never blocks: each survivor a test reached but did
+# not catch becomes one comment at its line. A survivor no test reaches is
+# line coverage's finding, so it is left to plan-coverage.
+if [ -n "$REVIEW_OUT" ]; then
+  jq --arg root "$root/" '[.files | to_entries[] | .value.undetectedMutants[]?
+      | select(.uncovered != true)
+      | { path: (.filePath | sub("^" + $root; "")), line: .line,
+          body: "Mutant survived: `\(.operatorName)` — \(.description). No test failed with this change; a case that pins this behaviour would catch it." }]' \
+    "$out/report.json" > "$REVIEW_OUT" || { echo "plan-mutation: could not write $REVIEW_OUT" >&2; exit 2; }
+  echo "plan-mutation: review — $(jq length "$REVIEW_OUT") survivor(s) to comment on, written to $REVIEW_OUT."
+  exit 0
+fi
 
 # LOW-SIGNAL BLOCKS. It means "not measured", and a row that was not measured is
 # not a pass; an exit 0 on it leaves that to prose. Measured twice on one real suite: a sign-in widget

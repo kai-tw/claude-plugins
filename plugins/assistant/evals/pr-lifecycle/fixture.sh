@@ -8,7 +8,7 @@ git clone -q origin.git wt 2>/dev/null
 cd wt
 git config user.email e@e; git config user.name e
 mkdir -p .claude lib/l10n
-printf 'vcs: git\ncoverage: plan-coverage -- flutter test\nmutation: plan-mutation -- flutter test\nui_strings: lib/l10n/*.arb\n' > .claude/assistant.md
+printf 'vcs: git\ncoverage: plan-coverage -- flutter test\nui_strings: lib/l10n/*.arb\n' > .claude/assistant.md
 printf '.claude/.assistant/\n' > .gitignore
 echo '{}' > lib/l10n/app_en.arb
 git add -A; git commit -qm base; git push -q origin HEAD:main 2>/dev/null

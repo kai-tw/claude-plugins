@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-review-mode
+description: plan-mutation --diff <ref> mutates only the lines the branch changed, one mutant a line, skips a file whose change only deleted lines, and with --review writes the survivors a test reaches as {path, line, body} and exits 0; it refuses --diff on a dart_mutants older than 0.7.0.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; w=$PWD; PATH="$w/fake:$PATH"; (cd r && plan-mutation --diff main --review "$w/review.json" -- flutter test 2>&1; echo "rc=$?"; echo "args: $(cat args.txt)") | sed "s/^/r: /"; echo "review: $(jq -c . review.json)"; (cd old && plan-mutation --diff main -- flutter test 2>&1; echo "rc=$?") | sed "s/^/old: /"
+  prompt: |
+    In a repo whose branch changed a few lines, run plan-mutation in review mode against main and print its output, exit code, the engine's arguments and the review file; then try review mode on a repo with an older engine.
+context:
+  scaffold_script: fixture.sh

@@ -14,7 +14,6 @@
 #          verify leg the adapter requires has a report filed after HEAD's commit
 # Legs: verify-code always · verify-coverage when the adapter's coverage: is
 # set · verify-text when ui_strings: is set and the PR's diff touches it.
-# Mutation is not a leg: it runs after the merge (asst-mutation-queue).
 # Exit: 0 done · 1 refused · 2 usage, not a git task, or no
 # PR possible here (gh missing or unauthenticated, no GitHub remote).
 #
@@ -25,7 +24,7 @@ set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,19p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,18p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
