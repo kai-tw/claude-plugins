@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Stop — tell the agent when the copy of this plugin it is running is behind the
-# marketplace index.
+# Stop — when the copy of this plugin this session runs is behind the marketplace
+# index, update it, then tell the agent so it can tell the user.
 #
 # The version a session actually resolved to cannot be determined from outside
 # (see .claude/rules/releasing.md): install records say what was installed, not
@@ -14,7 +14,16 @@
 # to a consumer project — which is exactly when the drift matters. A clone that
 # was never refreshed produces silence, never a wrong answer.
 #
-# Blocks the stop so the reason reaches the model, at most ONCE per session
+# The update is the one `consumers.mjs` runs: `claude plugin update` in the
+# install record's own directory, with that record's scope, after installing any
+# `dependencies` the new version declares (`update` does not install them, and
+# one missing dependency fails the load). No `-y`: a marketplace-declared command
+# is never accepted on the user's behalf; the update then fails and the user gets
+# the command to run. Several plugins carry this hook and Stop hooks run in
+# parallel, so updates take a lock — concurrent writers of installed_plugins.json
+# lose records.
+#
+# Blocks the stop so the notice reaches the model, at most ONCE per session
 # (Claude Code also caps consecutive Stop blocks on its own). A Stop block is
 # top-level `decision` / `reason`; `hookSpecificOutput.permissionDecision` is
 # PreToolUse's shape and is silently ignored here (measured: the hook ran, the
@@ -61,14 +70,76 @@ if [ -n "$session" ]; then
   : > "$stamp" 2>/dev/null || true
 fi
 
-reason="The ${name} plugin running in this session is ${running}, but ${mkt} publishes ${latest}. \
-You are working against an outdated copy of its skills, hooks and scripts. \
+id="$name@$mkt"
+registry="$HOME/.claude/plugins/installed_plugins.json"
+
+# The install this session runs from: a project record whose projectPath holds
+# cwd (a worktree inside the project counts, and so does one elsewhere through
+# git's common dir), else a user record.
+main=""
+[ -n "$cwd" ] && main=$(cd "$cwd" 2>/dev/null && git rev-parse --path-format=absolute --git-common-dir 2>/dev/null | sed 's#/\.git$##')
+record=$(jq -c --arg id "$id" --arg cwd "$cwd" --arg main "$main" '
+  (.plugins[$id] // []) as $all
+  | ([$all[] | select(.projectPath and (.projectPath == $main
+       or $cwd == .projectPath or ($cwd | startswith(.projectPath + "/"))))]
+     + [$all[] | select(.scope == "user")])[0] // empty' "$registry" 2>/dev/null)
+scope=$(printf '%s' "$record" | jq -r '.scope // "project"' 2>/dev/null)
+dir=$(printf '%s' "$record" | jq -r '.projectPath // empty' 2>/dev/null)
+[ -n "$dir" ] || { [ "$scope" = user ] && dir=$HOME || dir=$cwd; }
+
+# Dependencies the new version declares that this install's scope lacks.
+missing=$(jq -r --arg mkt "$mkt" '.dependencies[]? | "\(.name)@\(.marketplace // $mkt)"' "$index" 2>/dev/null \
+  | while read -r dep; do
+      jq -e --arg d "$dep" --arg s "$scope" --arg p "$dir" \
+        '(.plugins[$d] // [])[] | select(.scope == $s and ($s == "user" or .projectPath == $p))' \
+        "$registry" >/dev/null 2>&1 || printf '%s ' "$dep"
+    done)
+
+update() {
+  [ -n "$record" ] || { echo "no install record of $id for ${cwd:-this project}"; return 1; }
+  command -v claude >/dev/null 2>&1 || { echo "claude is not on the hook's PATH"; return 1; }
+  cd "$dir" 2>/dev/null || { echo "cannot enter $dir"; return 1; }
+
+  local lock="$HOME/.claude/plugins/.stale-check.lock" n=0
+  until mkdir "$lock" 2>/dev/null; do
+    # A lock older than five minutes belongs to a hook that was killed.
+    [ -n "$(find "$lock" -maxdepth 0 -mmin +5 2>/dev/null)" ] && rmdir "$lock" 2>/dev/null && continue
+    n=$((n + 1)); [ "$n" -ge 30 ] && { echo "another plugin update held the lock for 30s"; return 1; }
+    sleep 1
+  done
+  trap 'rmdir "$lock" 2>/dev/null' RETURN
+
+  local dep out
+  for dep in $missing; do
+    out=$(claude plugin install "$dep" --scope "$scope" </dev/null 2>&1) \
+      || { echo "installing dependency $dep failed: $(printf '%s' "$out" | tail -1)"; return 1; }
+  done
+  out=$(claude plugin update "$id" --scope "$scope" </dev/null 2>&1) \
+    || { echo "$(printf '%s' "$out" | tail -1)"; return 1; }
+
+  # Read the result back from the registry, not from the exit code.
+  jq -e --arg id "$id" --arg s "$scope" --arg p "$dir" --arg v "$latest" \
+    '(.plugins[$id] // [])[] | select(.scope == $s and ($s == "user" or .projectPath == $p) and .version == $v)' \
+    "$registry" >/dev/null 2>&1 || { echo "the install record still is not at $latest"; return 1; }
+}
+
+if why=$(update); then
+  reason="The ${name} plugin running in this session was ${running}; ${mkt} publishes ${latest}, \
+and the ${scope}-scope install for ${dir} has just been updated to ${latest} automatically. \
+Tell the user now, plainly, in one or two sentences: the update takes effect in a NEW \
+session, so this one keeps running ${running} until it is restarted."
+else
+  install=""
+  for dep in $missing; do install+="claude plugin install ${dep} --scope ${scope} && "; done
+  reason="The ${name} plugin running in this session is ${running}, but ${mkt} publishes ${latest}. \
+Updating it automatically failed: ${why}. \
 Tell the user now, plainly, and give them this command to run:
 
-    cd ${cwd:-<project>} && claude plugin update ${name}@${mkt} --scope project
+    cd ${dir:-<project>} && ${install}claude plugin update ${id} --scope ${scope}
 
 Then say that the update only takes effect in a NEW session, so this one keeps \
 running ${running} regardless. Do not run the command yourself."
+fi
 
 jq -n --arg r "$reason" '{decision: "block", reason: $r}'
 exit 0

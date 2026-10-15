@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: stale-check
-description: When the running version lags the marketplace index, the Stop hook blocks with top-level decision / reason and includes the update command; it speaks once per session and stays quiet when stop_hook_active is true or the versions match.
+description: When the running version lags the marketplace index, the Stop hook installs missing dependencies, updates the plugin in its install record's project, and blocks with top-level decision / reason saying so; a failed update gives the manual command instead. It speaks once per session and stays quiet when stop_hook_active is true or the versions match.
 tags: [hooks]
 plugins: ["../.."]
 runs: 1
