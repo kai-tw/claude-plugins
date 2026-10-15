@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'lib/gone\.dart -- flutter test|issue create mutation [A-Z]+: lib/gone'
+pattern: '--files lib/gone\.dart|issue create mutation [A-Z]+: lib/gone'
 flags: m
 match: not_contains
 ---
-A dropped file is neither run nor reported.
+A skipped file is neither run nor reported.

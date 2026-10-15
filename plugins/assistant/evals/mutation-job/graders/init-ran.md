@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^generated: yes$'
+pattern: 'lib/a\.dart -- flutter test .*generated: yes$'
 flags: m
 arm: with-only
 ---
-worktree_init runs in the job's worktree before plan-mutation, so what git ignores is there.
+worktree_init runs in the worktree before plan-mutation.

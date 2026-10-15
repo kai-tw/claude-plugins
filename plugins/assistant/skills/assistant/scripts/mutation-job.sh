@@ -1,124 +1,101 @@
 #!/usr/bin/env bash
-# asst-mutation-job — take one file from the mutation queue, mutation-test it,
-# and report it. Mutation is too slow to gate a PR, so merged files wait in the
-# queue (asst-mutation-queue) and routine sessions work through it
-# (references/mutation-queue.md).
+# asst-mutation-job — mutation-test one file as a PR merged it, and report it.
+# Mutation is too slow to gate a PR, so it runs after the merge: a workflow on
+# a self-hosted runner runs this once per changed file
+# (references/mutation-after-merge.md).
 #
-# Usage: asst-mutation-job      (from anywhere in the project's clone)
-#   First sweeps the queue, opening an issue for each file it gives up on. Then
-#   claims a file and runs the adapter's `mutation:` (a plan-mutation command)
-#   on it alone, at the commit the queue pinned, in a worktree at a fixed path:
-#   $ASST_MUTATION_SRC (default /tmp/asst-mutation)/<repo>, after the adapter's
+# Usage: asst-mutation-job <pr> <merge-sha> <file>   (from the project's clone)
+#   Runs the adapter's `mutation:` (a plan-mutation command) on <file> alone,
+#   at <merge-sha>, in a worktree at a fixed path per commit and file under
+#   $ASST_MUTATION_SRC (default /tmp/asst-mutation), after the adapter's
 #   `worktree_init:` when set — the worktree is a clean checkout, so nothing
-#   git ignores is there until that command makes it. Whatever it generates
-#   under lib/ must come out the same on every run of one commit, or a resumed
-#   run starts over. The run's journal
-#   is saved to the queue every $ASST_MUTATION_BEAT seconds (default 300) and
-#   restored on the next claim, so a session that dies part-way is resumed by
-#   the next one instead of starting over — the engine keys finished mutants on
-#   their absolute path and the package's content, hence the fixed path and the
-#   pinned commit.
-#   A pass is a comment on each PR queued for the file; a score under the
-#   threshold, or a run that scored nothing, is one issue naming them all. With
-#   a usable gh it posts itself and prints `posted: <url>`; without one it
-#   prints `post: comment <pr…>` or `post: issue <title>`, then the body.
-#   A file the pinned commit doesn't have is dropped without a report.
-# First line per job: `asst-mutation-job: PASS|FAIL|ERROR|GONE|STUCK <file> @ <sha7> (PR #<n>, …)`;
-# `asst-mutation-job: queue empty` when there was nothing to claim.
-# Exit: 0 passed or gone · 1 scored under the threshold · 2 nothing scored ·
-# 3 the queue had nothing to claim.
+#   git ignores is there until that command makes it.
+#   The run's journal (each finished mutant, and the coverage pass test file by
+#   test file) is kept under $ASST_MUTATION_STATE (default
+#   ~/.cache/asst-mutation), per repo, commit and file, until the file is
+#   scored. Run the same command again after an interruption, or after an
+#   ERROR, and it resumes from there. The engine keys that journal on each file's absolute path and
+#   the package's content, hence the fixed path, and whatever worktree_init
+#   generates under lib/ must come out the same every time.
+#   A pass is a comment on the PR; a score under the threshold is an issue, and
+#   so is a run that scored nothing. With a usable gh it posts itself and
+#   prints `posted: <url>`; without one it prints `post: comment <pr>` or
+#   `post: issue <title>`, then the body.
+#   A file the commit doesn't have is skipped without a report.
+# First line: `asst-mutation-job: PASS|FAIL|ERROR|GONE <file> @ <sha7> (PR #<n>)`.
+# Exit: 0 reported, whatever the verdict — so a failed job means one that was
+# cut off before reporting, which is worth running again · 2 usage, or the
+# commit can't be checked out.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"; source "$here/github.sh"
-queue() { bash "$here/mutation-queue.sh" "$@"; }
+pr="${1:-}"; sha="${2:-}"; file="${3:-}"
+[[ $pr =~ ^[0-9]+$ && $sha =~ ^[0-9a-f]{7,40}$ && -n $file ]] || { sed -n '7,28p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 root=$(asst_root); cd "$root" || exit 2
 field() { sed -nE "s/^$1:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" .claude/assistant.md 2>/dev/null | head -1; }
-refs_of() { local r; r=$(printf 'PR #%s, ' $1); echo "${r%, }"; }
+git cat-file -e "$sha^{commit}" 2>/dev/null || git fetch --quiet origin "$sha" 2>/dev/null
+sha=$(git rev-parse --verify --quiet "$sha^{commit}") || { echo "asst-mutation-job: no commit $2 here or on origin" >&2; exit 2; }
 
-# report <verdict> <file> <sha> <prs> <log-file>
-report() {
-  local verdict=$1 file=$2 sha=$3 prs=$4 log=$5 head body title why="" url pr
-  head="$file @ ${sha:0:7} ($(refs_of "$prs"))"
-  echo "asst-mutation-job: $verdict $head"
-  [ "$verdict" = GONE ] && return
-  body=$(printf 'asst-mutation-job: %s %s\n\n```\n%s\n```\n' "$verdict" "$head" "$(cat "$log")")
-  title="mutation $verdict: $file ($(refs_of "$prs"))"
-  why=$(gh_unusable "$root")
-  if [ -z "$why" ]; then
-    if [ "$verdict" = PASS ]; then
-      for pr in $prs; do url=$(gh pr comment "$pr" --body "$body") && echo "posted: $url" || why=failed; done
-    else
-      url=$(gh issue create --title "$title" --body "$body") && echo "posted: $url" || why=failed
-    fi
-    [ -z "$why" ] || echo "gh failed to post — post it yourself:"
-  fi
-  if [ -n "$why" ]; then
-    [ "$verdict" = PASS ] && echo "post: comment $prs" || echo "post: issue $title"
-    printf '%s\n' "$body"
-  fi
-}
+repo=$(basename "$root")
+key=$(printf '%s' "$file" | tr '/' '_')
+src="${ASST_MUTATION_SRC:-/tmp/asst-mutation}/$repo/${sha:0:12}/$key"
+keep="${ASST_MUTATION_STATE:-$HOME/.cache/asst-mutation}/$repo/$sha/$key"
+mkdir -p "$keep" || exit 2
+log="$keep/run.log"
 
-state=$(mktemp -d); trap 'rm -rf "$state"' EXIT
-journal="$state/plan-mutation-dart.jsonl"
-
-queue sweep | while IFS= read -r line; do
-  case "$line" in
-    "stuck: "*)
-      set -- ${line#stuck: }; f=$1; shift
-      echo "Three sessions in a row ended before this file's journal grew: no claim finished a single mutant. Split the file, or run it somewhere a session lives longer." > "$state/stuck.log"
-      report STUCK "$f" "" "$*" "$state/stuck.log" ;;
-    *) echo "asst-mutation-queue: $line" ;;
-  esac
-done
-
-job=$(queue claim "$journal"); rc=$?
-[ $rc = 3 ] && { echo "asst-mutation-job: queue empty"; exit 3; }
-[ $rc = 0 ] || exit 2
-read -r file sha prs <<< "$job"
-
-src="${ASST_MUTATION_SRC:-/tmp/asst-mutation}/$(basename "$root")"
-log="$state/run.log"
 run() {
-  local cmd; cmd=$(field mutation)
+  local cmd init; cmd=$(field mutation)
   case "$cmd" in
     plan-mutation|plan-mutation\ *) ;;
     *) echo "the adapter's mutation: must be a plan-mutation command, not: ${cmd:-(unset)}"; return 2 ;;
   esac
   # The worktree is a clean checkout: whatever the build generates and git
   # ignores (generated code, assets, .dart_tool) is made here, in the shell.
-  local init; init=$(field worktree_init)
+  init=$(field worktree_init)
   if [ -n "$init" ] && [ "$init" != none ]; then
     bash -c "$init" || { echo "worktree_init failed (exit $?): $init — nothing was mutated; fix the command, not the tests"; return 2; }
   fi
   # --files reads paths up to `--`, so the added flags go right before the test command.
   # shellcheck disable=SC2086 # the adapter's command is a command line on purpose
   case "$cmd" in
-    *" -- "*) ${cmd%% -- *} --keep-dir "$state" --files "$file" -- ${cmd#* -- } ;;
-    *)        $cmd --keep-dir "$state" --files "$file" ;;
+    *" -- "*) ${cmd%% -- *} --keep-dir "$keep" --files "$file" -- ${cmd#* -- } ;;
+    *)        $cmd --keep-dir "$keep" --files "$file" ;;
   esac
 }
+
 verdict=""
 git worktree remove --force "$src" >/dev/null 2>&1; rm -rf "$src"; git worktree prune
-if ! { git cat-file -e "$sha^{commit}" 2>/dev/null || git fetch --quiet origin "$sha"; } \
-   || ! git worktree add --quiet --detach "$src" "$sha" 2>"$log"; then
+mkdir -p "$(dirname "$src")"
+if ! git worktree add --quiet --detach "$src" "$sha" 2>"$log"; then
   echo "cannot check out $sha at $src" >>"$log"; rc=2
 elif [ ! -f "$src/$file" ]; then verdict=GONE; rc=0
-else
-  (cd "$src" && run) >"$log" 2>&1 &
-  pid=$!; beat=${ASST_MUTATION_BEAT:-300}; t=0
-  while kill -0 "$pid" 2>/dev/null; do
-    sleep 1; t=$((t + 1))
-    [ $t -ge "$beat" ] && { t=0; queue save "$file" "$journal" >/dev/null || true; }
-  done
-  wait "$pid"; rc=$?
+else (cd "$src" && run) >"$log" 2>&1; rc=$?
 fi
 if [ -z "$verdict" ]; then
   if [ $rc = 0 ]; then verdict=PASS
   elif [ $rc = 1 ] && grep -q '^plan-mutation: BLOCKED\.' "$log"; then verdict=FAIL
-  else verdict=ERROR; rc=2
+  else verdict=ERROR
   fi
 fi
-report "$verdict" "$file" "$sha" "$prs" "$log"
 git worktree remove --force "$src" >/dev/null 2>&1
-queue done "$file" || echo "asst-mutation-job: reported, but $file is still marked running — the next sweep queues it again" >&2
-exit $rc
+
+head="$file @ ${sha:0:7} (PR #$pr)"
+echo "asst-mutation-job: $verdict $head"
+if [ "$verdict" != GONE ]; then
+  body=$(printf 'asst-mutation-job: %s %s\n\n```\n%s\n```\n' "$verdict" "$head" "$(cat "$log")")
+  title="mutation $verdict: $file (PR #$pr)"
+  why=$(gh_unusable "$root")
+  if [ -z "$why" ]; then
+    if [ "$verdict" = PASS ]; then url=$(gh pr comment "$pr" --body "$body")
+    else url=$(gh issue create --title "$title" --body "$body"); fi \
+      && echo "posted: $url" || { echo "gh failed to post — post it yourself:"; why=failed; }
+  fi
+  if [ -n "$why" ]; then
+    [ "$verdict" = PASS ] && echo "post: comment $pr" || echo "post: issue $title"
+    printf '%s\n' "$body"
+  fi
+fi
+# A scored file needs its journal no more; an unscored one keeps it, so the
+# same command run again resumes.
+[ "$verdict" = ERROR ] || rm -rf "$keep"
+exit 0

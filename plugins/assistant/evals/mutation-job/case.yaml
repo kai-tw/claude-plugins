@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-job
-description: asst-mutation-job resumes a swept file at its pinned commit with its saved journal, pins a new claim to the tip, runs the adapter's worktree_init and then plan-mutation on the claimed file alone in the fixed worktree, reports a failed worktree_init as an error without mutating, saves the journal as it runs, comments a pass on every PR queued for the file, opens one issue for a failing score or a run that scored nothing, prints what to post when gh is unusable, drops a file the commit doesn't have, and exits 3 once the queue is empty.
+description: asst-mutation-job runs worktree_init and then plan-mutation on one file alone, at the merge commit, in a fixed worktree per commit and file; comments a pass on the PR, opens an issue for a failing score or a run that scored nothing, prints what to post when gh is unusable, keeps an unscored run's journal so running it again resumes, reports a failed worktree_init without mutating, skips a file the commit doesn't have, and exits 0 whenever it reported.
 tags: [asst-mutation-job]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 6
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH" ASST_MUTATION_SRC="$PWD/src" ASST_MUTATION_BEAT=1; tips() { sed "s/$(cat $EVAL_WS/tip1.sha)/TIP1/g;s/$(cat $EVAL_WS/tip2.sha)/TIP2/g;s#$EVAL_WS#WS#g"; }; cd wt; for m in pass slow abort initfail gone; do echo $m > ../stub.mode; [ $m = abort ] && export GH_OFF=1; [ $m = initfail ] && touch ../init.fail; asst-mutation-job; echo "$m=$?"; done; asst-mutation-job; echo "empty=$?"; asst-mutation-queue status; cat ../pm.log ../gh.log | tips
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH" ASST_MUTATION_SRC="$PWD/src" ASST_MUTATION_STATE="$PWD/state"; sha=$(cat merged.sha); tidy() { sed "s/$sha/SHA/g;s/${sha:0:12}/SHA12/g;s#$EVAL_WS#WS#g"; }; cd wt; j() { echo $2 > ../stub.mode; asst-mutation-job 7 "$sha" "$1"; echo "$1 $2=$?"; }; j lib/a.dart pass; j lib/b.dart blocked; export GH_OFF=1; j lib/c.dart abort; echo "kept=$(ls ../state/wt/$sha 2>/dev/null | paste -sd, -)"; unset GH_OFF; j lib/c.dart pass; echo "after=$(ls ../state/wt/$sha 2>/dev/null | paste -sd, -)"; touch ../init.fail; j lib/d.dart pass; rm ../init.fail; j lib/gone.dart pass; asst-mutation-job seven "$sha" lib/a.dart 2>/dev/null; echo "usage=$?"; cat ../pm.log ../gh.log | tidy
   prompt: |
-    In a clone whose mutation queue holds five files — one of them resuming from a lost session — with a fake plan-mutation and gh, run asst-mutation-job until the queue is empty, and print the output, exit codes, how each run started, what was posted and the queue's status.
+    In a clone with a fake plan-mutation and gh, run asst-mutation-job on files of a merge commit — a pass, a failing score, an abort with gh unusable and then the same file again, a failing worktree_init, a file the commit doesn't have, and a bad PR number — and print the output, exit codes, what was kept, how each run started and what was posted.
 context:
   scaffold_script: fixture.sh

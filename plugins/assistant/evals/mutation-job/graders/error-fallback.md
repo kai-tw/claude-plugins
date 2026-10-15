@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^post: issue mutation ERROR: lib/c\.dart \(PR #9\)$'
+pattern: '^post: issue mutation ERROR: lib/c\.dart \(PR #7\)$'
 flags: m
 arm: with-only
 ---
-A run that scored nothing is an error issue, printed for the session to post when gh is unusable.
+A run that scored nothing is an error issue, printed to post when gh is unusable.

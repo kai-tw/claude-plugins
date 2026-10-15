@@ -14,7 +14,7 @@
 #          verify leg the adapter requires has a report filed after HEAD's commit
 # Legs: verify-code always · verify-coverage when the adapter's coverage: is
 # set · verify-text when ui_strings: is set and the PR's diff touches it.
-# Mutation is not a leg: it runs after the merge (asst-mutation-queue).
+# Mutation is not a leg: it runs after the merge (asst-mutation-job).
 # Exit: 0 done · 1 refused · 2 usage, not a git task, or no
 # PR possible here (gh missing or unauthenticated, no GitHub remote).
 #

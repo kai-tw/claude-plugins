@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^worktree_init failed \(exit 3\): '
+pattern: '^gh: issue create mutation ERROR: lib/d\.dart \(PR #7\)$'
 flags: m
 arm: with-only
 ---
-A failed worktree_init is reported as such in the error issue.
+A failed worktree_init is an error issue.

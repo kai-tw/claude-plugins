@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^plan-mutation --workers 2 --keep-dir [^ ]+ --files lib/a\.dart -- flutter test '
+pattern: '^plan-mutation --workers 2 --keep-dir WS/state/wt/SHA/lib_a\.dart --files lib/a\.dart -- flutter test @ SHA '
 flags: m
 arm: with-only
 ---
---keep-dir and --files land right before the test command, so the run names only the claimed file.
+--keep-dir and --files land right before the test command, and the run is at the merge commit.
