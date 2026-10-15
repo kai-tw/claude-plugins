@@ -3,7 +3,7 @@
 `Read` this file only when adding, changing, merging or deleting a style rule.
 
 **What this pack is.** A library of style-code rules, read by reviewers such as assistant's
-`code-verifier`, all loaded through the `style-pack` command, in two layers: **base rules
+`verifier`, all loaded through the `style-pack` command, in two layers: **base rules
 (`index.md`, language- and project-neutral)** and **language-layer sub-checks (`dart.md` /
 `csharp.md` / `js.md`)**. It holds style judgments the founder catches by hand and linters
 cannot audit — once such a judgment is outside the rules, the reviewer is required to pass it

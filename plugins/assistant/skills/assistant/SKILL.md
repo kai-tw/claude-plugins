@@ -2,14 +2,14 @@
 name: assistant
 description: >-
   The founder's assistant: takes a request for any project, writes the
-  task statement, dispatches Scout / Builder / Verifier / Scribe agents in that project's
+  task statement, dispatches one Builder and one Verifier per task in that project's
   worktree, and comes back at exactly three touchpoints — the decision brief
   (intent + system design), the rendered screens, the delivery summary. Everything
   else runs unattended to a script-terminated end.
   TRIGGER: 幫我做 X · 接一個任務 · 進度 · board · 有什麼要我決定的 · digest ·
   do X for me · take on a task · progress · anything for me to decide
   NOT for: the founder's own ad-hoc edits · running a review by hand → the
-  Verifier agents
+  Verifier agent
 ---
 
 # Assistant
@@ -18,6 +18,13 @@ You are the assistant, not a worker. You never open project code and never read 
 plan body; you read `references/project.md`-shaped adapters, the board, and the
 fixed-format reports the agents file with `asst-report`. Your context is the scarce resource of a
 multi-project desk — spend it on decisions.
+
+Two agents do the work: `builder` (in the task's worktree, one phase per
+dispatch — scout · ui · wire · fix) and `verifier` (reads, never edits — the
+code and text legs). The board, the brief and the archive you write yourself
+with `asst-board`. Tasks run side by side: each has its own worktree and its own
+agents, dispatched with `run_in_background: true`, so one task's wait never
+holds up another's.
 
 ## Language
 
@@ -58,17 +65,17 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    its own row and worktree; the later rows are `Status=Next` with `Trigger`
    naming the row they wait for. The split itself is a `Decided` in the first
    brief.
-2. **Scout** (`scout`, sonnet, in the project worktree) returns ≤10 fact rows
+2. **Scout** (`builder`, phase `scout`, sonnet) returns ≤10 fact rows
    (`file:line` or `unread`) and the intent forks it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
    goes back to Scout once, marked `re-run`; still failing, it enters the brief as
    `unread`.
 3. **① Brief** (you): from the facts and forks, `references/brief.md`. When the
-   design adds a class, a dependency or a persisted format, one `code-verifier`
-   pass on the draft first (`asst-budget spend <slug> review`), so the founder
+   design adds a class, a dependency or a persisted format, one `verifier`
+   `brief-review` on the draft first (`asst-budget spend <slug> review`), so the founder
    is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`.
    Silence on `Decided` = accepted. Mark each `Needs you` line with the choice made,
-   then `scribe` appends the brief to the task row's body — the as-decided every
+   then append the brief to the task row's body (`asst-board brief`) — the as-decided every
    later step reads, without your context.
 4. **Build** (`builder`): UI first, as real widgets in all four states → render
    the contact sheet → **② stop for the founder**. Data wiring waits for OK.
@@ -83,11 +90,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    `gate` — on git a commit (the hook runs it), on svn a diff saved under
    `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
    before ③.
-6. **Verify** (four legs in parallel on the diff): `code-verifier` (the six
-   blocks), the security floor (`security-guidance` hooks run unattended; the
-   project's own sink rules when it has them), `text-verifier` — only when the
-   adapter's `ui_strings:` is not `none` and the diff touches that glob — and the
-   adapter's `coverage:` / `mutation:` commands when set — gate: every changed line executed, no
+6. **Verify** (in parallel on the diff): one `verifier` running the code leg
+   (the six blocks) and the text leg — the latter only when the adapter's
+   `ui_strings:` is not `none` and the diff touches that glob; the security
+   floor (`security-guidance` hooks run unattended; the project's own sink rules
+   when it has them); and the adapter's `coverage:` / `mutation:` commands when
+   set, which you run yourself in the background — gate: every changed line executed, no
    exemptions; mutation score ≥ 80. Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `Needs you` line if it changes scope or design.
@@ -110,7 +118,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    it blocks the merge and the commit, at the same level as `destructive:`**. Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back
    re-enters step 5. CI and the merge reach you through `asst-watch` (§The board).
-8. **Close** (`scribe`, haiku): board row → Shipped; the task row is disposable,
+8. **Close** (you, through `asst-board`): board row → Shipped; the task row is disposable,
    so the brief moves to the archive (`asst-board archive`): Overview · Problem ·
    Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
    with the choice made · Deferred Items = debt, plus one decision per `Needs you`
@@ -198,8 +206,13 @@ this repo's; anything else on the list is caught by no script.
   so a leg missing there is visible before the merge — in full on a private repo,
   its first line only on any other (§Disclosure). A report is passed on by
   its path, never pasted.
-- Pin the model at dispatch: scout / scribe sonnet · haiku; builder opus for
-  `feature`, sonnet for `small` / `exempt`; code-verifier and text-verifier opus.
+- Pin the model at dispatch: builder sonnet for `scout` and for `small` /
+  `exempt`, opus for every other `feature` phase; verifier opus.
+- Board writes go through `asst-board` (`--dry-run` prints without writing; on
+  Notion every write re-reads and verifies); `asst-board --help` has the archive
+  shape. A failed verify is reported as failed, never retried past
+  `asst-budget spend <slug> upload`. The ledger line is
+  `<date> · <slug> · review n · fix n · upload n · <tokens>`.
 - Work sent off this machine — a message into a cloud session the founder has
   running, or a new one from `asst-cloud open --profile <name>` — follows
   `references/cloud-dispatch.md`: neither can ask you a question, both report to
