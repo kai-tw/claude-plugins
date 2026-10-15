@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-job
+description: asst-mutation-job runs the adapter's plan-mutation on one file at the merge commit, comments a pass on the PR, opens an issue for a failing score or a run that scored nothing, and prints what to post when gh is unusable.
+tags: [asst-mutation-job]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; sha=$(cat merged.sha); cd wt; for m in pass blocked abort; do echo $m > ../stub.mode; [ $m = abort ] && export GH_OFF=1; asst-mutation-job 7 "$sha" lib/a.dart; echo "$m=$?"; done; asst-mutation-job seven "$sha" lib/a.dart 2>/dev/null; echo "usage=$?"; echo "at-merge=$(grep -c "@ $sha$" ../pm.log)"; cat ../pm.log ../gh.log
+  prompt: |
+    In a clone with a fake plan-mutation and gh, run asst-mutation-job on one file at a merge commit three times — a pass, a failing score, an abort with gh unusable — plus once with a bad PR number; print the output, exit codes and what was posted.
+context:
+  scaffold_script: fixture.sh

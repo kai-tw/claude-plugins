@@ -12,9 +12,9 @@
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists; every
 #          verify leg the adapter requires has a report filed after HEAD's commit
-# Legs: verify-code always · verify-coverage / verify-mutation when the adapter's
-# coverage: / mutation: are set · verify-text when ui_strings: is set and the
-# PR's diff touches it. Exit: 0 done · 1 refused · 2 usage, not a git task, or no
+# Legs: verify-code always · verify-coverage when the adapter's coverage: is
+# set · verify-text when ui_strings: is set and the PR's diff touches it.
+# Mutation is not a leg: it runs after the merge (asst-mutation-job). Exit: 0 done · 1 refused · 2 usage, not a git task, or no
 # PR possible here (gh missing or unauthenticated, no GitHub remote).
 #
 # On a repo not known to be private, `open` refuses to push, and `ready` to turn
@@ -73,7 +73,6 @@ $leaks"
 
     legs="code"
     [ "$(field coverage)" != none ] && [ -n "$(field coverage)" ] && legs="$legs coverage"
-    [ "$(field mutation)" != none ] && [ -n "$(field mutation)" ] && legs="$legs mutation"
     glob=$(field ui_strings)
     if [ -n "$glob" ] && [ "$glob" != none ]; then
       while IFS= read -r f; do

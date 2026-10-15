@@ -26,7 +26,7 @@ reports. Anything a linter or a passed check already settled is one line.
 - value approved at ②: <value> → change: <one sentence> · awaiting re-approval
 
 ## Other (automated checks)
-security passed · naming passed · coverage <n unexecuted lines, each named> · mutation <score>/80   (or `no coverage/mutation tool` from the adapter)
+security passed · naming passed · coverage <n unexecuted lines, each named>   (or `no coverage tool` from the adapter)
 ## Debt
 - <one line each, task id>
 ```
