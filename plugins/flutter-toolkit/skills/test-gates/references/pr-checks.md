@@ -22,8 +22,10 @@ service: nothing runs until a session needs it.
 
 After pushing to a PR, start `plan-ci-runner` from the repo's clone with the
 Bash tool's `run_in_background: true`. It starts this repo's runner and stops
-it once the repo has had no queued or running workflow for `--idle` minutes
-(default 5); a PR's jobs wait queued on GitHub until then. `plan-coverage` and
+it once the runner has had no work for `--idle` minutes (default 5): no job
+running on it, and none queued that asks for a self-hosted runner. Workflows on
+GitHub-hosted runners don't keep it up. Until it starts, a PR's jobs wait
+queued on GitHub. `plan-coverage` and
 `plan-mutation` take this machine's test slots like any other run, so CI and
 local sessions share the memory budget. Only use it on a private repo: a
 public repo's workflows can be made to run a stranger's code on it.

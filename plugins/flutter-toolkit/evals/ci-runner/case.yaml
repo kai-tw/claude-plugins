@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: ci-runner
-description: plan-ci-runner starts the runner registered for this repo, keeps it up while the repo has queued or running workflows, stops it once the repo has been idle long enough, leaves a runner that is already running alone, and refuses a repo with no registered runner.
+description: plan-ci-runner starts the runner registered for this repo, keeps it up while a job waits for a self-hosted runner, stops it once it has had no work long enough even though a workflow on GitHub-hosted runners is still running, leaves a runner that is already running alone, and refuses a repo with no registered runner.
 tags: [plan-ci-runner]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/fake:$PATH" PLAN_CI_RUNNERS="$PWD/runners" PLAN_CI_RUNNER_POLL=1; (cd app && plan-ci-runner --idle 0); echo "run=$?"; echo "polls-left=$(cat pending.txt)"; cat listener.log; "$(cd -P runners/app && pwd)/bin/Runner.Listener" & l=$!; sleep 1; (cd app && plan-ci-runner); echo "again=$?"; kill $l; (cd stray && plan-ci-runner 2>&1); echo "stray=$?"
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/fake:$PATH" PLAN_CI_RUNNERS="$PWD/runners" PLAN_CI_RUNNER_POLL=1 PLAN_CI_RUNNER_GRACE=3; (cd app && plan-ci-runner --idle 0) & p=$!; (sleep 30; kill $p 2>/dev/null && echo "watchdog: still running after 30s") & w=$!; wait $p; echo "run=$?"; kill $w 2>/dev/null; echo "self-hosted-left=$(cat selfq.txt)"; cat listener.log; "$(cd -P runners/app && pwd)/bin/Runner.Listener" & l=$!; sleep 1; (cd app && plan-ci-runner); echo "again=$?"; kill $l; (cd stray && plan-ci-runner 2>&1); echo "stray=$?"
   prompt: |
-    With two fake registered runners and a fake gh whose queue empties after a few polls, run plan-ci-runner in a clone, then again while its runner is already up, then in a clone with no runner; print the output and exit codes.
+    With two fake registered runners and a fake gh where a workflow on GitHub-hosted runners keeps running while the self-hosted queue empties after a few polls, run plan-ci-runner in a clone, then again while its runner is already up, then in a clone with no runner; print the output and exit codes.
 context:
   scaffold_script: fixture.sh

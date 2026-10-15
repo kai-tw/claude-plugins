@@ -3,8 +3,11 @@
 # runners/ holds two registered runners, as config.sh leaves them: one for
 # o/app, whose run.sh starts a fake Runner.Listener that logs it ran and
 # waits, and one for o/other. app/ and stray/ are clones of o/app and o/stray.
-# fake/gh answers `run list` with the count in pending.txt, one less on
-# every call, so the repo looks busy for a few polls and then idle.
+# fake/gh stands in for GitHub. The runner is never busy. Run 101 is in
+# progress the whole time, on GitHub-hosted runners: none of its jobs ask for
+# a self-hosted one. Run 102 is queued with as many self-hosted jobs waiting
+# as selfq.txt says, one fewer each time its jobs are listed, so the runner
+# has work for a few polls and then none.
 set -euo pipefail
 for r in app other; do
   mkdir -p "runners/$r/bin"
@@ -24,12 +27,17 @@ done
 mkdir -p fake
 cat > fake/gh <<'G'
 #!/usr/bin/env bash
-case "$1 $2" in
-  "run list")
-    n=$(cat "$EVAL_WS/pending.txt"); echo "$n"
-    [ "$n" -gt 0 ] && echo $((n - 1)) > "$EVAL_WS/pending.txt"; exit 0 ;;
+n=$(cat "$EVAL_WS/selfq.txt")
+case "$*" in
+  "api repos/o/app/actions/runners "*) echo false ;;
+  "run list"*"--status queued"*) [ "$n" -gt 0 ] && echo 102 ;;
+  "run list"*"--status in_progress"*) echo 101 ;;
+  "api repos/o/app/actions/runs/101/jobs "*) echo 0 ;;
+  "api repos/o/app/actions/runs/102/jobs "*)
+    echo "$n"; [ "$n" -gt 0 ] && echo $((n - 1)) > "$EVAL_WS/selfq.txt" ;;
+  *) exit 1 ;;
 esac
-exit 1
+exit 0
 G
 chmod +x fake/gh
-echo 4 > pending.txt
+echo 4 > selfq.txt

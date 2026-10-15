@@ -48,8 +48,9 @@ allowed-tools:
   `--workers n` is its concurrency; the other engine flags are Dart-only.
 - `plan-ci-runner [--idle <min>]` — after pushing to a PR, start it with
   `run_in_background: true`: it runs this repo's registered runner (under
-  `~/actions-runners/`) and stops it once no workflow has been queued or
-  running for `--idle` minutes (default 5). No runner is installed as a service.
+  `~/actions-runners/`) and stops it once it has had no job, running or queued
+  for a self-hosted runner, for `--idle` minutes (default 5). No runner is
+  installed as a service.
 
 Coverage grades the reach, mutation grades what was reached; neither replaces
 the other. Slot state: `$HOME/.claude/.flutter-toolkit/slots` (`PLAN_TEST_DIR`).
