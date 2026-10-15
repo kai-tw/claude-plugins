@@ -6,7 +6,7 @@
 # Never paste this file itself. It provisions the three things a fresh
 # container lacks: the Flutter toolchain, this marketplace's Claude plugins and
 # the plugins they depend on from other marketplaces (seeded for every session —
-# see the plugin block for why a seed and not an install), and the `ntn` CLI the assistant's scribe reaches Notion through.
+# see the plugin block for why a seed and not an install), and the `ntn` CLI the assistant reaches Notion through.
 #
 # Reusable across every project because it bootstraps whatever the environment
 # actually cloned and whatever that project's settings declare, instead of
@@ -364,7 +364,7 @@ install_one() {
   fi
 }
 
-# The scribe's transport to Notion. A fresh container has neither the binary
+# The assistant's transport to Notion. A fresh container has neither the binary
 # nor the ~/.config/notion that `ntn login` writes — and login is interactive
 # OAuth, so it cannot run here. Both halves come from the environment's
 # Environment variables field instead:
@@ -381,13 +381,13 @@ install_ntn() {
   # which this script cannot do. npm's global bin is already on PATH — the last
   # place notion-payload's own resolver looks.
   if ! npm install --global ntn >/dev/null 2>&1; then
-    report "\`ntn\` would not install, so the assistant's scribe has no transport to Notion — no
+    report "\`ntn\` would not install, so the assistant has no transport to Notion — no
 TaskList, no task rows, no Feature Archive, no close. Say so rather than
 working around it; do not hand-write into the repo what belongs in the KB."
     return 0
   fi
   # Advisory, like every other step — a bad token must never cost the session —
-  # but REPORTED, because a session that starts with a mute scribe and does
+  # but REPORTED, because a session that starts that cannot reach Notion and does
   # not know it is worse than one that fails loudly. Checked here rather than
   # left to discovery: the first `ntn` call of a task is usually the close
   # archive, the most expensive moment to learn the token was never set.
@@ -395,7 +395,7 @@ working around it; do not hand-write into the repo what belongs in the KB."
     log "ntn authenticated"
     return 0
   fi
-  report "\`ntn\` is installed but NOT authenticated, so the assistant's scribe cannot read or
+  report "\`ntn\` is installed but NOT authenticated, so the assistant cannot read or
 write Notion — no TaskList, no task rows, no Feature Archive, no close.
 Say so rather than working around it; do not hand-write into the repo what
 belongs in the KB.

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: reviewer-name
+description: CONVENTIONS.md names the reviewer that reads this pack by the agent the assistant actually has — verifier.
+tags: [docs]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: tr "\n" " " < "$root/skills/ui-text-pack/rules/CONVENTIONS.md" | grep -oE "assistant.s +\`[a-z-]+\`" | sed "s/^/reviewer=/"
+  prompt: |
+    Print which of the assistant's agents CONVENTIONS.md names as this pack's reader.
+context:
+  scaffold_script: fixture.sh

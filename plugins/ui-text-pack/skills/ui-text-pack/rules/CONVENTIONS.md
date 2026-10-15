@@ -3,7 +3,7 @@
 `Read` this file only when adding, changing, merging or deleting a UI text rule.
 
 **What this pack is.** A rulebook for writing user-visible text, read by reviewers
-(assistant's `text-verifier`, etc.), all loaded through the `ui-text-pack` command, in two
+(assistant's `verifier`, etc.), all loaded through the `ui-text-pack` command, in two
 layers: **base rules (`index.md`, locale- and project-neutral)** and the **locale layer
 (`zh-Hant.md` / `ja.md` / `en.md`)**. It holds text judgments the founder catches by hand
 and scripts cannot — once such a judgment is outside the rules, reviewers are required to
