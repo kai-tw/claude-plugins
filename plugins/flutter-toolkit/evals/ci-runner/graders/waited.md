@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^polls-left=0$'
+pattern: '^self-hosted-left=0$'
 flags: m
 arm: with-only
 ---
-It stays up while workflows are queued or running, polling until there are none.
+It stays up while jobs wait for a self-hosted runner, and stops only once none do.

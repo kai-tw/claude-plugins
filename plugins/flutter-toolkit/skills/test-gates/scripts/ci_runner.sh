@@ -5,8 +5,10 @@
 # Usage: plan-ci-runner [--idle <minutes>]   (from inside the repo's clone)
 #   Finds the runner registered for this repo's origin under
 #   $PLAN_CI_RUNNERS (default ~/actions-runners: one directory per runner,
-#   as `config.sh` leaves it), starts it, and stops it once the repo has had
-#   no queued or running workflow for --idle minutes (default 5). Start it
+#   as `config.sh` leaves it), starts it, and stops it once it has had no
+#   work for --idle minutes (default 5): it isn't running a job, and no job
+#   waiting in a queued or running workflow asks for a self-hosted runner.
+#   Jobs on GitHub-hosted runners don't count. Start it
 #   with the Bash tool's `run_in_background: true` after pushing to a PR; the
 #   session is woken when it exits. A runner already running for this repo
 #   is left alone.
@@ -17,7 +19,7 @@ idle=5
 while [ $# -gt 0 ]; do
   case "$1" in
     --idle) idle="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "plan-ci-runner: unknown argument '$1'" >&2; exit 2 ;;
   esac
 done
@@ -41,12 +43,23 @@ if pgrep -f "$dir/bin/Runner.Listener" >/dev/null 2>&1; then
   exit 0
 fi
 
-# Queued plus in-progress runs; empty when gh can't answer.
+agent=$(jq -r .agentName "$dir/.runner")
+
+# This runner's work: 1 while it runs a job, plus each queued job, in a queued
+# or running workflow, that asks for a self-hosted runner. A workflow on
+# GitHub-hosted runners is someone else's work. Fails when gh can't answer.
 pending() {
-  local q r
-  q=$(gh run list -R "$repo" --status queued --limit 20 --json databaseId --jq length 2>/dev/null) || return 1
-  r=$(gh run list -R "$repo" --status in_progress --limit 20 --json databaseId --jq length 2>/dev/null) || return 1
-  echo $((q + r))
+  local n=0 busy id k status
+  busy=$(gh api "repos/$repo/actions/runners" --jq ".runners[] | select(.name == \"$agent\") | .busy" 2>/dev/null) || return 1
+  [ "$busy" = true ] && n=1
+  for status in queued in_progress; do
+    for id in $(gh run list -R "$repo" --status "$status" --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null) ; do
+      k=$(gh api "repos/$repo/actions/runs/$id/jobs" \
+        --jq '[.jobs[] | select(.status == "queued" and (.labels | index("self-hosted")))] | length' 2>/dev/null) || return 1
+      n=$((n + k))
+    done
+  done
+  echo "$n"
 }
 pending >/dev/null || { echo "plan-ci-runner: gh can't list $repo's workflow runs" >&2; exit 2; }
 
@@ -54,14 +67,34 @@ log="$dir/_diag/plan-ci-runner.log"
 mkdir -p "$dir/_diag"
 "$dir/run.sh" >"$log" 2>&1 &
 pid=$!
-# TERM, not INT: a job started with `&` in a script ignores SIGINT, so the
-# runner would never hear it. The runner finishes cleanly on TERM; one that is
-# still up after the grace period is killed.
+# Every process below <pid>.
+descendants() {
+  local c
+  for c in $(pgrep -P "$1" 2>/dev/null); do
+    echo "$c"; descendants "$c"
+  done
+}
+# The whole tree, not just run.sh: run.sh starts run-helper.sh, which starts
+# Runner.Listener, which starts a Runner.Worker per job. Stopping run.sh alone
+# orphans the listener, which stays connected and keeps taking jobs. The tree
+# is listed before anything is signalled — once a parent dies its children are
+# re-parented and can't be found from it — and anything still running from
+# this runner's bin/ is caught by path. TERM, not INT: a job started with `&`
+# in a script ignores SIGINT. What is still up after the grace period is killed.
 stop_runner() {
-  local t=0
-  pkill -TERM -P "$pid" 2>/dev/null; kill -TERM "$pid" 2>/dev/null
-  while kill -0 "$pid" 2>/dev/null && [ $t -lt "${PLAN_CI_RUNNER_GRACE:-30}" ]; do sleep 1; t=$((t + 1)); done
-  pkill -KILL -P "$pid" 2>/dev/null; kill -KILL "$pid" 2>/dev/null
+  local t=0 tree
+  tree="$pid $(descendants "$pid") $(pgrep -f "$dir/bin/Runner\." 2>/dev/null)"
+  # shellcheck disable=SC2086 # a list of pids
+  kill -TERM $tree 2>/dev/null
+  while [ $t -lt "${PLAN_CI_RUNNER_GRACE:-30}" ]; do
+    # shellcheck disable=SC2086
+    alive=$(for p in $tree; do kill -0 "$p" 2>/dev/null && echo "$p"; done)
+    [ -n "$alive" ] || break
+    sleep 1; t=$((t + 1))
+  done
+  # shellcheck disable=SC2086
+  kill -KILL $tree 2>/dev/null
+  pkill -KILL -f "$dir/bin/Runner\." 2>/dev/null
   wait "$pid" 2>/dev/null
 }
 trap stop_runner EXIT
@@ -71,9 +104,10 @@ quiet=0
 while kill -0 "$pid" 2>/dev/null; do
   sleep "$poll"
   n=$(pending) || n=1   # unknown counts as busy: never stop under a job
-  if [ "$n" -gt 0 ]; then quiet=0; else quiet=$((quiet + poll)); fi
+  if [ "$n" -gt 0 ]; then quiet=0; continue; fi
+  quiet=$((quiet + poll))
   if [ "$quiet" -ge $((idle * 60)) ]; then
-    echo "plan-ci-runner: no queued or running workflow for ${idle} minute(s) — stopping"
+    echo "plan-ci-runner: no work for this runner for ${idle} minute(s) — stopping"
     exit 0
   fi
 done
