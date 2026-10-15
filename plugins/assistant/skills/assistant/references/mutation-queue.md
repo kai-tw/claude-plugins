@@ -29,31 +29,41 @@ and starts routine sessions that work through it.
 1. **The adapter's `mutation:`** is a `plan-mutation` command, e.g.
    `plan-mutation --select-by-coverage -- flutter test`. `asst-mutation-job` adds
    `--keep-dir` and `--files <file>` to it.
-2. **A cloud environment** whose setup script installs what the command needs
-   (Flutter, `dart pub get`), with the project's settings enabling `assistant`
-   and `flutter-toolkit`.
-3. **A routine** at claude.ai/code/routines on the project repo, in that
+2. **The adapter's `worktree_init:`**, when the build makes anything git
+   ignores: each job runs in a clean worktree, not in the environment's clone,
+   so `pub get`, generated code (`build_runner`, `gen-l10n`) and built assets
+   are made there by this command, e.g.
+   `flutter pub get && dart run build_runner build --delete-conflicting-outputs`.
+   What it generates under `lib/` must come out the same on every run of one
+   commit, or a resumed run starts over.
+3. **A cloud environment** whose setup script installs the toolchain (Flutter,
+   and Node if the init builds assets), with the project's settings enabling
+   `assistant` and `flutter-toolkit`.
+4. **A routine** at claude.ai/code/routines on the project repo, in that
    environment, model Haiku, with two triggers: an API trigger, and an hourly
-   schedule. Save this as its prompt:
+   schedule. Its runs stay in the routine's own history, out of the session
+   list. Save this as its prompt:
 
    ```
    You process the mutation queue. Nothing else is yours to do.
-   1. Run `asst-mutation-job` with the Bash tool's `run_in_background: true`
-      and end the turn; you are woken when it exits. For each `post:` line in
-      its output, post the body below that line: `post: comment <pr…>` as a
-      comment on each of those PRs, `post: issue <title>` as one new issue with
-      that title. Then, unless it printed `queue empty`, repeat step 1.
-   2. Once it prints `queue empty`, archive this session: `get_session` with no
-      session_id gives your own id, then `archive_session` with it. If either
-      tool is missing, say so in one line and stop.
+   Run `asst-mutation-job` with the Bash tool's `run_in_background: true` and
+   end the turn; you are woken when it exits. For each `post:` line in its
+   output, post the body below that line: `post: comment <pr…>` as a comment
+   on each of those PRs, `post: issue <title>` as one new issue with that
+   title. Then run it again, until it prints `queue empty`; then stop.
+   Never commit, push or ask about anything in this checkout: the asst-*
+   commands write the queue themselves, and a file the environment changed
+   stays as it is.
    ```
-4. **Two repo secrets**: `CLOUD_FIRE_URL` (the routine's `/fire` URL) and
+5. **Two repo secrets**: `CLOUD_FIRE_URL` (the routine's `/fire` URL) and
    `CLOUD_FIRE_TOKEN` (its token, shown once when generated).
-5. **The workflow**, as `.github/workflows/mutation.yml`. It runs the queue
+6. **The workflow**, as `.github/workflows/mutation.yml`. It runs the queue
    script from this plugin's repo, and starts one processor per pending file,
    up to 10 — a routine takes 30 fires an hour. Its file filter is
    `plan-mutation`'s: `lib/**.dart` minus generated files, and JS/TS under a
-   package's `src/` or `lib/` minus declarations and tests.
+   package's `src/` or `lib/` minus declarations and tests. Without Actions,
+   run `asst-mutation-queue add <pr> <file…>` from any clone after the merge
+   instead; the hourly run picks it up, and steps 5–6 aren't needed.
 
    ```yaml
    name: mutation
@@ -110,5 +120,3 @@ and starts routine sessions that work through it.
 - A `STUCK` issue is a file no session finished a single mutant of, three
   times in a row. Split the file, or run `plan-mutation` on it somewhere a
   session lives longer.
-- A routine session left in the session list means the archive step failed:
-  its last line says why.

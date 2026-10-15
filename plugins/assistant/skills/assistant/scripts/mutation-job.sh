@@ -8,7 +8,11 @@
 #   First sweeps the queue, opening an issue for each file it gives up on. Then
 #   claims a file and runs the adapter's `mutation:` (a plan-mutation command)
 #   on it alone, at the commit the queue pinned, in a worktree at a fixed path:
-#   $ASST_MUTATION_SRC (default /tmp/asst-mutation)/<repo>. The run's journal
+#   $ASST_MUTATION_SRC (default /tmp/asst-mutation)/<repo>, after the adapter's
+#   `worktree_init:` when set — the worktree is a clean checkout, so nothing
+#   git ignores is there until that command makes it. Whatever it generates
+#   under lib/ must come out the same on every run of one commit, or a resumed
+#   run starts over. The run's journal
 #   is saved to the queue every $ASST_MUTATION_BEAT seconds (default 300) and
 #   restored on the next claim, so a session that dies part-way is resumed by
 #   the next one instead of starting over — the engine keys finished mutants on
@@ -80,6 +84,12 @@ run() {
     plan-mutation|plan-mutation\ *) ;;
     *) echo "the adapter's mutation: must be a plan-mutation command, not: ${cmd:-(unset)}"; return 2 ;;
   esac
+  # The worktree is a clean checkout: whatever the build generates and git
+  # ignores (generated code, assets, .dart_tool) is made here, in the shell.
+  local init; init=$(field worktree_init)
+  if [ -n "$init" ] && [ "$init" != none ]; then
+    bash -c "$init" || { echo "worktree_init failed (exit $?): $init — nothing was mutated; fix the command, not the tests"; return 2; }
+  fi
   # --files reads paths up to `--`, so the added flags go right before the test command.
   # shellcheck disable=SC2086 # the adapter's command is a command line on purpose
   case "$cmd" in

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # origin.git is a local bare remote; wt is a clone whose adapter runs
-# plan-mutation, checked out behind main. The queue holds lib/a.dart (PRs 7
-# and 9), lib/b.dart, lib/c.dart and lib/gone.dart, which main doesn't have.
+# plan-mutation after a worktree_init that generates lib/made.g.dart, or fails
+# while init.fail exists; wt is checked out behind main. The queue holds
+# lib/a.dart (PRs 7 and 9), lib/b.dart, lib/c.dart, lib/d.dart and
+# lib/gone.dart, which main doesn't have.
 # lib/a.dart was claimed at tip1, saved a 2-line journal and lost its session:
 # it is swept back to pending while main has moved on to tip2.
 # stub/plan-mutation logs its arguments, commit, directory and the journal it
@@ -16,16 +18,16 @@ git clone -q origin.git wt 2>/dev/null
 cd wt
 git config user.email e@e; git config user.name e
 mkdir -p .claude lib
-printf 'vcs: git\nmutation: plan-mutation --workers 2 -- flutter test\n' > .claude/assistant.md
-printf '.claude/.assistant/\n' > .gitignore
-for f in a b c; do echo "int $f() => 1;" > lib/$f.dart; done
+printf 'vcs: git\nmutation: plan-mutation --workers 2 -- flutter test\nworktree_init: [ -e "$EVAL_WS/init.fail" ] && exit 3; echo made > lib/made.g.dart\n' > .claude/assistant.md
+printf '.claude/.assistant/\n*.g.dart\n' > .gitignore
+for f in a b c d; do echo "int $f() => 1;" > lib/$f.dart; done
 git add -A; git commit -qm base
 echo 'int a() => 2;' > lib/a.dart
 git commit -qam merged; git rev-parse HEAD > ../tip1.sha
 git push -q origin HEAD:main 2>/dev/null
 git remote set-head origin main 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 "$q" add 7 lib/a.dart lib/b.dart lib/gone.dart >/dev/null
-"$q" add 9 lib/a.dart lib/c.dart >/dev/null
+"$q" add 9 lib/a.dart lib/c.dart lib/d.dart >/dev/null
 "$q" claim >/dev/null
 printf 'header\nmutant 1\n' > ../saved.jsonl
 "$q" save lib/a.dart "$PWD/../saved.jsonl" >/dev/null
@@ -42,6 +44,7 @@ cat > stub/plan-mutation <<'SH'
 keep=$(printf '%s\n' "$@" | sed -n '/^--keep-dir$/{n;p;}')
 j="$keep/plan-mutation-dart.jsonl"
 echo "plan-mutation $* @ $(git rev-parse HEAD) in $PWD from $([ -f "$j" ] && grep -c . "$j" || echo 0) journal line(s)" >> "$EVAL_WS/pm.log"
+echo "generated: $([ -f lib/made.g.dart ] && echo yes || echo no)" >> "$EVAL_WS/pm.log"
 case "$(cat "$EVAL_WS/stub.mode")" in
   pass)    echo "lib/a.dart PASS 90%" ;;
   slow)    printf 'header\nm1\nm2\n' > "$j"; sleep 3

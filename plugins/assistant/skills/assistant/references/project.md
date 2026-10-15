@@ -13,6 +13,7 @@ kb:         <dir>                          # board=file: where `asst-board archi
 gate:       <command>                      # lint · format · tests in one command; red blocks the checkpoint
 coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, no exemptions
 mutation:   <plan-mutation command or none> # run per merged file from the queue (references/mutation-queue.md); gate: ≥ 80
+worktree_init: <command or none>           # mutation: makes what git ignores (pub get, generated code, assets) in the job's clean worktree
 render:     <command or none>              # produces the contact sheet for ② screens and strings
 ui_strings: <glob or none>                 # where the user-visible strings live (ARB); none = this project has none yet, the text leg is skipped
 locales:    <source> [→ <targets…>]       # ui_strings non-none: the source locale and every locale a key must carry
