@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-queue
+description: asst-mutation-queue merges PRs that change the same file into one job, never hands out the same file twice or runs it twice at once, keeps both of two concurrent adds, and sweeps stale claims back to pending.
+tags: [asst-mutation-queue]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: q() { (cd "$1" && shift && asst-mutation-queue "$@"); }; q a add 7 lib/a.dart lib/b.dart; q b add 9 lib/a.dart; echo "claim1=$(q a claim)"; echo "claim2=$(q b claim)"; q b claim; echo "empty=$?"; q a add 11 lib/a.dart; q a claim; echo "busy=$?"; q a done lib/a.dart; echo "claim3=$(q b claim)"; q a add 20 lib/x.dart & q b add 21 lib/y.dart & wait; sleep 1; q a sweep 0; q a status | sed "s/^/status: /"
+  prompt: |
+    From two clones of one remote, add files to the mutation queue, claim them, mark one done, add from both clones at once, then sweep and print the queue's status.
+context:
+  scaffold_script: fixture.sh

@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^post: issue mutation ERROR: lib/a\.dart \(PR #7\)$'
+pattern: '^post: issue mutation ERROR: lib/c\.dart \(PR #9\)$'
 flags: m
 arm: with-only
 ---

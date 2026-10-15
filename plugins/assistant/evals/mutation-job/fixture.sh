@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # origin.git is a local bare remote; wt is a clone whose adapter runs
-# plan-mutation. merged.sha is a commit on main that wt is NOT checked out at.
-# stub/plan-mutation logs its arguments and the commit it ran on, and ends the
-# way stub.mode says. stub/gh logs what it posts; GH_OFF=1 makes it unusable.
+# plan-mutation, checked out one commit behind main (main's tip is in tip.sha).
+# The queue holds lib/a.dart (PRs 7 and 9), lib/b.dart, lib/c.dart and
+# lib/gone.dart, which main no longer has. stub/plan-mutation logs its
+# arguments and the commit it ran on, and ends the way stub.mode says.
+# stub/gh logs what it posts; GH_OFF=1 makes it unusable.
 set -euo pipefail
 git init -q --bare origin.git
 git clone -q origin.git wt 2>/dev/null
@@ -12,12 +14,16 @@ git config user.email e@e; git config user.name e
 mkdir -p .claude lib
 printf 'vcs: git\nmutation: plan-mutation --workers 2 -- flutter test\n' > .claude/assistant.md
 printf '.claude/.assistant/\n' > .gitignore
-echo 'int a() => 1;' > lib/a.dart
+for f in a b c; do echo "int $f() => 1;" > lib/$f.dart; done
 git add -A; git commit -qm base
 echo 'int a() => 2;' > lib/a.dart
-git commit -qam merged; git rev-parse HEAD > ../merged.sha
+git commit -qam merged; git rev-parse HEAD > ../tip.sha
 git push -q origin HEAD:main 2>/dev/null
+git remote set-head origin main 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 git checkout -q HEAD~1
+q="$(dirname "$0")/../../bin/asst-mutation-queue"
+"$q" add 7 lib/a.dart lib/b.dart lib/gone.dart >/dev/null
+"$q" add 9 lib/a.dart lib/c.dart >/dev/null
 cd ..
 mkdir -p stub
 cat > stub/plan-mutation <<'SH'
