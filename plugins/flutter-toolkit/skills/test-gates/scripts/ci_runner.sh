@@ -67,14 +67,34 @@ log="$dir/_diag/plan-ci-runner.log"
 mkdir -p "$dir/_diag"
 "$dir/run.sh" >"$log" 2>&1 &
 pid=$!
-# TERM, not INT: a job started with `&` in a script ignores SIGINT, so the
-# runner would never hear it. The runner finishes cleanly on TERM; one that is
-# still up after the grace period is killed.
+# Every process below <pid>.
+descendants() {
+  local c
+  for c in $(pgrep -P "$1" 2>/dev/null); do
+    echo "$c"; descendants "$c"
+  done
+}
+# The whole tree, not just run.sh: run.sh starts run-helper.sh, which starts
+# Runner.Listener, which starts a Runner.Worker per job. Stopping run.sh alone
+# orphans the listener, which stays connected and keeps taking jobs. The tree
+# is listed before anything is signalled — once a parent dies its children are
+# re-parented and can't be found from it — and anything still running from
+# this runner's bin/ is caught by path. TERM, not INT: a job started with `&`
+# in a script ignores SIGINT. What is still up after the grace period is killed.
 stop_runner() {
-  local t=0
-  pkill -TERM -P "$pid" 2>/dev/null; kill -TERM "$pid" 2>/dev/null
-  while kill -0 "$pid" 2>/dev/null && [ $t -lt "${PLAN_CI_RUNNER_GRACE:-30}" ]; do sleep 1; t=$((t + 1)); done
-  pkill -KILL -P "$pid" 2>/dev/null; kill -KILL "$pid" 2>/dev/null
+  local t=0 tree
+  tree="$pid $(descendants "$pid") $(pgrep -f "$dir/bin/Runner\." 2>/dev/null)"
+  # shellcheck disable=SC2086 # a list of pids
+  kill -TERM $tree 2>/dev/null
+  while [ $t -lt "${PLAN_CI_RUNNER_GRACE:-30}" ]; do
+    # shellcheck disable=SC2086
+    alive=$(for p in $tree; do kill -0 "$p" 2>/dev/null && echo "$p"; done)
+    [ -n "$alive" ] || break
+    sleep 1; t=$((t + 1))
+  done
+  # shellcheck disable=SC2086
+  kill -KILL $tree 2>/dev/null
+  pkill -KILL -f "$dir/bin/Runner\." 2>/dev/null
   wait "$pid" 2>/dev/null
 }
 trap stop_runner EXIT
