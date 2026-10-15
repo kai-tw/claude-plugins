@@ -5,7 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/stale-check.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/stale-check.sh",
+            "timeout": 120
           }
         ]
       }

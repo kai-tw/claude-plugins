@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'claude plugin update p@m --scope project'
+pattern: '^claude plugin update p@m --scope project \(in \./proj\)$'
 flags: m
 arm: with-only
 ---
-reason carries the update command.
+The hook runs the update itself, with the install record's scope, in its project.

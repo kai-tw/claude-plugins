@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'running in this session is 0\.1\.0, but m publishes 0\.2\.0'
+pattern: 'running in this session was 0\.1\.0; m publishes 0\.2\.0, and the project-scope install for .*/proj has just been updated to 0\.2\.0 automatically'
 flags: m
 arm: with-only
 ---
-reason names the running and published versions.
+reason says the update already happened, with both versions.
