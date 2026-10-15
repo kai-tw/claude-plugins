@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-review-post
+description: plan-mutation-review posts survivors as one COMMENT review on the PR, one comment per survivor at its line, skips a survivor already commented on at the same line, and posts nothing for an empty or missing file.
+tags: [plan-mutation-review]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/fake:$PATH"; plan-mutation-review 7 review.json; echo "rc=$?"; echo "posted: $(jq -c . posted.json)"; rm posted.json; plan-mutation-review 7 empty.json; plan-mutation-review 7 missing.json; echo "posted-after=$([ -e posted.json ] && echo yes || echo no)"; plan-mutation-review seven review.json 2>/dev/null; echo "usage=$?"
+  prompt: |
+    With a fake gh, post a review file of survivors on a PR that already has one of them, then an empty and a missing file, and print what was posted.
+context:
+  scaffold_script: fixture.sh

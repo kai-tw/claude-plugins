@@ -9,7 +9,7 @@ git clone -q origin.git wt 2>/dev/null
 cd wt
 git config user.email e@e; git config user.name e
 mkdir -p .claude
-printf 'vcs: git\ncoverage: none\nmutation: none\nui_strings: none\n' > .claude/assistant.md
+printf 'vcs: git\ncoverage: none\nui_strings: none\n' > .claude/assistant.md
 printf '.claude/.assistant/\n' > .gitignore
 git add -A; git commit -qm base; git push -q origin HEAD:main 2>/dev/null
 git remote set-head origin main 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main

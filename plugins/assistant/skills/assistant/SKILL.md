@@ -96,8 +96,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    floor (`security-guidance` hooks run unattended; the project's own sink rules
    when it has them); and the adapter's `coverage:` command when set, which you
    run yourself in the background — gate: every changed line executed, no
-   exemptions. Mutation does not gate the PR: after the merge, a
-   workflow runs it per changed file (`references/mutation-after-merge.md`). Builder applies fixes;
+   exemptions. Mutation is not yours: the PR's CI comments its survivors at
+   their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `Needs you` line if it changes scope or design.
 7. **③ Deliver** (you, from the verifier reports): `references/delivery-summary.md`.

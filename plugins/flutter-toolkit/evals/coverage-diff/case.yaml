@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-diff
+description: plan-coverage --diff <ref> takes scope against that ref instead of the default branch, so a branch off a release branch is graded on its own change only.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_QA_REPORT_DIR="$PWD/r"; mkdir -p r; plan-coverage -- bash fake_test.sh 2>&1 | sed "s/^/default: /"; plan-coverage --diff release -- bash fake_test.sh 2>&1 | sed "s/^/release: /"
+  prompt: |
+    On a branch off a release branch, run plan-coverage against the default branch and then with --diff release, and print both outputs.
+context:
+  scaffold_script: fixture.sh

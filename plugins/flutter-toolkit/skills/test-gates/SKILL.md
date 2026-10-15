@@ -3,9 +3,11 @@ name: test-gates
 description: >-
   Three bare-name commands for Flutter/Dart test runs on a shared machine:
   `plan-test` (run a suite inside a machine-wide slot budget), `plan-coverage`
-  (every changed line executed, no exemptions) and `plan-mutation`
-  (mutation score over the changed Dart and JS/TS files). `<cmd> --help` for flags.
-  TRIGGER: run tests · coverage · mutation · Stryker · who is holding a test slot
+  (every changed line executed, no exemptions), `plan-mutation` (mutation
+  score over the changed Dart and JS/TS files, or review mode over the changed
+  lines) and `plan-mutation-review` (post review mode's survivors on a PR).
+  `<cmd> --help` for flags; `references/pr-checks.md` wires them into CI.
+  TRIGGER: run tests · coverage · mutation · Stryker · who is holding a test slot · PR checks
 allowed-tools:
   - Bash
 ---
@@ -23,6 +25,7 @@ allowed-tools:
   probe shows it has no executable line — NO-CODE, which passes. Runs with
   branch coverage, so a `throw const …` body no test entered is a gap; a throw
   arm of `??` / `?:` is unmeasurable and blocks until rewritten as a statement.
+  `--diff <ref>` takes scope against `<ref>` — a PR's base, in CI.
 - `plan-mutation -- <scoped test command>` — needs `dart_mutants` in pubspec (the
   script prints the exact stanza when it is missing). While it runs the working
   tree holds live mutants; read files via `git show HEAD:<path>`. The plan line
@@ -34,8 +37,10 @@ allowed-tools:
   blocking wait on it.
   `plan-mutation --stop [<pid>]` stops a run (STOPPED, exit 1, nothing scored)
   and keeps the finished mutants: the same command again runs only the rest,
-  while the code and tests are unchanged. `--keep-dir <dir>` keeps them in
-  `<dir>` instead of `$TMPDIR`, for a run another machine resumes.
+  while the code and tests are unchanged.
+  `--diff <ref> --review <file>` is review mode: only the lines changed since
+  `<ref>`, one mutant a line (`--per-line n`), survivors a test reaches written
+  to `<file>` for `plan-mutation-review <pr> <file>`, exit 0 whatever the score.
   Changed JS/TS package source (`<package>/src|lib/**`) goes to StrykerJS in
   that package — `@stryker-mutator/core` installed there, tests from its
   Stryker config, so no test command is needed when no Dart file changed.

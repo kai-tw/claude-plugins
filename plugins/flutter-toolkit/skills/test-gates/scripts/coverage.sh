@@ -39,7 +39,10 @@
 #   until it is a statement (`if (x == null) throw …;`) the gate can see.
 #
 # USAGE
-#   plan-coverage [--files a.dart …] -- <test-command…>
+#   plan-coverage [--diff <ref> | --files a.dart …] -- <test-command…>
+#
+#   --diff <ref> takes scope against <ref> instead of the default branch — a
+#   PR's own base, in CI.
 #
 #   Pass a SCOPED test command, the same scope the change lives in:
 #     plan-coverage -- flutter test test/features/trash
@@ -61,6 +64,7 @@
 set -uo pipefail
 
 EXPLICIT_FILES=""
+DIFF_BASE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --files)  shift
@@ -68,13 +72,14 @@ while [ $# -gt 0 ]; do
                 EXPLICIT_FILES="${EXPLICIT_FILES}${1}"$'\n'; shift
               done
               [ "${1:-}" = "--" ] && shift ;;
+    --diff)   DIFF_BASE="${2:?--diff needs a ref}"; shift 2 ;;
     --)       shift; break ;;
-    -h|--help) sed -n '2,59p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,62p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # A flag this script does not know is never forwarded silently. Measured on
     # mutation.sh's predecessor: an unrecognised flag fell through into the test
     # command, the run widened to the whole suite, and the score looked normal.
     -*)       echo "plan-coverage: unknown flag '$1'. The test command goes after \`--\`." >&2
-              echo "  usage: plan-coverage [--files a.dart …] -- <test-command…>" >&2
+              echo "  usage: plan-coverage [--diff <ref> | --files a.dart …] -- <test-command…>" >&2
               exit 2 ;;
     *)        break ;;
   esac
@@ -105,6 +110,7 @@ else
   base=${base#origin/}
   [ -n "$base" ] || base=main
   tried="origin/$base $base origin/main main"
+  [ -n "$DIFF_BASE" ] && tried=$DIFF_BASE
   resolved=
   for cand in $tried; do
     git rev-parse --verify --quiet "$cand" >/dev/null 2>&1 && { resolved=$cand; break; }
