@@ -34,7 +34,8 @@ allowed-tools:
   blocking wait on it.
   `plan-mutation --stop [<pid>]` stops a run (STOPPED, exit 1, nothing scored)
   and keeps the finished mutants: the same command again runs only the rest,
-  while the code and tests are unchanged.
+  while the code and tests are unchanged. `--keep-dir <dir>` keeps them in
+  `<dir>` instead of `$TMPDIR`, for a run another machine resumes.
   Changed JS/TS package source (`<package>/src|lib/**`) goes to StrykerJS in
   that package — `@stryker-mutator/core` installed there, tests from its
   Stryker config, so no test command is needed when no Dart file changed.

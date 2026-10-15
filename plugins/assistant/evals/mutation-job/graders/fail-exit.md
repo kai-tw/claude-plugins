@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^blocked=1$'
+pattern: '^slow=1$'
 flags: m
 arm: with-only
 ---

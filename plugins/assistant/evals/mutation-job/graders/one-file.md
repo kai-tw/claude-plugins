@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^plan-mutation --workers 2 --files lib/a\.dart -- flutter test @ '
+pattern: '^plan-mutation --workers 2 --keep-dir [^ ]+ --files lib/a\.dart -- flutter test '
 flags: m
 arm: with-only
 ---
---files lands right before the test command, so it names only the file.
+--keep-dir and --files land right before the test command, so the run names only the claimed file.

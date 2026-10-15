@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-keep-dir
+description: plan-mutation --keep-dir <dir> keeps what a run finished under <dir> instead of $TMPDIR, so another machine can resume the run from a copy of it.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 KEEP="$PWD/keep"; cd r; plan-mutation --files web/src/a.ts >/dev/null 2>&1; echo "default: $(cat stryker-args)"; plan-mutation --keep-dir "$KEEP" --files web/src/a.ts >/dev/null 2>&1; echo "keep: $(cat stryker-args)"; echo "kept-in=$KEEP"
+  prompt: |
+    Run plan-mutation on one TS file without and then with --keep-dir; print the arguments the fake Stryker received each time.
+context:
+  scaffold_script: fixture.sh
