@@ -94,9 +94,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    (the six blocks) and the text leg — the latter only when the adapter's
    `ui_strings:` is not `none` and the diff touches that glob; the security
    floor (`security-guidance` hooks run unattended; the project's own sink rules
-   when it has them); and the adapter's `coverage:` / `mutation:` commands when
-   set, which you run yourself in the background — gate: every changed line executed, no
-   exemptions; mutation score ≥ 80. Builder applies fixes;
+   when it has them); and the adapter's `coverage:` command when set, which you
+   run yourself in the background — gate: every changed line executed, no
+   exemptions. Mutation does not gate the PR: it runs after the merge, one cloud
+   session per changed file (`references/mutation-queue.md`). Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
    one `Needs you` line if it changes scope or design.
 7. **③ Deliver** (you, from the verifier reports): `references/delivery-summary.md`.
@@ -198,10 +199,10 @@ this repo's; anything else on the list is caught by no script.
   nothing.
 - One task = one worktree (or SVN working copy, per the adapter) = one agent
   chain. Every dispatch names the slug and the report kind (`scout` ·
-  `brief-review` · `build-<phase>` · `verify-<leg>`, the legs being `verify-code` · `verify-text` · `verify-coverage` ·
-  `verify-mutation`); the agent files its report
+  `brief-review` · `build-<phase>` · `verify-<leg>`, the legs being `verify-code` · `verify-text` · `verify-coverage`);
+  the agent files its report
   with `asst-report put <slug> <kind>` before returning, and the output of a
-  command you run yourself (`coverage:` / `mutation:`) is filed the same way, with
+  command you run yourself (`coverage:`) is filed the same way, with
   `--worktree <worktree>`. A `verify-<leg>` report is also posted to the task's PR,
   so a leg missing there is visible before the merge — in full on a private repo,
   its first line only on any other (§Disclosure). A report is passed on by

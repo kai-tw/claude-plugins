@@ -8,7 +8,7 @@ execution:
   max_turns: 6
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; git -C wt switch -q task/r; echo finding-A | asst-report put r verify-code --worktree wt; echo notes | asst-report put r scout --worktree wt; echo cloud | asst-report put r verify-mutation --worktree wt --no-post; GH_NOPR=yes asst-report put r verify-text --worktree wt </dev/null; echo t | GH_NOPR=yes asst-report put r verify-text --worktree wt; git -C wt switch -q local-only; echo c | asst-report put r verify-coverage --worktree wt; echo "files=$(asst-report list r 2>/dev/null; ls wt/.claude/.assistant/reports/r | paste -sd, -)"; echo "comments=$(grep -c "^--- comment" comments.log)"; cat comments.log
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; git -C wt switch -q task/r; echo finding-A | asst-report put r verify-code --worktree wt; echo notes | asst-report put r scout --worktree wt; echo cloud | asst-report put r verify-code --worktree wt --no-post; GH_NOPR=yes asst-report put r verify-text --worktree wt </dev/null; echo t | GH_NOPR=yes asst-report put r verify-text --worktree wt; git -C wt switch -q local-only; echo c | asst-report put r verify-coverage --worktree wt; echo "files=$(asst-report list r 2>/dev/null; ls wt/.claude/.assistant/reports/r | paste -sd, -)"; echo "comments=$(grep -c "^--- comment" comments.log)"; cat comments.log
   prompt: |
     On a task branch with a local remote and a fake gh, file several kinds of report with asst-report, see which are posted to the PR and which are not and why, and list the filed files.
 context:
