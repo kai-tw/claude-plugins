@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Run this repo's self-hosted Actions runner only while it has work. A
+# launcher: the script lives with the skill that owns it, and bin/ is on PATH
+# while the plugin is enabled.
+set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+exec bash "$here/../skills/test-gates/scripts/ci_runner.sh" "$@"
