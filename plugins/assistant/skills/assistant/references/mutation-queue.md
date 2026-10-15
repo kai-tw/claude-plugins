@@ -4,23 +4,31 @@ Mutation testing is too slow to hold a PR, so it doesn't gate one. When a PR
 merges, a workflow adds the files it changed to the project's mutation queue
 and starts routine sessions that work through it.
 
-- **The queue** is the `mutation-queue` branch on origin: `pending/<path>` is
+- **The queue** is the `mutation-queue` branch on origin, with no history in
+  common with the default branch and never merged into it: `pending/<path>` is
   waiting, `running/<path>` is claimed, and each lists the PRs that changed that
   file. A file several PRs changed before it ran is one job. Open the branch on
   GitHub to see what's waiting. `asst-mutation-queue status` prints the same.
+  A ruleset that requires PRs on every branch blocks it; exclude it.
 - **A processor** is one routine session running `asst-mutation-job` until the
-  queue is empty. Each run claims a file, grades it on the default branch's
-  tip, reports, and drops it. A pass is a comment on every PR queued for the
-  file; a score under 80, or a run that scored nothing, is one issue naming
-  them all — that issue is the debt task.
-- **A lost session** leaves its file in `running/`. The hourly run puts any file
-  claimed more than 6 hours ago back in `pending/`.
+  queue is empty. Each run claims a file, grades it, reports, and drops it. A
+  pass is a comment on every PR queued for the file; a score under 80, or a run
+  that scored nothing, is one issue naming them all — that issue is the debt
+  task. Mutants live only in the session's worktree and are never committed.
+- **A lost session doesn't lose its work.** The first claim pins the file to
+  the default branch's tip, and the run saves its journal (each finished
+  mutant) to `journal/<path>` every 5 minutes. A file with no save for 30
+  minutes goes back to `pending/`, and the next claim resumes it at the same
+  commit, from the same journal. If newer PRs queued the file meanwhile, it
+  starts over on the new tip instead. A file whose journal didn't grow over 3
+  claims in a row is given up as a `STUCK` issue. Only Dart resumes this way:
+  Stryker saves its progress only when stopped cleanly.
 
 ## Set up once per project
 
 1. **The adapter's `mutation:`** is a `plan-mutation` command, e.g.
    `plan-mutation --select-by-coverage -- flutter test`. `asst-mutation-job` adds
-   `--files <file>` to it.
+   `--keep-dir` and `--files <file>` to it.
 2. **A cloud environment** whose setup script installs what the command needs
    (Flutter, `dart pub get`), with the project's settings enabling `assistant`
    and `flutter-toolkit`.
@@ -30,13 +38,12 @@ and starts routine sessions that work through it.
 
    ```
    You process the mutation queue. Nothing else is yours to do.
-   1. Run `asst-mutation-queue sweep`.
-   2. Run `asst-mutation-job` with the Bash tool's `run_in_background: true`
-      and end the turn; you are woken when it exits. If its output has a
-      `post:` line, post the body below that line: `post: comment <pr…>` as a
+   1. Run `asst-mutation-job` with the Bash tool's `run_in_background: true`
+      and end the turn; you are woken when it exits. For each `post:` line in
+      its output, post the body below that line: `post: comment <pr…>` as a
       comment on each of those PRs, `post: issue <title>` as one new issue with
-      that title. Then, unless it printed `queue empty`, repeat step 2.
-   3. Once it prints `queue empty`, archive this session: `get_session` with no
+      that title. Then, unless it printed `queue empty`, repeat step 1.
+   2. Once it prints `queue empty`, archive this session: `get_session` with no
       session_id gives your own id, then `archive_session` with it. If either
       tool is missing, say so in one line and stop.
    ```
@@ -100,5 +107,8 @@ and starts routine sessions that work through it.
   `asst-mutation-queue add <pr> <file>`.
 - A `FAIL` issue lists the survivors; fix it as a debt task and close the issue
   from that task's PR.
+- A `STUCK` issue is a file no session finished a single mutant of, three
+  times in a row. Split the file, or run `plan-mutation` on it somewhere a
+  session lives longer.
 - A routine session left in the session list means the archive step failed:
   its last line says why.

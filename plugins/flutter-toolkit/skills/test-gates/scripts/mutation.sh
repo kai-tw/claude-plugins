@@ -47,7 +47,7 @@
 #   plan-mutation [--min <pct>] [--timeout <s>] [--baseline-timeout <s>]
 #                 [--baseline-factor <n>] [--select-by-coverage]
 #                 [--workers <n>] [--max-minutes <n>] [--history <file>]
-#                 [--files a.dart b.ts …] [-- <test-command…>]
+#                 [--keep-dir <dir>] [--files a.dart b.ts …] [-- <test-command…>]
 #
 #   --timeout is the FLOOR on a mutant's budget; the engine raises it to
 #   --baseline-factor × the measured baseline, and the report prints what it
@@ -111,7 +111,9 @@
 #   was killed before it restored the tree. Run the same command again and
 #   only the unfinished mutants run — Dart through dart_mutants' journal, JS/TS
 #   through Stryker's incremental file, both kept under
-#   $TMPDIR and reused only while the code and tests are unchanged. A finished
+#   $TMPDIR (or --keep-dir <dir>, for a run another machine resumes: the Dart
+#   journal is `<dir>/plan-mutation-dart.jsonl`, written as each mutant
+#   finishes) and reused only while the code and tests are unchanged. A finished
 #   run started again reuses every result, timeouts excepted. There is no
 #   pause: a frozen run's budgets keep counting, and the tree stays mutated.
 
@@ -181,6 +183,7 @@ MUTANT_TIMEOUT=30
 TIMEOUT_GIVEN=""     # Stryker keeps its own timeout unless --timeout is typed
 WORKERS=1
 EXPLICIT_FILES=""
+KEEP_DIR=""
 ENGINE_EXTRA=()      # 0.2.7 flags, forwarded only when the caller asks for them
 DART_ONLY=""         # the Dart-only flags typed, named when JS files are in scope
 
@@ -200,6 +203,7 @@ while [ $# -gt 0 ]; do
                 WORKERS=$2; ENGINE_EXTRA+=("--workers" "$2"); shift 2 ;;
     --max-minutes) ENGINE_EXTRA+=("--max-minutes" "${2:?--max-minutes needs a number of minutes}"); DART_ONLY+=" $1"; shift 2 ;;
     --history)  ENGINE_EXTRA+=("--history" "${2:?--history needs a file}"); DART_ONLY+=" $1"; shift 2 ;;
+    --keep-dir) KEEP_DIR="${2:?--keep-dir needs a directory}"; shift 2 ;;
     --files)    shift
                 while [ $# -gt 0 ] && [ "$1" != "--" ]; do
                   EXPLICIT_FILES="${EXPLICIT_FILES}${1}"$'\n'; shift
@@ -646,6 +650,7 @@ REPORT_KEEP="${TMPDIR:-/tmp}/plan-mutation-report.json"
 # so two worktrees never share one; the engines themselves decide when a kept
 # result still holds, from the code and tests, not from this path.
 KEEP_BASE="${TMPDIR:-/tmp}/plan-mutation-$(printf '%s' "$root" | cksum | cut -d' ' -f1)"
+if [ -n "$KEEP_DIR" ]; then mkdir -p "$KEEP_DIR" || exit 2; KEEP_BASE="$KEEP_DIR/plan-mutation"; fi
 [ -n "$dart_files" ] && ENGINE_EXTRA+=("--journal" "$KEEP_BASE-dart.jsonl")
 
 stop_requested() { grep -q '^stop:' "$MARKER" 2>/dev/null; }

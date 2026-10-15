@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^claim2=lib/b\.dart 7$'
+pattern: '^claim2=lib/b\.dart TIP1 7$'
 flags: m
 arm: with-only
 ---
