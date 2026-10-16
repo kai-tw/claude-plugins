@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Wait for a PR to merge, then do everything a merge owes: update every install
-// of each plugin the PR changed (consumers.mjs) and verify it, sync the main
-// checkout, and remove the PR's local worktree and branch.
+// of each plugin the PR changed (consumers.mjs) and verify it, uninstall every
+// install of a plugin the PR deleted, sync the main checkout, and remove the PR's
+// local worktree and branch.
 //
 // Start it with the Bash tool's `run_in_background: true` once the PR is ready:
 // it exits when the PR merges or closes, and the exit wakes the session — nobody
@@ -18,7 +19,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { marketplaceSource, slug, updateConsumers } from './consumers.mjs';
+import { marketplaceSource, removeConsumers, slug, updateConsumers } from './consumers.mjs';
 
 const pr = process.argv[2];
 const die = (msg) => {
@@ -94,12 +95,23 @@ try {
   notes.push(`${wt ?? pull.headRefName} kept — ${(e.stderr || e.message).trim()}`);
 }
 
-// 3. Install what the PR changed.
-const plugins = [...new Set(pull.files.map((f) => f.path.match(/^plugins\/([^/]+)\//)?.[1]).filter(Boolean))];
+// 3. Install what the PR changed, then uninstall what it deleted — in that order,
+// so a plugin that moved into another is never missing in between.
+const changed = [...new Set(pull.files.map((f) => f.path.match(/^plugins\/([^/]+)\//)?.[1]).filter(Boolean))];
+const exists = (plugin) => {
+  try {
+    git(['cat-file', '-e', `${ref}:plugins/${plugin}/.claude-plugin/plugin.json`]);
+    return true;
+  } catch {
+    return false;
+  }
+};
+const plugins = changed.filter(exists);
+const removed = changed.filter((p) => !exists(p));
 const marketplace = JSON.parse(git(['show', `${ref}:.claude-plugin/marketplace.json`])).name;
 const src = marketplaceSource(marketplace);
 const failures = [];
-if (plugins.length === 0) {
+if (changed.length === 0) {
   console.log(`  no plugin in #${pr} — nothing to install`);
 } else if (!src || slug(src.url ?? src.repo) !== slug(git(['remote', 'get-url', 'origin']))) {
   console.log(`  ⚠ "${marketplace}" does not install from this repo here — nothing local to update`);
@@ -109,10 +121,14 @@ if (plugins.length === 0) {
     console.log(`\n${plugin} ${version}`);
     failures.push(...updateConsumers({ root: main, marketplace, plugin, version, ref }).map((f) => `${plugin}: ${f}`));
   }
+  for (const plugin of removed) {
+    console.log(`\n${plugin} — deleted`);
+    failures.push(...removeConsumers({ marketplace, plugin }).map((f) => `${plugin}: ${f}`));
+  }
 }
 
 notes.forEach((n) => console.log(`  ⚠ ${n}`));
 if (failures.length) die(`#${pr} merged, but:\n${failures.map((f) => `    ${f}`).join('\n')}`);
 console.log(
-  `\n✔ #${pr} merged${plugins.length ? ` — ${plugins.join(', ')} installed and verified everywhere; a running session loads it only after a restart` : ''}`,
+  `\n✔ #${pr} merged${plugins.length ? ` — ${plugins.join(', ')} installed and verified everywhere; a running session loads it only after a restart` : ''}${removed.length ? ` — ${removed.join(', ')} uninstalled everywhere` : ''}`,
 );

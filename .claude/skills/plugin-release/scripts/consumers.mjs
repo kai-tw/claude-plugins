@@ -106,3 +106,32 @@ export function updateConsumers({ root, marketplace, plugin, version, ref, log =
   if (failures.length === 0) log(`  ✔ ${all.length} install(s) at ${version} and loading`);
   return failures;
 }
+
+// Uninstall every install of `plugin`, for a release that deleted it from the
+// marketplace. Returns the failures, one line each; an empty array means no
+// install and no project `enabledPlugins` entry is left.
+export function removeConsumers({ marketplace, plugin, log = console.log }) {
+  const id = `${plugin}@${marketplace}`;
+  const failures = [];
+  const all = installs(id);
+  if (all.length === 0) log(`  ${id} is installed nowhere on this machine — nothing to remove`);
+  for (const i of all) {
+    const where = i.projectPath ?? '~';
+    try {
+      log(`  ${where} [${i.scope}]: ${run('claude', ['plugin', 'uninstall', id, '--scope', i.scope], i.projectPath ?? home).split('\n').pop()}`);
+    } catch (e) {
+      failures.push(`${where} [${i.scope}]: uninstall failed — ${errText(e)}`);
+    }
+  }
+  for (const i of installs(id)) failures.push(`${i.projectPath ?? '~'} [${i.scope}]: still installed`);
+  // Uninstall edits the scope's settings file; one that still enables the plugin
+  // would ask every session there to load a plugin the marketplace no longer has.
+  for (const dir of [...new Set(all.map((i) => i.projectPath).filter(Boolean))]) {
+    const p = join(dir, '.claude/settings.json');
+    if (existsSync(p) && id in (JSON.parse(readFileSync(p, 'utf8')).enabledPlugins ?? {})) {
+      failures.push(`${p} still lists ${id} in enabledPlugins`);
+    }
+  }
+  if (failures.length === 0 && all.length) log(`  ✔ ${id} removed from ${all.length} install(s)`);
+  return failures;
+}
