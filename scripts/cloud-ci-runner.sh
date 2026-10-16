@@ -2,9 +2,9 @@
 # cloud-ci-runner <owner/repo> [--idle <minutes>]
 #
 # Runs <owner/repo>'s queued self-hosted Actions jobs in this cloud container,
-# then exits. Installed as /usr/local/bin/cloud-ci-runner by
-# scripts/cloud-runner-setup.sh, in the runner environment only; that
-# environment's routine runs it when a PR's checks wake it.
+# then exits. Each repo's routine on the runner environment downloads this
+# file from main and runs it, so a change here needs no snapshot rebuild:
+#   bash <(curl -fsSL https://raw.githubusercontent.com/kai-tw/claude-plugins/main/scripts/cloud-ci-runner.sh) <owner/repo>
 #
 # Each job gets its own just-in-time runner (labels self-hosted, flutter, linux,
 # cloud): GitHub hands it one job and removes it afterwards, so nothing stays
@@ -12,12 +12,12 @@
 # self-hosted job is still queued; with none for --idle minutes (default 5) it
 # exits. A runner stopped before it took a job is deleted.
 #
-# Needs a token that can administer the repo's runners, from the environment's
-# Environment variables: CI_RUNNER_TOKEN_<OWNER> (owner upper-cased, anything
-# not a letter or digit as _, e.g. CI_RUNNER_TOKEN_NOVELGLIDE), else
-# CI_RUNNER_TOKEN. The session's own GitHub credentials can't register a runner.
+# Registering a runner needs administration write on the repo. It uses the
+# session's own GitHub credentials, unless the environment's Environment
+# variables set CI_RUNNER_TOKEN_<OWNER> (owner upper-cased, anything not a
+# letter or digit as _, e.g. CI_RUNNER_TOKEN_NOVELGLIDE) or CI_RUNNER_TOKEN.
 #
-# Exit: 0 no work left · 1 a runner failed · 2 usage, no token, no runner
+# Exit: 0 no work left · 1 a runner failed · 2 usage, no runner
 # unpacked, or GitHub refused.
 set -uo pipefail
 repo="" idle=5
@@ -35,8 +35,7 @@ poll=${CLOUD_CI_RUNNER_POLL:-30}
 
 var="CI_RUNNER_TOKEN_$(printf '%s' "${repo%%/*}" | tr '[:lower:]' '[:upper:]' | tr -c 'A-Z0-9\n' '_')"
 token="${!var:-${CI_RUNNER_TOKEN:-}}"
-[ -n "$token" ] || { echo "cloud-ci-runner: no token — set $var or CI_RUNNER_TOKEN in the environment's Environment variables (it needs administration write on $repo)" >&2; exit 2; }
-export GH_TOKEN="$token"
+[ -n "$token" ] && export GH_TOKEN="$token"
 dir=${CLOUD_CI_RUNNER_HOME:-/opt/actions-runner}
 [ -x "$dir/run.sh" ] || { echo "cloud-ci-runner: no runner unpacked at $dir — the environment's setup script installs it; rebuild its snapshot" >&2; exit 2; }
 # The runner refuses to start as root unless told it may; a container runs as root.
@@ -60,7 +59,7 @@ pending() {
   done
   echo "$n"
 }
-pending >/dev/null || { echo "cloud-ci-runner: gh can't list $repo's workflow runs with this token" >&2; exit 2; }
+pending >/dev/null || { echo "cloud-ci-runner: gh can't list $repo's workflow runs with these credentials" >&2; exit 2; }
 
 log="$dir/_diag/cloud-ci-runner.log"
 mkdir -p "$dir/_diag"
@@ -107,7 +106,7 @@ while :; do
   out=$(gh api -X POST "repos/$repo/actions/runners/generate-jitconfig" \
         -f name="$agent" -F runner_group_id=1 -f work_folder=_work \
         -f 'labels[]=self-hosted' -f 'labels[]=flutter' -f 'labels[]=linux' -f 'labels[]=cloud' 2>&1) || {
-    echo "cloud-ci-runner: GitHub refused a runner for $repo — ${out##*$'\n'} (the token needs administration write on $repo)" >&2
+    echo "cloud-ci-runner: GitHub refused a runner for $repo — ${out##*$'\n'} (the credentials need administration write on $repo: set CI_RUNNER_TOKEN)" >&2
     exit 2
   }
   rid=$(printf '%s' "$out" | jq -r '.runner.id')

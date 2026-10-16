@@ -3,12 +3,12 @@
 # Run by scripts/cloud-runner-setup-field.sh after scripts/cloud-setup.sh, in
 # that one environment only.
 #
-# It unpacks the GitHub Actions runner into /opt/actions-runner, unconfigured,
-# and installs `cloud-ci-runner` (scripts/cloud-ci-runner.sh), which the
-# environment's routine runs. Registration is NOT here: this filesystem is
-# snapshotted and shared by every container, and one registered runner
-# identity can't be online in two containers. cloud-ci-runner registers a
-# just-in-time runner per job instead.
+# It unpacks the GitHub Actions runner into /opt/actions-runner, unconfigured.
+# Each repo's routine runs scripts/cloud-ci-runner.sh, downloaded from main at
+# run time, so that script isn't part of the snapshot. Registration is NOT
+# here: this filesystem is snapshotted and shared by every container, and one
+# registered runner identity can't be online in two containers.
+# cloud-ci-runner registers a just-in-time runner per job instead.
 #
 # Advisory like cloud-setup.sh: a failure is reported into ~/.claude/CLAUDE.md
 # and the script still exits 0, so the session starts and says what's missing.
@@ -18,7 +18,6 @@ set -uo pipefail
 # so bump this when GitHub deprecates it.
 RUNNER_VERSION="2.338.0"
 RUNNER_HOME=/opt/actions-runner
-BIN=/usr/local/bin/cloud-ci-runner
 
 report() {
   mkdir -p ~/.claude
@@ -37,13 +36,5 @@ else
   else
     report "The GitHub Actions runner $RUNNER_VERSION would not install into $RUNNER_HOME, so \`cloud-ci-runner\` can't take any job. Say so; the PR checks stay queued."
   fi
-fi
-
-if curl -fsSL --retry 3 https://raw.githubusercontent.com/kai-tw/claude-plugins/main/scripts/cloud-ci-runner.sh -o "$BIN.tmp" && [ -s "$BIN.tmp" ]; then
-  chmod +x "$BIN.tmp" && mv "$BIN.tmp" "$BIN"
-  echo "runner-setup: $BIN installed"
-else
-  rm -f "$BIN.tmp"
-  report "\`cloud-ci-runner\` could not be downloaded, so this session can't run the queued PR checks. Say so."
 fi
 exit 0
