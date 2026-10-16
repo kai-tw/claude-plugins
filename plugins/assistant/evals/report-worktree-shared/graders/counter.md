@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^fix 1/2'
+pattern: '^fix 1$'
 flags: m
 arm: with-only
 ---

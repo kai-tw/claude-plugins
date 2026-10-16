@@ -27,6 +27,6 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 - <screens × states the contact sheet will show>
 
 ## Budget and debt
-- review <0|1> · fix 2 · upload 2
+- review <0|1> · upload 2 · fix uncapped
 - Known debt: <none, or one line each>
 ```

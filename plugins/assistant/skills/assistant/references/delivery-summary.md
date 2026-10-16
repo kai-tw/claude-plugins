@@ -27,8 +27,6 @@ reports. Anything a linter or a passed check already settled is one line.
 
 ## Other (automated checks)
 security passed · naming passed · coverage <n unexecuted lines, each named>   (or `no coverage tool` from the adapter)
-## Debt
-- <one line each, task id>
 ```
 
 **Approval is given at ②; this page only asks whether it still holds.** A string
