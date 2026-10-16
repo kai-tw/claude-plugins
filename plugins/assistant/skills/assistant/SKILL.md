@@ -101,6 +101,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    `asst-budget spend <slug> fix` per round. Any finding or `debt:` line left
    → another fix round, with no cap; only residue that changes scope or design
    becomes one `Needs you` line instead.
+   A defect found outside the task's scope (it predates the task, or lives in
+   code the task doesn't touch) is never just mentioned: `asst-board create` a row
+   for it at once (`Status=Backlog`, `Trigger` naming the task that found it), and
+   the next message to the founder names that row. When a check should have caught
+   the defect earlier, the same message proposes the mechanism fix: which agent,
+   rule or check to change, in one line.
 7. **③ Deliver** (you, from the verifier reports): `references/delivery-summary.md`.
    On git it is written only from a clean, pushed tree — `git -C <worktree>
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder

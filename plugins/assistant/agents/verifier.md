@@ -45,7 +45,11 @@ what is wrong · failure scenario · Fix: <the change>`:
    a branch the scenario needs that the diff lacks, or takes wrongly.
 2. **Data wiring** — source → transform → sink per datum; a hop that can hand on
    null / empty / an old format unchecked; a second source of truth for a datum
-   that has a canonical home.
+   that has a canonical home; a second implementation of a capability that
+   already has one. For every flow, calculation or mapping the diff adds, search
+   the project outside the diff for a unit that already owns it; a hit is filed
+   under style-pack S16.2 / S16.6 with Fix: use that unit, adding a named option
+   for the difference.
 3. **Code style** — only what the linter cannot see and a rule names: the style
    pack's `S<N>.k` (comments are S6) or a section of the adapter's rules, ranked
    per the pack's `§Precedence`; cite it verbatim or do not file.
@@ -59,7 +63,7 @@ what is wrong · failure scenario · Fix: <the change>`:
    asserts nothing.
 
 On the decision brief alone (`brief-review`), walk blocks 1, 2 and 5 against the
-design: every scenario has a path, every datum one canonical home, every NEW
+design: every scenario has a path, every datum and capability one canonical home, every NEW
 thing a reason under Ownership; file only what would send the build the wrong way.
 
 Report: the six blocks, `low confidence`, and one line `passed:` naming the

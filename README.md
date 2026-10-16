@@ -32,8 +32,7 @@ claude plugin install dart-lsp@kai-tw
 | [flutter-toolkit](plugins/flutter-toolkit) | Flutter test gates for a shared machine: `plan-test` slot budget, per-line coverage and mutation score over the diff (Dart and JS/TS) |
 | [session-journal](plugins/session-journal) | Cross-session task-state journal — which threads are in flight and where each one lives, surviving context compaction, `/clear`, and resume |
 | [google-reporting](plugins/google-reporting) | GA4 and Search Console readers via keyless service-account impersonation |
-| [style-pack](plugins/style-pack) | The founder's cross-project style code: charter S1–S16 plus Dart, C# and JS language files, printed by `style-pack` for any reviewer |
-| [ui-text-pack](plugins/ui-text-pack) | The founder's cross-project rules for user-visible text: charter U1–U5 plus zh-Hant / ja / en locale files, printed by `ui-text-pack` for any reviewer grading UI strings and their translations |
+| [assistant](plugins/assistant) | The founder's assistant: request → decision brief → screens → PR, across projects. Ships the cross-project rulebooks its reviewers grade against: `style-pack` (code style, charter S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, charter U1–U5 plus zh-Hant, ja and en) |
 | [reclaim-space](plugins/reclaim-space) | Developer-disk reclamation on macOS: regenerable build output and toolchain caches, with a free-space floor on new git worktrees |
 | [mother-tongue](plugins/mother-tongue) | Per-locale writing rules for the agent's own prose: detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies and commit messages that use its banned terms |
 | [guardrails](plugins/guardrails) | Turns corrections into rules that fire on their own: hooks that warn about or block a known mistake as it happens, and a short discipline loaded at session start |
