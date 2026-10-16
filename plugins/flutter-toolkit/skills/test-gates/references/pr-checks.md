@@ -67,7 +67,6 @@ jobs:
         run: plan-coverage --diff "origin/$GITHUB_BASE_REF" -- flutter test
   mutation:
     needs: coverage
-    if: always()
     runs-on: [self-hosted, flutter]
     timeout-minutes: 120
     steps:
@@ -94,3 +93,7 @@ The checkout is the PR's head, not GitHub's merge commit, so the lines
 `plan-mutation` reports are the lines the review comments land on. A push to
 the PR cancels the run still going for the previous one; a survivor already
 commented on at the same line isn't posted again.
+
+Mutation runs only once coverage passes. Don't add `if: always()` to it: a PR
+that fails coverage changes anyway, and an `always()` step keeps running after
+the workflow is cancelled.

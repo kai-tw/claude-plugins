@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-checks-mutation-after-coverage
+description: The PR-checks workflow template runs mutation only once line coverage passes, and has no `always()`, which would keep a step running after the workflow is cancelled.
+tags: [pr-checks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: ref="$(dirname "$(command -v plan-coverage)")/../skills/test-gates/references/pr-checks.md"; grep -A40 -- "^  mutation:" "$ref" | sed "/^\`\`\`/q"
+  prompt: |
+    Print the mutation job of the workflow in flutter-toolkit's references/pr-checks.md.
+context:
+  scaffold_script: fixture.sh
