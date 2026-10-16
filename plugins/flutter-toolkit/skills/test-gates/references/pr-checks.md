@@ -17,16 +17,12 @@ Two checks on every PR, on a self-hosted runner:
 A self-hosted runner with the label `flutter`, on a machine with the
 toolchain and `gh`, registered once per repo into its own directory under
 `~/actions-runners/` (repo Settings → Actions → Runners → New self-hosted
-runner, adding `--labels flutter` to `config.sh`). It is not installed as a
-service: nothing runs until a session needs it.
+runner, adding `--labels flutter` to `config.sh`).
 
-After pushing to a PR, start `plan-ci-runner` from the repo's clone with the
-Bash tool's `run_in_background: true`. It starts this repo's runner and stops
-it once the runner has had no work for `--idle` minutes (default 5): no job
-running on it, and none queued that asks for a self-hosted runner. Workflows on
-GitHub-hosted runners don't keep it up. Until it starts, a PR's jobs wait
-queued on GitHub. `plan-coverage` and
-`plan-mutation` take this machine's test slots like any other run, so CI and
+Keep each repo's runner up in its own terminal tab with
+`~/actions-runners/<dir>/run.sh`. While it's down, a PR's jobs wait queued on
+GitHub. An idle runner takes about 60 MB of memory and no CPU. `plan-coverage`
+and `plan-mutation` take this machine's test slots like any other run, so CI and
 local sessions share the memory budget. Only use it on a private repo: a
 public repo's workflows can be made to run a stranger's code on it.
 

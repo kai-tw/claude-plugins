@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: ci-runner-standing
+description: The plugin ships no runner launcher; pr-checks.md keeps each repo's runner up in a terminal tab with its run.sh.
+tags: [pr-checks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: d="$(dirname "$(command -v plan-test)")/.."; if [ -e "$d/bin/plan-ci-runner" ]; then echo "launcher=present"; else echo "launcher=gone"; fi; echo "run-sh=$(grep -c "actions-runners/<dir>/run.sh" "$d/skills/test-gates/references/pr-checks.md")"
+  prompt: |
+    Say whether the plugin's bin/ ships a plan-ci-runner command, and whether the plugin's pr-checks reference tells you to keep the runner up with its run.sh.
+context:
+  scaffold_script: fixture.sh
