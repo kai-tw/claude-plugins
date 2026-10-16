@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: packs-shipped
+description: assistant ships style-pack and ui-text-pack itself — both commands are in its bin/ and both skills in its manifest — and no longer depends on them as separate plugins.
+tags: [packaging]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: echo "bin=$(cd "$root/bin" && ls | grep -E "pack$" | paste -sd " " -)"; echo "skills=$(grep -oE "skills/[a-z-]+-pack" "$root/.claude-plugin/plugin.json" | paste -sd " " -)"; echo "deps=$(grep -oE "\"name\": \"[a-z-]+-pack\"" "$root/.claude-plugin/plugin.json" | paste -sd " " -)"
+  prompt: |
+    Print which pack commands assistant's bin/ has, which pack skills its manifest lists, and which packs it still depends on.
+context:
+  scaffold_script: fixture.sh

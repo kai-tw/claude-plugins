@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "assistant",
   "version": "0.41.0",
-  "description": "The founder's assistant: takes a request, decides, dispatches worker agents per project, and comes back with three touchpoints — intent + system design, the rendered screens, the delivery summary.",
+  "description": "The founder's assistant: takes a request, decides, dispatches worker agents per project, and comes back with three touchpoints — intent + system design, the rendered screens, the delivery summary. Ships the rulebooks its reviewers grade against: `style-pack` (code style, charter S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, charter U1–U5 plus zh-Hant, ja and en).",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"
@@ -13,24 +13,21 @@
     "orchestrator",
     "multi-project",
     "notion",
-    "svn"
+    "svn",
+    "code-style",
+    "ui-text",
+    "review"
   ],
   "skills": [
     "./skills/assistant",
-    "./skills/scribe"
+    "./skills/scribe",
+    "./skills/style-pack",
+    "./skills/ui-text-pack"
   ],
   "dependencies": [
     {
       "name": "security-guidance",
       "marketplace": "claude-plugins-official"
-    },
-    {
-      "name": "style-pack",
-      "marketplace": "kai-tw"
-    },
-    {
-      "name": "ui-text-pack",
-      "marketplace": "kai-tw"
     },
     {
       "name": "mother-tongue",

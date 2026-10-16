@@ -1,4 +1,4 @@
-# UI text rules — legislative procedure and format (ui-text-pack plugin)
+# UI text rules — legislative procedure and format
 
 `Read` this file only when adding, changing, merging or deleting a UI text rule.
 

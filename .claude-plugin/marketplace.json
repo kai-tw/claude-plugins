@@ -44,28 +44,6 @@
       "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/session-journal"
     },
     {
-      "name": "style-pack",
-      "description": "The founder's cross-project style code — a language-neutral charter (S1–S16) plus Dart, C# and JS language files, printed by `style-pack` for any reviewer to grade a diff against",
-      "source": "./plugins/style-pack",
-      "category": "development",
-      "author": {
-        "name": "Kai",
-        "url": "https://github.com/kai-tw"
-      },
-      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/style-pack"
-    },
-    {
-      "name": "ui-text-pack",
-      "description": "The founder's cross-project rules for writing user-visible text — a locale-neutral charter (U1–U5) plus zh-Hant / ja / en locale files, printed by `ui-text-pack` for any reviewer to grade UI strings and their translations against",
-      "source": "./plugins/ui-text-pack",
-      "category": "development",
-      "author": {
-        "name": "Kai",
-        "url": "https://github.com/kai-tw"
-      },
-      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/ui-text-pack"
-    },
-    {
       "name": "google-reporting",
       "description": "Google Analytics 4 and Search Console readers — usage, indexing status, search performance, and sitemap health, via keyless service-account impersonation",
       "source": "./plugins/google-reporting",
@@ -101,7 +79,7 @@
     {
       "name": "assistant",
       "source": "./plugins/assistant",
-      "description": "The founder's assistant — request → decision brief → screens → PR, across projects."
+      "description": "The founder's assistant — request → decision brief → screens → PR, across projects, with the style-pack and ui-text-pack rulebooks its reviewers grade against."
     },
     {
       "name": "mother-tongue",

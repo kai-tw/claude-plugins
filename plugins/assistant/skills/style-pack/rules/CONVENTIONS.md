@@ -1,4 +1,4 @@
-# Style rules — legislative procedure and drafting form (style-pack plugin)
+# Style rules — legislative procedure and drafting form
 
 `Read` this file only when adding, changing, merging or deleting a style rule.
 
