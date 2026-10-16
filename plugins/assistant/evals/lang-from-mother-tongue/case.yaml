@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: jq -r ".dependencies[].name" "$root/.claude-plugin/plugin.json"; grep -L mother-tongue-rules "$root"/agents/*.md | sed "s/^/unread=/"; ls "$root/bin/asst-lang" "$root/skills/assistant/references/language.md" 2>/dev/null || echo own=gone
+    EVAL_CMD: jq -r ".dependencies[].name" "$root/.claude-plugin/plugin.json"; grep -L mother-tongue-rules $(grep -L "assistant:builder" "$root"/agents/*.md) "$root/skills/builder/SKILL.md" | sed "s/^/unread=/"; ls "$root/bin/asst-lang" "$root/skills/assistant/references/language.md" 2>/dev/null || echo own=gone
   prompt: |
     List assistant's dependencies, the agents that do not call mother-tongue-rules, and whether assistant's own copy of the Chinese rules still exists.
 context:

@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: echo "agents=$(cd "$root/agents" && ls | sed "s|\.md$||" | paste -sd " " -)"; grep -lE "^  - Agent$" "$root"/agents/*.md | sed "s/^/spawns=/"; grep -rnoE "\`(scribe|code-verifier|text-verifier)\`|general-purpose" "$root/agents" "$root/skills/assistant" | sed "s/^/stale=/"; grep -c "^- \*\*scout\*\*" "$root/agents/builder.md" | sed "s/^/scout-phase=/"
+    EVAL_CMD: echo "agents=$(cd "$root/agents" && ls | sed "s|\.md$||" | paste -sd " " -)"; grep -lE "^  - Agent$" "$root"/agents/*.md | sed "s/^/spawns=/"; grep -rnoE "\`(scribe|code-verifier|text-verifier)\`|general-purpose" "$root/agents" "$root/skills/assistant" | sed "s/^/stale=/"; grep -c "^- \*\*scout\*\*" "$root/skills/builder/SKILL.md" | sed "s/^/scout-phase=/"
   prompt: |
     List assistant's agents, any agent that may spawn further agents, and any mention of an agent the assistant no longer has.
 context:

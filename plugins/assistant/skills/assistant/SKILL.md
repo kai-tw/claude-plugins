@@ -19,12 +19,13 @@ plan body; you read `references/project.md`-shaped adapters, the board, and the
 fixed-format reports the agents file with `asst-report`. Your context is the scarce resource of a
 multi-project desk — spend it on decisions.
 
-Two agents do the work: `builder` (in the task's worktree, one phase per
-dispatch — scout · ui · wire · fix) and `verifier` (reads, never edits — the
+Two workers do the work: the builder (in the task's worktree, one phase per
+dispatch — scout · ui · wire · fix — running the `assistant:builder` skill; where
+it runs is §Builder sessions) and the `verifier` agent (reads, never edits — the
 code and text legs). The board, the brief and the archive you write yourself
 with `asst-board`. Tasks run side by side: each has its own worktree and its own
-agents, dispatched with `run_in_background: true`, so one task's wait never
-holds up another's.
+builder, and every agent is dispatched with `run_in_background: true`, so one
+task's wait never holds up another's.
 
 ## Language
 
@@ -65,7 +66,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    its own row and worktree; the later rows are `Status=Next` with `Trigger`
    naming the row they wait for. The split itself is a `Decided` in the first
    brief.
-2. **Scout** (`builder`, phase `scout`, sonnet) returns ≤10 fact rows
+2. **Scout** (builder, phase `scout`) returns ≤10 fact rows
    (`file:line` or `unread`) and the intent forks it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
    goes back to Scout once, marked `re-run`; still failing, it enters the brief as
@@ -77,7 +78,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    Silence on `Decided` = accepted. Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
    later step reads, without your context.
-4. **Build** (`builder`): UI first, as real widgets in all four states → render
+4. **Build** (builder): UI first, as real widgets in all four states → render
    the contact sheet → **② stop for the founder**. Data wiring waits for OK.
    ② also carries every string the task adds or changes, its value listed per
    locale; tone-sensitive ones (error, guidance, confirmation, empty state) carry
@@ -86,7 +87,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    else** — after ③ they are copied into tests and mockups, and changing one word
    means changing dozens of assertion lines. A string first created in the wire
    phase comes back from the builder as a strings-only ② supplement, not a re-render.
-5. **Wire + tests** (`builder`): one checkpoint per phase, gated by the adapter's
+5. **Wire + tests** (builder): one checkpoint per phase, gated by the adapter's
    `gate` — on git a commit (the hook runs it), on svn a diff saved under
    `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
    before ③.
@@ -151,9 +152,9 @@ to `In Progress` and start at Scout). A Close changes the board, so the pass run
 again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet
 board, never at a Close. A row's progress is what the board and the disk hold, never
 what you remember: a row waiting on a report reads `asst-report latest <slug>
-<kind>`; none filed and no agent of yours on it in `ListAgents` → dispatch it again,
-marked `re-run` so no one calls `asst-budget spend` for it, since that round
-produced nothing. `digest` prints one line per row plus this week's cost from the
+<kind>`; none filed and nothing of yours working on it (its session in
+`list_sessions`, an agent in `ListAgents`) → dispatch it again, marked `re-run` so
+no one calls `asst-budget spend` for it, since that round produced nothing. `digest` prints one line per row plus this week's cost from the
 ledger.
 
 Nobody reports CI or a merge. Every row with an open PR (from its first `asst-pr
@@ -197,6 +198,28 @@ public repo quotes this paragraph verbatim. `asst-pr` refuses to push or turn
 ready what names a private repo, a home-directory path or a `#<n>` that is not
 this repo's; anything else on the list is caught by no script.
 
+## Builder sessions
+
+Where `start_session` is a tool (the Claude desktop app), a task's builder is one
+linked session for the task's whole life; anywhere else it is the `builder` agent,
+one phase per dispatch. Both run the `assistant:builder` skill and file the same
+reports.
+
+- Start the session in the turn the founder hands you the task, with its first
+  phase as the prompt: `start_session` with `initiation: "user_asked"` (handing you
+  the task is the founder's ask), `context: "fresh"`, title `<slug>`, `model` per
+  §Dispatch rules, `background` = the task statement. Git: `use_worktree: true`,
+  `branch_name: <slug>`, and read the worktree path from `get_session`. SVN: `cwd` =
+  the task's working copy, `use_worktree: false`.
+- Every later phase is a `SendMessage` to that session's `local_…` id, never a
+  second session for the task; `list_sessions` finds it by title.
+- The app refuses `start_session` on a turn an event started (an `asst-watch` exit,
+  another session's note), so a builder needed then — a `Next` row gone live, a
+  session that is gone — is proposed instead (`initiation: "own_initiative"`), and
+  the founder's click starts it.
+- A session ending its turn wakes you with a note; read its report from
+  `asst-report latest`, never from the note.
+
 ## Dispatch rules
 
 - Every dispatch names the founder's language as a locale tag (`zh-TW`, `ja`, `en`, …).
@@ -205,8 +228,8 @@ this repo's; anything else on the list is caught by no script.
   searches the whole disk. Exit 1 "no rules for locale" means that language has
   none; `mother-tongue-rules` not found → the agent reports a blocker and searches
   nothing.
-- One task = one worktree (or SVN working copy, per the adapter) = one agent
-  chain. Every dispatch names the slug and the report kind (`scout` ·
+- One task = one worktree (or SVN working copy, per the adapter) = one builder.
+  Every dispatch names the slug and the report kind (`scout` ·
   `brief-review` · `build-<phase>` · `verify-<leg>`, the legs being `verify-code` · `verify-text` · `verify-coverage`);
   the agent files its report
   with `asst-report put <slug> <kind>` before returning, and the output of a
@@ -215,8 +238,10 @@ this repo's; anything else on the list is caught by no script.
   so a leg missing there is visible before the merge — in full on a private repo,
   its first line only on any other (§Disclosure). A report is passed on by
   its path, never pasted.
-- Pin the model at dispatch: builder sonnet for `scout` and for `small` /
-  `exempt`, opus for every other `feature` phase; verifier opus.
+- Pin the model at dispatch: a builder session keeps the model it starts with —
+  sonnet for `small` / `exempt`, opus for `feature` (its scout included); the
+  builder agent sonnet for `scout` and for `small` / `exempt`, opus for every other
+  `feature` phase; verifier opus.
 - Board writes go through `asst-board` (`--dry-run` prints without writing; on
   Notion every write re-reads and verifies); `asst-board --help` has the archive
   shape. A failed verify is reported as failed, never retried past

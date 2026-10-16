@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: builder-session
+description: On the desktop app a task's builder is one linked session started with start_session and driven by SendMessage; elsewhere the builder agent is the fallback, and both run the one builder skill.
+tags: [agents]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: test -f "$root/skills/builder/SKILL.md" && grep -q "skills/builder" "$root/.claude-plugin/plugin.json" && echo skill=listed; grep -qE "^  - Skill$" "$root/agents/builder.md" && grep -q "assistant:builder" "$root/agents/builder.md" && echo agent=delegates; grep -c "^- \*\*" "$root/agents/builder.md" | sed "s/^/agent-phases=/"; grep -q "^## Builder sessions" "$root/skills/assistant/SKILL.md" && grep -q "start_session" "$root/skills/assistant/SKILL.md" && grep -q "SendMessage" "$root/skills/assistant/SKILL.md" && echo session=yes
+  prompt: |
+    Say how the assistant runs a task's builder on the desktop app and elsewhere, and where the builder's instructions live.
+context:
+  scaffold_script: fixture.sh
