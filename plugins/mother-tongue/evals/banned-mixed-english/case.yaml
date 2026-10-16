@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-mixed-english
+description: The Stop hook blocks English words dropped into Chinese sentences where a common Taiwanese word exists (board → 任務板, live 任務 → 進行中的任務); the same words in code spans or in English phrases don't count.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed stop.sh two zh-TW replies (one saying "board 上只有一個 live 任務", one quoting `asst-board` and a "live stream") and print the output.
+context:
+  scaffold_script: fixture.sh
