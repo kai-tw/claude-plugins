@@ -3,7 +3,7 @@ name: test-gates
 description: >-
   Bare-name commands for Flutter/Dart test runs on a shared machine:
   `plan-test` (run a suite inside a machine-wide slot budget), `plan-coverage`
-  (every changed line executed, no exemptions), `plan-mutation` (mutation
+  (every changed line executed, no markers), `plan-mutation` (mutation
   score over the changed Dart and JS/TS files, or review mode over the changed
   lines), `plan-mutation-review` (post review mode's survivors on a PR) and
   `plan-ci-runner` (run this repo's self-hosted Actions runner until it's idle).
@@ -20,8 +20,11 @@ allowed-tools:
   Never the bare `flutter test` / `dart test`: several sessions share this
   machine's memory, and the plugin's `test-gate` hook denies them.
 - `plan-coverage -- <scoped test command>` — per **line**, not per percent: each
-  changed `lib/**.dart` line is executed. No exemptions: a changed file carrying
+  changed `lib/**.dart` line is executed. No markers: a changed file carrying
   `// coverage:ignore-*` (or the retired `// coverage-ignore:`) is blocked too.
+  The one exception is built in: drift table definitions (column getters of a
+  class extending drift's `Table`) are left unmeasured, and the report counts
+  them. Exceptions are added to the script only, never to project code.
   A file with no coverage record is UNREACHED (blocks) unless an import-only
   probe shows it has no executable line — NO-CODE, which passes. Runs with
   branch coverage, so a `throw const …` body no test entered is a gap; a throw

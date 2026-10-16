@@ -11,7 +11,7 @@ board:      notion | file                  # where task rows live — the TaskLi
 notion_root: <page-id>                     # board=notion: the KB root; TaskList / feature-archive / decision-log resolve by title under it
 kb:         <dir>                          # board=file: where `asst-board archive` lands (e.g. docs/decisions)
 gate:       <command>                      # lint · format · tests in one command; red blocks the checkpoint
-coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, no exemptions
+coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, no markers
 render:     <command or none>              # produces the contact sheet for ② screens and strings
 ui_strings: <glob or none>                 # where the user-visible strings live (ARB); none = this project has none yet, the text leg is skipped
 locales:    <source> [→ <targets…>]       # ui_strings non-none: the source locale and every locale a key must carry

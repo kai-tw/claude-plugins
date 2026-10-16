@@ -28,6 +28,16 @@
 #   nothing and only claims to — blocks until it is removed. Generated files
 #   are excluded by name below and never reach that check.
 #
+# THE EXCEPTIONS LIVE HERE, AND ONLY HERE
+#   A kind of line no test can ever execute is left unmeasured by this script,
+#   by what the code is, never by a marker, a flag or a per-project list. A new
+#   exception is a change to this script. There is one:
+#   - drift table definitions (`drift_columns.pl` says exactly which lines).
+#     drift's generator reads the column getters and the generated class
+#     overrides them, so at runtime the builder chain never runs past its first
+#     call. The schema snapshot test is what checks them. The report counts the
+#     lines left out, per file.
+#
 # LINES THE VM NEVER RECORDS
 #   A statement with no call or allocation in it — `throw const E();`,
 #   `throw 'msg';`, `throw kError;` — gets no `DA:` line at all, so an error
@@ -62,6 +72,7 @@
 #   name is the fallback, not the default: it only moves when someone pulls it.
 
 set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 EXPLICIT_FILES=""
 DIFF_BASE=""
@@ -152,7 +163,7 @@ set -- "$@"
 case " $* " in *" --coverage "*) ;; *) set -- "$@" --coverage ;; esac
 case " $* " in *" --branch-coverage "*) ;; *) set -- "$@" --branch-coverage ;; esac
 
-echo "plan-coverage: ${count_files} changed file(s); every line must be executed — no exemptions."
+echo "plan-coverage: ${count_files} changed file(s); every line must be executed, drift table definitions aside."
 echo "plan-coverage: running — $*"
 started=$(date +%s)
 "$@"
@@ -215,6 +226,17 @@ seen_files=$(printf '%s\n' "$uncov" | awk -F'\t' '$2 == "-" { print $1 }' | sort
 # One gap per line; a DA at 0 outranks a BRDA opening on the same line.
 gaps=$(printf '%s\n' "$uncov" | awk -F'\t' '$3 == "line" || $3 == "branch"' \
        | sort -t$'\t' -k1,1 -k2,2n -k3,3r | awk -F'\t' '!s[$1 FS $2]++')
+
+# The one exception (see the header): drift table definitions, as "<file>\t<line>".
+drift=$(while IFS= read -r f; do
+          [ -n "$f" ] || continue
+          perl "$here/drift_columns.pl" "$f" | sed "s|^|$f	|"
+        done <<< "$files")
+if [ -n "$drift" ]; then
+  gaps=$(printf '%s\n' "$gaps" | awk -F'\t' 'NR == FNR { d[$1 FS $2] = 1; next } !($1 FS $2 in d)' \
+         <(printf '%s\n' "$drift") -)
+fi
+n_drift=$(printf '%s' "$drift" | grep -c . || true)
 
 # --- gaps and pragmas -------------------------------------------------------
 unexecuted=""
@@ -328,6 +350,15 @@ while IFS= read -r f; do
 done <<< "$files"
 echo "plan-coverage: elapsed ${elapsed}s."
 
+drift_note() {
+  printf '%s\n' "$drift" | awk -F'\t' 'NF { n[$1]++ } END { for (f in n) printf "  %s: %d line(s)\n", f, n[f] }' | sort
+}
+if [ "$n_drift" -gt 0 ]; then
+  echo
+  echo "Not measured — drift table definitions (read by drift's generator, never run):"
+  drift_note
+fi
+
 if [ "$n_gaps" -gt 0 ]; then
   echo
   echo "Unexecuted:"
@@ -367,7 +398,7 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:coverage sha=%s -->\n' "$head_sha"
   printf '### Coverage — reach\n\n'
-  printf 'Scope: %s changed file(s) vs `%s`, `%s`. Every changed line executed; no exemptions.\n\n' \
+  printf 'Scope: %s changed file(s) vs `%s`, `%s`. Every changed line executed, drift table definitions aside.\n\n' \
     "$count_files" "${base:---files}" "$*"
   printf '| Verdict | Gaps | Pragmas | File |\n|---|---:|---:|---|\n'
   while IFS= read -r f; do
@@ -378,6 +409,10 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
   done <<< "$files"
   if [ "$n_unreached" -gt 0 ]; then
     printf '\n**UNREACHED means no test imported the file at all** — not 0%%%s, but absent from the coverage report entirely.\n' ''
+  fi
+  if [ "$n_drift" -gt 0 ]; then
+    printf '\nNot measured — drift table definitions (read by drift'"'"'s generator, never run):\n\n'
+    drift_note | sed 's/^  /- /'
   fi
   if [ -n "$nocode" ]; then
     printf '\nNO-CODE means the file has no executable line (declarations only): importing it alone still leaves no coverage record.\n'
