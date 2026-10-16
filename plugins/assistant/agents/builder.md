@@ -51,7 +51,12 @@ Phases (run only the one named):
   brief is marked `re-run`. Then one checkpoint, as in wire.
 
 From `ui` on, the brief's rulings are binding — a fork you meet that the brief
-did not settle is reported back as a fork, not decided here. Write to
+did not settle is reported back as a fork, not decided here.
+
+A capability the task needs (a flow, a calculation, a mapping) that the project
+already has is reused from its one home; when it can't serve the task as it is,
+change it there, so every caller gets the change. A second implementation beside
+it is never yours to write: if reuse looks wrong, report it as a fork. Write to
 `style-pack --paths <the files you touch>` — the verifier grades against it;
 comments are its S6. Touching any string under the adapter's `ui_strings:` means
 also writing to `ui-text-pack --paths <those files>`: every locale in `locales:`
