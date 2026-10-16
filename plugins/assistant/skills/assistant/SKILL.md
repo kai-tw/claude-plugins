@@ -96,7 +96,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    floor (`security-guidance` hooks run unattended; the project's own sink rules
    when it has them); and the adapter's `coverage:` command when set, which you
    run yourself in the background — gate: every changed line executed, no
-   exemptions. Mutation is not yours: the PR's CI comments its survivors at
+   markers. Mutation is not yours: the PR's CI comments its survivors at
    their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Any finding or `debt:` line left
    → another fix round, with no cap; only residue that changes scope or design
