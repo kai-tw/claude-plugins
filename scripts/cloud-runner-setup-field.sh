@@ -1,5 +1,5 @@
 #!/bin/bash
-# cloud-runner-setup v1 — bump this number to rebuild the environment
+# cloud-runner-setup v2 — bump this number to rebuild the environment
 for s in cloud-setup.sh cloud-runner-setup.sh; do
   f=$(mktemp)
   if curl -fsSL https://raw.githubusercontent.com/kai-tw/claude-plugins/main/scripts/$s -o "$f" && [ -s "$f" ]; then

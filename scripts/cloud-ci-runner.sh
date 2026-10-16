@@ -2,9 +2,10 @@
 # cloud-ci-runner <owner/repo> [--idle <minutes>]
 #
 # Runs <owner/repo>'s queued self-hosted Actions jobs in this cloud container,
-# then exits. Each repo's routine on the runner environment downloads this
-# file from main and runs it, so a change here needs no snapshot rebuild:
-#   bash <(curl -fsSL https://raw.githubusercontent.com/kai-tw/claude-plugins/main/scripts/cloud-ci-runner.sh) <owner/repo>
+# then exits. Installed as /usr/local/bin/cloud-ci-runner by
+# scripts/cloud-runner-setup.sh, in the runner environment only, where each
+# repo's routine runs it. A change here reaches that environment only after
+# its snapshot rebuilds.
 #
 # Each job gets its own just-in-time runner (labels self-hosted, flutter, linux,
 # cloud): GitHub hands it one job and removes it afterwards, so nothing stays
