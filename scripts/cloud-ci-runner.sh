@@ -46,21 +46,23 @@ export RUNNER_ALLOW_RUNASROOT=1
 # runner, plus 1 while this runner is busy. Fails when gh can't answer.
 agent=""
 pending() {
-  local n=0 busy id k status
+  local n=0 busy id ids k status
   if [ -n "$agent" ]; then
-    busy=$(gh api "repos/$repo/actions/runners" --jq ".runners[] | select(.name == \"$agent\") | .busy" 2>/dev/null) || return 1
+    busy=$(gh api "repos/$repo/actions/runners" --jq ".runners[] | select(.name == \"$agent\") | .busy" 2>&1) || { echo "$busy" >&2; return 1; }
     [ "$busy" = true ] && n=1
   fi
   for status in queued in_progress; do
-    for id in $(gh run list -R "$repo" --status "$status" --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null); do
+    # A failed listing must not read as "no runs", so gh's error goes to stderr.
+    ids=$(gh run list -R "$repo" --status "$status" --limit 20 --json databaseId --jq '.[].databaseId' 2>&1) || { echo "$ids" >&2; return 1; }
+    for id in $ids; do
       k=$(gh api "repos/$repo/actions/runs/$id/jobs" \
-        --jq '[.jobs[] | select(.status == "queued" and (.labels | index("self-hosted")))] | length' 2>/dev/null) || return 1
+        --jq '[.jobs[] | select(.status == "queued" and (.labels | index("self-hosted")))] | length' 2>&1) || { echo "$k" >&2; return 1; }
       n=$((n + k))
     done
   done
   echo "$n"
 }
-pending >/dev/null || { echo "cloud-ci-runner: gh can't list $repo's workflow runs with these credentials" >&2; exit 2; }
+pending >/dev/null || { echo "cloud-ci-runner: gh can't list $repo's workflow runs with these credentials (gh's error is above): set CI_RUNNER_TOKEN" >&2; exit 2; }
 
 log="$dir/_diag/cloud-ci-runner.log"
 mkdir -p "$dir/_diag"
