@@ -8,8 +8,8 @@ execution:
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Bash]
   env:
-    EVAL_CMD: asst-section append body.md "Deferred Items" - <<<"- fix 2/2 殘留：空 map 的 putAll 未測 · task T-12" && cat body.md
+    EVAL_CMD: asst-section append body.md "Deferred Items" - <<<"- 殘留：空 map 的 putAll 未測 · task T-12" && cat body.md
   prompt: |
-    Append the line `- fix 2/2 殘留：空 map 的 putAll 未測 · task T-12` at the end of `## Deferred Items` in body.md. Touch only that section; every other section must stay unchanged to the character. Use a section-editing tool if one is available. Then print the whole body.md.
+    Append the line `- 殘留：空 map 的 putAll 未測 · task T-12` at the end of `## Deferred Items` in body.md. Touch only that section; every other section must stay unchanged to the character. Use a section-editing tool if one is available. Then print the whole body.md.
 context:
   scaffold_script: fixture.sh

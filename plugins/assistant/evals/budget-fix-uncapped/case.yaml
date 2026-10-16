@@ -1,6 +1,6 @@
 schema_version: "1.1"
-name: budget-cap-hit
-description: The 3rd fix spend hits cap 2: prints CAP HIT, exit 1.
+name: budget-fix-uncapped
+description: Fix rounds have no cap — the 3rd fix spend is recorded as fix 3, exit 0.
 tags: [asst-budget]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: for i in 1 2 3; do asst-budget spend demo fix; done; echo "exit=$?"
   prompt: |
-    Record 3 fix rounds in a row for task demo (one budget-tool record per round). The 3rd should be blocked; print the tool's output each time and the last exit code.
+    Record 3 fix rounds in a row for task demo (one budget-tool record per round). Print the tool's output each time and the last exit code.
 context:
   scaffold_script: fixture.sh

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: budget-show-reset
-description: fix counted to 2/2, other kinds untouched; after reset every kind is back to zero.
+description: fix counted to 2, other kinds untouched; after reset every kind is back to zero.
 tags: [asst-budget]
 plugins: ["../.."]
 runs: 1

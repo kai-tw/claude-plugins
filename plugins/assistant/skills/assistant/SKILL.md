@@ -98,8 +98,9 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    run yourself in the background — gate: every changed line executed, no
    exemptions. Mutation is not yours: the PR's CI comments its survivors at
    their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes;
-   `asst-budget spend <slug> fix` per round. Residue at the cap → debt task, or
-   one `Needs you` line if it changes scope or design.
+   `asst-budget spend <slug> fix` per round. Any finding or `debt:` line left
+   → another fix round, with no cap; only residue that changes scope or design
+   becomes one `Needs you` line instead.
 7. **③ Deliver** (you, from the verifier reports): `references/delivery-summary.md`.
    On git it is written only from a clean, pushed tree — `git -C <worktree>
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
@@ -122,7 +123,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
 8. **Close** (you, through `asst-board`): board row → Shipped; the task row is disposable,
    so the brief moves to the archive (`asst-board archive`): Overview · Problem ·
    Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
-   with the choice made · Deferred Items = debt, plus one decision per `Needs you`
+   with the choice made · Deferred Items = one decision per `Needs you`
    fork (Context · Decision · Consequence, the rejected option and its cost in
    Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
    task's rounds and cost appended to `.claude/.assistant/ledger.md`.
@@ -171,9 +172,10 @@ candidate whose ref already ends a row `Name` in `asst-board list --all` is not 
 
 ## Budgets
 
-`asst-budget` counts per task: review 1 · fix 2 · upload 2. A cap hit is
-never "one more try": record as debt (a Deferred task with a Trigger), cut scope
-(`Decided`, written into the brief), or raise `Needs you`. No round ends because someone
+`asst-budget` counts per task: review 1 · upload 2 · fix uncapped. Debt is
+never deferred: while a finding or `debt:` line remains, run another fix round. A
+review or upload cap hit is never "one more try": cut scope (`Decided`, written
+into the brief), or raise `Needs you`. No round ends because someone
 inside it felt it converged.
 
 ## Disclosure
