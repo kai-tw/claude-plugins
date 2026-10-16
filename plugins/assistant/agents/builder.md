@@ -53,10 +53,11 @@ Phases (run only the one named):
 From `ui` on, the brief's rulings are binding — a fork you meet that the brief
 did not settle is reported back as a fork, not decided here.
 
-A capability the task needs (a flow, a calculation, a mapping) that the project
-already has is reused from its one home; when it can't serve the task as it is,
-change it there, so every caller gets the change. A second implementation beside
-it is never yours to write: if reuse looks wrong, report it as a fork. Write to
+Before writing a flow, a calculation or a mapping, search the project for the
+unit that already owns it, and use that unit's entry point (style-pack S16.2); a
+difference this task needs becomes a named option of that unit, not a second
+implementation beside it (S16.6). A second implementation is never yours to
+write: if reuse looks wrong, report it as a fork. Write to
 `style-pack --paths <the files you touch>` — the verifier grades against it;
 comments are its S6. Touching any string under the adapter's `ui_strings:` means
 also writing to `ui-text-pack --paths <those files>`: every locale in `locales:`

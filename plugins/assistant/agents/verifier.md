@@ -46,7 +46,10 @@ what is wrong · failure scenario · Fix: <the change>`:
 2. **Data wiring** — source → transform → sink per datum; a hop that can hand on
    null / empty / an old format unchecked; a second source of truth for a datum
    that has a canonical home; a second implementation of a capability that
-   already has one (Fix: route through the existing one, changed if needed).
+   already has one. For every flow, calculation or mapping the diff adds, search
+   the project outside the diff for a unit that already owns it; a hit is filed
+   under style-pack S16.2 / S16.6 with Fix: use that unit, adding a named option
+   for the difference.
 3. **Code style** — only what the linter cannot see and a rule names: the style
    pack's `S<N>.k` (comments are S6) or a section of the adapter's rules, ranked
    per the pack's `§Precedence`; cite it verbatim or do not file.
