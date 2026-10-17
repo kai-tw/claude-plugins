@@ -80,10 +80,11 @@ main=""
 [ -n "$cwd" ] && main=$(cd "$cwd" 2>/dev/null && git rev-parse --path-format=absolute --git-common-dir 2>/dev/null | sed 's#/\.git$##')
 record=$(jq -c --arg id "$id" --arg cwd "$cwd" --arg main "$main" '
   (.plugins[$id] // []) as $all
-  | ([$all[] | select(.projectPath and (.projectPath == $main
-       or $cwd == .projectPath or ($cwd | startswith(.projectPath + "/"))))]
+  | ([$all[] | .projectPath as $p | select($p and ($p == $main
+       or $cwd == $p or ($cwd | startswith($p + "/"))))]
      + [$all[] | select(.scope == "user")])[0] // empty' "$registry" 2>/dev/null)
-scope=$(printf '%s' "$record" | jq -r '.scope // "project"' 2>/dev/null)
+scope=$(printf '%s' "$record" | jq -r '.scope' 2>/dev/null)
+[ -n "$scope" ] || scope=project
 dir=$(printf '%s' "$record" | jq -r '.projectPath // empty' 2>/dev/null)
 [ -n "$dir" ] || { [ "$scope" = user ] && dir=$HOME || dir=$cwd; }
 

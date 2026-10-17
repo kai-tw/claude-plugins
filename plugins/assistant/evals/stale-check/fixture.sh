@@ -18,7 +18,7 @@ r="$HOME/.claude/plugins/installed_plugins.json"
 [ "${FAIL:-}" = 1 ] && { echo "boom: update refused"; exit 1; }
 case "$2" in
   install) jq --arg id "$3" --arg p "$PWD" '.plugins[$id] = [{scope:"project",projectPath:$p,version:"1.0.0"}]' "$r" > "$r.n" ;;
-  update) jq --arg id "$3" '.plugins[$id][0].version = "0.2.0"' "$r" > "$r.n" ;;
+  update) jq --arg id "$3" --arg p "$PWD" '.plugins[$id] |= map(if .projectPath == $p then .version = "0.2.0" else . end)' "$r" > "$r.n" ;;
 esac
 mv "$r.n" "$r"
 SH
@@ -27,8 +27,12 @@ cat > check.sh <<'SH'
 h="$PWD/home"; c="$h/.claude/plugins/cache/m/p/0.1.0"; proj="$PWD/proj"
 export LOG="$PWD/calls.log"
 cp "$1/hooks/stale-check.sh" "$c/hooks/"
-reg() { printf '{"plugins":{"p@m":[{"scope":"project","projectPath":"%s","version":"0.1.0"}]}}' "$proj" \
-  > "$h/.claude/plugins/installed_plugins.json"; }
+# reg [other|none] — the registry holds this project's record; "other" puts
+# another project's record before it, "none" keeps only the other one.
+reg() { local other='{"scope":"project","projectPath":"/elsewhere","version":"0.1.0"}' mine
+  mine=$(printf '{"scope":"project","projectPath":"%s","version":"0.1.0"}' "$proj")
+  case "${1:-}" in other) mine="$other,$mine" ;; none) mine=$other ;; esac
+  printf '{"plugins":{"p@m":[%s]}}' "$mine" > "$h/.claude/plugins/installed_plugins.json"; }
 run() { printf '{"session_id":"%s","cwd":"%s","stop_hook_active":%s}' "$1" "$proj" "$2" \
   | HOME="$h" TMPDIR="$PWD/t" PATH="$PWD/bin:$PATH" bash "$c/hooks/stale-check.sh"; }
 reg; : > "$LOG"
@@ -41,6 +45,10 @@ echo "again=[$(run s1 false)]"
 echo "active=[$(run s2 true)]"
 reg
 echo "failed:"; FAIL=1 run s4 false | jq -r .reason | sed "s#$PWD#.#g"
+reg other
+echo "other-first=[$(run s5 false | jq -r .reason | grep -o 'has just been updated to 0.2.0')]"
+reg none
+echo "unrecorded:"; run s6 false | jq -r .reason | sed -e "s#$PWD#.#g" -e 's/^/unrecorded /'
 echo '{"name":"p","version":"0.1.0"}' > "$h/.claude/plugins/marketplaces/m/plugins/p/.claude-plugin/plugin.json"
 echo "current=[$(run s3 false)]"
 SH
