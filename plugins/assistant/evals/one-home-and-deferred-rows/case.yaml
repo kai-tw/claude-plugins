@@ -8,7 +8,7 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: for f in skills/builder/SKILL.md agents/verifier.md skills/assistant/SKILL.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+    EVAL_CMD: for f in agents/builder.md agents/verifier.md skills/assistant/SKILL.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
   prompt: |
     Print the builder, verifier and assistant skill text, one file per line.
 context:

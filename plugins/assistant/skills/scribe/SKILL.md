@@ -4,7 +4,7 @@ description: >-
   The assistant's persistence toolbelt: `asst-board` (task rows, brief, archive —
   Notion or a local board file, per the adapter), `asst-notion` (the Notion
   request builder + writer behind it), `asst-section` (edit one `## ` section of a
-  local Markdown body). Used by the assistant and the builder; not a user
+  local Markdown body). Used by the assistant and the `builder` agent; not a user
   entry point.
 ---
 

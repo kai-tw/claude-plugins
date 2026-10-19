@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-Every agent and the builder skill read the rules by running mother-tongue-rules.
+Every agent reads the rules by running mother-tongue-rules.
