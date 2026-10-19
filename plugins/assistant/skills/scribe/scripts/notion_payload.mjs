@@ -115,7 +115,7 @@ const DB = {
       // The git-side anchor: the issue the task's PR closes (`Fixes #N`).
       // Empty for Tracing rows — nothing to link.
       'GitHub Issue': { type: 'url' },
-      // The ② contact sheet — the task's design trail. Empty for non-UI work.
+      // The ② screens page — the task's design trail. Empty for non-UI work.
       'Design Sheet': { type: 'url' },
     },
     // Relation props on this DB are Notion-managed reverse relations — not

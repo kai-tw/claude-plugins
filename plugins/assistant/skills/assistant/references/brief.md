@@ -24,7 +24,7 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 - Rejected alternatives: <one line + its cost>
 
 ## Screens (UI in scope only)
-- <screens × states the contact sheet will show>
+- <screens × states the screens page will show>
 
 ## Budget and debt
 - review <0|1> · upload 2 · fix uncapped
