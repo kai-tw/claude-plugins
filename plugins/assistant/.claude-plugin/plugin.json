@@ -22,8 +22,7 @@
     "./skills/assistant",
     "./skills/scribe",
     "./skills/style-pack",
-    "./skills/ui-text-pack",
-    "./skills/builder"
+    "./skills/ui-text-pack"
   ],
   "dependencies": [
     {
