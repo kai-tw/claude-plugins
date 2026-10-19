@@ -39,7 +39,7 @@ Phases (run only the one named):
 - **ui** — the screens as real widgets, every state (empty / loading / error /
   populated), no data wiring. Run the adapter's `render`, which writes one image
   per screen × state × locale into one directory, named
-  `<screen>--<state>--<locale>.png`; then `asst-screens <slug> <that directory>`
+  `<screen>-<state>-<locale>.png`; then `asst-screens <slug> <that directory>`
   builds the page and prints its path. Never combine the images into one, and
   never write a page of your own.
   Strings are real from here on, in every locale — the founder reads the screens

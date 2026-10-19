@@ -7,10 +7,12 @@
 // Usage: asst-screens <task-slug> <image-dir>   → prints the page's path
 //
 // Images: .png .jpg .jpeg .webp .gif in <image-dir>, named
-// <screen>--<state>[--<locale>].<ext> (e.g. `inbox--empty--zh-TW.png`). The page
-// has one section per screen, states in the order empty · loading · error ·
-// populated, then any other. Every image gets a number, so the founder can
-// answer "which cell" with one. A name without `--` is a screen with no state.
+// <screen>-<state>[-<locale>].<ext> (e.g. `sign-in-empty-zh-TW.png`). The state
+// is the last of empty · loading · error · populated in the name: what comes
+// before it is the screen, what comes after is the locale, so either may hold a
+// dash. The page has one section per screen, states in that order, and every
+// image gets a number, so the founder can answer "which cell" with one. A name
+// with none of the four states is a screen with no state.
 //
 // The page lands at <root>/.claude/.assistant/tasks/<slug>/screens.html and is
 // overwritten on each run. Exit: 0 = written, 1 = no images, 2 = usage.
@@ -54,18 +56,22 @@ const shots = readdirSync(src)
   .filter((f) => MIME[extname(f).toLowerCase()])
   .map((file) => {
     const ext = extname(file).toLowerCase();
-    const [screen, state = '', ...rest] = file.slice(0, -ext.length).split('--');
+    const name = file.slice(0, -ext.length);
+    const parts = name.split('-');
+    const at = parts.findLastIndex((p) => STATES.includes(p));
+    const [screen, state, locale] = at < 0 ? [name, '', '']
+      : [parts.slice(0, at).join('-') || name, parts[at], parts.slice(at + 1).join('-')];
     const buf = readFileSync(join(src, file));
-    return { file, ext, screen, state, locale: rest.join('--'), buf, px: size(buf, ext) };
+    return { file, ext, screen, state, locale, buf, px: size(buf, ext) };
   });
 if (!shots.length) {
   console.error(`asst-screens: no images in ${src} (looked for ${Object.keys(MIME).join(' ')})`);
   process.exit(1);
 }
 
-const rank = (s) => (STATES.includes(s) ? STATES.indexOf(s) : STATES.length);
+const rank = (s) => (STATES.includes(s) ? STATES.indexOf(s) : -1);
 shots.sort((a, b) =>
-  a.screen.localeCompare(b.screen) || rank(a.state) - rank(b.state) || a.state.localeCompare(b.state)
+  a.screen.localeCompare(b.screen) || rank(a.state) - rank(b.state)
   || a.locale.localeCompare(b.locale) || a.file.localeCompare(b.file));
 shots.forEach((s, i) => (s.n = i + 1));
 

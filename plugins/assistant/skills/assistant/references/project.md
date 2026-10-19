@@ -12,7 +12,7 @@ notion_root: <page-id>                     # board=notion: the KB root; TaskList
 kb:         <dir>                          # board=file: where `asst-board archive` lands (e.g. docs/decisions)
 gate:       <command>                      # lint · format · tests in one command; red blocks the checkpoint
 coverage:   <command or none>              # per-line reach on the diff; gate: every changed line executed, no markers
-render:     <command or none>              # writes one image per screen × state × locale into one directory, named <screen>--<state>--<locale>.png; asst-screens builds the ② page from them
+render:     <command or none>              # writes one image per screen × state × locale into one directory, named <screen>-<state>-<locale>.png; asst-screens builds the ② page from them
 ui_strings: <glob or none>                 # where the user-visible strings live (ARB); none = this project has none yet, the text leg is skipped
 locales:    <source> [→ <targets…>]       # ui_strings non-none: the source locale and every locale a key must carry
 strings_canon: <path or none>             # the project's own string canon when it sits outside rules: (the regulation layer under ui-text-pack §Precedence)

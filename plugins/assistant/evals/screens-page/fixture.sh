@@ -5,7 +5,8 @@ git init -q
 mkdir -p .claude shots empty
 touch .claude/assistant.md
 echo notes > shots/README.md
-# Four states of one screen, named so that alphabetical order is not state order, and a second screen.
+# Four states of a screen whose name holds a dash, named so that alphabetical order is not
+# state order, and a second screen.
 node - <<'JS'
 const { deflateSync } = require('node:zlib');
 const { writeFileSync } = require('node:fs');
@@ -23,9 +24,9 @@ const png = (name, w, h, shade) => {
   writeFileSync(`shots/${name}`, Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
     chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]));
 };
-png('inbox--populated--zh-TW.png', 390, 844, 200);
-png('inbox--empty--zh-TW.png', 390, 844, 230);
-png('inbox--error--zh-TW.png', 390, 844, 120);
-png('inbox--loading--zh-TW.png', 390, 844, 180);
-png('settings--populated--en.png', 390, 600, 90);
+png('sign-in-populated-zh-TW.png', 390, 844, 200);
+png('sign-in-empty-zh-TW.png', 390, 844, 230);
+png('sign-in-error-zh-TW.png', 390, 844, 120);
+png('sign-in-loading-zh-TW.png', 390, 844, 180);
+png('settings-populated-en.png', 390, 600, 90);
 JS
