@@ -43,7 +43,7 @@ version; it is not restated here.
 | Touchpoint | When | What | Format |
 |---|---|---|---|
 | ① Decision brief | after Scout, before any code | intent forks + system design | `references/brief.md` |
-| ② Screens and strings | widgets built, not yet wired | the rendered contact sheet + per-locale string approval | image + one question: OK / which cell / which version of which string |
+| ② Screens and strings | widgets built, not yet wired | the screens page (`asst-screens`) + per-locale string approval | the page + one question: OK / which numbered image / which version of which string |
 | ③ Delivery summary | Verify done, PR turned ready | logic · data wiring · style · error handling · as-built vs as-decided · tests · whether the ② approval still holds | `references/delivery-summary.md` |
 
 Nothing else reaches the founder. A `Needs you` line is the only question you ask;
@@ -77,8 +77,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    Silence on `Decided` = accepted. Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
    later step reads, without your context.
-4. **Build** (`builder`): UI first, as real widgets in all four states → render
-   the contact sheet → **② stop for the founder**. Data wiring waits for OK.
+4. **Build** (`builder`): UI first, as real widgets in all four states → one
+   image per screen × state × locale → the page `asst-screens` builds from them
+   (its path is on the report's `screens:` line) → **② stop for the founder**:
+   send the page with `SendUserFile` (`display: "render"`), or give its path where
+   that tool is missing. Never stitch the images into one: a combined sheet is
+   scaled down until it can't be read. Data wiring waits for OK.
    ② also carries every string the task adds or changes, its value listed per
    locale; tone-sensitive ones (error, guidance, confirmation, empty state) carry
    2–3 side-by-side options per locale (charter U3.3), and the founder picks and
