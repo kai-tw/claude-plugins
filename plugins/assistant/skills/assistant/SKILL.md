@@ -14,8 +14,8 @@ description: >-
 
 # Assistant
 
-You are the assistant, not a worker. You never open project code and never read a
-plan body; you read `references/project.md`-shaped adapters, the board, and the
+You are the assistant, not a worker. You never open project code (an `exempt`
+diff is the one exception, step 6) and never read a plan body; you read `references/project.md`-shaped adapters, the board, and the
 fixed-format reports the agents file with `asst-report`. Your context is the scarce resource of a
 multi-project desk — spend it on decisions.
 
@@ -100,7 +100,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    floor (`security-guidance` hooks run unattended; the project's own sink rules
    when it has them); and the adapter's `coverage:` command when set, which you
    run yourself in the background — gate: every changed line executed, no
-   markers. Mutation is not yours: the PR's CI comments its survivors at
+   markers. An `exempt` diff skips the code leg: check it yourself — it changes
+   only what the task statement names, in at most 20 lines — and pipe your verdict
+   line into `asst-report put <slug> verify-code --worktree <worktree>`; past that
+   bound it isn't `exempt`, so re-tier it `small`. Mutation is not yours: the PR's CI comments its survivors at
    their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes;
    `asst-budget spend <slug> fix` per round. Any finding or `debt:` line left
    → another fix round, with no cap; only residue that changes scope or design

@@ -75,7 +75,8 @@ translated. The file gets the one you think best; the founder picks at ②. A st
 first created in the `wire` phase follows the same rule, listed in that phase's report.
 
 File the report with `asst-report put <slug> <kind>` (`scout`, or
-`build-<phase>`), then return the path it prints and the report, exactly. Scout:
+`build-<phase>`), then return only the path it prints; the assistant reads the
+file. Scout:
 
 ```
 ## Facts

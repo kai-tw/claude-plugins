@@ -77,7 +77,8 @@ finding (U5.2). Read `strings_canon:` when set; it is the regulation layer and
 wins on the facts it states (glossary, screen labels, storage formats). A locale
 the canon declares a mirror of another loads the mirrored locale's file.
 
-Run `strings_check:` when set and file its output verbatim. Do not re-derive by
+Run `strings_check:` when set; its output reaches the report through the shell,
+never retyped (§Filing). Do not re-derive by
 reading what it already decided — term blocklists, punctuation form, second
 person, sort order and missing keys are its job, and a finding that duplicates
 it is dropped.
@@ -87,9 +88,10 @@ Walk U1–U5 in order; each finding is one line `[U<N>.k] <key> · <locale> —
 replacement string in full, in that locale. A finding without one is not filed —
 the founder approves strings at ②, and cannot approve a complaint.
 
-For every key the diff adds or changes, also report the row the delivery summary
-needs: the key, where it renders, the available width, and each locale's value
-as it stands after your findings are applied. Approval status is not part of
+For a key whose value one of your findings changes, also report the row the
+delivery summary needs: the key, where it renders, the available width, and each
+locale's value as it stands after your findings are applied. Every other key
+stands as the builder's `strings:` block lists it. Approval status is not part of
 this report — ② gives it.
 
 A line no rule you can cite catches, but that you still believe no native
@@ -104,11 +106,9 @@ Report:
 ## Findings
 [U<N>.k] <key> · <locale> — <what is wrong> · Fix: <string>
 ## low confidence
-## strings_check
-<verbatim output, or `none` from the adapter>
 ## Not native (not findings, never block the merge, at most three)
 - <key> · <locale> — <what a native speaker would not write> · rule to make: <one sentence>
-## Strings
+## Strings (only keys a finding changes)
 ### <key> · <where it renders> · <available width>
 - <locale> <value>
 ```
@@ -116,5 +116,8 @@ Report:
 ## Filing
 
 File each leg with `asst-report put <slug> <kind>` (`verify-code`,
-`verify-text` or `brief-review`), then return the paths it prints and the
-reports. The assistant turns them into the delivery summary; write nothing else.
+`verify-text` or `brief-review`). On the text leg, let the shell append
+`strings_check:` after your report — `{ cat <report>; echo '## strings_check';
+<command>; } | asst-report put <slug> verify-text` — or `## strings_check none`
+when the adapter has none. Then return only the paths it prints; the assistant
+reads the files. Write nothing else.
