@@ -219,8 +219,9 @@ this repo's; anything else on the list is caught by no script.
   so a leg missing there is visible before the merge — in full on a private repo,
   its first line only on any other (§Disclosure). A report is passed on by
   its path, never pasted.
-- Pin the model at dispatch: builder sonnet for `scout` and for `small` /
-  `exempt`, opus for every other `feature` phase; verifier opus.
+- Pin the model at dispatch: builder haiku for `exempt`, sonnet for `scout`,
+  `small` and every `feature` phase, opus for a `fix` once `asst-budget show
+  <slug>` already counts a fix round; verifier opus.
 - Board writes go through `asst-board` (`--dry-run` prints without writing; on
   Notion every write re-reads and verifies); `asst-board --help` has the archive
   shape. A failed verify is reported as failed, never retried past

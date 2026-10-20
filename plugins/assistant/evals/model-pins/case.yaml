@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: model-pins
+description: Models follow Claude Code's usage guide — haiku for an exempt builder, sonnet for scout, small and feature phases (the builder's default), opus for the second fix round on and for the verifier.
+tags: [agents]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: for a in builder verifier; do sed -n "s/^model: /$a-default=/p" "$root/agents/$a.md"; done; sed -n "/^- Pin the model at dispatch/,/verifier opus\./p" "$root/skills/assistant/SKILL.md" | tr -s " \n" " " | sed "s/^/pin=/"
+  prompt: |
+    Say which model each assistant agent runs on by default and which model the assistant pins for each builder phase and for the verifier.
+context:
+  scaffold_script: fixture.sh

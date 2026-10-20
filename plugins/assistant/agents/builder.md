@@ -5,7 +5,7 @@ description: |
   the brief, the UI as real widgets in all four states, the screens page, the
   wiring, the tests, the fixes the verifier asks for. Files one fixed-format
   report per phase. Never talks to the founder; the assistant does.
-model: opus
+model: sonnet
 tools:
   - Bash
   - Read
