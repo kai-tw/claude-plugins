@@ -42,3 +42,25 @@ jobs:
       - name: Version bump check
         if: always()
         run: node .github/scripts/check-version-bump.mjs "${{ github.event.pull_request.base.sha || 'HEAD^' }}"
+
+  # The whole history takes under a second, so every run scans all of it
+  # instead of working out a commit range. Same scanner as .githooks/pre-commit.
+  secrets:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          f="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$f"
+          echo "$GITLEAKS_SHA256  $f" | sha256sum -c -
+          tar -xzf "$f" gitleaks
+
+      - name: Scan for secrets
+        run: ./gitleaks git --redact --no-banner --verbose .
