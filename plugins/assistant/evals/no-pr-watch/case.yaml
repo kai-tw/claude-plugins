@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: no-pr-watch
+description: PRs aren't watched — there's no asst-watch, nothing calls it, and the assistant doesn't read a PR's state on its passes.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: ls "$root/bin" | grep -c "^asst-watch$" | sed "s/^/watch-bin=/"; grep -rl "asst-watch" "$root/skills" "$root/agents" | wc -l | tr -d " " | sed "s/^/watch-refs=/"; grep -c "gh pr view --json state" "$root/skills/assistant/SKILL.md" | sed "s/^/pr-reads=/"
+  prompt: |
+    Say whether the assistant plugin ships a PR watcher, whether its skills or agents call one, and whether the assistant reads a PR's state on its passes.
+context:
+  scaffold_script: fixture.sh
