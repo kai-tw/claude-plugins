@@ -124,11 +124,15 @@ update() {
     "$registry" >/dev/null 2>&1 || { echo "the install record still is not at $latest"; return 1; }
 }
 
+# How a running session picks up an update changes with Claude Code releases, so
+# the agent looks it up instead of being told one fixed way.
+apply="This session keeps running ${running} until it loads the update. Find out how \
+this Claude Code version loads an updated plugin into a running session (its docs, \
+its slash commands, or the claude-code-guide agent), and tell the user that way."
 if why=$(update); then
   reason="The ${name} plugin running in this session was ${running}; ${mkt} publishes ${latest}, \
 and the ${scope}-scope install for ${dir} has just been updated to ${latest} automatically. \
-Tell the user now, plainly, in one or two sentences: the update takes effect in a NEW \
-session, so this one keeps running ${running} until it is restarted."
+${apply} Tell them now, plainly, in one or two sentences."
 else
   install=""
   for dep in $missing; do install+="claude plugin install ${dep} --scope ${scope} && "; done
@@ -138,8 +142,7 @@ Tell the user now, plainly, and give them this command to run:
 
     cd ${dir:-<project>} && ${install}claude plugin update ${id} --scope ${scope}
 
-Then say that the update only takes effect in a NEW session, so this one keeps \
-running ${running} regardless. Do not run the command yourself."
+Once it's installed: ${apply} Do not run the command yourself."
 fi
 
 jq -n --arg r "$reason" '{decision: "block", reason: $r}'
