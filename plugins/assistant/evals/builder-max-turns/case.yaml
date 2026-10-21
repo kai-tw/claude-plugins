@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: builder-max-turns
-description: A builder dispatch stops at 300 turns; a builder that comes back marked partial is never resumed, but replaced by a fresh one briefed with the last checkpoint and `git status`.
+description: A builder dispatch stops at 300 turns; a builder, whether its slice finished or it came back marked partial, is never resumed.
 tags: [agents]
 plugins: ["../.."]
 runs: 1
@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: sed -n "s/^maxTurns: /builder-max-turns=/p" "$root/agents/builder.md"; sed -n "/^- Never resume a builder/,/git status/p" "$root/skills/assistant/SKILL.md" | tr -s " \n" " " | sed "s/^/partial=/"
+    EVAL_CMD: sed -n "s/^maxTurns: /builder-max-turns=/p" "$root/agents/builder.md"; sed -n "/^- Cut /,/dead end/p" "$root/skills/assistant/SKILL.md" | tr -s " \n" " " | sed "s/^/partial=/"
   prompt: |
     Say how many turns one builder dispatch may run, and what the assistant does when a builder comes back marked partial.
 context:
