@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Stop — when the copy of this plugin this session runs is behind the marketplace
-# index, update it, then tell the agent so it can tell the user.
+# index, update it and tell the user; when the update fails, hand the agent the
+# command to give them.
 #
 # The version a session actually resolved to cannot be determined from outside
 # (see .claude/rules/releasing.md): install records say what was installed, not
@@ -23,11 +24,12 @@
 # parallel, so updates take a lock — concurrent writers of installed_plugins.json
 # lose records.
 #
-# Blocks the stop so the notice reaches the model, at most ONCE per session
-# (Claude Code also caps consecutive Stop blocks on its own). A Stop block is
-# top-level `decision` / `reason`; `hookSpecificOutput.permissionDecision` is
-# PreToolUse's shape and is silently ignored here (measured: the hook ran, the
-# model never saw the notice). Everything here degrades to exit 0: a missing jq,
+# A successful update is a `systemMessage` to the user and doesn't block: a running
+# session picks up the new version on its own, so the model has nothing to do. A
+# failed one blocks the stop so the model gives the user the command. Either way it
+# speaks at most ONCE per session. A Stop block is top-level `decision` / `reason`;
+# `hookSpecificOutput.permissionDecision` is PreToolUse's shape and is silently
+# ignored here (measured: the hook ran, the model never saw the notice). Everything here degrades to exit 0: a missing jq,
 # an unexpected install layout, or a marketplace that is not a clone means no
 # notice, never a stuck session.
 set -uo pipefail
@@ -124,15 +126,10 @@ update() {
     "$registry" >/dev/null 2>&1 || { echo "the install record still is not at $latest"; return 1; }
 }
 
-# How a running session picks up an update changes with Claude Code releases, so
-# the agent looks it up instead of being told one fixed way.
-apply="This session keeps running ${running} until it loads the update. Find out how \
-this Claude Code version loads an updated plugin into a running session (its docs, \
-its slash commands, or the claude-code-guide agent), and tell the user that way."
 if why=$(update); then
-  reason="The ${name} plugin running in this session was ${running}; ${mkt} publishes ${latest}, \
-and the ${scope}-scope install for ${dir} has just been updated to ${latest} automatically. \
-${apply} Tell them now, plainly, in one or two sentences."
+  jq -n --arg m "${name} plugin updated from ${running} to ${latest} (${scope} scope, ${dir})." \
+    '{systemMessage: $m}'
+  exit 0
 else
   install=""
   for dep in $missing; do install+="claude plugin install ${dep} --scope ${scope} && "; done
@@ -142,7 +139,7 @@ Tell the user now, plainly, and give them this command to run:
 
     cd ${dir:-<project>} && ${install}claude plugin update ${id} --scope ${scope}
 
-Once it's installed: ${apply} Do not run the command yourself."
+Do not run the command yourself."
 fi
 
 jq -n --arg r "$reason" '{decision: "block", reason: $r}'
