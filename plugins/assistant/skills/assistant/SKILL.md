@@ -129,7 +129,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    meaning changed since ② loses its approval (charter U5.1), and **a locale that lost
    it blocks the merge and the commit, at the same level as `destructive:`**. Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back
-   re-enters step 5.
+   re-enters step 5; the founder saying the PR merged → step 8.
 8. **Close** (you, through `asst-board`): board row → Shipped; the task row is disposable,
    so the brief moves to the archive (`asst-board archive`): Overview · Problem ·
    Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
@@ -202,6 +202,9 @@ this repo's; anything else on the list is caught by no script.
 - Pin the model at every dispatch. The builder's is yours to pick for the work
   in hand — haiku for `exempt`, sonnet by default, opus for a finding a previous
   fix round didn't clear; verifier opus.
+- Never resume a builder that comes back marked partial: a resumed run keeps its
+  full history, so its context keeps growing. Dispatch a fresh builder for the
+  rest, briefed with the last checkpoint and `git status`.
 - Board writes go through `asst-board` (`--dry-run` prints without writing; on
   Notion every write re-reads and verifies); `asst-board --help` has the archive
   shape. A failed verify is reported as failed. The ledger line is

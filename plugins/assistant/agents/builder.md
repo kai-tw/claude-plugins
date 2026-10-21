@@ -6,6 +6,7 @@ description: |
   wiring, the tests, the fixes the verifier asks for. Files one fixed-format
   report per phase. Never talks to the founder; the assistant does.
 model: sonnet
+maxTurns: 300
 tools:
   - Bash
   - Read
