@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: leader-reads-code
+description: The assistant may read project code; nothing in its instructions forbids it.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -ci "never open project code" | sed "s/^/forbids-code=/"
+  prompt: |
+    Say whether the assistant's instructions let it read project code.
+context:
+  scaffold_script: fixture.sh
