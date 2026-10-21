@@ -114,5 +114,6 @@ app's PR monitor wakes a session on CI failures, conflicts and review comments,
 never on a merge. Exit 1 (closed unmerged, the forwarder failed or stopped, or a
 failed check) prints why; report it as it stands.
 
-LSP servers, hooks and scripts from the updated plugin take effect on the **next
-session**, not this one — tell the user which running sessions need a restart.
+A running session switches to the updated plugin on its own, at a moment no one can
+predict (`.claude/rules/releasing.md`), so don't tell the user to restart: check the
+version a session runs, as that rule says.

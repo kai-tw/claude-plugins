@@ -130,5 +130,5 @@ if (changed.length === 0) {
 notes.forEach((n) => console.log(`  ⚠ ${n}`));
 if (failures.length) die(`#${pr} merged, but:\n${failures.map((f) => `    ${f}`).join('\n')}`);
 console.log(
-  `\n✔ #${pr} merged${plugins.length ? ` — ${plugins.join(', ')} installed and verified everywhere; a running session loads it only after a restart` : ''}${removed.length ? ` — ${removed.join(', ')} uninstalled everywhere` : ''}`,
+  `\n✔ #${pr} merged${plugins.length ? ` — ${plugins.join(', ')} installed and verified everywhere; running sessions switch to it on their own` : ''}${removed.length ? ` — ${removed.join(', ')} uninstalled everywhere` : ''}`,
 );
