@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'builder haiku for `exempt`, sonnet for `scout`, `small` and every `feature` phase'
+pattern: 'The builder.s is yours to pick for the work in hand — haiku for `exempt`, sonnet by default'
 arm: with-only
 ---
-An exempt builder runs on haiku; scout, small and feature phases on sonnet.
+The leader picks the builder's model per dispatch: haiku for exempt, sonnet by default.

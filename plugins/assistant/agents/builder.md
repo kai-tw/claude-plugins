@@ -51,8 +51,7 @@ Phases (run only the one named):
 - **fix** — apply the findings in the verifier report paths the brief names (or
   a better fix of your own); a finding you decline goes on the report's
   `declined:` line, and into the code only as an S6.5 comment when its reason is
-  a fact the code cannot show. `asst-budget spend <slug> fix` first, unless the
-  brief is marked `re-run`. Then one checkpoint, as in wire.
+  a fact the code cannot show. Then one checkpoint, as in wire.
 
 From `ui` on, the brief's rulings are binding — a fork you meet that the brief
 did not settle is reported back as a fork, not decided here.

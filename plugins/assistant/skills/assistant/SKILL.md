@@ -64,14 +64,13 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    its own row and worktree; the later rows are `Status=Next` with `Trigger`
    naming the row they wait for. The split itself is a `Decided` in the first
    brief.
-2. **Scout** (`builder`, phase `scout`, sonnet) returns ≤10 fact rows
+2. **Scout** (`builder`, phase `scout`) returns ≤10 fact rows
    (`file:line` or `unread`) and the intent forks it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
-   goes back to Scout once, marked `re-run`; still failing, it enters the brief as
-   `unread`.
+   goes back to Scout once; still failing, it enters the brief as `unread`.
 3. **① Brief** (you): from the facts and forks, `references/brief.md`. When the
    design adds a class, a dependency or a persisted format, one `verifier`
-   `brief-review` on the draft first (`asst-budget spend <slug> review`), so the founder
+   `brief-review` on the draft first, so the founder
    is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`.
    Silence on `Decided` = accepted. Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
@@ -103,9 +102,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line into `asst-report put <slug> verify-code --worktree <worktree>`; past that
    bound it isn't `exempt`, so re-tier it `small`. Mutation is not yours: the PR's CI comments its survivors at
-   their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes;
-   `asst-budget spend <slug> fix` per round. Any finding or `debt:` line left
-   → another fix round, with no cap; only residue that changes scope or design
+   their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes.
+   Any finding or `debt:` line left → another fix round; only residue that changes scope or design
    becomes one `Needs you` line instead.
    A defect found outside the task's scope (it predates the task, or lives in
    code the task doesn't touch) is never just mentioned: `asst-board create` a row
@@ -138,7 +136,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    with the choice made · Deferred Items = one decision per `Needs you`
    fork (Context · Decision · Consequence, the rejected option and its cost in
    Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
-   task's rounds and cost appended to `.claude/.assistant/ledger.md`.
+   task's cost appended to `.claude/.assistant/ledger.md`.
 
 ## The board
 
@@ -157,9 +155,8 @@ to `In Progress` and start at Scout). A Close changes the board, so the pass run
 again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet
 board, never at a Close. A row's progress is what the board and the disk hold, never
 what you remember: a row waiting on a report reads `asst-report latest <slug>
-<kind>`; none filed and no agent of yours on it in `ListAgents` → dispatch it again,
-marked `re-run` so no one calls `asst-budget spend` for it, since that round
-produced nothing. `digest` prints one line per row plus this week's cost from the
+<kind>`; none filed and no agent of yours on it in `ListAgents` → dispatch it again.
+`digest` prints one line per row plus this week's cost from the
 ledger.
 
 Nobody reports CI or a merge. Every row with an open PR (from its first `asst-pr
@@ -181,14 +178,6 @@ candidate whose ref already ends a row `Name` in `asst-board list --all` is not 
 (every row, every status — `list` alone shows only the live ones). Each new candidate is one
 `Needs you` line — take it (task statement, row `Status=In Progress`) or pass (row
 `Status=Backlog`) — so a ref is asked once.
-
-## Budgets
-
-`asst-budget` counts per task: review 1 · upload 2 · fix uncapped. Debt is
-never deferred: while a finding or `debt:` line remains, run another fix round. A
-review or upload cap hit is never "one more try": cut scope (`Decided`, written
-into the brief), or raise `Needs you`. No round ends because someone
-inside it felt it converged.
 
 ## Disclosure
 
@@ -221,14 +210,13 @@ this repo's; anything else on the list is caught by no script.
   so a leg missing there is visible before the merge — in full on a private repo,
   its first line only on any other (§Disclosure). A report is passed on by
   its path, never pasted.
-- Pin the model at dispatch: builder haiku for `exempt`, sonnet for `scout`,
-  `small` and every `feature` phase, opus for a `fix` once `asst-budget show
-  <slug>` already counts a fix round; verifier opus.
+- Pin the model at every dispatch. The builder's is yours to pick for the work
+  in hand — haiku for `exempt`, sonnet by default, opus for a finding a previous
+  fix round didn't clear; verifier opus.
 - Board writes go through `asst-board` (`--dry-run` prints without writing; on
   Notion every write re-reads and verifies); `asst-board --help` has the archive
-  shape. A failed verify is reported as failed, never retried past
-  `asst-budget spend <slug> upload`. The ledger line is
-  `<date> · <slug> · review n · fix n · upload n · <tokens>`.
+  shape. A failed verify is reported as failed. The ledger line is
+  `<date> · <slug> · <tokens>`.
 - Work sent off this machine — a message into a cloud session the founder has
   running, or a new one from `asst-cloud open --profile <name>` — follows
   `references/cloud-dispatch.md`: neither can ask you a question, both report to

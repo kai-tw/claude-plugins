@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: no-round-budget
+description: Rounds aren't counted — there's no asst-budget, and nothing in the assistant's instructions calls it.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: ls "$root/bin" | grep -c "^asst-budget$" | sed "s/^/budget-bin=/"; grep -rl "asst-budget" "$root/skills" "$root/agents" | wc -l | tr -d " " | sed "s/^/budget-refs=/"
+  prompt: |
+    Say whether the assistant plugin ships a round counter, and whether its skills or agents call one.
+context:
+  scaffold_script: fixture.sh

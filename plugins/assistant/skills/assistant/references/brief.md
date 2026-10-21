@@ -26,7 +26,6 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 ## Screens (UI in scope only)
 - <screens × states the screens page will show>
 
-## Budget and debt
-- review <0|1> · upload 2 · fix uncapped
+## Debt
 - Known debt: <none, or one line each>
 ```

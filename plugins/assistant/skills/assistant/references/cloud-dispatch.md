@@ -57,9 +57,8 @@ report but its source, and one already on the PR is not posted again.
 
 **Cadence.** Polling folds into the existing scheduler pass: read the task's
 report address once per pass, no separate mechanism. One cloud session per slug
-at a time. Report address empty for a whole pass → re-dispatch under the existing
-`re-run` rule (marked `re-run`, not counted by `asst-budget`); never blindly
-dispatch again.
+at a time. Report address empty for a whole pass → re-dispatch under the board's
+missing-report rule (`SKILL.md` §The board); never blindly dispatch again.
 
 ## 2. A new cloud session for long work
 

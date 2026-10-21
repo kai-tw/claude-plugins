@@ -49,7 +49,7 @@
   every scope; `after-merge.mjs` and `release.mjs` report it as `FAILS TO LOAD`.
 - **Call your own scripts by bare name.** A plugin's `bin/` is on PATH once it is enabled;
   the install path cannot be derived from the project and changes with every bump. Write
-  `asst-budget`, not `bash .claude/hooks/…` — the latter fails with a single
+  `asst-report`, not `bash .claude/hooks/…` — the latter fails with a single
   `No such file or directory` line that looks just like "nothing to do this time".
 - **Tags are not made by hand; do not try.** Once a version reaches `main`, the
   `plugin-tag` workflow creates `<plugin>--v<version>` from `plugin.json` and pushes it.

@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'opus for a `fix` once `asst-budget show <slug>` already counts a fix round; verifier opus\.'
+pattern: 'opus for a finding a previous fix round didn.t clear; verifier opus\.'
 arm: with-only
 ---
-A fix escalates to opus from the second round on; the verifier is pinned to opus.
+A builder goes to opus for a finding a previous fix round didn't clear; the verifier is pinned to opus.

@@ -1,15 +1,15 @@
 schema_version: "1.1"
 name: report-worktree-shared
-description: Rounds and reports an agent records inside a worktree are readable by the assistant in the main tree.
-tags: [asst-report, asst-budget]
+description: Reports an agent files inside a worktree are readable by the assistant in the main tree.
+tags: [asst-report]
 plugins: ["../.."]
 runs: 1
 execution:
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Bash]
   env:
-    EVAL_CMD: (cd wt && asst-budget spend t fix >/dev/null && echo finding | asst-report put t verify-code); asst-budget show t; asst-report latest t verify-code
+    EVAL_CMD: (cd wt && echo finding | asst-report put t verify-code); asst-report latest t verify-code
   prompt: |
-    Inside worktree wt, record one fix round for task t and file a verify-code report; back in the main tree, print t's counts and the latest verify-code report path.
+    Inside worktree wt, file a verify-code report for task t; back in the main tree, print the latest verify-code report path.
 context:
   scaffold_script: fixture.sh
