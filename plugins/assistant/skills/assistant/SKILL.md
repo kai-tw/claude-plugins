@@ -88,7 +88,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    else** — after ③ they are copied into tests and mockups, and changing one word
    means changing dozens of assertion lines. A string first created in the wire
    phase comes back from the builder as a strings-only ② supplement, not a re-render.
-5. **Wire + tests** (`builder`): one checkpoint per phase, gated by the adapter's
+5. **Wire + tests** (`builder`): one checkpoint per slice (§Dispatch rules), gated by the adapter's
    `gate` — on git a commit (the hook runs it), on svn a diff saved under
    `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
    before ③.
@@ -202,9 +202,12 @@ this repo's; anything else on the list is caught by no script.
 - Pin the model at every dispatch. The builder's is yours to pick for the work
   in hand — haiku for `exempt`, sonnet by default, opus for a finding a previous
   fix round didn't clear; verifier opus.
-- Never resume a builder that comes back marked partial: a resumed run keeps its
-  full history, so its context keeps growing. Dispatch a fresh builder for the
-  rest, briefed with the last checkpoint and `git status`.
+- Cut `wire` and `fix` into slices — a module, a group of findings — and dispatch
+  one builder per slice, each ending at its checkpoint; `ui` is one dispatch for
+  every screen. Never resume a builder, whether its slice finished or it came back
+  marked partial: a resumed run keeps its full history, so its context keeps
+  growing. Brief the next one with the slice and only what the code and the filed
+  reports can't show — a ruling it needs, a dead end the last run hit.
 - Board writes go through `asst-board` (`--dry-run` prints without writing; on
   Notion every write re-reads and verifies); `asst-board --help` has the archive
   shape. A failed verify is reported as failed. The ledger line is

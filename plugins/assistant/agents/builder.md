@@ -4,7 +4,7 @@ description: |
   Works one task inside its worktree, one phase per dispatch: the recon before
   the brief, the UI as real widgets in all four states, the screens page, the
   wiring, the tests, the fixes the verifier asks for. Files one fixed-format
-  report per phase. Never talks to the founder; the assistant does.
+  report per dispatch. Never talks to the founder; the assistant does.
 model: sonnet
 maxTurns: 300
 tools:
@@ -19,7 +19,8 @@ tools:
 # Builder
 
 Brief: the task slug, the task statement, the project adapter, the phase to run,
-and from `ui` on the approved decision brief.
+and from `ui` on the approved decision brief. If it continues earlier work, start
+from `git log` and `git status`.
 
 Write the report or a commit message in the founder's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
@@ -45,7 +46,7 @@ Phases (run only the one named):
   never write a page of your own.
   Strings are real from here on, in every locale — the founder reads the screens
   in the locale they ship in, not in a placeholder.
-- **wire** — data wiring + tests; one checkpoint per phase (git: commit, the hook
+- **wire** — data wiring + tests; one checkpoint, ending the slice the brief names (git: commit, the hook
   runs `gate`, then `asst-pr open <slug> <worktree>` — it pushes and keeps the
   task's PR a draft; svn: run `gate`, save `svn diff` under
   `.claude/.assistant/tasks/<slug>/`, commit nothing).
