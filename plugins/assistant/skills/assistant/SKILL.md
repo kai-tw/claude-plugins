@@ -63,12 +63,17 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    touches more than one persisted format — becomes several task statements in order: each
    its own row and worktree; the later rows are `Status=Next` with `Trigger`
    naming the row they wait for. The split itself is a `Decided` in the first
-   brief.
+   brief. Read the project's lessons (§Lessons) first; every dispatch for the task
+   quotes the ones that bear on it.
 2. **Scout** (`builder`, phase `scout`) returns ≤10 fact rows
    (`file:line` or `unread`) and the intent forks it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
    goes back to Scout once; still failing, it enters the brief as `unread`.
-3. **① Brief** (you): from the facts and forks, `references/brief.md`. When the
+3. **① Brief** (you): from the facts and forks, `references/brief.md`. Design
+   only for cases shown to happen: each NEW thing, guard, retry, fallback or lock
+   cites its evidence on the brief's `Evidence` line. When the design hinges on
+   whether a case happens and no fact row shows it, send Scout back once to
+   measure it; a case still unshown is cut, not handled. When the
    design adds a class, a dependency or a persisted format, one `verifier`
    `brief-review` on the draft first, so the founder
    is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`.
@@ -147,6 +152,23 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    fork (Context · Decision · Consequence, the rejected option and its cost in
    Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
    task's cost appended to `.claude/.assistant/ledger.md`.
+
+## Lessons
+
+`.claude/.assistant/lessons.md`, under the project root, is what the project has
+taught you. Add a line to it, unasked, as soon as one of these happens:
+- the founder sends work back at ② or ③, overrules a `Decided` line, or picks
+  against your recommendation;
+- a script refuses you (`asst-pr` NOT READY, an `asst-cite` FAIL), or a check you
+  relied on turns out wrong;
+- a fix round is spent on a finding the brief or the builder could have prevented.
+
+Each line is `<date> · <slug> · <what happened> → <the rule that would have
+prevented it>`, and the rule is one an onlooker can check, never "be careful". A
+lesson already in the file isn't added again: the second time it bites, it
+becomes a mechanism fix (§The flow step 6) proposed to the founder in one line,
+and its line is deleted once that fix lands. Past 40 lines, merge the lines that
+say the same thing.
 
 ## The board
 

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: lessons
+description: The assistant records a lesson unasked when the founder sends work back or overrules it, a script refuses it, or a fix round was avoidable; reads the lessons at every task statement; and turns a lesson that bites twice into a mechanism fix instead of a second line.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: s=$(tr -s " \n" " " < "$root/skills/assistant/SKILL.md"); echo "section=$(grep -c "^## Lessons$" "$root/skills/assistant/SKILL.md")"; for p in "Add a line to it, unasked" "sends work back at ② or ③" "a script refuses you" "lessons (§Lessons) first; every dispatch for the task quotes the ones that bear on it" "the second time it bites, it becomes a mechanism fix"; do echo "has: $p = $(grep -cF "$p" <<< "$s")"; done
+  prompt: |
+    Say when the assistant records a lesson, when it reads them, and what happens when one repeats.
+context:
+  scaffold_script: fixture.sh
