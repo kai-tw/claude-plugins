@@ -11,6 +11,9 @@
 #          push the branch, then ensure a draft PR exists for it → prints the URL
 #        asst-pr checks <task-slug> <worktree>
 #          look once at CI on the pushed HEAD and print every check; never waits
+#        asst-pr watch <task-slug> <worktree> [--timeout <minutes>, default 60]
+#          wait for CI on the pushed HEAD to finish, then print what checks would;
+#          one per PR, any number of PRs at once (pr-watch.mjs)
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists; every
 #          verify leg the adapter requires has a report filed after HEAD's commit;
@@ -19,7 +22,7 @@
 # set · verify-text when ui_strings: is set and the PR's diff touches it.
 # Exit: 0 done · 1 refused, or a check failed · 2 usage, not a git task, CI
 # unreadable, or no PR possible here (gh missing or unauthenticated, no GitHub
-# remote) · 3 CI still running on HEAD.
+# remote), or the PR already watched · 3 CI still running on HEAD.
 #
 # On a repo not known to be private, `open` refuses to push, and `ready` to turn
 # ready, while the commits, the diff or the PR body name something from outside
@@ -28,7 +31,7 @@ set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,22p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,25p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
@@ -87,6 +90,17 @@ case "$op" in
     github "There is no CI to read."
     (cd "$wt" && gh pr view "$branch" --json number >/dev/null 2>&1) || refuse "no PR for $branch — asst-pr open never ran"
     ci ;;
+  watch)
+    mins=60
+    case "${1:-}" in --timeout) mins=${2:-}; [[ $mins =~ ^[0-9]+(\.[0-9]+)?$ ]] || usage ;; "") ;; *) usage ;; esac
+    [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
+    github "There is no CI to watch."
+    num=$(cd "$wt" && gh pr view "$branch" --json number --jq .number 2>/dev/null) && [ -n "$num" ] \
+      || refuse "no PR for $branch — asst-pr open never ran"
+    repo=$(cd "$wt" && gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
+    [ -n "$repo" ] || { echo "asst-pr: can't tell which GitHub repo $wt is" >&2; exit 2; }
+    wt=$(cd "$wt" && pwd)
+    exec node "$here/pr-watch.mjs" "$repo" "$num" "$(g rev-parse HEAD)" "$mins" bash "$here/pr.sh" checks "$slug" "$wt" ;;
   ready)
     [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — checkpoint first"
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed — run asst-pr open first"

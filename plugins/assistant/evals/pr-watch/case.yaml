@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-watch
+description: asst-pr watch waits for CI on one PR's head and exits with the checks verdict; two PRs watched at once share one webhook forwarder (GitHub allows one per repo), a second watch of the same PR exits 2, the watcher left after the leader finishes still gets its result, nothing is left behind, and --timeout ends a watch with 3.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH" XDG_CACHE_HOME="$PWD/cache"; sa=$(git -C wa rev-parse HEAD); sb=$(git -C wb rev-parse HEAD); echo "pending ci" > checks.task_a; echo "pending ci" > checks.task_b; asst-pr watch a wa > a.out 2>&1 & pa=$!; ./up 7; asst-pr watch b wb > b.out 2>&1 & pb=$!; ./up 7 8; echo "up=$?"; asst-pr watch a wa; echo "dup=$?"; echo "pass ci" > checks.task_a; echo "{\"check_suite\":{\"head_sha\":\"$sb\"}}" >> gh.events; echo "{\"check_suite\":{\"head_sha\":\"$sa\"}}" >> gh.events; wait $pa; echo "a=$?"; sed "s/^/a: /" a.out; echo "fail ci" > checks.task_b; echo "{\"check_suite\":{\"head_sha\":\"$sb\"}}" >> gh.events; wait $pb; echo "b=$?"; sed "s/^/b: /" b.out; echo "starts=$(grep -c start fwd.log)"; echo "hook-left=$([ -f hook ] && echo yes || echo no)"; echo "pids-left=$(ls cache/asst-pr/o__r/ | grep -c pid)"; echo "pending ci" > checks.task_a; asst-pr watch a wa --timeout 0.03; echo "timeout=$?"
+  prompt: |
+    With a fake gh whose webhook forwarder allows one at a time, watch two PRs' CI at once, try a second watch of the same PR, finish the first PR's CI (its watcher runs the forwarder), then fail the other's; print every output and exit code, how often the forwarder started, and what was left behind; then watch a PR whose CI never finishes with a short timeout.
+context:
+  scaffold_script: fixture.sh

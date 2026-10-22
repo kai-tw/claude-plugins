@@ -125,11 +125,14 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    while the tree is dirty or unpushed, while a required `verify-<leg>`
    report is missing or older than `HEAD`, or while a check on `HEAD` failed —
    whatever it refuses on is unfinished work: finish it, don't deliver around it.
-   Exit 3 means CI is still running: schedule one re-check a few minutes out
-   (`CronCreate`, `recurring: false`) and end the turn — never wait in a loop,
-   and never stop without a re-check, since nothing reports a passing run. That
-   re-check runs `asst-pr checks <slug> <worktree>` — one look at CI, same exit
-   codes — and on 0 runs `ready` again.
+   Exit 3 means CI is still running: start `asst-pr watch <slug> <worktree>` with
+   `run_in_background: true` and end the turn. It exits when CI on `HEAD`
+   finishes, with the same codes as `asst-pr checks`, and its exit wakes the
+   session — nothing else reports a passing run. One watch per PR; tasks' PRs are
+   watched side by side. On 0 run `ready` again; on 3 (its 60-minute timeout)
+   watch again; on 2 it couldn't watch (it needs the `cli/gh-webhook` gh
+   extension), so schedule one `asst-pr checks` a few minutes out (`CronCreate`,
+   `recurring: false`) instead. Never wait in a loop.
    Exit 2 means no PR is possible here (no usable `gh`, no GitHub remote): ③
    carries that line as a `Needs you`, and the PR is the founder's to open.
    Its Text block only asks whether the ② approval still holds — a string whose
