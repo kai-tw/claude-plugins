@@ -117,14 +117,19 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    On git it is written only from a clean, pushed tree — `git -C <worktree>
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
    checkpoints first: a check that read files the branch never got graded code
-   that does not ship — and `gh pr checks` shows no check pending or failed on it.
+   that does not ship.
    Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft, and
    write ③ only once it exits 0, with `PR #<n> ready` in its header. A draft
    means work is still in progress, so a ③ sent while the PR is a draft tells
    the founder it's done when it can't be merged yet. `asst-pr ready` refuses
-   while the tree is dirty or unpushed, or while a required `verify-<leg>`
-   report is missing or older than `HEAD` — whatever it refuses on is
-   unfinished work: finish it, don't deliver around it.
+   while the tree is dirty or unpushed, while a required `verify-<leg>`
+   report is missing or older than `HEAD`, or while a check on `HEAD` failed —
+   whatever it refuses on is unfinished work: finish it, don't deliver around it.
+   Exit 3 means CI is still running: schedule one re-check a few minutes out
+   (`CronCreate`, `recurring: false`) and end the turn — never wait in a loop,
+   and never stop without a re-check, since nothing reports a passing run. That
+   re-check runs `asst-pr checks <slug> <worktree>` — one look at CI, same exit
+   codes — and on 0 runs `ready` again.
    Exit 2 means no PR is possible here (no usable `gh`, no GitHub remote): ③
    carries that line as a `Needs you`, and the PR is the founder's to open.
    Its Text block only asks whether the ② approval still holds — a string whose
