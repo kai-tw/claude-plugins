@@ -62,10 +62,10 @@ chmod +x stub/gh
 # up <pr>… — wait until each PR's watcher is registered and a forwarder has connected.
 cat > up <<'SH'
 #!/usr/bin/env bash
-d=cache/asst-pr/o__r
+d=cache/gh-webhook-hub/o__r
 for _ in $(seq 100); do
-  ok=1; for n in "$@"; do [ -f $d/watch-$n.pid ] || ok=0; done
-  [ $ok = 1 ] && grep -q connected $d/events.jsonl 2>/dev/null && exit 0
+  ok=1; for n in "$@"; do [ -f $d/ci-$n.pid ] || ok=0; done
+  [ $ok = 1 ] && grep -q connected $d/check_suite+status/events.jsonl 2>/dev/null && exit 0
   sleep 0.1
 done
 exit 1

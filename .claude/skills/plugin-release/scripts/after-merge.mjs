@@ -11,15 +11,21 @@
 // polling: `gh webhook forward` (the cli/gh-webhook extension) streams GitHub's
 // pull_request events over a websocket.
 //
+// One run per PR, any number of PRs at once: the runs share one forwarder
+// (the assistant plugin's hub.mjs, which asst-pr watch uses too), and the work
+// after a merge runs one PR at a time.
+//
 // Usage: node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 // Exit: 0 merged and every install verified (or no plugin to install) · 1 closed
-// unmerged, the forwarder failed or stopped, or a check failed — the reason on stderr.
+// unmerged, already running for this PR, the forwarder failed, or a check
+// failed — the reason on stderr.
 
-import { execFileSync, spawn } from 'node:child_process';
-import { createInterface } from 'node:readline';
-import { resolve, dirname } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { watch } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marketplaceSource, removeConsumers, slug, updateConsumers } from './consumers.mjs';
+import { claim, joinHub, owner, release, repoDir } from '../../../../plugins/assistant/skills/assistant/scripts/hub.mjs';
 
 const pr = process.argv[2];
 const die = (msg) => {
@@ -48,29 +54,35 @@ try {
 // 1. Wait. Connected first, then one state check, so a merge in between still
 // arrives as an event and a merge before the start is not waited for forever.
 const repo = slug(git(['remote', 'get-url', 'origin']));
-const fwd = spawn('gh', ['webhook', 'forward', '--events=pull_request', `--repo=${repo}`], {
-  cwd: main, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
-});
-// Stop the whole group: killing only `gh` leaves the extension under it running.
-const stop = () => { try { process.kill(-fwd.pid, 'SIGTERM'); } catch {} };
-process.on('exit', stop);
-let err = '';
-const closed = await new Promise((settle) => {
-  fwd.stderr.on('data', (d) => {
-    const was = /^Forwarding/m.test(err);
-    err += d;
-    if (!was && /^Forwarding/m.test(err) && view().state !== 'OPEN') settle(true);
+const mine = join(repoDir(repo), `merge-${pr}.pid`);
+const turnFile = join(repoDir(repo), 'after-merge.lock');
+process.on('exit', () => { release(mine); release(turnFile); });
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => process.exit(130));
+if (!claim(mine)) die(`after-merge is already running for #${pr} (pid ${owner(mine)})`);
+let hub;
+const failed = await new Promise((settle) => {
+  hub = joinHub({
+    repo,
+    events: 'pull_request',
+    pick: (ev) => (ev.action === 'closed' ? { closed: ev.number } : null),
+    onEvent: (ev) => { if (String(ev.closed) === pr) settle(''); },
+    onConnected: () => { if (view().state !== 'OPEN') settle(''); },
+    onFail: settle,
   });
-  createInterface({ input: fwd.stdout }).on('line', (line) => {
-    try {
-      const ev = JSON.parse(line);
-      if (ev.action === 'closed' && String(ev.number) === pr) settle(true);
-    } catch {}
-  });
-  fwd.on('exit', () => settle(false));
 });
-stop();
-if (!closed) die(`webhook forwarder for ${repo} stopped — ${err.trim().split('\n').slice(-2).join(' ')}`);
+await hub.stop();
+if (failed) die(failed);
+
+// Two merges close together would sync the main checkout and rewrite the same
+// install records at once, and git refuses a second writer of one index — so
+// steps 2 and 3 run one PR at a time.
+while (!claim(turnFile)) {
+  await new Promise((r) => {
+    const done = () => { w.close(); clearTimeout(t); r(); };
+    const w = watch(dirname(turnFile), done);
+    const t = setTimeout(done, 5000);
+  });
+}
 const pull = view();
 if (pull.state !== 'MERGED') die(`${pull.url} was closed without merging — nothing to install`);
 const ref = pull.mergeCommit.oid;
