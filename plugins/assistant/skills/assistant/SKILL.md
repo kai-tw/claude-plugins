@@ -78,8 +78,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
 4. **Build** (`builder`): UI first, as real widgets in all four states → one
    image per screen × state × locale → the page `asst-screens` builds from them
    (its path is on the report's `screens:` line) → **② stop for the founder**:
-   send the page with `SendUserFile` (`display: "render"`), or give its path where
-   that tool is missing. Never stitch the images into one: a combined sheet is
+   publish the page with the `Artifact` tool and give the founder its link — never
+   the file or its path, which open as source. A re-render republishes the same
+   path, so the link stays. Without the `Artifact` tool, ② is a blocker: say so
+   instead of sending the file. Never stitch the images into one: a combined sheet is
    scaled down until it can't be read. Data wiring waits for OK.
    ② also carries every string the task adds or changes, its value listed per
    locale; tone-sensitive ones (error, guidance, confirmation, empty state) carry

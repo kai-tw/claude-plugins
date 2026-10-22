@@ -2,7 +2,8 @@
 // asst-screens — build the ② screens page: one web page showing every rendered
 // screenshot as its own image, at its original resolution. The images are
 // embedded byte for byte (no re-encoding, no stitching), so nothing is scaled
-// down before the founder sees it, and the page is one file that opens anywhere.
+// down before the founder sees it, and the page is one file the assistant
+// publishes as an Artifact.
 //
 // Usage: asst-screens <task-slug> <image-dir>   → prints the page's path
 //
