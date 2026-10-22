@@ -11,7 +11,14 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const home = process.env.HOME;
-const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, encoding: 'utf8' }).trim();
+// A missing cwd makes execFileSync report `spawnSync <cmd> ENOENT`, which reads
+// as a missing command; an install record outlives a deleted project, so say that.
+const run = (cmd, args, cwd) => {
+  if (cwd && !existsSync(cwd)) {
+    throw new Error(`${cwd} no longer exists — a stale install record; delete its entries from ~/.claude/plugins/installed_plugins.json`);
+  }
+  return execFileSync(cmd, args, { cwd, encoding: 'utf8' }).trim();
+};
 const errText = (e) => (e.stderr || e.stdout || e.message).trim();
 
 // Where `marketplace` installs from; null when this machine has no such
