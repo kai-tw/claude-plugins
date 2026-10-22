@@ -89,7 +89,15 @@ const ref = pull.mergeCommit.oid;
 console.log(`✔ ${pull.url} merged as ${ref.slice(0, 7)}`);
 
 // 2. Sync the main checkout, then clear the PR's worktree and branch.
-git(['fetch', '--quiet', 'origin']);
+// Something else fetches this checkout the moment a PR merges (measured: "cannot
+// lock ref 'refs/remotes/origin/main'"), so a lost ref lock is retried once.
+try {
+  git(['fetch', '--quiet', 'origin']);
+} catch (e) {
+  if (!/cannot lock ref/.test(e.stderr ?? '')) throw e;
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+  git(['fetch', '--quiet', 'origin']);
+}
 const notes = [];
 const branchHere = git(['rev-parse', '--abbrev-ref', 'HEAD']);
 const defaultBranch = git(['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']).replace(/^origin\//, '');
