@@ -1,10 +1,7 @@
 # Shipping rules
 
-- **Code and logic changes go on a branch + draft PR; everything else goes straight to
-  `main`.** Code and logic means scripts, hooks, schemas, and skill or agent text that
-  changes what an agent does. Docs, comments, and any single-file edit of about 5 lines are
-  committed and pushed on `main` — under `plugins/` they still bump the version (next rule).
-  A PR's plugin change carries an eval case that fails on the old version; run `gh pr ready` only after CI's
+- **Changes go on a branch + draft PR, never a direct commit to `main`.** A plugin change
+  carries an eval case that fails on the old version; run `gh pr ready` only after CI's
   `Evals` (`.github/scripts/run-evals.mjs`) is green and the version is bumped — the draft
   state is what stops a merge while the agent is still working. Right after `gh pr ready`,
   start `node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>` with
