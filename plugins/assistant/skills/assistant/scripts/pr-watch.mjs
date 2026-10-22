@@ -75,9 +75,22 @@ for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => finish(
 
 // One look at CI. 3 = still running; anything else ends the watch.
 function look() {
-  if (done) return;
+  if (done) return 0;
   const r = spawnSync(check[0], check.slice(1), { encoding: 'utf8' });
   if (r.status !== 3) finish(r.status ?? 2, (r.stdout || '') + (r.stderr || ''));
+  return r.status;
+}
+// GitHub sends a suite's completed event before its API shows it (measured: the
+// event a second after the suite finished, and the read still said running),
+// and no later event comes for that commit. So a read that still says running
+// after an event is repeated a few times.
+const LAGS = [2000, 10000, 30000];
+let again;
+function onEvent() {
+  clearTimeout(again);
+  let i = 0;
+  const go = () => { if (look() === 3 && i < LAGS.length) again = setTimeout(go, LAGS[i++]); };
+  go();
 }
 
 const note = (ev) => appendFileSync(eventsFile, JSON.stringify(ev) + '\n');
@@ -97,7 +110,7 @@ function lead() {
     const at = ev.check_suite?.head_sha || ev.sha;
     if (!at) return;
     note({ sha: at });
-    if (at === sha) look();
+    if (at === sha) onEvent();
   });
   fwd.on('exit', () => {
     fwd = null;
@@ -124,7 +137,7 @@ function readNew() {
   if (fwd) return; // the leader handles its own events as they arrive
   for (const line of buf.toString('utf8').split('\n')) {
     let ev; try { ev = JSON.parse(line); } catch { continue; }
-    if (ev.connected || ev.sha === sha) { look(); return; }
+    if (ev.connected || ev.sha === sha) { onEvent(); return; }
   }
 }
 watch(dir, () => { readNew(); if (!existsSync(leaderFile)) tryLead(); });

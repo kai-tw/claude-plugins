@@ -37,7 +37,12 @@ case "$1 $2" in
       *number*) num ;;
       *) echo "https://github.com/o/r/pull/$(num)" ;;
     esac ;;
-  "pr checks") cat "$EVAL_WS/checks.${b//\//_}" ;;
+  "pr checks")
+    # lag.<branch> holds how many more reads still say running, as GitHub's API does
+    # for a moment after a suite's completed event.
+    lag="$EVAL_WS/lag.${b//\//_}"; n=$(cat "$lag" 2>/dev/null || echo 0)
+    if [ "$n" -gt 0 ]; then echo $((n - 1)) > "$lag"; echo "pending ci"; exit 0; fi
+    cat "$EVAL_WS/checks.${b//\//_}" ;;
   "webhook forward")
     hook="$EVAL_WS/hook"
     if ! (set -o noclobber; echo $$ > "$hook") 2>/dev/null; then

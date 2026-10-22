@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-watch-lag
+description: When the read right after a PR's completed event still says CI is running, as GitHub's API does for a moment, asst-pr watch reads again shortly after and exits with the verdict instead of waiting out its timeout.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH" XDG_CACHE_HOME="$PWD/cache"; sa=$(git -C wa rev-parse HEAD); echo "pending ci" > checks.task_a; asst-pr watch a wa --timeout 0.5 > a.out 2>&1 & pa=$!; ./up 7; echo "pass ci" > checks.task_a; echo 2 > lag.task_a; echo "{\"check_suite\":{\"head_sha\":\"$sa\"}}" >> gh.events; wait $pa; echo "a=$?"; sed "s/^/a: /" a.out
+  prompt: |
+    With a fake gh whose next two reads after a PR's CI passes still say running, watch the PR, send its completed event, and print the watch's output and exit code.
+context:
+  scaffold_script: ../pr-watch/fixture.sh
