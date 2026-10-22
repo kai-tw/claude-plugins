@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: screens-artifact
+description: At ② the assistant publishes the screens page as an Artifact and sends its link; it never sends the file itself.
+tags: [assistant, asst-screens]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: f="$root/skills/assistant/SKILL.md"; echo "senduserfile=$(grep -c "SendUserFile" "$f")"; tr -s " \n" " " < "$f" | grep -ci "publish the page with the \`Artifact\` tool" | sed "s/^/artifact=/"
+  prompt: |
+    Say how the assistant shows the founder the ② screens page.
+context:
+  scaffold_script: fixture.sh

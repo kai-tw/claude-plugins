@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-checks
+description: asst-pr checks looks once at CI on the pushed HEAD, lists every check and exits 0 passed or skipped · 1 one failed · 3 still running (no check reported yet counts as running); ready refuses while CI is running (exit 3) or failed (exit 1) and turns ready once it passed.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; (cd wt && echo r | asst-report put x verify-code >/dev/null); GH_CHECKS="pass validate|skipping deploy" asst-pr checks x wt; echo "passed=$?"; GH_CHECKS="pass secrets|pending validate" asst-pr checks x wt; echo "running=$?"; GH_CHECKS="pass secrets|fail validate" asst-pr checks x wt; echo "failed=$?"; GH_CHECKS=none asst-pr checks x wt; echo "none=$?"; GH_CHECKS="pending validate" asst-pr ready x wt 2>&1; echo "ready-running=$?"; GH_CHECKS="fail validate" asst-pr ready x wt 2>&1; echo "ready-failed=$?"; echo "ready-calls=$(cat gh.log 2>/dev/null | grep -c "pr ready")"; GH_CHECKS="pass validate" asst-pr ready x wt; echo "ready-passed=$?"
+  prompt: |
+    With a fake gh, run asst-pr checks on a PR whose CI passed, is still running, failed, and has no check reported yet; then run asst-pr ready while CI is running, after it failed, and after it passed. Print every output and exit code.
+context:
+  scaffold_script: fixture.sh

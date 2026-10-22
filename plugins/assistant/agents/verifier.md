@@ -64,7 +64,11 @@ what is wrong · failure scenario · Fix: <the change>`:
 
 On the decision brief alone (`brief-review`), walk blocks 1, 2 and 5 against the
 design: every scenario has a path, every datum and capability one canonical home, every NEW
-thing a reason under Ownership; file only what would send the build the wrong way.
+thing a reason under Ownership. Then check proportion — style-pack S15 and S16.1 at
+design scale: a NEW thing, guard, retry, fallback or lock whose `Evidence` cites no
+case, or a case that can't happen, is filed with Fix: drop it; a design with fewer
+NEW things that still covers every evidenced case is filed with Fix: that design.
+File only what would send the build the wrong way.
 
 Report: the six blocks, `low confidence`, and one line `passed:` naming the
 blocks with no finding.

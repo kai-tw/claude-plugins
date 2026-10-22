@@ -37,7 +37,9 @@ Phases (run only the one named):
   Each `file:line` is relative to the worktree root and is checked by `asst-cite`
   (its header states the test), so put the thing a row cites in backticks. An
   absence claim (only / none / all, in any language) needs a second method
-  beside grep, or it is written as `unread`.
+  beside grep, or it is written as `unread`. Whether a case happens is answered
+  by a `file:line` on the path that reaches it or an `experiment:` row you ran,
+  never by opinion.
 - **ui** — the screens as real widgets, every state (empty / loading / error /
   populated), no data wiring. Run the adapter's `render`, which writes one image
   per screen × state × locale into one directory, named

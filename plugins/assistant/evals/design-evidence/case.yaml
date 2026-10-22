@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: design-evidence
+description: A brief designs only for cases shown to happen — each NEW thing, guard, retry, fallback or lock cites its evidence; an unshown case goes back to Scout once, then is cut; Scout answers whether a case happens with a reaching file:line or an experiment it ran; brief-review files anything without evidence, or a simpler design that covers every evidenced case.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; echo "brief-evidence=$(grep -c "^- Evidence: " "$root/skills/assistant/references/brief.md")"; echo "brief-simplest=$(f skills/assistant/references/brief.md | grep -cF "the simplest design that could work")"; echo "skill-cut=$(f skills/assistant/SKILL.md | grep -cF "a case still unshown is cut, not handled")"; echo "scout-measures=$(f agents/builder.md | grep -cF "an \`experiment:\` row you ran, never by opinion")"; echo "review-drop=$(f agents/verifier.md | grep -cF "is filed with Fix: drop it")"; echo "review-simpler=$(f agents/verifier.md | grep -cF "a design with fewer NEW things that still covers every evidenced case")"
+  prompt: |
+    Say how a decision brief keeps its design to the cases that actually happen, and who checks it.
+context:
+  scaffold_script: fixture.sh

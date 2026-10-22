@@ -63,12 +63,17 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    touches more than one persisted format — becomes several task statements in order: each
    its own row and worktree; the later rows are `Status=Next` with `Trigger`
    naming the row they wait for. The split itself is a `Decided` in the first
-   brief.
+   brief. Read the project's lessons (§Lessons) first; every dispatch for the task
+   quotes the ones that bear on it.
 2. **Scout** (`builder`, phase `scout`) returns ≤10 fact rows
    (`file:line` or `unread`) and the intent forks it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
    goes back to Scout once; still failing, it enters the brief as `unread`.
-3. **① Brief** (you): from the facts and forks, `references/brief.md`. When the
+3. **① Brief** (you): from the facts and forks, `references/brief.md`. Design
+   only for cases shown to happen: each NEW thing, guard, retry, fallback or lock
+   cites its evidence on the brief's `Evidence` line. When the design hinges on
+   whether a case happens and no fact row shows it, send Scout back once to
+   measure it; a case still unshown is cut, not handled. When the
    design adds a class, a dependency or a persisted format, one `verifier`
    `brief-review` on the draft first, so the founder
    is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`.
@@ -78,8 +83,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
 4. **Build** (`builder`): UI first, as real widgets in all four states → one
    image per screen × state × locale → the page `asst-screens` builds from them
    (its path is on the report's `screens:` line) → **② stop for the founder**:
-   send the page with `SendUserFile` (`display: "render"`), or give its path where
-   that tool is missing. Never stitch the images into one: a combined sheet is
+   publish the page with the `Artifact` tool and give the founder its link — never
+   the file or its path, which open as source. A re-render republishes the same
+   path, so the link stays. Without the `Artifact` tool, ② is a blocker: say so
+   instead of sending the file. Never stitch the images into one: a combined sheet is
    scaled down until it can't be read. Data wiring waits for OK.
    ② also carries every string the task adds or changes, its value listed per
    locale; tone-sensitive ones (error, guidance, confirmation, empty state) carry
@@ -115,14 +122,22 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    On git it is written only from a clean, pushed tree — `git -C <worktree>
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
    checkpoints first: a check that read files the branch never got graded code
-   that does not ship — and `gh pr checks` shows no check pending or failed on it.
+   that does not ship.
    Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft, and
    write ③ only once it exits 0, with `PR #<n> ready` in its header. A draft
    means work is still in progress, so a ③ sent while the PR is a draft tells
    the founder it's done when it can't be merged yet. `asst-pr ready` refuses
-   while the tree is dirty or unpushed, or while a required `verify-<leg>`
-   report is missing or older than `HEAD` — whatever it refuses on is
-   unfinished work: finish it, don't deliver around it.
+   while the tree is dirty or unpushed, while a required `verify-<leg>`
+   report is missing or older than `HEAD`, or while a check on `HEAD` failed —
+   whatever it refuses on is unfinished work: finish it, don't deliver around it.
+   Exit 3 means CI is still running: start `asst-pr watch <slug> <worktree>` with
+   `run_in_background: true` and end the turn. It exits when CI on `HEAD`
+   finishes, with the same codes as `asst-pr checks`, and its exit wakes the
+   session — nothing else reports a passing run. One watch per PR; tasks' PRs are
+   watched side by side. On 0 run `ready` again; on 3 (its 60-minute timeout)
+   watch again; on 2 it couldn't watch (it needs the `cli/gh-webhook` gh
+   extension), so schedule one `asst-pr checks` a few minutes out (`CronCreate`,
+   `recurring: false`) instead. Never wait in a loop.
    Exit 2 means no PR is possible here (no usable `gh`, no GitHub remote): ③
    carries that line as a `Needs you`, and the PR is the founder's to open.
    Its Text block only asks whether the ② approval still holds — a string whose
@@ -137,6 +152,23 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    fork (Context · Decision · Consequence, the rejected option and its cost in
    Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
    task's cost appended to `.claude/.assistant/ledger.md`.
+
+## Lessons
+
+`.claude/.assistant/lessons.md`, under the project root, is what the project has
+taught you. Add a line to it, unasked, as soon as one of these happens:
+- the founder sends work back at ② or ③, overrules a `Decided` line, or picks
+  against your recommendation;
+- a script refuses you (`asst-pr` NOT READY, an `asst-cite` FAIL), or a check you
+  relied on turns out wrong;
+- a fix round is spent on a finding the brief or the builder could have prevented.
+
+Each line is `<date> · <slug> · <what happened> → <the rule that would have
+prevented it>`, and the rule is one an onlooker can check, never "be careful". A
+lesson already in the file isn't added again: the second time it bites, it
+becomes a mechanism fix (§The flow step 6) proposed to the founder in one line,
+and its line is deleted once that fix lands. Past 40 lines, merge the lines that
+say the same thing.
 
 ## The board
 
