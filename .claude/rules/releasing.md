@@ -49,6 +49,9 @@
   the install path cannot be derived from the project and changes with every bump. Write
   `asst-report`, not `bash .claude/hooks/…` — the latter fails with a single
   `No such file or directory` line that looks just like "nothing to do this time".
+  A shell script finds a plugin command with `command -v <name>`, never a path it
+  builds, and `${CLAUDE_PLUGIN_ROOT}` expands only in `hooks.json` and an injected
+  `SKILL.md` — never in Bash, a file opened with `Read`, or frontmatter.
 - **Tags are not made by hand; do not try.** Once a version reaches `main`, the
   `plugin-tag` workflow creates `<plugin>--v<version>` from `plugin.json` and pushes it.
   Cloud sessions' GitHub credentials refuse tag pushes anyway (403), and **tagging locally
