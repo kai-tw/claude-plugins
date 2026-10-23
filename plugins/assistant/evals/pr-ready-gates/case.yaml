@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-ready-gates
+description: asst-pr ready keeps a PR stacked on another branch a draft, refuses a PR with no description, and requires no verify-coverage report when the adapter says CI measures coverage; asst-report put refuses a kind that carries a round number.
+tags: [asst-pr, asst-report]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; asst-pr open x wt --title T >/dev/null; (cd wt && echo r | asst-report put x verify-code >/dev/null && echo r | asst-report put x verify-text >/dev/null); echo other > base; asst-pr ready x wt; echo "stacked=$?"; echo main > base; printf " \n" > body; asst-pr ready x wt; echo "nobody=$?"; echo "What shipped." > body; asst-pr ready x wt; echo "ready=$?"; (cd wt && echo r | asst-report put x verify-code-2); echo "numbered=$?"
+  prompt: |
+    On a worktree with a local remote and a fake gh, turn the PR ready while it is stacked on another branch, then with an empty description, then with both fixed; then file a report under a numbered kind. Print each output and exit code.
+context:
+  scaffold_script: fixture.sh

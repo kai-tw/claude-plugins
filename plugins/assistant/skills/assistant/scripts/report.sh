@@ -61,6 +61,8 @@ post_to_pr() {
 case "$op" in
   put)
     [ -n "$kind" ] || usage
+    # A numbered kind files as <kind>-<n>-1.md, which `latest <kind>` never finds.
+    [[ $kind =~ -[0-9]+$ ]] && { echo "asst-report: '$kind' carries a round number — pass the bare kind (${kind%-*}); put numbers the rounds itself" >&2; exit 2; }
     mkdir -p "$dir"
     n=$(( $(rounds | tail -1) + 1 ))
     f="$dir/$kind-$n.md"; cat > "$f.partial"

@@ -43,9 +43,18 @@ law (`CONVENTIONS.md`).
   between the start and end of the sentence? Where it does, it violates charter U3.2.
   Example: 「儲存空間不足，檔案沒有存進去。請先清出空間再試一次。」 — state and cause in
   one sentence, the next step in its own.
+- **U3.6-zhHant Objects do not act, and verbs are the ones a Taiwanese app ships** — Check:
+  Does the value give a thing a will or an action (「照片會跑進相簿」「相簿在這裡等你」), or use
+  a casual verb carried over from another language (「逛逛」「打開就能看」)? Where it does, it
+  violates charter U3.1. Write 「照片將匯入相簿」「隨時都能開始瀏覽」; the fix is natural
+  phrasing, not a flatter tone.
 
 ## U4 — One concept, one word across the app
 
 - **U4.1-zhHant Quote another screen's label in 「」** — Check: When the sentence cites
   another screen, setting or tab by name, does it use that screen's label in this locale
   verbatim, enclosed in 「」? Example: 「請從「探索」重新嘗試。」
+- **U4.2-zhHant A change the user made is 「變更」** — Check: Where the string means a
+  modification that is pending, not yet synced or lost, is it 「變更」? 「編輯」 names the
+  action or the edit screen (「編輯個人檔案」); using it for the modification itself violates
+  charter U4.1. Example: 「尚未同步的變更」.

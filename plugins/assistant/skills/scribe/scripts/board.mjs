@@ -8,6 +8,7 @@
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
 //        asst-board archive <slug> <archive.md>                at close: the archive + its decisions
+//        asst-board trash   <slug|page-id>                     at close, after archive: the row leaves the board
 //        asst-board show    <slug|page-id> [--body]           one row whole; --body adds its brief after ---
 //        asst-board list [--all]                               the live rows (In Progress · Next), or every row
 //        asst-board --help                    Any op takes --dry-run: print, write nothing.
@@ -28,7 +29,7 @@ const fail = (m) => { console.error(`asst-board: ${m}`); process.exit(2); };
 const argv = process.argv.slice(2);
 const dry = argv.includes('--dry-run'); const args = argv.filter(a => a !== '--dry-run');
 const [op, ...rest] = args;
-if (!op || op === '--help' || op === '-h') { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 20).join('\n').replace(/^\/\/ ?/gm, '')); process.exit(0); }
+if (!op || op === '--help' || op === '-h') { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 21).join('\n').replace(/^\/\/ ?/gm, '')); process.exit(0); }
 
 const root = spawnSync('bash', [join(here, '../../assistant/scripts/root.sh')], { encoding: 'utf8' }).stdout.trim();
 const adapterPath = join(root, '.claude/assistant.md');
@@ -163,5 +164,10 @@ switch (op) {
     if (!dry) print(rows.map(r => [r.Name, r.Status, r.Stage, r.Trigger, r.id].map(v => v ?? '').join(' · ')));
     break;
   }
-  default: fail(`unknown op "${op}" (create · set · brief · archive · show · list)`);
+  case 'trash': {
+    const [ref] = rest; if (!ref) fail('trash <slug|page-id>');
+    if (backend === 'file') { const rows = readRows(); const i = rows.findIndex(x => x.Slug === ref); if (i < 0) fail(`no row "${ref}"`); rows.splice(i, 1); writeRows(rows); console.log(`trash ${ref} → ${boardFile}`); break; }
+    notion(['trash', pageIdOf(ref)]); break;
+  }
+  default: fail(`unknown op "${op}" (create · set · brief · archive · trash · show · list)`);
 }
