@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: intercept
+description: intercept warns on silent shell traps — a test/build run piped into head/tail or followed by `; echo`, a log written into shared /tmp, BSD sed's `\b`, `git checkout --`/`git restore` on a file, a directory-wide `dart format` or unscoped `dart fix --apply` — and stays quiet on the healthy form of each.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the intercept hook several trap commands and their healthy forms, and print which rules fire for each.
+context:
+  scaffold_script: fixture.sh

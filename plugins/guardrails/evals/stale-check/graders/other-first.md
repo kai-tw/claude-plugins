@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^other-first=\[has just been updated to 0\.2\.0\]$'
+pattern: '^other-first=\[updated from 0\.1\.0 to 0\.2\.0 \(project scope\]$'
 flags: m
 arm: with-only
 ---
