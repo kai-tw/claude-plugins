@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: watch-forwarder-error
+description: When the webhook forwarder fails, asst-pr watch names the forwarder's own error line, not the end of its usage text.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 3
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH" XDG_CACHE_HOME="$PWD/cache"; asst-pr watch a wa; echo "exit=$?"
+  prompt: |
+    With a fake gh whose webhook forwarder fails at once, printing an error and then its usage text, watch a PR's CI and print the output and exit code.
+context:
+  scaffold_script: fixture.sh
