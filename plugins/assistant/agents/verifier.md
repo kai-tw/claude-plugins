@@ -54,7 +54,11 @@ what is wrong · failure scenario · Fix: <the change>`:
    pack's `S<N>.k` (comments are S6) or a section of the adapter's rules, ranked
    per the pack's `§Precedence`; cite it verbatim or do not file.
 4. **Error handling** — every failure event on the touched paths: caught where, what the
-   user sees, what is logged; a catch that swallows, a fallback that hides.
+   user sees, what is logged; a catch that swallows, a fallback that hides. A
+   notice the user neither caused nor can act on — it exists only because of a
+   lost reply, a retry, a race or a step that failed after the outcome was settled —
+   is filed with Fix: remove that state at its source (make the step idempotent,
+   report the settled outcome, order the steps so the window can't open).
 5. **As built vs as decided** — each deviation from the brief's System design, with
    the reason found in the code or `no reason found`; and each hunk outside the
    task statement's boundary, filed unless a filed fact row shows this task's
@@ -122,7 +126,10 @@ Report:
 ## Filing
 
 File each leg with `asst-report put <slug> <kind>` (`verify-code`,
-`verify-text` or `brief-review`). On the text leg, let the shell append
+`verify-text` or `brief-review`, the bare kind), its text on stdin from a heredoc
+or a file named after the slug and kind, never a shared name like `report.md`.
+Run only what finishes inside this dispatch, never waiting in a `sleep` or
+`until` loop. On the text leg, let the shell append
 `strings_check:` after your report — `{ cat <report>; echo '## strings_check';
 <command>; } | asst-report put <slug> verify-text` — or `## strings_check none`
 when the adapter has none. Then return only the paths it prints; the assistant

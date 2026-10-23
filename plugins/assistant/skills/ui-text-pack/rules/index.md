@@ -62,6 +62,10 @@ is a manual, not an interface.
   where both the string's writer and other locales' writers can read it (where is a
   regulation-layer matter)? Where it is not recorded and the spot truncates, this violates
   this rule: a writer of only the source language cannot see which locale truncates.
+- **U1.4 A string is never changed for where it wraps** — Check: Is a string shortened or
+  reworded only so that its last line does not hold a lone word or character? That
+  violates this rule: the screen renders at every width, so some width always leaves one.
+  A lone word on the last line is outside every rule; a string changes for its meaning.
 
 ## U2 — A failure message must state what happened, the current state, and the next step
 
@@ -77,6 +81,15 @@ the three hands the judgment back to the user.
   one string? Sharing violates this rule: users take different actions for each. Nor may
   a failure message be copied verbatim from elsewhere — that sentence describes another
   failure.
+- **U2.3 The cause is stated, never guessed** — Check: Does the failure string give its
+  cause as a possibility ("may", "might", "possibly")? That violates this rule: a guessed
+  cause sends the user to fix the wrong thing. Where the app cannot tell the causes apart,
+  the state must be split until each string has one known cause — a design change, not a
+  wording one.
+- **U2.4 The failure is attributed to whoever failed** — Check: Does the string blame a
+  third party (the sign-in provider, the platform, the store) for a failure of the app's
+  own account or service? That violates this rule: the user's account is the app's, and
+  where its failure has no known cause the string says the cause is unknown.
 
 ## U3 — Each locale is written natively
 

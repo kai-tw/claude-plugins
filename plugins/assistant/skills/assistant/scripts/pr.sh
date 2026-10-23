@@ -15,11 +15,12 @@
 #          wait for CI on the pushed HEAD to finish, then print what checks would;
 #          one per PR, any number of PRs at once (pr-watch.mjs)
 #        asst-pr ready <task-slug> <worktree>
-#          refuse unless: the tree is clean and pushed; the PR exists; every
-#          verify leg the adapter requires has a report filed after HEAD's commit;
-#          CI on HEAD passed
-# Legs: verify-code always · verify-coverage when the adapter's coverage: is
-# set · verify-text when ui_strings: is set and the PR's diff touches it.
+#          refuse unless: the tree is clean and pushed; the PR exists, targets
+#          the default branch and has a description; every verify leg the
+#          adapter requires has a report filed after HEAD's commit; CI on HEAD passed
+# Legs: verify-code always · verify-coverage when the adapter's coverage: is a
+# command (not none or ci) · verify-text when ui_strings: is set and the PR's
+# diff touches it.
 # Exit: 0 done · 1 refused, or a check failed · 2 usage, not a git task, CI
 # unreadable, or no PR possible here (gh missing or unauthenticated, no GitHub
 # remote), or the PR already watched · 3 CI still running on HEAD.
@@ -109,13 +110,19 @@ case "$op" in
       || refuse "no PR for $branch — asst-pr open never ran"
     read -r num draft base <<< "$pr"
     [ "$draft" = true ] || { echo "asst-pr: #$num is already ready"; exit 0; }
+    # A PR on top of an unmerged one looks mergeable on its own, and merging it
+    # first lands the other PR's unfinished commits with it.
+    default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); default=${default#origin/}
+    [ "$base" = "${default:-main}" ] || refuse "#$num is stacked on $base — it stays a draft until that PR merges and this branch is merged with ${default:-main}"
+    body=$(cd "$wt" && gh pr view "$branch" --json body --jq .body 2>/dev/null)
+    [ -n "${body//[[:space:]]/}" ] || refuse "#$num has no description — write its title and body from ③ first (gh pr edit)"
     g fetch --quiet origin "$base" 2>/dev/null
-    leaks=$(disclosure_leaks "$wt" "origin/$base" "$(cd "$wt" && gh pr view "$branch" --json body --jq .body 2>/dev/null)")
+    leaks=$(disclosure_leaks "$wt" "origin/$base" "$body")
     [ -z "$leaks" ] || refuse "this repo is not known to be private, and #$num publishes (SKILL.md §Disclosure):
 $leaks"
 
     legs="code"
-    [ "$(field coverage)" != none ] && [ -n "$(field coverage)" ] && legs="$legs coverage"
+    case "$(field coverage)" in none|ci|"") ;; *) legs="$legs coverage" ;; esac
     glob=$(field ui_strings)
     if [ -n "$glob" ] && [ "$glob" != none ]; then
       while IFS= read -r f; do

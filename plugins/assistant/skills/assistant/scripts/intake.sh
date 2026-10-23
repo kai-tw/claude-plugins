@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
-# asst-intake — to-do candidates outside the board: GitHub issues / PRs and open
-# session-journal threads. A source that cannot be read prints a `skip` line with
-# the reason, so "unavailable" never looks like "nothing to do".
+# asst-intake — to-do candidates outside the board: GitHub issues and PRs. A
+# source that cannot be read prints a `skip` line with the reason, so
+# "unavailable" never looks like "nothing to do".
 #
 # Usage: asst-intake [project-dir]      (default: cwd)
 # Output, one line per item, tab-separated:  <ref>	<title>	<why>
 #   issue#<n>        open issue assigned to me
 #   pr#<n>           open PR: review requested from me · mine with changes requested · mine with failing checks
-#   journal:<title>  open thread in docs/session-journal/_active.md (why = its Next line)
 #   skip <source>: <reason>
 set -uo pipefail
-source "$(dirname -- "${BASH_SOURCE[0]}")/root.sh"
 dir="${1:-$PWD}"
 cd "$dir" 2>/dev/null || { echo "asst-intake: no such directory: $dir" >&2; exit 2; }
 
@@ -31,20 +29,4 @@ github() {
     | "pr#\(.number)\t\(.title)\t\(if .reviewDecision == "CHANGES_REQUESTED" then "changes requested" else "checks failing" end)"' <<<"$out"
 }
 
-journal() {
-  local f
-  f="$(asst_root)/docs/session-journal/_active.md"
-  [ -f "$f" ] || { echo "skip journal: no docs/session-journal/_active.md"; return; }
-  # Drop <!-- … --> (the template lives in one), then one line per `## <title> · <status>` block.
-  awk '
-    /<!--/ { c = 1 }
-    c { if (/-->/) c = 0; next }
-    function flush() { if (t != "") { r = t; sub(/ *·.*/, "", r); printf "journal:%s\t%s\t%s\n", r, t, n } }
-    /^## / { flush(); t = substr($0, 4); n = "" ; next }
-    /^- \*\*Next:\*\*/ { n = $0; sub(/^- \*\*Next:\*\* */, "", n) }
-    END { flush() }
-  ' "$f"
-}
-
 github
-journal

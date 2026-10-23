@@ -84,13 +84,18 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    measure it; a case still unshown is cut, not handled. When the
    design adds a class, a dependency or a persisted format, one `verifier`
    `brief-review` on the draft first, so the founder
-   is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`.
+   is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`;
+   it holds four questions, so the rest go in the same message as a numbered list —
+   a fork is never marked `Decided` for lack of room.
    Silence on `Decided` = accepted. Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
    later step reads, without your context.
 4. **Build** (`builder`): UI first, as real widgets in all four states → one
    image per screen × state × locale → the page `asst-screens` builds from them
-   (its path is on the report's `screens:` line) → **② stop for the founder**:
+   (its path is on the report's `screens:` line) → you open every image and read
+   every string in every locale, beside the existing screen that does the same
+   job; what breaks a rule or a lesson goes back to the builder, and every fork it
+   reports that changes what the user sees is a `Needs you` → **② stop for the founder**:
    publish the page with the `Artifact` tool and give the founder its link — never
    the file or its path, which open as source. A re-render republishes the same
    path, so the link stays. Without the `Artifact` tool, ② is a blocker: say so
@@ -113,7 +118,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    floor (`security-guidance` hooks run unattended; the project's own sink rules
    when it has them); and the adapter's `coverage:` command when set, which you
    run yourself in the background — gate: every changed line executed, no
-   markers. An `exempt` diff skips the code leg: check it yourself — it changes
+   markers. `coverage: ci` means the PR's CI measures it: run nothing, and read
+   its log before ③. An `exempt` diff skips the code leg: check it yourself — it changes
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line into `asst-report put <slug> verify-code --worktree <worktree>`; past that
    bound it isn't `exempt`, so re-tier it `small`. Mutation is not yours: the PR's CI comments its survivors at
@@ -131,6 +137,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
    checkpoints first: a check that read files the branch never got graded code
    that does not ship.
+   Rewrite the PR's title and body from ③ first (`gh pr edit`): the draft's
+   describe the plan, not what shipped.
    Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft, and
    write ③ only once it exits 0, with `PR #<n> ready` in its header. A draft
    means work is still in progress, so a ③ sent while the PR is a draft tells
@@ -152,9 +160,16 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    meaning changed since ② loses its approval (charter U5.1), and **a locale that lost
    it blocks the merge and the commit, at the same level as `destructive:`**. Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back
-   re-enters step 5; the founder saying the PR merged → step 8.
-8. **Close** (you, through `asst-board`): board row → Shipped; the task row is disposable,
-   so the brief moves to the archive (`asst-board archive`): Overview · Problem ·
+   re-enters step 5, and every question the founder raises on the PR is fixed in
+   that PR, with each sibling of the same shape. Told to merge one PR, squash-merge
+   that PR only, pinned to the head you checked (`gh pr merge <n> --squash
+   --match-head-commit <sha>`); the founder saying the PR merged → step 8.
+8. **Close** (you, through `asst-board`): the task row is disposable, so the brief
+   moves to the archive (`asst-board archive`) and then the row is deleted
+   (`asst-board trash <slug>`) — a row never moves to `Shipped`, and the archive goes
+   first because until then the row's body is the only copy of its decisions.
+   Delete the PR's worktree, local branch and remote branch, unasked, once
+   `HEAD` matches the merged PR's head. The archive: Overview · Problem ·
    Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
    with the choice made · Deferred Items = one decision per `Needs you`
    fork (Context · Decision · Consequence, the rejected option and its cost in
@@ -184,13 +199,15 @@ The board is whatever the adapter's `board:` names — the project's Notion
 TaskList, or the personal `.claude/.assistant/board.md` — read and written only
 through `asst-board`, same columns either way (Status · Stage · Trigger). One row
 per task, `Stage` mapped as: task statement → Product Plan · brief → Engineering Plan ·
-screens → Design Plan · build → Implementation · verify → Review · deliver → QA ·
-closed → Shipped. `list` is the summary (Name · Status · Stage · Trigger); one row's
+screens → Design Plan · build → Implementation · verify → Review · deliver → QA;
+a closed row is trashed. `Trigger` holds only what the row waits for, in one line,
+empty when nothing does; a description, scope or evidence goes in the row's body
+(`asst-board brief`). `list` is the summary (Name · Status · Stage · Trigger); one row's
 every property, and with `--body` its brief, is `asst-board show <slug> [--body]` —
 never a whole-board query read for one row. Every turn you take is a scheduler pass: `asst-board list` and
 `asst-intake <project-dir>` → file new candidates → advance or
 dispatch each live row → surface new `Needs you` lines together.
-Live = `In Progress`, or `Next` whose `Trigger` names a row now `Shipped` (flip it
+Live = `In Progress`, or `Next` whose `Trigger` names a row no longer on the board (flip it
 to `In Progress` and start at Scout). A Close changes the board, so the pass runs
 again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet
 board, never at a Close. A row's progress is what the board and the disk hold, never
@@ -201,7 +218,7 @@ ledger.
 
 `asst-intake` lists work not yet on the board: GitHub issues assigned to the
 founder, PRs awaiting their review or theirs with changes requested / failing
-checks, open session-journal threads; a `skip` line means that source is
+checks; a `skip` line means that source is
 unreadable, not empty. A row ends its `Name` with the source ref (`… (pr#42)`); a
 candidate whose ref already ends a row `Name` in `asst-board list --all` is not new
 (every row, every status — `list` alone shows only the live ones). Each new candidate is one

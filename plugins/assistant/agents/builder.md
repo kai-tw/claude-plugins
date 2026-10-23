@@ -80,9 +80,17 @@ side-by-side options per locale, listed in the report with a one-line trade-off
 translated. The file gets the one you think best; the founder picks at ②. A string
 first created in the `wire` phase follows the same rule, listed in that phase's report.
 
+Run only what finishes inside this dispatch, and never wait on anything with a
+`sleep` or `until` loop; a command that can't finish here — a full coverage or
+mutation run, a test slot that stays busy — goes back on the report as not run.
+`gate: green` means the whole gate ran to its end and passed; a gate that couldn't
+run is `gate: not run — <why>`, and that slice is unfinished, never green.
+
 File the report with `asst-report put <slug> <kind>` (`scout`, or
-`build-<phase>`), then return only the path it prints; the assistant reads the
-file. Scout:
+`build-<phase>`, the bare kind — it numbers rounds itself), its text on stdin from
+a heredoc or a file named after the slug and kind, never a shared name like
+`report.md` that another agent may have written.
+Then return only the path it prints; the assistant reads the file. Scout:
 
 ```
 ## Facts
@@ -96,7 +104,7 @@ file. Scout:
 Every other phase:
 
 ```
-phase: <name> · checkpoints: <sha … | diff path> · gate: <green|n red>
+phase: <name> · checkpoints: <sha … | diff path> · gate: <green|n red|not run — why>
 screens: <ui: the path asst-screens printed; other phases: none>
 forks: <none, or one line each>
 debt: <none, or one line each>

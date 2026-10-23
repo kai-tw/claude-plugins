@@ -101,6 +101,14 @@ for (const entry of entries) {
     fail(where, `name disagrees with its plugin.json ("${entry.name}" vs "${plugin.name}")`);
   }
 
+  // `hooks/hooks.json` loads on its own; naming it in `hooks` registers it twice,
+  // and Claude Code then fails to load the whole plugin, skills included. Only
+  // `claude plugin list` shows it — validate and installing both succeed.
+  const hookFiles = [plugin.hooks ?? []].flat().filter((h) => typeof h === 'string');
+  if (hookFiles.some((h) => resolve(dir, h) === join(dir, 'hooks/hooks.json'))) {
+    fail(where, '`hooks` names hooks/hooks.json, which loads on its own — listed twice, the whole plugin fails to load; `hooks` is for additional hook files only');
+  }
+
   checkSkills(plugin, dir, entry.source);
 }
 
