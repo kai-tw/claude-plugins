@@ -446,7 +446,7 @@ if [ "$n_unreached" -gt 0 ] || [ "$n_gaps" -gt 0 ] || [ "$n_prag" -gt 0 ] || [ "
 
 plan-coverage: BLOCKED.
 $( [ "$n_unreached" -gt 0 ] && printf '\n  %s changed file(s) appear NOWHERE in the coverage report — no test imports them.\n  That is not a low score; it is an unmeasured file, and mutation cannot see it\n  either (an unexecuted line produces no mutant to survive).\n' "$n_unreached" )
-$( [ "$n_gaps" -gt 0 ] && printf '\n  %s unexecuted line(s). Add the test that runs each one. A line no test can\n  reach is a design finding — put it behind a seam a test can drive — and\n  there is no marker that passes it.\n' "$n_gaps" )
+$( [ "$n_gaps" -gt 0 ] && printf '\n  %s unexecuted line(s). Add the test that runs each one. A line no test can\n  reach is a design finding — put it behind a seam a test can drive — and\n  there is no marker that passes it. Before calling a gap a miscount, find how\n  sibling files cover the same shape of line; a line no test can execute by\n  construction is fixed in plan-coverage, never by reshaping the code.\n' "$n_gaps" )
 $( [ "$n_unmeas" -gt 0 ] && printf '\n  %s throw arm(s) of ?? / ?: that no coverage record can see. Rewrite each as a\n  statement (`if (x == null) throw …;`) so branch coverage measures it, then\n  test it.\n' "$n_unmeas" )
 $( [ "$n_prag" -gt 0 ] && printf '\n  %s coverage pragma(s) in changed files. `coverage:ignore-*` removes lines from\n  the measurement before this gate reads it; `coverage-ignore:` is retired.\n  Remove them and let those lines be measured.\n' "$n_prag" )
 EOF

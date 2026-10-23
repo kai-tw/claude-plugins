@@ -1061,6 +1061,29 @@ EOF
   exit 2
 fi
 
+# --- equivalent mutants -----------------------------------------------------
+# A survivor whose description replaces a text with the same text left the code
+# byte-identical — `switch_expression_arm_swap` over two arms with one result
+# reads `switch arm result 'X' replaced with 'X'`. No test can kill it, so it is
+# taken out of `undetected` and `total`, listed on its own, and never posted as
+# a review comment.
+jq '
+  def same($sep): index("'"'"'") as $q | if $q == null or (endswith("'"'"'") | not) then false
+    else .[$q + 1:-1] as $in | ($sep | length) as $s | (($in | length) - $s) as $r
+    | if $r < 0 or $r % 2 != 0 then false
+      else ($r / 2) as $n | $in[$n:$n + $s] == $sep and $in[:$n] == $in[$n + $s:] end end;
+  def equivalent: (.description // "") | same("'"'"' replaced with '"'"'") or same("'"'"' -> '"'"'");
+  .files |= map_values(
+    ([.undetectedMutants[]? | select(equivalent)]) as $eq
+    | if ($eq | length) == 0 then . else
+        .equivalentMutants = $eq
+        | .undetectedMutants |= map(select(equivalent | not))
+        | .total -= ($eq | length)
+        | if .undetected then .undetected -= ($eq | length) else . end end)' \
+  "$out/report.json" > "$out/equiv.json" && mv -f "$out/equiv.json" "$out/report.json"
+equiv=$(jq -r '.files | to_entries[] | .value.equivalentMutants[]?
+  | "  • \(.filePath | split("/") | last):\(.line):\(.column)  \(.operatorName) — \(.description)"' "$out/report.json")
+
 # --- score, per file --------------------------------------------------------
 # Per-file, not aggregate: an aggregate lets a well-tested file carry a badly
 # tested one. Measured on one HTTP client — 100% and 67%
@@ -1142,6 +1165,7 @@ echo "plan-mutation: raw engine report(s) — $KEPT (every field, including any 
 surv=$(jq -r '.files | to_entries[] | .value.undetectedMutants[]?
   | "  • \(.filePath | split("/") | last):\(.line):\(.column)  \(.operatorName) — \(.description)"' "$out/report.json")
 [ -n "$surv" ] && { echo; echo "Surviving mutants:"; printf '%s\n' "$surv"; }
+[ -n "$equiv" ] && { echo; echo "Equivalent mutants — replaced with the same text, so the code did not change; not scored:"; printf '%s\n' "$equiv"; }
 
 # Survivors grouped by operator, because the pool asks TWO different questions
 # and each takes a different fix. A `statement_deletion` survivor means nothing
@@ -1256,6 +1280,11 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
   if [ -n "$surv" ]; then
     printf '\n<details><summary>Surviving mutants</summary>\n\n'
     printf '%s\n' "$surv" | sed 's|^  • |- `|; s|  \([A-Za-z_]*\) — |` — `\1` — |'
+    printf '\n</details>\n'
+  fi
+  if [ -n "$equiv" ]; then
+    printf '\n<details><summary>Equivalent mutants — the code did not change, not scored</summary>\n\n'
+    printf '%s\n' "$equiv" | sed 's|^  • |- `|; s|  \([A-Za-z_]*\) — |` — `\1` — |'
     printf '\n</details>\n'
   fi
   if [ -n "${timed:-}" ]; then

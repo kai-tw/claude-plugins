@@ -17,7 +17,9 @@ allowed-tools:
 - `plan-test test/features/<x>/` — scoped run; `--full` for the whole suite;
   `--status` lists slot holders; `--exec <cmd…>` holds one slot around a command.
   Never the bare `flutter test` / `dart test`: several sessions share this
-  machine's memory, and the plugin's `test-gate` hook denies them.
+  machine's memory, and the plugin's `test-gate` hook denies them. A run on an
+  Android device (`-d <serial>`) that is locked or asleep is refused before it
+  starts, since it would hang behind the lock screen: ask for it to be unlocked.
 - `plan-coverage -- <scoped test command>` — per **line**, not per percent: each
   changed `lib/**.dart` line is executed. No markers: a changed file carrying
   `// coverage:ignore-*` (or the retired `// coverage-ignore:`) is blocked too.
@@ -30,7 +32,9 @@ allowed-tools:
   arm of `??` / `?:` is unmeasurable and blocks until rewritten as a statement.
   `--diff <ref>` takes scope against `<ref>` — a PR's base, in CI.
 - `plan-mutation -- <scoped test command>` — needs `dart_mutants` in pubspec (the
-  script prints the exact stanza when it is missing). While it runs the working
+  script prints the exact stanza when it is missing). A survivor replaced with
+  its own text (two switch arms with one result) is equivalent: listed apart,
+  not scored, not posted. While it runs the working
   tree holds live mutants; read files via `git show HEAD:<path>`. The plan line
   estimates the run and each mutant line says how long is left; `--max-minutes n`
   stops one that will not fit, scoring nothing — that is an abort, not a score.

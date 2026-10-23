@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: device-awake
+description: plan-test refuses a flutter run on an Android device that is locked or asleep, before anything runs, and names the state; an awake unlocked device, or a device adb does not know, runs.
+tags: [plan-test]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0; PATH="$PWD/fake:$PATH"; for d in "locked:-d locked" "asleep:--device-id=asleep" "awake:-dawake" "macos:-d macos"; do plan-test integration_test/ ${d#*:} 2>&1 | sed "s/^/${d%%:*}: /"; echo "${d%%:*}: rc=${PIPESTATUS[0]}"; done
+  prompt: |
+    With a fake adb that reports one device locked, one asleep and one awake, run plan-test on an integration test against each of them and against a desktop device, and print the output and exit code of each.
+context:
+  scaffold_script: fixture.sh
