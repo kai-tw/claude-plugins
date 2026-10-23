@@ -7,7 +7,9 @@
 #   the agent drifts back to its default wording within the same session. Next
 #   to the latest prompt is the only position that does not decay.
 #
-# A prompt with no detectable language ("ok", "1", a pasted path) keeps the
+# A prompt with no detectable language ("ok", "1", a pasted path), or one the
+# harness wrote (it opens with a tag such as <task-notification>; a sub-agent's
+# English report is not the user switching language), keeps the
 # locale of the last one that had it; the choice is stored per session so the
 # Stop hook can fall back to the same answer.
 #
@@ -24,7 +26,9 @@ input=$(cat)
 session=$(jq -r '.session_id // empty' <<<"$input")
 state="${TMPDIR:-/tmp}/mother-tongue-${session:-none}"
 
-loc=$(jq -r '.prompt // empty' <<<"$input" | "$here/detect.sh")
+prompt=$(jq -r '.prompt // empty' <<<"$input")
+loc=""
+[[ $prompt =~ ^[[:space:]]*\<[a-z][a-z-]*\> ]] || loc=$("$here/detect.sh" <<<"$prompt")
 if [ -n "$loc" ]; then
   printf '%s' "$loc" > "$state" 2>/dev/null || true
 else

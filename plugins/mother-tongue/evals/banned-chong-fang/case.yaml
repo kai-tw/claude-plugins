@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-chong-fang
+description: The Stop hook blocks a reply that calls a replay attack 重播攻擊 or its guard 防重播 and offers 重放; 重播 for a TV rerun does not count.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed stop.sh two zh-TW replies (one about a replay attack written with 重播, one about a TV rerun) and print the output.
+context:
+  scaffold_script: fixture.sh

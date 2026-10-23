@@ -21,7 +21,9 @@ unknown locale exits 1.
 
 Detection is by script (`hooks/detect.sh`): Hangul → `ko`, kana → `ja`, other
 Han → `$MOTHER_TONGUE_ZH` (default `zh-TW`), mostly Latin → `en`. A prompt too
-short to tell keeps the session's previous locale. Code blocks, `backtick
+short to tell keeps the session's previous locale, and so does one the harness
+wrote (it opens with a tag such as `<task-notification>`), so a sub-agent's
+English report does not switch the conversation to English. Code blocks, `backtick
 spans`, URLs and paths are ignored (`hooks/strip.sh`); backticks are also how a
 banned term is quoted on purpose. The commit check judges only the message:
 quoted strings, heredoc bodies and `-F`/`--body-file` files, minus `…-by:`

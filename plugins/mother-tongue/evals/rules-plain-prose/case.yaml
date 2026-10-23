@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: rules-plain-prose
+description: The rules attached to a Chinese prompt ask for short plain sentences, a concrete case before the conclusion, a file or class named rather than given a Chinese nickname, and 重放 for replay.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed remind.sh one Chinese prompt and print the rules it attaches.
+context:
+  scaffold_script: fixture.sh

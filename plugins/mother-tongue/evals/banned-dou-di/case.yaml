@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-dou-di
+description: The Stop hook blocks a reply that calls the sentence for every other case 兜底 and offers 其他情況.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed stop.sh a zh-TW reply that uses 兜底 and print the output.
+context:
+  scaffold_script: fixture.sh
