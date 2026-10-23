@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: notification-keeps-locale
+description: An English task notification does not switch a Chinese conversation's locale, so an English reply right after it is still blocked; the user's own English prompt still switches it.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Send remind.sh a Chinese prompt and then an English task notification, feed stop.sh an English reply, and print the output; repeat with an English user prompt instead of the notification.
+context:
+  scaffold_script: fixture.sh
