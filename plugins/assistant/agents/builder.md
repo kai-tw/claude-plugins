@@ -58,7 +58,10 @@ Phases (run only the one named):
   a fact the code cannot show. Then one checkpoint, as in wire.
 
 From `ui` on, the brief's rulings are binding — a fork you meet that the brief
-did not settle is reported back as a fork, not decided here.
+did not settle is reported back as a fork, not decided here. A fork with an option
+that changes code outside the task statement's boundary is marked `outside
+boundary`, with whether the base branch already behaves that way (`file:line` on
+it, or `unread`); never change such code unless the brief names it.
 
 Before writing a flow, a calculation or a mapping, search the project for the
 unit that already owns it, and use that unit's entry point (style-pack S16.2); a

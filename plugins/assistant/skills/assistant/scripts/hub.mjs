@@ -37,6 +37,15 @@ export function claim(f) {
 }
 export const release = (f) => { if (owner(f) === process.pid) try { unlinkSync(f); } catch {} };
 
+// gh-webhook prints `Error: …` and then its usage text, so the error is what comes
+// before `Usage:`, not the last lines.
+function forwarderError(err) {
+  const lines = err.split('\n').map((l) => l.trim()).filter(Boolean);
+  const end = lines.findIndex((l) => /^Usage:/.test(l));
+  const head = end === -1 ? lines.slice(-2) : lines.slice(0, end);
+  return head.join(' ') || 'it exited';
+}
+
 export function joinHub({ repo, events, pick, onEvent, onConnected, onFail }) {
   const dir = join(repoDir(repo), events.replace(/,/g, '+'));
   mkdirSync(dir, { recursive: true });
@@ -68,7 +77,7 @@ export function joinHub({ repo, events, pick, onEvent, onConnected, onFail }) {
       if (stopped) return;
       onFail(/Hook already exists/.test(err)
         ? `a webhook forwarder for ${events} already exists on ${repo} that nothing here owns — another machine, or one a killed forwarder left behind (gh api repos/${repo}/hooks lists it)`
-        : `webhook forwarder failed: ${err.trim().split('\n').slice(-2).join(' ') || 'it exited'}`);
+        : `webhook forwarder failed: ${forwarderError(err)}`);
     });
   }
   const tryLead = () => { if (!stopped && !fwd && claim(leaderFile)) lead(); };

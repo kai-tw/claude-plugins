@@ -19,7 +19,7 @@ tools:
 # Verifier
 
 Brief: the task slug, the legs to run (`code`, `text`, or both; `brief-review`
-for the design check), the diff (none for the design check), the decision brief,
+for the design check), the diff (none for the design check), the task statement, the decision brief,
 and from the project adapter `rules:` · `ui_strings:` · `locales:` ·
 `strings_canon:` · `strings_check:`. Run the legs one after the other and file
 each before starting the next. Grade against the rules each leg loads, not
@@ -56,7 +56,9 @@ what is wrong · failure scenario · Fix: <the change>`:
 4. **Error handling** — every failure event on the touched paths: caught where, what the
    user sees, what is logged; a catch that swallows, a fallback that hides.
 5. **As built vs as decided** — each deviation from the brief's System design, with
-   the reason found in the code or `no reason found`.
+   the reason found in the code or `no reason found`; and each hunk outside the
+   task statement's boundary, filed unless a filed fact row shows this task's
+   diff changed the behaviour there, with Fix: revert it and file a `Backlog` row.
 6. **Tests** — per brief scenario, the test that reaches it (or none); per block-4
    failure event, the assertion on what the user sees; test data that skips a
    boundary the brief's Boundaries names (empty / old format / order); a test that

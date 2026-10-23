@@ -59,6 +59,14 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    Tier: `exempt` (typo / constant / log — Builder edits, straight to Verify),
    `small` (one module, no new abstraction — skip Scout and the brief, you rule),
    `feature` (everything else — the full flow). Unsure → `feature`.
+   The boundary names the features or paths the task may change, in the founder's
+   words when they gave any, and every dispatch quotes it. Code outside it changes
+   only where this task's own diff changed the behaviour there, shown by a fact row
+   that the base branch behaves differently. Whatever the base branch already does —
+   a defect, a gap, a better UX — is not this task's, however small: it becomes a
+   `Backlog` row (step 6), never a ruling, a fix round or a dispatch. A fork whose
+   option changes code outside the boundary is checked against this before you
+   recommend anything.
    A request one brief cannot hold — more than 5 `Needs you` forks, or a design that
    touches more than one persisted format — becomes several task statements in order: each
    its own row and worktree; the later rows are `Status=Next` with `Trigger`
@@ -112,8 +120,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes.
    Any finding or `debt:` line left → another fix round; only residue that changes scope or design
    becomes one `Needs you` line instead.
-   A defect found outside the task's scope (it predates the task, or lives in
-   code the task doesn't touch) is never just mentioned: `asst-board create` a row
+   Anything found outside the task's boundary (step 1) — a defect, a gap, an
+   improvement — is never just mentioned and never fixed here: `asst-board create` a row
    for it at once (`Status=Backlog`, `Trigger` naming the task that found it), and
    the next message to the founder names that row. When a check should have caught
    the defect earlier, the same message proposes the mechanism fix: which agent,
