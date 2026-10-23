@@ -275,8 +275,8 @@ function assembleBody(dbKey, body, row, rowLabel) {
 // schema (required present, none unknown) WITHOUT touching the bytes; for content
 // DBs the whole file is the body. A repo-relative path resolves against the MAIN
 // worktree root (§mainRepoRoot), NOT cwd — a task runs from a git worktree whose
-// cwd is under .claude/worktrees/, while the session-journal draft the bodyFile
-// points at lives (gitignored) only in the MAIN tree.
+// cwd is under .claude/worktrees/, while the draft the bodyFile points at lives
+// (under .claude/.assistant/) only in the MAIN tree.
 let _mainRoot;
 function mainRepoRoot() {
   // `git rev-parse --git-common-dir` returns the shared main .git even from a
@@ -1007,8 +1007,8 @@ bodyFile — author the body ONCE in a Markdown file, upload it byte-exact (neve
 re-typed into the manifest → CJK-safe). Put "bodyFile": "<path>" on a row instead
 of inline body sections / "content"; its "## Heading"s must match the DB schema.
 On UPDATE, a bodyFile does a safe full-body replace (the file is the SoT); without
-it, update stays properties-only. Convention: docs/session-journal/<sid>/<artifact>.md.
-  create: { "db":"feature-archive", "rows":[ { "Name":"…", "bodyFile":"docs/session-journal/<sid>/archive.md" } ] }
+it, update stays properties-only. Convention: .claude/.assistant/tasks/<slug>/<artifact>.md.
+  create: { "db":"feature-archive", "rows":[ { "Name":"…", "bodyFile":".claude/.assistant/tasks/<slug>/archive.md" } ] }
 Use "-" to read the manifest from stdin.`;
 
 // ── Project KB resolution ───────────────────────────────────────────────────────

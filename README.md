@@ -30,7 +30,6 @@ claude plugin install dart-lsp@kai-tw
 | --- | --- |
 | [dart-lsp](plugins/dart-lsp) | Dart/Flutter language server (Dart Analysis Server in LSP mode) for code intelligence |
 | [flutter-toolkit](plugins/flutter-toolkit) | Flutter test gates for a shared machine: `plan-test` slot budget, per-line coverage and mutation score over the diff (Dart and JS/TS) |
-| [session-journal](plugins/session-journal) | Cross-session task-state journal — which threads are in flight and where each one lives, surviving context compaction, `/clear`, and resume |
 | [google-reporting](plugins/google-reporting) | GA4 and Search Console readers via keyless service-account impersonation |
 | [assistant](plugins/assistant) | The founder's assistant: request → decision brief → screens → PR, across projects. Ships the cross-project rulebooks its reviewers grade against: `style-pack` (code style, charter S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, charter U1–U5 plus zh-Hant, ja and en) |
 | [reclaim-space](plugins/reclaim-space) | Developer-disk reclamation on macOS: regenerable build output and toolchain caches, with a free-space floor on new git worktrees |

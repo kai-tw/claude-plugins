@@ -201,7 +201,7 @@ ledger.
 
 `asst-intake` lists work not yet on the board: GitHub issues assigned to the
 founder, PRs awaiting their review or theirs with changes requested / failing
-checks, open session-journal threads; a `skip` line means that source is
+checks; a `skip` line means that source is
 unreadable, not empty. A row ends its `Name` with the source ref (`… (pr#42)`); a
 candidate whose ref already ends a row `Name` in `asst-board list --all` is not new
 (every row, every status — `list` alone shows only the live ones). Each new candidate is one
