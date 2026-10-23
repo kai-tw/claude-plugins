@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-equivalent
+description: plan-mutation takes a survivor replaced with its own text (a switch arm swapped for an arm with the same result) out of the score and lists it as equivalent; review mode does not post it.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_QA_REPORT_DIR="$PWD" PLAN_MUTATION_ENGINE_REPO="$PWD/none"; w=$PWD; PATH="$w/fake:$PATH"; cd r; plan-mutation --files lib/a.dart -- flutter test 2>&1; echo "rc=$?"; echo "md: $(grep -c "Equivalent mutants" "$w/plan-qa-mutation.md")"; plan-mutation --diff main --review "$w/review.json" -- flutter test >/dev/null 2>&1; echo "review: $(jq -c . "$w/review.json")"
+  prompt: |
+    Run plan-mutation over a file whose survivors include a switch arm replaced with the same text, then in review mode, and print the output, exit code, whether the markdown report lists equivalents, and the review file.
+context:
+  scaffold_script: fixture.sh

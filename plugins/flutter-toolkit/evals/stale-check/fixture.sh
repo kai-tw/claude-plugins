@@ -37,16 +37,18 @@ run() { printf '{"session_id":"%s","cwd":"%s","stop_hook_active":%s}' "$1" "$pro
   | HOME="$h" TMPDIR="$PWD/t" PATH="$PWD/bin:$PATH" bash "$c/hooks/stale-check.sh"; }
 reg; : > "$LOG"
 out=$(run s1 false)
-echo "shape=$(printf '%s' "$out" | jq -c '[.decision, has("hookSpecificOutput")]')"
-printf '%s' "$out" | jq -r .reason
+echo "shape=$(printf '%s' "$out" | jq -c '[.decision, has("hookSpecificOutput"), has("systemMessage")]')"
+printf '%s' "$out" | jq -r .systemMessage
 echo "calls:"; sed "s#$PWD#.#g" "$LOG"
 echo "registry=$(jq -c '[.plugins["p@m"][0].version, (.plugins["d@m"] != null)]' "$h/.claude/plugins/installed_plugins.json")"
 echo "again=[$(run s1 false)]"
 echo "active=[$(run s2 true)]"
 reg
-echo "failed:"; FAIL=1 run s4 false | jq -r .reason | sed "s#$PWD#.#g"
+fout=$(FAIL=1 run s4 false)
+echo "fail-shape=$(printf '%s' "$fout" | jq -c '[.decision, has("systemMessage")]')"
+echo "failed:"; printf '%s' "$fout" | jq -r .reason | sed "s#$PWD#.#g"
 reg other
-echo "other-first=[$(run s5 false | jq -r .reason | grep -o 'has just been updated to 0.2.0')]"
+echo "other-first=[$(run s5 false | jq -r .systemMessage | grep -o 'updated from 0.1.0 to 0.2.0 (project scope')]"
 reg none
 echo "unrecorded:"; run s6 false | jq -r .reason | sed -e "s#$PWD#.#g" -e 's/^/unrecorded /'
 echo '{"name":"p","version":"0.1.0"}' > "$h/.claude/plugins/marketplaces/m/plugins/p/.claude-plugin/plugin.json"

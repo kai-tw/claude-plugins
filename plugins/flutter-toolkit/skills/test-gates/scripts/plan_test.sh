@@ -192,6 +192,30 @@ else
   CMD=("${RUNNER[@]}" "$@")
 fi
 
+# A LOCKED OR SLEEPING ANDROID DEVICE IS REFUSED BEFORE THE RUN.
+# Behind the lock screen no frame is drawn, so a pump-until-timeout never
+# reaches its timeout and the run hangs without a word — measured once at 86
+# minutes. The check only applies to a `flutter` run whose `-d` / `--device-id`
+# adb knows; any other device (iOS, desktop, web) runs unchecked.
+if [ "${CMD[0]}" = flutter ] && command -v adb >/dev/null 2>&1; then
+  dev="" prev=""
+  for a in "${CMD[@]}"; do
+    case "$prev" in -d|--device-id) dev=$a ;; esac
+    case "$a" in --device-id=*) dev=${a#*=} ;; -d?*) dev=${a#-d} ;; esac
+    prev=$a
+  done
+  if [ -n "$dev" ] && [ "$(adb -s "$dev" get-state 2>/dev/null)" = device ]; then
+    keyguard=$(adb -s "$dev" shell dumpsys window 2>/dev/null | grep -o 'isKeyguardShowing=[a-z]*' | head -1)
+    wake=$(adb -s "$dev" shell dumpsys power 2>/dev/null | grep -o 'mWakefulness=[A-Za-z]*' | head -1)
+    if [ "$keyguard" = isKeyguardShowing=true ] || { [ -n "$wake" ] && [ "$wake" != mWakefulness=Awake ]; }; then
+      echo "plan-test: REFUSED — device $dev is $( [ "$keyguard" = isKeyguardShowing=true ] && echo locked || echo asleep ) (${keyguard:-isKeyguardShowing=?}, ${wake:-mWakefulness=?}). Nothing ran: a test behind the lock screen hangs instead of failing. Ask for the device to be woken and unlocked, then run again." >&2
+      exit 2
+    fi
+    [ -n "$keyguard" ] && [ -n "$wake" ] \
+      || echo "plan-test: NOTE — could not read whether device $dev is awake and unlocked; if the run makes no progress, check its screen." >&2
+  fi
+fi
+
 # Already inside a slot — a launcher routed through --exec and the command it
 # ran reached plan-test again. Run straight through: waiting here would be a
 # process blocking on a semaphore it is itself holding, and the refusal would
