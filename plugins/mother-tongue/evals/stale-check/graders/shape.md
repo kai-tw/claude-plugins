@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^shape=\["block",false\]$'
+pattern: '^shape=\[null,false,true\]$'
 flags: m
 arm: with-only
 ---
-The Stop block uses top-level decision, not PreToolUse's hookSpecificOutput.
+A successful update tells the user through systemMessage and doesn't block.
