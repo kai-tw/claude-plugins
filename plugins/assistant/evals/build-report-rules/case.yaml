@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: build-report-rules
+description: asst-report files a build-ui, build-wire or build-fix report only when it carries a `rules: style-pack --paths …` line naming the run made before the first edit; a scout report needs none.
+tags: [agents, asst-report]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Bash]
+  env:
+    EVAL_CMD: cd wt; printf "phase: wire\n" | asst-report put x build-wire; echo "norules=$?"; printf "phase: fix\n" | asst-report put x build-fix >/dev/null 2>&1; echo "fix-norules=$?"; printf "phase: wire\nrules: style-pack --paths lib/a.dart\n" | asst-report put x build-wire >/dev/null; echo "rules=$?"; echo "| 1 | a | unread |" | asst-report put x scout >/dev/null; echo "scout=$?"; echo "filed=$(asst-report list x | paste -sd, -)"
+  prompt: |
+    File a build-wire and a build-fix report without a rules line, a build-wire report with one, and a scout report; print each exit code and the files filed.
+context:
+  scaffold_script: fixture.sh

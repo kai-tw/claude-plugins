@@ -69,6 +69,15 @@ case "$op" in
     if [ ! -s "$f.partial" ]; then
       rm -f "$f.partial"; echo "asst-report: empty report on stdin — nothing filed" >&2; exit 1
     fi
+    # A builder that never loaded the style pack writes code the verifier then
+    # grades against rules the builder never saw.
+    case "$kind" in build-ui|build-wire|build-fix)
+      grep -q '^rules: style-pack --paths ' "$f.partial" || {
+        rm -f "$f.partial"
+        echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit (builder.md)" >&2
+        exit 1
+      } ;;
+    esac
     mv -f "$f.partial" "$f"; echo "$f"
     case "$kind" in verify-*) [ "$post" = 1 ] && post_to_pr "$f" ;; esac ;;
   latest)

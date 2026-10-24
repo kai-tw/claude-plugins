@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-draft-skips-ci
+description: On a draft whose every check skipped, CI hasn't run — asst-pr checks says so with exit 3, and ready takes the PR out of draft so CI runs but still exits 3; ready on a PR that is already ready checks CI again, so a failed check refuses and only a pass exits 0.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; (cd wt && echo r | asst-report put x verify-code >/dev/null 2>&1); GH_CHECKS="skipping validate|skipping deploy" asst-pr checks x wt; echo "draft-checks=$?"; GH_CHECKS="skipping validate|skipping deploy" asst-pr ready x wt 2>&1; echo "draft-ready=$?"; echo "ready-calls=$(grep -c "pr ready" gh.log)"; GH_CHECKS="fail validate" asst-pr ready x wt 2>&1; echo "after-failed=$?"; GH_CHECKS="pass validate" asst-pr ready x wt; echo "after-passed=$?"; echo "ready-calls-end=$(grep -c "pr ready" gh.log)"
+  prompt: |
+    With a fake gh whose workflows skip drafts, run asst-pr checks and asst-pr ready on the draft, then run ready again once it is out of draft — first with a failed check, then with a passed one. Print every output and exit code.
+context:
+  scaffold_script: fixture.sh

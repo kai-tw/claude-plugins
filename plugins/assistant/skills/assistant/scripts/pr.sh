@@ -20,23 +20,26 @@
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists, targets
 #          the default branch and has a description; every verify leg the
-#          adapter requires has a report filed after HEAD's commit; CI on HEAD passed
+#          adapter requires has a report filed after HEAD's commit, and an
+#          `exempt:` verify-code covers at most 20 changed lines; CI on HEAD
+#          passed. A PR that is already ready is checked the same way. A draft
+#          whose every check skipped is turned ready so CI runs, and exits 3
 # Legs: verify-code always · verify-coverage when the adapter's coverage: is a
 # command (not none or ci) · verify-text when ui_strings: is set and the PR's
 # diff touches it.
 # Exit: 0 done (--merge: merged) · 1 refused, a check failed, or (--merge) closed
 # without merging · 2 usage, not a git task, CI unreadable, or no PR possible here
 # (gh missing or unauthenticated, no GitHub remote), or the PR already watched ·
-# 3 CI still running on HEAD, or (--merge) the PR still open at the timeout.
+# 3 CI still running or not yet run on HEAD, or (--merge) the PR still open at the timeout.
 #
 # On a repo not known to be private, `open` refuses to push, and `ready` to turn
 # ready, while the commits, the diff or the PR body name something from outside
 # the repo (disclosure.sh): a push to a public repo cannot be taken back.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"
+source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"; source "$here/node.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,31p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,34p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
@@ -55,7 +58,10 @@ github() {
 }
 # One look at CI on the PR's head commit: prints every check, then the verdict.
 # Returns 0 passed · 1 failed · 2 unreadable · 3 running. No check reported yet
-# counts as running while the repo has workflows, else as passed.
+# counts as running while the repo has workflows, else as passed. On a draft
+# ($draft=true) whose every check skipped, CI hasn't run at all — many repos
+# skip drafts — so that's 3 too, with ci_unrun=1, never a pass.
+ci_unrun=0
 ci() {
   local out fail run
   out=$(cd "$wt" && gh pr checks "$branch" --json bucket,name --jq '.[] | "\(.bucket) \(.name)"' 2>&1)
@@ -71,6 +77,10 @@ ci() {
   fail=$(names '^(fail|cancel)$'); run=$(names '^pending$')
   [ -z "$fail" ] || { echo "asst-pr: CI FAILED — $fail"; return 1; }
   [ -z "$run" ] || { echo "asst-pr: CI RUNNING — $run"; return 3; }
+  if [ "${draft:-}" = true ] && ! grep -vqE '^skipping ' <<< "$out"; then
+    ci_unrun=1
+    echo "asst-pr: CI NOT RUN — every check skipped on this draft; CI runs once the PR is ready"; return 3
+  fi
   echo "asst-pr: CI PASSED"
 }
 
@@ -93,7 +103,9 @@ case "$op" in
   checks)
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
     github "There is no CI to read."
-    (cd "$wt" && gh pr view "$branch" --json number >/dev/null 2>&1) || refuse "no PR for $branch — asst-pr open never ran"
+    pr=$(cd "$wt" && gh pr view "$branch" --json number,isDraft,baseRefName --jq '"\(.number) \(.isDraft) \(.baseRefName)"' 2>/dev/null) \
+      || refuse "no PR for $branch — asst-pr open never ran"
+    read -r _ draft _ <<< "$pr"
     ci ;;
   watch)
     mins="" merge=""
@@ -113,9 +125,9 @@ case "$op" in
     [ -n "$repo" ] || { echo "asst-pr: can't tell which GitHub repo $wt is" >&2; exit 2; }
     wt=$(cd "$wt" && pwd)
     if [ -n "$merge" ]; then
-      exec node "$here/pr-watch.mjs" merge "$repo" "$num" "${mins:-1440}"
+      exec_node "$here/pr-watch.mjs" merge "$repo" "$num" "${mins:-1440}"
     fi
-    exec node "$here/pr-watch.mjs" ci "$repo" "$num" "${mins:-60}" "$(g rev-parse HEAD)" bash "$here/pr.sh" checks "$slug" "$wt" ;;
+    exec_node "$here/pr-watch.mjs" ci "$repo" "$num" "${mins:-60}" "$(g rev-parse HEAD)" bash "$here/pr.sh" checks "$slug" "$wt" ;;
   ready)
     [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — checkpoint first"
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed — run asst-pr open first"
@@ -123,7 +135,6 @@ case "$op" in
     pr=$(cd "$wt" && gh pr view "$branch" --json number,isDraft,baseRefName --jq '"\(.number) \(.isDraft) \(.baseRefName)"' 2>/dev/null) \
       || refuse "no PR for $branch — asst-pr open never ran"
     read -r num draft base <<< "$pr"
-    [ "$draft" = true ] || { echo "asst-pr: #$num is already ready"; exit 0; }
     # A PR on top of an unmerged one looks mergeable on its own, and merging it
     # first lands the other PR's unfinished commits with it.
     default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); default=${default#origin/}
@@ -155,15 +166,28 @@ $leaks"
       [ "$t" -ge "$head_t" ] || missing="$missing verify-$leg(older than HEAD)"
     done
     [ -z "$missing" ] || refuse "verify reports missing or stale:$missing"
+    # The assistant may grade a diff itself only as `exempt` (SKILL.md step 6),
+    # and that verdict starts with `exempt:`. Past 20 lines it isn't exempt.
+    f=$(cd "$wt" && bash "$here/report.sh" latest "$slug" verify-code 2>/dev/null)
+    if head -1 "$f" | grep -q '^exempt:'; then
+      n=$(g diff --numstat "origin/$base...HEAD" | awk '{ s += $1 + $2 } END { print s + 0 }')
+      [ "$n" -le 20 ] || refuse "verify-code is an \`exempt:\` verdict, but the diff changes $n lines — dispatch the verifier's code leg"
+    fi
     ci; case $? in
       0) ;;
       1) refuse "a check failed on HEAD — fix it first" ;;
-      3) echo "asst-pr: NOT READY — CI is still running on HEAD" >&2; exit 3 ;;
+      3)
+        if [ "$ci_unrun" = 1 ]; then
+          (cd "$wt" && gh pr ready "$num") >/dev/null || exit 2
+          echo "asst-pr: NOT READY — #$num is out of draft so CI can run, but nothing has passed yet: start asst-pr watch $slug $wt with run_in_background: true, then run ready again" >&2
+        else
+          echo "asst-pr: NOT READY — CI is still running on HEAD" >&2
+        fi
+        exit 3 ;;
       *) exit 2 ;;
     esac
-    (cd "$wt" && gh pr ready "$num") && {
-      echo "asst-pr: #$num ready (legs: $legs)"
-      echo "asst-pr: to be woken when it merges, run asst-pr watch $slug $wt --merge with run_in_background: true"
-    } ;;
+    if [ "$draft" = true ]; then (cd "$wt" && gh pr ready "$num") || exit 2; fi
+    echo "asst-pr: #$num ready (legs: $legs)"
+    echo "asst-pr: to be woken when it merges, run asst-pr watch $slug $wt --merge with run_in_background: true" ;;
   *) usage ;;
 esac

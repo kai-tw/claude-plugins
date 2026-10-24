@@ -67,9 +67,13 @@ Before writing a flow, a calculation or a mapping, search the project for the
 unit that already owns it, and use that unit's entry point (style-pack S16.2); a
 difference this task needs becomes a named option of that unit, not a second
 implementation beside it (S16.6). A second implementation is never yours to
-write: if reuse looks wrong, report it as a fork. Write to
-`style-pack --paths <the files you touch>` — the verifier grades against it;
-comments are its S6. Touching any string under the adapter's `ui_strings:` means
+write: if reuse looks wrong, report it as a fork.
+
+In `ui`, `wire` and `fix`, before your first edit run `style-pack --paths <the
+files you'll touch>` and read all of it; run it again for a file you add later.
+The verifier grades against it, comments are its S6, and the report's `rules:`
+line names that run — `asst-report` won't file a build report without it.
+Touching any string under the adapter's `ui_strings:` means
 also writing to `ui-text-pack --paths <those files>`: every locale in `locales:`
 gets its value in the same pass, each authored in that locale rather than
 translated from the source one (U3), and none of them is approved by you.
@@ -105,6 +109,7 @@ Every other phase:
 
 ```
 phase: <name> · checkpoints: <sha … | diff path> · gate: <green|n red|not run — why>
+rules: style-pack --paths <the files>   (and ui-text-pack --paths <files>, when strings changed)
 screens: <ui: the path asst-screens printed; other phases: none>
 forks: <none, or one line each>
 debt: <none, or one line each>

@@ -121,11 +121,14 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    markers. `coverage: ci` means the PR's CI measures it: run nothing, and read
    its log before ③. An `exempt` diff skips the code leg: check it yourself — it changes
    only what the task statement names, in at most 20 lines — and pipe your verdict
-   line into `asst-report put <slug> verify-code --worktree <worktree>`; past that
-   bound it isn't `exempt`, so re-tier it `small`. Mutation is not yours: the PR's CI comments its survivors at
+   line, starting `exempt:`, into `asst-report put <slug> verify-code --worktree <worktree>`; past that
+   bound it isn't `exempt`, so re-tier it `small` (`asst-pr ready` refuses an `exempt:` verdict over a
+   longer diff). Every other `verify-<leg>` report is the verifier's: you never write one yourself,
+   whatever the round. Mutation is not yours: the PR's CI comments its survivors at
    their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes.
-   Any finding or `debt:` line left → another fix round; only residue that changes scope or design
-   becomes one `Needs you` line instead.
+   Any finding or `debt:` line left → another fix round, and every fix round's checkpoint — a
+   CI-driven one too (coverage gaps, mutation survivors) — goes back to the verifier for the legs it
+   touched; only residue that changes scope or design becomes one `Needs you` line instead.
    Anything found outside the task's boundary (step 1) — a defect, a gap, an
    improvement — is never just mentioned and never fixed here: `asst-board create` a row
    for it at once (`Status=Backlog`, `Trigger` naming the task that found it), and
@@ -146,7 +149,9 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    while the tree is dirty or unpushed, while a required `verify-<leg>`
    report is missing or older than `HEAD`, or while a check on `HEAD` failed —
    whatever it refuses on is unfinished work: finish it, don't deliver around it.
-   Exit 3 means CI is still running: start `asst-pr watch <slug> <worktree>` with
+   Exit 3 means CI is still running, or that it never ran: a draft whose
+   checks all skipped is taken out of draft so CI runs, and is still not done.
+   Either way, start `asst-pr watch <slug> <worktree>` with
    `run_in_background: true` and end the turn. It exits when CI on `HEAD`
    finishes, with the same codes as `asst-pr checks`, and its exit wakes the
    session — nothing else reports a passing run. One watch per PR; tasks' PRs are
