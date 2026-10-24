@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: node-fallback
+description: A launcher that runs a .mjs script finds node where nvm installed it when PATH has none, instead of failing with "node not found".
+tags: [launchers]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Bash]
+  env:
+    EVAL_CMD: for b in asst-board asst-notion asst-screens; do PATH="$PWD/tools" HOME="$PWD/home" "$root/bin/$b" probe 2>&1; echo "$b=$?"; done
+  prompt: |
+    With no node on PATH but one installed under ~/.nvm, run asst-board, asst-notion and asst-screens; print what each prints and its exit code.
+context:
+  scaffold_script: fixture.sh

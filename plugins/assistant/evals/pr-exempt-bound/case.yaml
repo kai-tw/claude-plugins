@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-exempt-bound
+description: asst-pr ready refuses a verify-code report that is the assistant's own `exempt:` verdict when the diff changes more than 20 lines, and accepts the verifier's report on the same diff.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; (cd wt && echo "exempt: only the note changed" | asst-report put x verify-code >/dev/null 2>&1); GH_CHECKS="pass validate" asst-pr ready x wt 2>&1; echo "exempt=$?"; (cd wt && printf "## 1. Logic\n(none)\n" | asst-report put x verify-code >/dev/null 2>&1); GH_CHECKS="pass validate" asst-pr ready x wt 2>&1; echo "verifier=$?"
+  prompt: |
+    With a fake gh, turn a PR whose diff adds 30 lines ready, first with an exempt verdict as its verify-code report, then with the verifier's report. Print every output and exit code.
+context:
+  scaffold_script: fixture.sh
