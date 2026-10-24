@@ -33,6 +33,8 @@ case "$1 $2" in
   "repo view") case "$*" in *nameWithOwner*) echo o/r ;; esac ;;
   "pr view")
     case "$*" in
+      # pr.<number> holds "<STATE> <merge commit>", as the watcher's --jq prints it
+      *mergeCommit*) cat "$EVAL_WS/pr.$3" 2>/dev/null || echo "OPEN " ;;
       *isDraft*) echo "$(num) true main" ;;
       *number*) num ;;
       *) echo "https://github.com/o/r/pull/$(num)" ;;
@@ -60,12 +62,14 @@ esac
 SH
 chmod +x stub/gh
 # up <pr>… — wait until each PR's watcher is registered and a forwarder has connected.
+# UP_KIND=merge waits for --merge watchers instead of CI watchers.
 cat > up <<'SH'
 #!/usr/bin/env bash
 d=cache/gh-webhook-hub/o__r
+kind=${UP_KIND:-ci}; events=check_suite+status; [ "$kind" = merge ] && events=pull_request
 for _ in $(seq 100); do
-  ok=1; for n in "$@"; do [ -f $d/ci-$n.pid ] || ok=0; done
-  [ $ok = 1 ] && grep -q connected $d/check_suite+status/events.jsonl 2>/dev/null && exit 0
+  ok=1; for n in "$@"; do [ -f $d/$kind-$n.pid ] || ok=0; done
+  [ $ok = 1 ] && grep -q connected $d/$events/events.jsonl 2>/dev/null && exit 0
   sleep 0.1
 done
 exit 1

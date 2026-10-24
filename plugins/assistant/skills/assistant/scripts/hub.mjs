@@ -8,7 +8,7 @@
 // already has a leader, so a member that reads state then misses nothing that
 // happened before it was listening.
 //
-// Used by pr-watch.mjs (asst-pr watch) and this repo's after-merge.mjs.
+// Used by pr-watch.mjs (asst-pr watch), which this repo's after-merge.mjs waits through.
 // State: ${XDG_CACHE_HOME:-~/.cache}/gh-webhook-hub/<owner>__<repo>/<events>/
 // (leader.pid · events.jsonl); repoDir(repo) is its parent, for callers' own locks.
 

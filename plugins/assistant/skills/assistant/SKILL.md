@@ -156,7 +156,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    `recurring: false`) instead. Never wait in a loop.
    Exit 2 means no PR is possible here (no usable `gh`, no GitHub remote): ③
    carries that line as a `Needs you`, and the PR is the founder's to open.
-   Its Text block only asks whether the ② approval still holds — a string whose
+   Once `ready` exits 0, start `asst-pr watch <slug> <worktree> --merge` with
+   `run_in_background: true`. It exits when the PR merges or closes, and its exit
+   wakes the session: 0 merged → step 8; 1 closed unmerged → tell the founder;
+   3 (its 24-hour timeout) watch again; 2 it couldn't watch, so step 8 waits for
+   the founder's word.
+   ③'s Text block only asks whether the ② approval still holds — a string whose
    meaning changed since ② loses its approval (charter U5.1), and **a locale that lost
    it blocks the merge and the commit, at the same level as `destructive:`**. Merge
    (git) or `svn commit` (asked) or send-back is the founder's; a send-back

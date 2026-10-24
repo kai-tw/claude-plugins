@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-merge-watch
+description: asst-pr watch --merge waits for a PR to merge or close and exits 0 merged · 1 closed without merging; two PRs watched at once share one webhook forwarder, a second watch of the same PR exits 2, a PR already merged before the watch started exits 0 at once, nothing is left behind, and --timeout ends a watch of an open PR with 3.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH" XDG_CACHE_HOME="$PWD/cache" UP_KIND=merge; echo "OPEN " > pr.7; echo "OPEN " > pr.8; asst-pr watch a wa --merge > a.out 2>&1 & pa=$!; ./up 7; asst-pr watch b wb --merge > b.out 2>&1 & pb=$!; ./up 7 8; echo "up=$?"; asst-pr watch a wa --merge; echo "dup=$?"; echo "MERGED abc1234def" > pr.7; echo "{\"action\":\"closed\",\"number\":7}" >> gh.events; wait $pa; echo "a=$?"; sed "s/^/a: /" a.out; echo "CLOSED " > pr.8; echo "{\"action\":\"closed\",\"number\":8}" >> gh.events; wait $pb; echo "b=$?"; sed "s/^/b: /" b.out; echo "starts=$(grep -c start fwd.log)"; echo "hook-left=$([ -f hook ] && echo yes || echo no)"; echo "pids-left=$(find cache/gh-webhook-hub -name "*.pid" | wc -l | tr -d " ")"; asst-pr watch a wa --merge; echo "premerged=$?"; echo "OPEN " > pr.7; asst-pr watch a wa --merge --timeout 0.03; echo "timeout=$?"
+  prompt: |
+    With a fake gh whose webhook forwarder allows one at a time, watch two PRs for their merge at once, try a second watch of the same PR, merge the first PR (its watcher runs the forwarder), then close the other without merging; print every output and exit code, how often the forwarder started, and what was left behind; then watch a PR that is already merged, and one that stays open with a short timeout.
+context:
+  scaffold_script: ../pr-watch/fixture.sh
