@@ -23,7 +23,7 @@ new=$(printf '%s\n' "$seen" | jq -s . | jq -c --slurpfile seen /dev/stdin \
   || { echo "plan-mutation-review: could not compare $file with PR #$pr's comments" >&2; exit 1; }
 n=$(jq length <<< "$new")
 [ "$n" -gt 0 ] || { echo "plan-mutation-review: every survivor is already commented on"; exit 0; }
-jq -n --argjson comments "$new" --arg body "plan-mutation: $n mutant(s) survived on lines this PR changed. Not a failed check — each is a question about whether a test pins that behaviour." \
+jq -n --argjson comments "$new" --arg body "plan-mutation: $n mutant(s) survived on lines this PR changed. Each one needs a test that pins that behaviour." \
   '{event: "COMMENT", body: $body, comments: $comments}' \
   | gh api -X POST "repos/$repo/pulls/$pr/reviews" --input - >/dev/null \
   || { echo "plan-mutation-review: posting the review on PR #$pr failed" >&2; exit 1; }

@@ -1,16 +1,17 @@
-# PR checks — line coverage that blocks, mutation that comments
+# PR checks — line coverage and mutation, both blocking
 
-Two checks on every PR, on a self-hosted runner:
+Two checks on every PR, on a self-hosted runner. Make both jobs required
+checks where the plan allows it.
 
-- **Line coverage blocks.** `plan-coverage --diff <PR base>` fails the job
-  when a line the PR changed isn't executed by any test. Make the job a
-  required check where the plan allows it.
-- **Mutation comments, after Google's practice.** `plan-mutation --diff <PR
-  base> --review <file>` mutates only the lines the PR changed, one mutant a
-  line, and `plan-mutation-review` posts each survivor a test reaches as a
-  review comment at its line. It never fails the PR: a survivor is a question
-  for the reviewer — "would a test notice if this `<` were `<=`?" — not a
-  verdict. Survivors no test reaches are left to line coverage.
+- **Line coverage.** `plan-coverage --diff <PR base>` fails the job when a
+  line the PR changed isn't executed by any test.
+- **Mutation, scoped after Google's practice.** `plan-mutation --diff <PR
+  base> --review <file> --fail-on-survivors` mutates only the lines the PR
+  changed, one mutant a line. `plan-mutation-review` posts each survivor a
+  test reaches as a review comment at its line, and the job fails on any
+  survivor, including one no test reaches. Equivalent mutants (replaced with
+  the same text) and timed-out ones don't count. Drop `--fail-on-survivors`
+  to make mutation comment only.
 
 ## The runner
 
@@ -77,13 +78,17 @@ jobs:
       - name: Prepare
         run: flutter pub get && dart run build_runner build --delete-conflicting-outputs
       - name: Mutants on changed lines
-        continue-on-error: true
-        run: plan-mutation --diff "origin/$GITHUB_BASE_REF" --review "$RUNNER_TEMP/review.json" --max-minutes 90 -- flutter test
+        id: mutants
+        run: plan-mutation --diff "origin/$GITHUB_BASE_REF" --review "$RUNNER_TEMP/review.json" --fail-on-survivors --max-minutes 90 -- flutter test
       - name: Comment survivors
+        if: success() || steps.mutants.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
         run: plan-mutation-review "${{ github.event.pull_request.number }}" "$RUNNER_TEMP/review.json"
 ```
+
+The mutation step fails the job, so the comment step runs on its failure
+too. An aborted run writes no review file, which posts nothing.
 
 The checkout is the PR's head, not GitHub's merge commit, so the lines
 `plan-mutation` reports are the lines the review comments land on. A push to
