@@ -47,7 +47,7 @@
 #   plan-mutation [--min <pct>] [--timeout <s>] [--baseline-timeout <s>]
 #                 [--baseline-factor <n>] [--select-by-coverage]
 #                 [--workers <n>] [--max-minutes <n>] [--history <file>]
-#                 [--diff <ref> [--per-line <n>] [--review <file>]]
+#                 [--diff <ref> [--per-line <n>] [--review <file> [--fail-on-survivors]]]
 #                 [--files a.dart b.ts …] [-- <test-command…>]
 #
 #   --diff <ref> is review mode, after Google's: mutate only the lines this
@@ -57,9 +57,11 @@
 #   changed. JS/TS files are mutated whole. --review <file> writes the
 #   survivors a test reaches but doesn't catch as a JSON list of
 #   {path, line, body} for plan-mutation-review to post on the PR, and the
-#   run exits 0 whatever the scores — a survivor is a question for the
-#   reviewer, not a failed check. Survivors no test reaches are left out:
-#   that's line coverage's finding (plan-coverage), not mutation's.
+#   run exits 0 whatever the scores. Survivors no test reaches are left out
+#   of the file: that's line coverage's finding (plan-coverage), not
+#   mutation's. --fail-on-survivors makes any survivor exit 1 once the file
+#   is written, including one no test reaches; equivalent and timed-out
+#   mutants don't count.
 #
 #   --timeout is the FLOOR on a mutant's budget; the engine raises it to
 #   --baseline-factor × the measured baseline, and the report prints what it
@@ -196,6 +198,7 @@ EXPLICIT_FILES=""
 DIFF_BASE=""
 PER_LINE=""
 REVIEW_OUT=""
+FAIL_ON_SURVIVORS=""
 ENGINE_EXTRA=()      # 0.2.7 flags, forwarded only when the caller asks for them
 DART_ONLY=""         # the Dart-only flags typed, named when JS files are in scope
 
@@ -221,6 +224,7 @@ while [ $# -gt 0 ]; do
                 esac
                 PER_LINE=$2; DART_ONLY+=" $1"; shift 2 ;;
     --review)   REVIEW_OUT="${2:?--review needs a file}"; shift 2 ;;
+    --fail-on-survivors) FAIL_ON_SURVIVORS=1; shift ;;
     --files)    shift
                 while [ $# -gt 0 ] && [ "$1" != "--" ]; do
                   EXPLICIT_FILES="${EXPLICIT_FILES}${1}"$'\n'; shift
@@ -269,6 +273,9 @@ EOF
     *)          break ;;
   esac
 done
+
+[ -z "$FAIL_ON_SURVIVORS" ] || [ -n "$REVIEW_OUT" ] || {
+  echo "plan-mutation: --fail-on-survivors needs --diff <ref> --review <file> (outside review mode, --min is the gate)" >&2; exit 2; }
 
 TEST_CMD="$*"   # required once a Dart file is in scope; Stryker's config names its tests
 command -v jq >/dev/null 2>&1 || { echo "plan-mutation: jq is required" >&2; exit 2; }
@@ -1301,9 +1308,11 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 echo "plan-mutation: report section — $REPORT"
 echo "plan-mutation: raw engine report(s) — $KEPT"
 
-# Review mode reports and never blocks: each survivor a test reached but did
-# not catch becomes one comment at its line. A survivor no test reaches is
-# line coverage's finding, so it is left to plan-coverage.
+# Review mode: each survivor a test reached but did not catch becomes one
+# comment at its line. A survivor no test reaches is line coverage's finding,
+# so it is left out of the comments. With --fail-on-survivors every survivor,
+# reached or not, fails the run — after the file is written, so the comments
+# still go up. `$surv` already excludes equivalent and timed-out mutants.
 if [ -n "$REVIEW_OUT" ]; then
   jq --arg root "$root/" '[.files | to_entries[] | .value.undetectedMutants[]?
       | select(.uncovered != true)
@@ -1311,6 +1320,10 @@ if [ -n "$REVIEW_OUT" ]; then
           body: "Mutant survived: `\(.operatorName)` — \(.description). No test failed with this change; a case that pins this behaviour would catch it." }]' \
     "$out/report.json" > "$REVIEW_OUT" || { echo "plan-mutation: could not write $REVIEW_OUT" >&2; exit 2; }
   echo "plan-mutation: review — $(jq length "$REVIEW_OUT") survivor(s) to comment on, written to $REVIEW_OUT."
+  if [ -n "$FAIL_ON_SURVIVORS" ] && [ -n "$surv" ]; then
+    echo "plan-mutation: FAILED — $(printf '%s\n' "$surv" | wc -l | tr -d ' ') mutant(s) survived on the changed lines. Add the test that kills each one." >&2
+    exit 1
+  fi
   exit 0
 fi
 

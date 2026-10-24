@@ -47,7 +47,8 @@ allowed-tools:
   while the code and tests are unchanged.
   `--diff <ref> --review <file>` is review mode: only the lines changed since
   `<ref>`, one mutant a line (`--per-line n`), survivors a test reaches written
-  to `<file>` for `plan-mutation-review <pr> <file>`, exit 0 whatever the score.
+  to `<file>` for `plan-mutation-review <pr> <file>`, exit 0 whatever the score
+  — or, with `--fail-on-survivors`, exit 1 on any survivor, reached or not.
   Changed JS/TS package source (`<package>/src|lib/**`) goes to StrykerJS in
   that package — `@stryker-mutator/core` installed there, tests from its
   Stryker config, so no test command is needed when no Dart file changed.

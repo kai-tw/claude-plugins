@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-review-fail-on-survivors
+description: With --fail-on-survivors, review mode still writes the review file, then exits 1 on any survivor, including one no test reaches; equivalent and timed-out mutants don't count, and the flag outside review mode is a usage error.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_QA_REPORT_DIR="$PWD" PLAN_MUTATION_ENGINE_REPO="$PWD/none"; w=$PWD; PATH="$w/fake:$PATH"; (cd r && plan-mutation --diff main --review "$w/review.json" --fail-on-survivors -- flutter test 2>&1; echo "rc=$?") | sed "s/^/r: /"; echo "review: $(jq -c . review.json)"; (cd eq && plan-mutation --diff main --review "$w/eq.json" --fail-on-survivors -- flutter test 2>&1; echo "rc=$?") | sed "s/^/eq: /"; (cd r && plan-mutation --fail-on-survivors --files lib/a.dart -- flutter test 2>&1; echo "rc=$?") | sed "s/^/usage: /"
+  prompt: |
+    Run plan-mutation in review mode with --fail-on-survivors on a branch with two survivors (one a test reaches, one none does), then on one whose only leftovers are an equivalent and a timed-out mutant, then pass the flag outside review mode. Print each output and exit code, and the review file.
+context:
+  scaffold_script: fixture.sh
