@@ -11,9 +11,9 @@
 // polling: `gh webhook forward` (the cli/gh-webhook extension) streams GitHub's
 // pull_request events over a websocket.
 //
-// One run per PR, any number of PRs at once: the runs share one forwarder
-// (the assistant plugin's hub.mjs, which asst-pr watch uses too), and the work
-// after a merge runs one PR at a time.
+// One run per PR, any number of PRs at once: the wait is the assistant plugin's
+// pr-watch.mjs (`asst-pr watch --merge`), so the runs share one forwarder, and the
+// work after a merge runs one PR at a time.
 //
 // Usage: node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 // Exit: 0 merged and every install verified (or no plugin to install) · 1 closed
@@ -25,7 +25,8 @@ import { watch } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marketplaceSource, removeConsumers, slug, updateConsumers } from './consumers.mjs';
-import { claim, joinHub, owner, release, repoDir } from '../../../../plugins/assistant/skills/assistant/scripts/hub.mjs';
+import { claim, release, repoDir } from '../../../../plugins/assistant/skills/assistant/scripts/hub.mjs';
+import { watchPr } from '../../../../plugins/assistant/skills/assistant/scripts/pr-watch.mjs';
 
 const pr = process.argv[2];
 const die = (msg) => {
@@ -51,27 +52,16 @@ try {
   die('gh webhook not installed — gh extension install cli/gh-webhook');
 }
 
-// 1. Wait. Connected first, then one state check, so a merge in between still
-// arrives as an event and a merge before the start is not waited for forever.
+// 1. Wait, with the watcher `asst-pr watch --merge` runs: it reads the state once
+// connected, so a merge in between still arrives as an event and a merge before
+// the start is not waited for forever.
 const repo = slug(git(['remote', 'get-url', 'origin']));
-const mine = join(repoDir(repo), `merge-${pr}.pid`);
 const turnFile = join(repoDir(repo), 'after-merge.lock');
-process.on('exit', () => { release(mine); release(turnFile); });
+process.on('exit', () => release(turnFile));
 for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => process.exit(130));
-if (!claim(mine)) die(`after-merge is already running for #${pr} (pid ${owner(mine)})`);
-let hub;
-const failed = await new Promise((settle) => {
-  hub = joinHub({
-    repo,
-    events: 'pull_request',
-    pick: (ev) => (ev.action === 'closed' ? { closed: ev.number } : null),
-    onEvent: (ev) => { if (String(ev.closed) === pr) settle(''); },
-    onConnected: () => { if (view().state !== 'OPEN') settle(''); },
-    onFail: settle,
-  });
-});
-await hub.stop();
-if (failed) die(failed);
+const waited = await watchPr({ mode: 'merge', repo, pr, timeoutMin: Infinity });
+if (waited.code === 1) die(`#${pr} was closed without merging — nothing to install`);
+if (waited.code !== 0) die(waited.out.trim());
 
 // Two merges close together would sync the main checkout and rewrite the same
 // install records at once, and git refuses a second writer of one index — so

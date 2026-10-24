@@ -11,9 +11,12 @@
 #          push the branch, then ensure a draft PR exists for it → prints the URL
 #        asst-pr checks <task-slug> <worktree>
 #          look once at CI on the pushed HEAD and print every check; never waits
-#        asst-pr watch <task-slug> <worktree> [--timeout <minutes>, default 60]
-#          wait for CI on the pushed HEAD to finish, then print what checks would;
-#          one per PR, any number of PRs at once (pr-watch.mjs)
+#        asst-pr watch <task-slug> <worktree> [--merge] [--timeout <minutes>]
+#          wait for CI on the pushed HEAD to finish (default 60 minutes), then print
+#          what checks would; with --merge, wait for the PR to merge or close
+#          (default 1440) and print which. Start it with run_in_background: true,
+#          and its exit wakes the session. One per PR and kind, any number of PRs
+#          at once (pr-watch.mjs)
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists, targets
 #          the default branch and has a description; every verify leg the
@@ -21,9 +24,10 @@
 # Legs: verify-code always · verify-coverage when the adapter's coverage: is a
 # command (not none or ci) · verify-text when ui_strings: is set and the PR's
 # diff touches it.
-# Exit: 0 done · 1 refused, or a check failed · 2 usage, not a git task, CI
-# unreadable, or no PR possible here (gh missing or unauthenticated, no GitHub
-# remote), or the PR already watched · 3 CI still running on HEAD.
+# Exit: 0 done (--merge: merged) · 1 refused, a check failed, or (--merge) closed
+# without merging · 2 usage, not a git task, CI unreadable, or no PR possible here
+# (gh missing or unauthenticated, no GitHub remote), or the PR already watched ·
+# 3 CI still running on HEAD, or (--merge) the PR still open at the timeout.
 #
 # On a repo not known to be private, `open` refuses to push, and `ready` to turn
 # ready, while the commits, the diff or the PR body name something from outside
@@ -32,7 +36,7 @@ set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,25p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,31p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
@@ -92,16 +96,26 @@ case "$op" in
     (cd "$wt" && gh pr view "$branch" --json number >/dev/null 2>&1) || refuse "no PR for $branch — asst-pr open never ran"
     ci ;;
   watch)
-    mins=60
-    case "${1:-}" in --timeout) mins=${2:-}; [[ $mins =~ ^[0-9]+(\.[0-9]+)?$ ]] || usage ;; "") ;; *) usage ;; esac
-    [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
-    github "There is no CI to watch."
+    mins="" merge=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --merge) merge=1; shift ;;
+        --timeout) mins=${2:-}; [[ $mins =~ ^[0-9]+(\.[0-9]+)?$ ]] || usage; shift 2 ;;
+        *) usage ;;
+      esac
+    done
+    [ -n "$merge" ] || [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] \
+      || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
+    github "There is nothing to watch."
     num=$(cd "$wt" && gh pr view "$branch" --json number --jq .number 2>/dev/null) && [ -n "$num" ] \
       || refuse "no PR for $branch — asst-pr open never ran"
     repo=$(cd "$wt" && gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
     [ -n "$repo" ] || { echo "asst-pr: can't tell which GitHub repo $wt is" >&2; exit 2; }
     wt=$(cd "$wt" && pwd)
-    exec node "$here/pr-watch.mjs" "$repo" "$num" "$(g rev-parse HEAD)" "$mins" bash "$here/pr.sh" checks "$slug" "$wt" ;;
+    if [ -n "$merge" ]; then
+      exec node "$here/pr-watch.mjs" merge "$repo" "$num" "${mins:-1440}"
+    fi
+    exec node "$here/pr-watch.mjs" ci "$repo" "$num" "${mins:-60}" "$(g rev-parse HEAD)" bash "$here/pr.sh" checks "$slug" "$wt" ;;
   ready)
     [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — checkpoint first"
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed — run asst-pr open first"
@@ -147,6 +161,9 @@ $leaks"
       3) echo "asst-pr: NOT READY — CI is still running on HEAD" >&2; exit 3 ;;
       *) exit 2 ;;
     esac
-    (cd "$wt" && gh pr ready "$num") && echo "asst-pr: #$num ready (legs: $legs)" ;;
+    (cd "$wt" && gh pr ready "$num") && {
+      echo "asst-pr: #$num ready (legs: $legs)"
+      echo "asst-pr: to be woken when it merges, run asst-pr watch $slug $wt --merge with run_in_background: true"
+    } ;;
   *) usage ;;
 esac

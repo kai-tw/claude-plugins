@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: no-pr-watch
-description: PRs aren't watched — there's no asst-watch, nothing calls it, the assistant doesn't read a PR's state on its passes, and the founder's word that the PR merged starts Close.
+description: PRs aren't polled — there's no asst-watch, nothing calls it, the assistant doesn't read a PR's state on its passes, and the founder's word that the PR merged still starts Close.
 tags: [assistant]
 plugins: ["../.."]
 runs: 1
