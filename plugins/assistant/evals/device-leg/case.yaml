@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: device-leg
+description: asst-device runs the project's on-device command once per platform on a physical phone (a simulator doesn't count, a busy phone is not run), checks every scenario the brief numbers has a wired test, and files verify-device; asst-pr ready refuses until its first line is `device: passed`.
+tags: [asst-device, asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; asst-pr open x wt --title T >/dev/null 2>&1; (cd wt && echo r | asst-report put x verify-code >/dev/null 2>&1); asst-device x wt --brief brief.md > d1.txt 2>/dev/null; echo "first=$?"; sed "s/^/first: /" d1.txt; asst-pr ready x wt; echo "refused=$?"; cp devices-both.json devices.json; lock="${TMPDIR:-/tmp}"; lock="${lock%/}/asst-device-IP15.lock"; mkdir -p "$lock"; asst-device x wt --brief brief.md 2>/dev/null | grep "^ios:" | sed "s/^/busy: /"; rmdir "$lock"; (cd wt && cp ../wired/*.dart integration_test/ && git add -A && git commit -qm wired && git push -q 2>/dev/null && echo r | asst-report put x verify-code >/dev/null 2>&1); asst-device x wt --brief brief.md > d2.txt 2>/dev/null; echo "second=$?"; sed "s/^/second: /" d2.txt; asst-pr ready x wt; echo "ready=$?"; echo "ran=$(sort -u ran.log | paste -sd, -)"
+  prompt: |
+    Run the device leg with only an Android phone and an iPhone simulator, try to turn the PR ready, then with an iPhone that another run holds, then wire the tests and run it with both phones free, and turn the PR ready.
+context:
+  scaffold_script: fixture.sh

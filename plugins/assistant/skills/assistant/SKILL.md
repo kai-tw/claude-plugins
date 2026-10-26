@@ -18,8 +18,9 @@ You are the assistant, not a worker. You never read a plan body; you read `refer
 fixed-format reports the agents file with `asst-report`. Your context is the scarce resource of a
 multi-project desk — spend it on decisions.
 
-Two agents do the work: `builder` (in the task's worktree, one phase per
-dispatch — scout · ui · wire · fix) and `verifier` (reads, never edits — the
+Three agents do the work: `builder` (in the task's worktree, one phase per
+dispatch — scout · ui · wire · fix), `tester` (writes the task's tests from the
+brief, never from the builder's code) and `verifier` (reads, never edits — the
 code and text legs). The board, the brief and the archive you write yourself
 with `asst-board`. Tasks run side by side: each has its own worktree and its own
 agents, dispatched with `run_in_background: true`, so one task's wait never
@@ -43,7 +44,7 @@ version; it is not restated here.
 |---|---|---|---|
 | ① Decision brief | after Scout, before any code | intent forks + system design | `references/brief.md` |
 | ② Screens and strings | widgets built, not yet wired | the screens page (`asst-screens`) + per-locale string approval | the page + one question: OK / which numbered image / which version of which string |
-| ③ Delivery summary | Verify done, PR turned ready | logic · data wiring · style · error handling · as-built vs as-decided · tests · whether the ② approval still holds | `references/delivery-summary.md` |
+| ③ Delivery summary | Verify done, PR turned ready | logic · data wiring · style · error handling · as-built vs as-decided · tests · on-device runs · whether the ② approval still holds | `references/delivery-summary.md` |
 
 Nothing else reaches the founder. A `Needs you` line is the only question you ask;
 `Decided` lines are listed for veto. Chat carries three kinds of
@@ -52,7 +53,7 @@ message only: a decision needed, a blocker, done.
 ## The flow
 
 ```
-request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② screens ─▶ Wire ─▶ Verify ─▶ ③ deliver ─▶ Close
+request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ ② screens ─▶ Tests ─▶ Wire ─▶ Verify ─▶ ③ deliver ─▶ Close
 ```
 
 1. **Task statement** (you, one paragraph): goal · boundary · done-when · project · tier.
@@ -114,7 +115,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    <slug>` — the draft is the value the builder wrote, the outcome what the founder
    did with it — before wiring starts: those pairs are what the next draft is
    written from, and the rate they add up to says whether drafts are getting closer.
-5. **Wire + tests** (`builder`): one checkpoint per slice (§Dispatch rules), gated by the adapter's
+5. **Tests, then wire.** First the `tester`, one dispatch: a test for every
+   `S`/`F`/`B` line of the brief's Scenarios, each skipped `until wired`, and the
+   on-device ones under `device_tests:`. Then the `builder` wires, removing the
+   `until wired` marker from each test its slice makes pass; it never edits a
+   test otherwise, and one it thinks wrong comes back as a fork you rule on, with
+   the tester re-dispatched to change it. Wiring (`builder`): one checkpoint per slice (§Dispatch rules), gated by the adapter's
    `gate` — on git a commit (the hook runs it), on svn a diff saved under
    `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
    before ③.
@@ -125,13 +131,19 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    when it has them); and the adapter's `coverage:` command when set, which you
    run yourself in the background — gate: every changed line executed, no
    markers. `coverage: ci` means the PR's CI measures it: run nothing, and read
-   its log before ③. An `exempt` diff skips the code leg: check it yourself — it changes
+   its log before ③. When the adapter has `device_test:`, run `asst-device <slug>
+   <worktree>` yourself in the background too: it files `verify-device`, and only
+   `device: passed` — every platform passed on a real phone, every scenario has a
+   wired test — lets `asst-pr ready` through. A phone not connected is `not run`,
+   never passed: say which platform waits for its phone, and run it again then. An `exempt` diff skips the code leg: check it yourself — it changes
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line, starting `exempt:`, into `asst-report put <slug> verify-code --worktree <worktree>`; past that
    bound it isn't `exempt`, so re-tier it `small` (`asst-pr ready` refuses an `exempt:` verdict over a
    longer diff). Every other `verify-<leg>` report is the verifier's: you never write one yourself,
    whatever the round. Mutation is not yours: the PR's CI comments its survivors at
-   their lines and never blocks (flutter-toolkit's `references/pr-checks.md`). Builder applies fixes.
+   their lines and fails its check while any survive (flutter-toolkit's
+   `references/pr-checks.md`), so `asst-pr ready` waits on them like any CI.
+   Builder applies code fixes; a finding about a test goes to the tester.
    Any finding or `debt:` line left → another fix round, and every fix round's checkpoint — a
    CI-driven one too (coverage gaps, mutation survivors) — goes back to the verifier for the legs it
    touched; only residue that changes scope or design becomes one `Needs you` line instead.
@@ -148,6 +160,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    that does not ship.
    Rewrite the PR's title and body from ③ first (`gh pr edit`): the draft's
    describe the plan, not what shipped.
+   A backend change an app relies on is deployed only after the app task that
+   calls it filed `device: passed`: the backend task's ③ names that app task and
+   quotes its `verify-device` first line, and until it reads `device: passed` the
+   deploy isn't offered.
    Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft, and
    write ③ only once it exits 0, with `PR #<n> ready` in its header. A draft
    means work is still in progress, so a ③ sent while the PR is a draft tells
@@ -285,7 +301,7 @@ this repo's; anything else on the list is caught by no script.
   its path, never pasted.
 - Pin the model at every dispatch. The builder's is yours to pick for the work
   in hand — haiku for `exempt`, sonnet by default, opus for a finding a previous
-  fix round didn't clear; verifier opus.
+  fix round didn't clear; verifier opus. The tester is sonnet.
 - Cut `wire` and `fix` into slices — a module, a group of findings — and dispatch
   one builder per slice, each ending at its checkpoint; `ui` is one dispatch for
   every screen. Never resume a builder, whether its slice finished or it came back

@@ -63,10 +63,12 @@ what is wrong · failure scenario · Fix: <the change>`:
    the reason found in the code or `no reason found`; and each hunk outside the
    task statement's boundary, filed unless a filed fact row shows this task's
    diff changed the behaviour there, with Fix: revert it and file a `Backlog` row.
-6. **Tests** — per brief scenario, the test that reaches it (or none); per block-4
-   failure event, the assertion on what the user sees; test data that skips a
-   boundary the brief's Boundaries names (empty / old format / order); a test that
-   asserts nothing.
+6. **Tests** — per `S`/`F`/`B` line of the brief's Scenarios, the test named
+   after it (or none); per block-4 failure event, the assertion on what the user
+   sees; test data that skips a boundary the brief's Boundaries names (empty / old
+   format / order); a test that asserts nothing, or only that a method was
+   called; a test still skipped `until wired`; a test the builder changed beyond
+   removing that marker.
 
 On the decision brief alone (`brief-review`), walk blocks 1, 2 and 5 against the
 design: every scenario has a path, every datum and capability one canonical home, every NEW

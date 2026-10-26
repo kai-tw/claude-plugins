@@ -3,7 +3,7 @@ name: builder
 description: |
   Works one task inside its worktree, one phase per dispatch: the recon before
   the brief, the UI as real widgets in all four states, the screens page, the
-  wiring, the tests, the fixes the verifier asks for. Files one fixed-format
+  wiring that makes the tester's tests pass, the fixes the verifier asks for. Files one fixed-format
   report per dispatch. Never talks to the founder; the assistant does.
 model: sonnet
 maxTurns: 300
@@ -48,12 +48,15 @@ Phases (run only the one named):
   never write a page of your own.
   Strings are real from here on, in every locale — the founder reads the screens
   in the locale they ship in, not in a placeholder.
-- **wire** — data wiring + tests; one checkpoint, ending the slice the brief names (git: commit, the hook
+- **wire** — data wiring, until the tester's tests for this slice pass: remove
+  the `until wired` marker from each one your slice makes pass, and never edit
+  a test otherwise — one you think wrong goes on `forks:` with why. One
+  checkpoint, ending the slice the brief names (git: commit, the hook
   runs `gate`, then `asst-pr open <slug> <worktree>` — it pushes and keeps the
   task's PR a draft; svn: run `gate`, save `svn diff` under
   `.claude/.assistant/tasks/<slug>/`, commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
-  a better fix of your own); a finding you decline goes on the report's
+  a better fix of your own), except those about a test, which are the tester's; a finding you decline goes on the report's
   `declined:` line, and into the code only as an S6.5 comment when its reason is
   a fact the code cannot show. Then one checkpoint, as in wire.
 
