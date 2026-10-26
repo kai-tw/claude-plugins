@@ -15,6 +15,11 @@
 // image gets a number, so the founder can answer "which cell" with one. A name
 // with none of the four states is a screen with no state.
 //
+// Cells are phone-width (at least 220px), so a portrait screenshot is never
+// stretched to the page's width. A sticky bar shows one locale at a time (the
+// first, until the founder picks another) and one screen or all of them;
+// numbers don't change when a filter hides a cell.
+//
 // The page lands at <root>/.claude/.assistant/tasks/<slug>/screens.html and is
 // overwritten on each run. Exit: 0 = written, 1 = no images, 2 = usage.
 
@@ -78,13 +83,21 @@ shots.forEach((s, i) => (s.n = i + 1));
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const screens = [...new Set(shots.map((s) => s.screen))];
+const locales = [...new Set(shots.map((s) => s.locale).filter(Boolean))].sort();
+const bar = (group, items) => `
+    <div class="group">${items.map(([key, label]) =>
+      `<button type="button" data-${group}="${esc(key)}">${esc(label)}</button>`).join('')}</div>`;
+const filters = [
+  locales.length > 1 ? bar('locale', [...locales.map((l) => [l, l]), ['all', 'All locales']]) : '',
+  screens.length > 1 ? bar('screen', [['all', 'All screens'], ...screens.map((s) => [s, s])]) : '',
+].join('');
 
 const sections = screens.map((screen) => {
   const cells = shots.filter((s) => s.screen === screen).map((s) => {
     const label = [s.state, s.locale].filter(Boolean).join(' · ') || s.file;
     const px = s.px ? `${s.px[0]} × ${s.px[1]}` : '';
     return `
-      <figure id="cell-${s.n}">
+      <figure id="cell-${s.n}" data-locale="${esc(s.locale)}">
         <button type="button" class="shot" data-n="${s.n}" aria-label="Open #${s.n} at full size">
           <img src="data:${MIME[s.ext]};base64,${s.buf.toString('base64')}" alt="${esc(screen)} — ${esc(label)}" loading="lazy" decoding="async">
         </button>
@@ -92,7 +105,7 @@ const sections = screens.map((screen) => {
       </figure>`;
   }).join('');
   return `
-    <section>
+    <section data-screen="${esc(screen)}">
       <h2>${esc(screen)}</h2>
       <div class="grid">${cells}
       </div>
@@ -119,14 +132,20 @@ const html = `<!doctype html>
   h1 { font-size: 22px; margin: 0; }
   header p { margin: 4px 0 0; color: var(--muted); }
   h2 { font-size: 17px; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
-  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); align-items: start; }
+  .bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bar button { font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .bar button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); align-items: start; }
   figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   figure:target { outline: 3px solid var(--accent); }
   .shot { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
   .shot img { display: block; width: 100%; height: auto; }
   figcaption { padding: 8px 12px; border-top: 1px solid var(--line); }
   figcaption span { display: block; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-  #full { position: fixed; inset: 0; z-index: 1; display: none; overflow: auto; background: var(--shade); cursor: zoom-out; }
+  #full { position: fixed; inset: 0; z-index: 2; display: none; overflow: auto; background: var(--shade); cursor: zoom-out; }
   #full.open { display: block; }
   #full img { display: block; margin: 0 auto; max-width: none; }
   #full p { position: sticky; top: 0; margin: 0; padding: 8px 16px; color: #fff; background: rgb(0 0 0 / .6); font-size: 13px; }
@@ -137,11 +156,38 @@ const html = `<!doctype html>
   <h1>${esc(title)}</h1>
   <p>${shots.length} images · ${screens.length} screens · click an image for full size (← → to step, Esc to close)</p>
 </header>
-<main>${sections}
+<main>${filters ? `
+  <div class="bar" role="toolbar" aria-label="Filter">${filters}
+  </div>` : ''}${sections}
 </main>
 <div id="full" role="dialog" aria-modal="true" aria-label="Full-size image"><p></p><img alt=""></div>
 <script>
-  const shots = [...document.querySelectorAll('.shot')];
+  const pick = { locale: ${JSON.stringify(locales[0] ?? 'all')}, screen: 'all' };
+  try { pick.locale = localStorage.getItem('screens-locale') || pick.locale; } catch (e) {}
+  if (!document.querySelector('[data-locale="' + CSS.escape(pick.locale) + '"]')) pick.locale = 'all';
+  function filter() {
+    for (const b of document.querySelectorAll('.bar button')) {
+      const [group, key] = Object.entries(b.dataset)[0];
+      b.setAttribute('aria-pressed', String(pick[group] === key));
+    }
+    for (const sec of document.querySelectorAll('main section')) {
+      let any = false;
+      for (const fig of sec.querySelectorAll('figure')) {
+        fig.hidden = pick.locale !== 'all' && fig.dataset.locale !== '' && fig.dataset.locale !== pick.locale;
+        any ||= !fig.hidden;
+      }
+      sec.hidden = !any || (pick.screen !== 'all' && sec.dataset.screen !== pick.screen);
+    }
+  }
+  for (const b of document.querySelectorAll('.bar button')) b.addEventListener('click', () => {
+    const [group, key] = Object.entries(b.dataset)[0];
+    pick[group] = key;
+    if (group === 'locale') try { localStorage.setItem('screens-locale', key); } catch (e) {}
+    filter();
+  });
+  filter();
+  const all = [...document.querySelectorAll('.shot')];
+  let shots = all;
   const full = document.getElementById('full');
   const big = full.querySelector('img');
   let at = -1;
@@ -156,7 +202,11 @@ const html = `<!doctype html>
     full.classList.add('open');
     full.scrollTo(0, 0);
   }
-  shots.forEach((b, i) => b.addEventListener('click', () => show(i)));
+  // ← → step through the cells the filters leave visible.
+  all.forEach((b) => b.addEventListener('click', () => {
+    shots = all.filter((s) => !s.closest('[hidden]'));
+    show(shots.indexOf(b));
+  }));
   full.addEventListener('click', () => full.classList.remove('open'));
   addEventListener('keydown', (e) => {
     if (!full.classList.contains('open')) return;
