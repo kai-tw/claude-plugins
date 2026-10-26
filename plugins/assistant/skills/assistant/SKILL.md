@@ -104,8 +104,9 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    scaled down until it can't be read. Data wiring waits for OK.
    ② also carries every string the task adds or changes, its value listed per
    locale; tone-sensitive ones (error, guidance, confirmation, empty state) carry
-   2–3 side-by-side options per locale (charter U3.3), and the founder picks and
-   approves each locale in the same pass. **Strings are approved here and nowhere
+   2–3 side-by-side options per locale (charter U3.3), one of them the shortest that
+   states only the fact, and the founder picks and approves each locale in the same
+   pass; their own wording is always an answer, and becomes the value as written. **Strings are approved here and nowhere
    else** — after ③ they are copied into tests and mockups, and changing one word
    means changing dozens of assertion lines. A string first created in the wire
    phase comes back from the builder as a strings-only ② supplement, not a re-render.
@@ -187,12 +188,23 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
    task's cost appended to `.claude/.assistant/ledger.md`.
 
+## House style for strings
+
+Rules written from scratch don't make text native; the strings the founder already
+approved do. A project with `ui_strings:` and `strings_canon: none` has no house
+style yet, so before its first task that adds a string, derive one from the shipped
+strings (the `ui_strings:` files on the default branch, never a task's own): group
+them by UI role (button, title, caption, toast, dialog body, empty state), and for
+each role measure length, set phrases and which of two competing words wins, with
+counts. Show it to the founder; only what they approve goes into the canon file
+`strings_canon:` then names, since a count isn't a preference.
+
 ## Lessons
 
 `.claude/.assistant/lessons.md`, under the project root, is what the project has
 taught you. Add a line to it, unasked, as soon as one of these happens:
-- the founder sends work back at ② or ③, overrules a `Decided` line, or picks
-  against your recommendation;
+- the founder sends work back at ② or ③, rewrites a string, overrules a `Decided`
+  line, or picks against your recommendation;
 - a script refuses you (`asst-pr` NOT READY, an `asst-cite` FAIL), or a check you
   relied on turns out wrong;
 - a fix round is spent on a finding the brief or the builder could have prevented.

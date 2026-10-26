@@ -28,8 +28,10 @@ law (`CONVENTIONS.md`).
   sentence asks the user to act, does it open with 「請」 plus a verb? Prefixing 「請」 to a
   mere state report violates charter U1.2.
 - **U3.2-zhHant No source-language word-order markers** — Check: Does the sentence contain
-  transcription traces such as 「被…所」「一個…的」「對…進行」「做出…的動作」「這是一個…」?
+  transcription traces such as 「被…所」「一個…的」「對…進行」「做出…的動作」「這是一個…」
+  「直到…為止」, or an indirect question used as the subject (「最晚要在…前多久取消，依…規定」)?
   Where it does, it violates charter U3.1; rewrite it in natural Chinese word order.
+  Example: 「關閉期限依 App Store 規定。」
 - **U3.3-zhHant Unfinished is spelled out with a resultative complement** — Check: Where an
   action has begun but not finished, is it written 「還沒…完」「沒有…完成」 rather than
   「還沒…」? Chinese marks completion with a resultative complement; leaving it out states
@@ -48,6 +50,14 @@ law (`CONVENTIONS.md`).
   a casual verb carried over from another language (「逛逛」「打開就能看」)? Where it does, it
   violates charter U3.1. Write 「照片將匯入相簿」「隨時都能開始瀏覽」; the fix is natural
   phrasing, not a flatter tone.
+- **U3.7-zhHant Short written forms, not drawn-out spoken ones** — Check: Where the value
+  means 「無」「將」「即可」「尚未」 or a finished action, is it written that way, rather than
+  「沒有找到」「就會」「就可以」「還在等待」 or 「…成功」? The long form violates charter U3.7.
+  Example: 「連上網路後將顯示清單」「尚未核准」「已匯出」.
+- **U3.8-zhHant A missing capability is 「不支援」; a missing thing is 「無」** — Check:
+  Where the value says something can't do a thing, is it 「不支援」? Where it says something
+  doesn't exist, is it 「無」? 「沒有…」 for either violates charter U3.5. Example:
+  「此影片不支援字幕」「無可匯出的檔案」.
 
 ## U4 — One concept, one word across the app
 

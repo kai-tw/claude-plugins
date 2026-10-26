@@ -66,6 +66,11 @@ is a manual, not an interface.
   reworded only so that its last line does not hold a lone word or character? That
   violates this rule: the screen renders at every width, so some width always leaves one.
   A lone word on the last line is outside every rule; a string changes for its meaning.
+- **U1.5 A caption says only what the title and the screen don't** — Check: Does the
+  caption add something neither the title nor the visible screen already shows — a
+  cause, a consequence, a next step, or that the state clears by itself? Where it only
+  restates them, it violates this rule; drop the caption. Example: under the title
+  「目前離線」 beside a greyed-out buy button, 「連上網路後即可購買」 restates the screen.
 
 ## U2 — A failure message must state what happened, the current state, and the next step
 
@@ -125,6 +130,10 @@ into several locales, at least half of them read unlike anything a person would 
   not finished, is the value written the way the locale marks "unfinished"? Reading as
   "not happened" in that locale violates this rule — users conclude that existing
   progress does not exist.
+- **U3.7 The shortest written form wins** — Check: Does the value have a shorter form
+  with the same meaning, in the written register the app's shipped strings use? A
+  drawn-out spoken form where a short written one exists violates this rule. Example:
+  「無可匯出的檔案」, not 「沒有找到可匯出的檔案」.
 
 ## U4 — One concept, one word across the app
 
@@ -143,6 +152,14 @@ think it is a different thing.
   something by an internal identifier (class name, error code, file path, version number,
   internal code name, stage or unit names of an internal process)? Doing so violates this
   rule — those are for logs.
+- **U4.4 What the app already says is said the same way** — Check: Does a string the app
+  already ships carry the same meaning in the same UI role? Where one does and the value
+  words it differently, it violates this rule; reuse the shipped value. Strings the change
+  itself adds are not shipped and are outside the comparison.
+- **U4.5 Platform concepts take the platform's term** — Check: Where the string names a
+  concept the operating system or app store owns (restoring purchases, subscriptions,
+  permissions), does it use that platform's own term in that locale? Coining a
+  translation violates this rule. Example: Apple's Taiwan term is 「回復購買項目」.
 
 ## U5 — The key triggers retranslation
 
