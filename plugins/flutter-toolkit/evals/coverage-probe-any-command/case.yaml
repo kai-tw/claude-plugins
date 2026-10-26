@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-probe-any-command
+description: plan-coverage runs its import probe in any Flutter package, whatever the test command starts with, so a declaration-only file reached through `-- plan-test <scope>` is NO-CODE, not UNREACHED; outside a Flutter package it says on stderr that the probe did not run.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0; w=$PWD; PATH="$w/fake:$PATH"; (cd app && plan-coverage --diff main -- plan-test test/ 2>&1; echo "rc=$?") | sed "s/^/app: /"; (cd dart && plan-coverage --diff main -- bash fake_test.sh 2>&1; echo "rc=$?") | sed "s/^/dart: /"
+  prompt: |
+    In a Flutter package whose change adds an enum file, run plan-coverage with plan-test as the test command; then in a pure Dart package with the same change. Print each report and exit code.
+context:
+  scaffold_script: fixture.sh

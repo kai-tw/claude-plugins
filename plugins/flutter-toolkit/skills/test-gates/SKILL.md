@@ -23,9 +23,12 @@ allowed-tools:
 - `plan-coverage -- <scoped test command>` — per **line**, not per percent: each
   changed `lib/**.dart` line is executed. No markers: a changed file carrying
   `// coverage:ignore-*` (or the retired `// coverage-ignore:`) is blocked too.
-  The one exception is built in: drift table definitions (column getters of a
-  class extending drift's `Table`) are left unmeasured, and the report counts
-  them. Exceptions are added to the script only, never to project code.
+  Two exceptions are built in, and the report counts the lines each leaves out:
+  drift table definitions (column getters of a class extending drift's `Table`),
+  and const constructor declarations with no logic, whose line the VM records or
+  not depending on what the run loads (one whose initializer list branches or
+  asserts is still measured). Exceptions are added to the script only, never to
+  project code.
   A file with no coverage record is UNREACHED (blocks) unless an import-only
   probe shows it has no executable line — NO-CODE, which passes. Runs with
   branch coverage, so a `throw const …` body no test entered is a gap; a throw

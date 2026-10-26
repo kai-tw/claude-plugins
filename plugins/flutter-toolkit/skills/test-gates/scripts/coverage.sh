@@ -31,12 +31,16 @@
 # THE EXCEPTIONS LIVE HERE, AND ONLY HERE
 #   A kind of line no test can ever execute is left unmeasured by this script,
 #   by what the code is, never by a marker, a flag or a per-project list. A new
-#   exception is a change to this script. There is one:
+#   exception is a change to this script. There are two, and the report counts
+#   the lines each leaves out, per file:
 #   - drift table definitions (`drift_columns.pl` says exactly which lines).
 #     drift's generator reads the column getters and the generated class
 #     overrides them, so at runtime the builder chain never runs past its first
-#     call. The schema snapshot test is what checks them. The report counts the
-#     lines left out, per file.
+#     call. The schema snapshot test is what checks them.
+#   - const constructor declarations with no logic (`const_ctors.pl` says
+#     which). Whether the VM records such a line depends on what else the run
+#     loads, so the same line passed in one test scope and failed in another.
+#     One whose initializer list branches or asserts is still measured.
 #
 # LINES THE VM NEVER RECORDS
 #   A statement with no call or allocation in it — `throw const E();`,
@@ -172,7 +176,7 @@ set -- "$@"
 case " $* " in *" --coverage "*) ;; *) set -- "$@" --coverage ;; esac
 case " $* " in *" --branch-coverage "*) ;; *) set -- "$@" --branch-coverage ;; esac
 
-echo "plan-coverage: ${count_files} changed file(s); every line must be executed, drift table definitions aside."
+echo "plan-coverage: ${count_files} changed file(s); every line must be executed, drift table definitions and logic-free const constructors aside."
 echo "plan-coverage: running — $*"
 started=$(date +%s)
 "$@"
@@ -247,6 +251,17 @@ if [ -n "$drift" ]; then
 fi
 n_drift=$(printf '%s' "$drift" | grep -c . || true)
 
+# The second exception (see the header): logic-free const constructor declarations.
+consts=$(while IFS= read -r f; do
+           [ -n "$f" ] || continue
+           perl "$here/const_ctors.pl" "$f" | sed "s|^|$f	|"
+         done <<< "$files")
+if [ -n "$consts" ]; then
+  gaps=$(printf '%s\n' "$gaps" | awk -F'\t' 'NR == FNR { d[$1 FS $2] = 1; next } !($1 FS $2 in d)' \
+         <(printf '%s\n' "$consts") -)
+fi
+n_consts=$(printf '%s' "$consts" | grep -c . || true)
+
 # --- gaps and pragmas -------------------------------------------------------
 unexecuted=""
 while IFS=$'\t' read -r f ln kind; do
@@ -298,11 +313,19 @@ done <<< "$files"
 # an interface, typedefs and consts, and a class whose only code is field
 # initializers all leave no record. The probe tells the two apart: a test that
 # only imports the absent files, run under coverage. A file still absent there
-# has no executable line, so it is NO-CODE and does not block. Flutter runs only,
-# since the lcov path is flutter's; a `part of` file cannot be imported and stays
-# UNREACHED, as does everything when the probe itself fails to run.
+# has no executable line, so it is NO-CODE and does not block. Flutter packages
+# only, since the probe runs `flutter test` itself, whatever the test command
+# was: keyed on that command's first word, it was silently skipped for
+# `-- plan-test <scope>`, as a consumer's docs recommend. A `part of`
+# file cannot be imported and stays UNREACHED, as does everything when the probe
+# is skipped or fails to run, and either is said on stderr.
 nocode=""
-if [ -n "$unreached" ] && [ "$1" = flutter ]; then
+is_flutter=""
+grep -qE '^[[:space:]]*sdk:[[:space:]]*flutter[[:space:]]*$' pubspec.yaml 2>/dev/null && is_flutter=1
+if [ -n "$unreached" ] && [ -z "$is_flutter" ]; then
+  echo "plan-coverage: not a Flutter package (no \`sdk: flutter\` in pubspec.yaml), so the import probe did not run and every absent file stays UNREACHED." >&2
+fi
+if [ -n "$unreached" ] && [ -n "$is_flutter" ]; then
   pkg=$(sed -n 's/^name:[[:space:]]*//p' pubspec.yaml | head -1 | tr -d "\"' ")
   probe_dir="$root/build/plan-coverage-probe"
   mkdir -p "$probe_dir"
@@ -367,6 +390,14 @@ if [ "$n_drift" -gt 0 ]; then
   echo "Not measured — drift table definitions (read by drift's generator, never run):"
   drift_note
 fi
+consts_note() {
+  printf '%s\n' "$consts" | awk -F'\t' 'NF { n[$1]++ } END { for (f in n) printf "  %s: %d line(s)\n", f, n[f] }' | sort
+}
+if [ "$n_consts" -gt 0 ]; then
+  echo
+  echo "Not measured — const constructor declarations with no logic (recorded or not depending on what the run loads):"
+  consts_note
+fi
 
 if [ "$n_gaps" -gt 0 ]; then
   echo
@@ -407,7 +438,7 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:coverage sha=%s -->\n' "$head_sha"
   printf '### Coverage — reach\n\n'
-  printf 'Scope: %s changed file(s) vs `%s`, `%s`. Every changed line executed, drift table definitions aside.\n\n' \
+  printf 'Scope: %s changed file(s) vs `%s`, `%s`. Every changed line executed, drift table definitions and logic-free const constructors aside.\n\n' \
     "$count_files" "${base:---files}" "$*"
   printf '| Verdict | Gaps | Pragmas | File |\n|---|---:|---:|---|\n'
   while IFS= read -r f; do
@@ -422,6 +453,10 @@ head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
   if [ "$n_drift" -gt 0 ]; then
     printf '\nNot measured — drift table definitions (read by drift'"'"'s generator, never run):\n\n'
     drift_note | sed 's/^  /- /'
+  fi
+  if [ "$n_consts" -gt 0 ]; then
+    printf '\nNot measured — const constructor declarations with no logic (recorded or not depending on what the run loads):\n\n'
+    consts_note | sed 's/^  /- /'
   fi
   if [ -n "$nocode" ]; then
     printf '\nNO-CODE means the file has no executable line (declarations only): importing it alone still leaves no coverage record.\n'
