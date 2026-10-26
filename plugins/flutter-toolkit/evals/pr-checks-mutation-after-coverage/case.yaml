@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: pr-checks-mutation-after-coverage
-description: The PR-checks workflow template runs mutation only once line coverage passes, and has no `always()`, which would keep a step running after the workflow is cancelled.
+description: The PR-checks workflow template runs mutation only once line coverage passes, has no `always()`, which would keep a step running after the workflow is cancelled, and no `--max-minutes`, which stops a run on a time estimate that is often wrong.
 tags: [pr-checks]
 plugins: ["../.."]
 runs: 1
