@@ -33,8 +33,9 @@ As `.github/workflows/pr-checks.yml`. Replace the `Prepare` step with what
 your build needs in a clean checkout, and the test command with the
 narrowest one that still covers the code PRs change. Each mutant runs that
 command once, so on a large suite add `--select-by-coverage` to the mutation
-step, and keep `--max-minutes` under the job's timeout: a run that won't fit
-stops and comments nothing.
+step. Don't pass `--max-minutes`: it stops a run on the engine's time estimate,
+which is often wrong, so a run that would have finished comments nothing. The
+job's `timeout-minutes` is the only cap.
 
 ```yaml
 name: pr-checks
@@ -79,7 +80,7 @@ jobs:
         run: flutter pub get && dart run build_runner build --delete-conflicting-outputs
       - name: Mutants on changed lines
         id: mutants
-        run: plan-mutation --diff "origin/$GITHUB_BASE_REF" --review "$RUNNER_TEMP/review.json" --fail-on-survivors --max-minutes 90 -- flutter test
+        run: plan-mutation --diff "origin/$GITHUB_BASE_REF" --review "$RUNNER_TEMP/review.json" --fail-on-survivors -- flutter test
       - name: Comment survivors
         if: success() || steps.mutants.outcome == 'failure'
         env:
