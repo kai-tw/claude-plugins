@@ -48,7 +48,15 @@
 #                 [--baseline-factor <n>] [--select-by-coverage]
 #                 [--workers <n>] [--max-minutes <n>] [--history <file>]
 #                 [--diff <ref> [--per-line <n>] [--review <file> [--fail-on-survivors]]]
-#                 [--files a.dart b.ts …] [-- <test-command…>]
+#                 [--files a.dart b.ts …] [--by-dir] [-- <test-command…>]
+#
+#   --by-dir groups the changed Dart files by test directory (lib/a/b/c.dart →
+#   test/a/b, or its nearest parent that exists) and runs one pass per group:
+#   that group's files against `<test-command> <its test directory>`, so pass
+#   the command without test paths. JS/TS files get one more pass with the
+#   command as given. Review files are merged; the exit code is the worst
+#   group's. Each pass prints its own table, and the report files under the
+#   temp dir hold the last pass's only.
 #
 #   --diff <ref> is review mode, after Google's: mutate only the lines this
 #   branch changed since its merge base with <ref> (uncommitted edits to
@@ -199,7 +207,8 @@ DIFF_BASE=""
 PER_LINE=""
 REVIEW_OUT=""
 FAIL_ON_SURVIVORS=""
-ENGINE_EXTRA=()      # 0.2.7 flags, forwarded only when the caller asks for them
+BY_DIR=""
+ENGINE_EXTRA=()     # 0.2.7 flags, forwarded only when the caller asks for them
 DART_ONLY=""         # the Dart-only flags typed, named when JS files are in scope
 
 while [ $# -gt 0 ]; do
@@ -211,6 +220,7 @@ while [ $# -gt 0 ]; do
     --baseline-timeout) ENGINE_EXTRA+=("--baseline-timeout" "${2:?--baseline-timeout needs seconds}"); DART_ONLY+=" $1"; shift 2 ;;
     --baseline-factor)  ENGINE_EXTRA+=("--baseline-factor" "${2:?--baseline-factor needs a number}"); DART_ONLY+=" $1"; shift 2 ;;
     --select-by-coverage) ENGINE_EXTRA+=("--select-by-coverage"); DART_ONLY+=" $1"; shift ;;
+    --by-dir)   BY_DIR=1; shift ;;
     # The launcher reads the same value to take that many slots.
     --workers)  case "${2:-}" in
                   ''|*[!0-9]*|0) echo "plan-mutation: --workers needs a positive integer" >&2; exit 2 ;;
@@ -352,6 +362,14 @@ JS_EXT='\.(js|jsx|ts|tsx|mjs|cjs|mts|cts)$'
 base=
 if [ -n "$EXPLICIT_FILES" ]; then
   files=$(printf '%s' "$EXPLICIT_FILES" | grep -v '^$')
+  # --diff with --files: the files are the scope, the ref still sets the lines.
+  # Left unset, the changed-lines step diffs against an empty ref, finds no
+  # range in any file and exits 0 as "only deletes lines" — a pass nobody ran.
+  if [ -n "$DIFF_BASE" ]; then
+    git rev-parse --verify --quiet "$DIFF_BASE" >/dev/null 2>&1 || {
+      echo "plan-mutation: --diff $DIFF_BASE does not resolve — nothing was measured." >&2; exit 2; }
+    base=$DIFF_BASE
+  fi
 else
   # Prefer the REMOTE-tracking ref. `origin/<branch>` is what the PR merges
   # into and `git fetch` keeps it current without touching the working tree;
@@ -655,6 +673,57 @@ js_rows=$(printf '%s' "$js_rows" | while IFS=$'\t' read -r p r; do
 js_pkgs=$(printf '%s\n' "$js_rows" | cut -f1 | grep -v '^$' | sort -u)
 [ -z "$dart_files" ] || [ -n "$TEST_CMD" ] || {
   echo "plan-mutation: Dart files need a test command (e.g. plan-mutation -- flutter test test/features/trash)" >&2; exit 2; }
+
+# --by-dir: one pass per test directory, each mutating only its own files
+# against only its own tests, instead of every mutant running the tests of
+# every changed file. Measured on a 24-file diff: one pass against all their
+# test directories cost ~200s a mutant (~7h for 118); split by directory,
+# 6–15s a mutant, 20 minutes in all.
+if [ -n "$BY_DIR" ] && [ -z "${PLAN_MUTATION_GROUP:-}" ]; then
+  # lib/a/b/c.dart → test/a/b, or the nearest parent of it that exists, else test.
+  test_dir_of() {
+    local d; d=$(dirname "${1#lib/}")
+    while [ "$d" != . ] && [ ! -d "test/$d" ]; do d=$(dirname "$d"); done
+    if [ "$d" = . ]; then echo test; else echo "test/$d"; fi
+  }
+  grouped=$(printf '%s\n' "$dart_files" | while IFS= read -r f; do
+    [ -n "$f" ] && printf '%s\t%s\n' "$(test_dir_of "$f")" "$f"; done | sort)
+  dirs=$(printf '%s\n' "$grouped" | cut -f1 | grep -v '^$' | uniq)
+  js_only=$(printf '%s\n' "$files" | grep -vE '\.dart$' | grep -v '^$')
+  pass=(--min "$MIN_SCORE")
+  [ -n "$TIMEOUT_GIVEN" ] && pass+=(--timeout "$MUTANT_TIMEOUT")
+  pass+=(${ENGINE_EXTRA[@]+"${ENGINE_EXTRA[@]}"})
+  [ -n "$DIFF_BASE" ] && pass+=(--diff "$DIFF_BASE")
+  [ -n "$PER_LINE" ] && pass+=(--per-line "$PER_LINE")
+  [ -n "$FAIL_ON_SURVIVORS" ] && pass+=(--fail-on-survivors)
+  n=$(printf '%s\n' "$dirs" | grep -c .); [ -z "$js_only" ] || n=$((n + 1))
+  worst=0; i=0; reviews=()
+  run_group() {   # <label> <test command> <file…>
+    local label=$1 cmd=$2 rv=() rc
+    shift 2; i=$((i + 1))
+    echo "plan-mutation: group $i/$n — $label ($# file(s))"
+    if [ -n "$REVIEW_OUT" ]; then rv=(--review "$(mktemp)"); reviews+=("${rv[1]}"); fi
+    # shellcheck disable=SC2086 # the test command is a string of words, as the engine takes it
+    PLAN_MUTATION_GROUP=1 bash "$0" "${pass[@]}" ${rv[@]+"${rv[@]}"} --files "$@" -- $cmd
+    rc=$?
+    case $rc in 0) ;; 1) [ "$worst" -ge 1 ] || worst=1 ;; *) worst=2 ;; esac
+  }
+  while IFS= read -r dir; do
+    [ -n "$dir" ] || continue
+    gf=(); while IFS=$'\t' read -r d f; do [ "$d" = "$dir" ] && gf+=("$f"); done <<< "$grouped"
+    run_group "$dir" "$TEST_CMD $dir" "${gf[@]}"
+  done <<< "$dirs"
+  if [ -n "$js_only" ]; then
+    jf=(); while IFS= read -r f; do jf+=("$f"); done <<< "$js_only"
+    run_group "JS/TS" "$TEST_CMD" "${jf[@]}"
+  fi
+  if [ -n "$REVIEW_OUT" ]; then
+    jq -s 'add // []' "${reviews[@]}" > "$REVIEW_OUT" || worst=2
+    rm -f "${reviews[@]}"
+  fi
+  echo "plan-mutation: $n group(s) done — exit $worst (the worst group's: 2 nothing measured · 1 failed · 0 passed)"
+  exit "$worst"
+fi
 # Review mode: each Dart file's changed lines, from the merge base to the
 # working tree, as the engine's `--lines <file>:<ranges>`. A file whose change
 # only deleted lines has none, so nothing in it is new to ask about.

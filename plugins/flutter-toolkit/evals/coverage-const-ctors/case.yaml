@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-const-ctors
+description: plan-coverage leaves const constructor declarations with no logic unmeasured and counts them, while one whose initializer list branches or asserts, and every use of a constructor, is still measured.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_QA_REPORT_DIR="$PWD"; plan-coverage --files lib/cc.dart -- bash fake_test.sh 2>&1; echo "rc=$?"
+  prompt: |
+    Run plan-coverage on lib/cc.dart with a test run that records every constructor line unexecuted, and print the report and exit code.
+context:
+  scaffold_script: fixture.sh

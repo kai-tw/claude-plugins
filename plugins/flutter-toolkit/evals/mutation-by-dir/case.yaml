@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-by-dir
+description: --by-dir runs one mutation pass per test directory, each changed file's changed lines against only its own directory's tests (the nearest that exists), merges the review files, and exits with the worst group's code.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; w=$PWD; PATH="$w/fake:$PATH"; (cd r && plan-mutation --diff main --by-dir --review "$w/review.json" --fail-on-survivors -- flutter test > "$w/out.txt" 2>&1; echo "rc=$?"); grep "^plan-mutation: group" out.txt; sed "s/^/call: /" calls.txt; echo "review=$(jq -r "map(.path + \":\" + (.line|tostring)) | sort | join(\",\")" review.json)"
+  prompt: |
+    In a repo whose branch changed one line in lib/core/db and one in lib/ui/home, run plan-mutation in review mode with --by-dir, then print the exit code, the groups, each engine call's test command and lines, and the merged review file.
+context:
+  scaffold_script: fixture.sh

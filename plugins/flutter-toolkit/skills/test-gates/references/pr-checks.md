@@ -24,16 +24,21 @@ Keep each repo's runner up in its own terminal tab with
 `~/actions-runners/<dir>/run.sh`. While it's down, a PR's jobs wait queued on
 GitHub. An idle runner takes about 60 MB of memory and no CPU. `plan-coverage`
 and `plan-mutation` take this machine's test slots like any other run, so CI and
-local sessions share the memory budget. Only use it on a private repo: a
+local sessions share the memory budget. A local session gives up after 120
+seconds without a slot, because the Bash tool stops a call at 10 minutes; CI has
+no such limit, so the workflow sets `PLAN_TEST_WAIT` to wait an hour instead of
+failing a check that measured nothing. Only use it on a private repo: a
 public repo's workflows can be made to run a stranger's code on it.
 
 ## The workflow
 
 As `.github/workflows/pr-checks.yml`. Replace the `Prepare` step with what
 your build needs in a clean checkout, and the test command with the
-narrowest one that still covers the code PRs change. Each mutant runs that
-command once, so on a large suite add `--select-by-coverage` to the mutation
-step. Don't pass `--max-minutes`: it stops a run on the engine's time estimate,
+narrowest one that still covers the code PRs change. The mutation step passes
+`--by-dir`: each directory of changed files is mutated against only its own
+test directory, which `plan-mutation` appends to the command, so give it the
+command without test paths. On a large suite add `--select-by-coverage` too.
+Don't pass `--max-minutes`: it stops a run on the engine's time estimate,
 which is often wrong, so a run that would have finished comments nothing. The
 job's `timeout-minutes` is the only cap.
 
@@ -50,6 +55,8 @@ concurrency:
 jobs:
   coverage:
     runs-on: [self-hosted, flutter]
+    env:
+      PLAN_TEST_WAIT: 3600
     steps:
       - uses: actions/checkout@v4
         with:
@@ -67,6 +74,8 @@ jobs:
     needs: coverage
     runs-on: [self-hosted, flutter]
     timeout-minutes: 120
+    env:
+      PLAN_TEST_WAIT: 3600
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,7 +89,7 @@ jobs:
         run: flutter pub get && dart run build_runner build --delete-conflicting-outputs
       - name: Mutants on changed lines
         id: mutants
-        run: plan-mutation --diff "origin/$GITHUB_BASE_REF" --review "$RUNNER_TEMP/review.json" --fail-on-survivors -- flutter test
+        run: plan-mutation --diff "origin/$GITHUB_BASE_REF" --review "$RUNNER_TEMP/review.json" --fail-on-survivors --by-dir -- flutter test
       - name: Comment survivors
         if: success() || steps.mutants.outcome == 'failure'
         env:

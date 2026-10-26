@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-slot-after-scope
+description: plan-coverage takes a test slot only once a changed Dart file needs measuring, so a change with no Dart file passes while every slot is held, and one with a Dart file still waits for a slot.
+tags: [plan-coverage, plan-test]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_SLOTS=1 PLAN_TEST_WAIT=0; mkdir -p s/slot-1; echo "pid=$$" > s/slot-1/meta; (cd r && git switch -q ci && plan-coverage --diff main -- flutter test 2>&1; echo "rc=$?") | sed "s/^/ci: /"; (cd r && git switch -q code && plan-coverage --diff main -- flutter test 2>&1; echo "rc=$?") | sed "s/^/code: /"
+  prompt: |
+    With the machine's only test slot held, run plan-coverage against main on a branch that changed only a workflow file, then on one that changed a Dart file. Print each output and exit code.
+context:
+  scaffold_script: fixture.sh
