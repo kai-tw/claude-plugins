@@ -26,4 +26,7 @@ allowed-tools:
   blocklists, punctuation width, second person, missing translations) — that
   belongs to each project's string checker, per the admission criteria in
   `rules/CONVENTIONS.md`.
+- `examples/<locale>.tsv` — the founder's rewrites that hold in every project, as
+  draft → final pairs; `asst-strings examples` prints them after the project's own.
+  A rewrite goes here as an example, never into a rule: language doesn't fit rules.
 - Legislating: `${CLAUDE_PLUGIN_ROOT}/skills/ui-text-pack/rules/CONVENTIONS.md`.

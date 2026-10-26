@@ -93,6 +93,13 @@ reading what it already decided — term blocklists, punctuation form, second
 person, sort order and missing keys are its job, and a finding that duplicates
 it is dropped.
 
+For each changed value, read its shipped siblings: strings in the same UI role in
+the `ui_strings:` files on the default branch (svn: the last committed revision).
+U1.5, U3.7 and U4.4 are checked against them, and such a finding names the
+sibling it was measured against. Run `asst-strings examples <role> <locale>` for
+each changed value too: U3.8 is checked against those pairs, and its finding
+quotes the pair.
+
 Walk U1–U5 in order; each finding is one line `[U<N>.k] <key> · <locale> —
 <what is wrong> · Fix: <the string you would write>`. `Fix:` carries the
 replacement string in full, in that locale. A finding without one is not filed —

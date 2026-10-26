@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: strings-from-shipped
+description: UI text is written and reviewed against what the founder already approved — the charter has rules for captions that restate the screen, the shortest written form, repeating a rewritten draft, reusing a shipped value and platform terms, and no locale-level word rules; the builder reads shipped strings and the founder's rewrites, the verifier measures against both, and a project with no canon derives its house style from shipped strings.
+tags: [ui-text-pack, builder, verifier]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: echo "rules=$(ui-text-pack zh-Hant ja en 2>/dev/null | grep -oE "\*\*U(1\.5|3\.7|3\.8|4\.4|4\.5)(-[A-Za-z]+)? " | tr -d "* " | paste -sd, -)"; echo "uses=builder:$(tr -s " \n" " " < "$root/agents/builder.md" | grep -c "read the shipped strings.*asst-strings examples"),verifier:$(tr -s " \n" " " < "$root/agents/verifier.md" | grep -c "read its shipped siblings.*asst-strings examples"),skill:$(grep -c "^## House style for strings$" "$root/skills/assistant/SKILL.md")"
+  prompt: |
+    Print which rules about approved strings ui-text-pack carries, and whether the builder, the verifier and the assistant use the shipped strings and the founder's rewrites.
+context:
+  scaffold_script: fixture.sh

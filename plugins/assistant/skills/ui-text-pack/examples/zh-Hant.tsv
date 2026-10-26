@@ -1,0 +1,11 @@
+# The founder's rewrites that hold in every project — read with `asst-strings examples`.
+# Columns (tab-separated): locale · role · where it renders · draft · final (`-` = dropped)
+zh-Hant	caption	under the title 「目前離線」, beside a greyed-out buy button	連上網路後就可以購買這個項目	-
+zh-Hant	empty	export list with no files	沒有找到可匯出的檔案	無可匯出的檔案
+zh-Hant	caption	offline list screen	連上網路後，就會顯示清單	連上網路後將顯示清單
+zh-Hant	label	purchase status	還在等待核准	尚未核准
+zh-Hant	toast	after an export finishes	匯出成功	已匯出
+zh-Hant	caption	video without subtitle support	這部影片沒有字幕	此影片不支援字幕
+zh-Hant	dialog	subscription renewal terms	訂閱會自動續訂，直到你關閉為止。最晚要在到期前多久取消，依商店規定。	訂閱將於到期時自動續訂，若不希望續訂，請至「設定」關閉，關閉期限依 App Store 規定。
+zh-Hant	button	restore purchases on iOS	恢復購買	回復購買項目
+zh-Hant	toast	thanks after a purchase	感謝你的支持！	感謝你的支持。

@@ -1,0 +1,5 @@
+# The founder's rewrites that hold in every project — read with `asst-strings examples`.
+# Columns (tab-separated): locale · role · where it renders · draft · final (`-` = dropped)
+ja	empty	export list with no files	書き出せるファイルが見つかりませんでした。	書き出せるファイルはありません。
+ja	toast	thanks after a purchase	ご購入ありがとうございます！	ご購入ありがとうございます。
+ja	label	membership badge	Pro会員	Pro 会員

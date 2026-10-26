@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: strings-log
+description: asst-strings records what the founder did with each string at ②, refuses a whole batch when one line is bad, prints the founder's changes for a role and locale (this project's newest first, then the shipped examples), and reports per task how many strings were accepted as drafted.
+tags: [asst-strings]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: printf "%s\n" "sub_title · zh-Hant · title · accepted · 訂閱" "sub_caption · zh-Hant · caption · rewritten · 你可以隨時取消訂閱喔 → 可隨時取消訂閱" "sub_button · zh-Hant · button · accepted · 訂閱 → 訂閱" | asst-strings record t1; printf "%s\n" "ok · zh-Hant · title · accepted · 好" "x · zh-Hant · banner · accepted · 好" | asst-strings record t1; echo "bad=$?"; printf "%s\n" "off_title · zh-Hant · title · accepted · 目前離線" "off_caption · zh-Hant · caption · dropped · 連上網路後就能購買 → -" | asst-strings record t2; echo "examples=$(asst-strings examples caption zh-Hant --limit 3 | grep "^\[" | paste -sd "|" -)"; asst-strings rate
+  prompt: |
+    Record two tasks' string outcomes, try a batch with a bad role, list the caption examples for zh-Hant, then print the acceptance rate.
+context:
+  scaffold_script: fixture.sh
