@@ -1,4 +1,4 @@
-# Delivery summary — one screen, seven blocks, every line clickable
+# Delivery summary — one screen, eight blocks, every line clickable
 
 Built from the verifier reports, with string values from the builder's `strings:`
 blocks unless a text finding changed them; the founder reads this, not the diff and not the
@@ -19,6 +19,10 @@ reports. Anything a linter or a passed check already settled is one line.
 - <deviation from the brief's System design + reason> or no deviation
 ## Tests
 - <scenario> → <test file:line> · missing: <scenario or failure event with no test> or none
+## On device (the latest `verify-device`, verbatim)
+<its first line>
+- <platform>: <passed | failed | not run — why> on <phone>
+- scenarios <n/n> · features without an on-device test: <n>
 
 ## Text (changed since the ② approval?)
 <n> strings · approved at ② · meaning changed since: <n>   (or no string changes)

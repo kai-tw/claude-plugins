@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: tester-flow
+description: The brief numbers its scenarios, the tester writes a test per scenario skipped until wired before the builder wires, the builder only removes that marker, and the verifier and mutation text match how CI works.
+tags: [tester, flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: s="$root/skills/assistant/SKILL.md"; echo "brief=$(grep -cE "^- (S|F|B)<n> " "$root/skills/assistant/references/brief.md")"; echo "flow=$(grep -c "② screens ─▶ Tests ─▶ Wire" "$s")"; echo "tester=$(grep -cE "skip: .until wired." "$root/agents/tester.md")"; echo "builder=$(tr -s " \n" " " < "$root/agents/builder.md" | grep -c "remove the \`until wired\` marker from each one your slice makes pass, and never edit a test otherwise")"; echo "mutation=$(tr -s " \n" " " < "$s" | grep -c "never blocks")"
+  prompt: |
+    Print whether the brief numbers its scenarios, where tests come in the flow, and what the tester and the builder each do with the until-wired marker.
+context:
+  scaffold_script: fixture.sh

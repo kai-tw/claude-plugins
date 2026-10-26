@@ -26,7 +26,8 @@
 #          whose every check skipped is turned ready so CI runs, and exits 3
 # Legs: verify-code always · verify-coverage when the adapter's coverage: is a
 # command (not none or ci) · verify-text when ui_strings: is set and the PR's
-# diff touches it.
+# diff touches it · verify-device when device_test: is a command, and its first
+# line must be `device: passed` (asst-device).
 # Exit: 0 done (--merge: merged) · 1 refused, a check failed, or (--merge) closed
 # without merging · 2 usage, not a git task, CI unreadable, or no PR possible here
 # (gh missing or unauthenticated, no GitHub remote), or the PR already watched ·
@@ -148,6 +149,7 @@ $leaks"
 
     legs="code"
     case "$(field coverage)" in none|ci|"") ;; *) legs="$legs coverage" ;; esac
+    case "$(field device_test)" in none|"") ;; *) legs="$legs device" ;; esac
     glob=$(field ui_strings)
     if [ -n "$glob" ] && [ "$glob" != none ]; then
       while IFS= read -r f; do
@@ -166,6 +168,12 @@ $leaks"
       [ "$t" -ge "$head_t" ] || missing="$missing verify-$leg(older than HEAD)"
     done
     [ -z "$missing" ] || refuse "verify reports missing or stale:$missing"
+    # A device report is filed whatever the outcome; only a pass counts.
+    if [[ " $legs " == *" device "* ]]; then
+      f=$(cd "$wt" && bash "$here/report.sh" latest "$slug" verify-device 2>/dev/null)
+      first=$(head -1 "$f")
+      [ "$first" = "device: passed" ] || refuse "verify-device says: $first — run asst-device again once every platform can pass"
+    fi
     # The assistant may grade a diff itself only as `exempt` (SKILL.md step 6),
     # and that verdict starts with `exempt:`. Past 20 lines it isn't exempt.
     f=$(cd "$wt" && bash "$here/report.sh" latest "$slug" verify-code 2>/dev/null)

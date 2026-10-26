@@ -26,6 +26,11 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 - Evidence: <each NEW thing, guard, retry, fallback or lock → the case it handles · where that case is shown to happen (file:line · experiment · issue)>
 - Rejected alternatives: <the simplest design that could work, and the evidenced case it fails; any other, one line + its cost>
 
+## Scenarios
+- S<n> <what the user does> → <what they see or keep>
+- F<n> <a failure event> → <what the user sees, and the state left behind>
+- B<n> <a boundary from Boundaries: empty · old format · order · limit> → <the expected result>
+
 ## Screens (UI in scope only)
 - <screens × states the screens page will show>
 

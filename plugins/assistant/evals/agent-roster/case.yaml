@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: agent-roster
-description: Two agents do the work — builder (scout through fix) and verifier (code and text legs, self-scored) — and nothing in the assistant dispatches the retired roles or spawns an agent per finding.
+description: Three agents do the work — builder (scout through fix), tester (tests from the brief) and verifier (code and text legs, self-scored) — and nothing in the assistant dispatches the retired roles or spawns an agent per finding.
 tags: [agents]
 plugins: ["../.."]
 runs: 1
