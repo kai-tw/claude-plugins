@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-diff-with-files
+description: --diff with --files mutates the changed lines of the named files instead of reporting that the diff only deletes lines, and a --diff ref that does not resolve fails with exit 2 instead of passing.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_MUTATION_ENGINE_REPO="$PWD/none"; w=$PWD; PATH="$w/fake:$PATH"; (cd r && plan-mutation --diff main --files lib/a.dart -- flutter test 2>&1; echo "rc=$?"; echo "args: $(cat args.txt)") | sed "s/^/files: /"; (cd r && plan-mutation --diff nope --files lib/a.dart -- flutter test 2>&1; echo "rc=$?") | sed "s/^/badref: /"
+  prompt: |
+    In a repo whose branch changed lines 2-3 of lib/a.dart, run plan-mutation against main with --files lib/a.dart, then with a --diff ref that does not exist. Print each output, exit code and the engine's arguments.
+context:
+  scaffold_script: fixture.sh

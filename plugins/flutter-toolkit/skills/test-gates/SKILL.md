@@ -30,9 +30,14 @@ allowed-tools:
   probe shows it has no executable line — NO-CODE, which passes. Runs with
   branch coverage, so a `throw const …` body no test entered is a gap; a throw
   arm of `??` / `?:` is unmeasurable and blocks until rewritten as a statement.
-  `--diff <ref>` takes scope against `<ref>` — a PR's base, in CI.
+  `--diff <ref>` takes scope against `<ref>` — a PR's base, in CI. It takes a test
+  slot only once a changed Dart file needs measuring; a change with none passes
+  without waiting for one.
 - `plan-mutation -- <scoped test command>` — needs `dart_mutants` in pubspec (the
-  script prints the exact stanza when it is missing). A survivor replaced with
+  script prints the exact stanza when it is missing). With many changed files in
+  different directories, pass `--by-dir` and a command without test paths: each
+  directory's files are mutated against only their own test directory, one pass
+  each, instead of every mutant running every directory's tests. A survivor replaced with
   its own text (two switch arms with one result) is equivalent: listed apart,
   not scored, not posted. While it runs the working
   tree holds live mutants; read files via `git show HEAD:<path>`. The plan line

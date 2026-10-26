@@ -73,6 +73,7 @@
 
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+ORIG_ARGS=("$@")
 
 EXPLICIT_FILES=""
 DIFF_BASE=""
@@ -143,6 +144,14 @@ fi
 files=$(printf '%s\n' "$files" | grep -v '^$' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)
 [ -n "$files" ] || { echo "plan-coverage: no changed lib/**.dart files — nothing to measure."; exit 0; }
 count_files=$(printf '%s\n' "$files" | grep -c .)
+
+# A test slot is taken only now that there is something to run, so a change
+# with no Dart file passes without waiting for one: taken first, a CI run
+# that changed only a workflow failed whenever local sessions held every slot.
+# plan-test runs this script again inside the slot, with PLAN_TEST_SLOT_HELD set.
+if [ -z "${PLAN_TEST_SLOT_HELD:-}" ]; then
+  exec bash "$here/plan_test.sh" --exec bash "$here/coverage.sh" "${ORIG_ARGS[@]}"
+fi
 
 # --- run --------------------------------------------------------------------
 LCOV=coverage/lcov.info

@@ -16,7 +16,6 @@ impl="$here/../skills/test-gates/scripts/coverage.sh"
 # ~4 min plain on NovelGlide), and this script types it INSIDE itself where the
 # test-gate hook — which only sees the top-level Bash command — cannot. Route
 # it through the slot budget so it cannot spend the machine off the books.
-case "${1:-}" in
-  --help|-h) exec bash "$impl" "$@" ;;   # printing help must not need a slot
-esac
-exec bash "$here/../skills/test-gates/scripts/plan_test.sh" --exec bash "$impl" "$@"
+# The script takes the slot itself, once it knows a Dart file changed: help, a
+# usage error and a change with no Dart file never wait for one.
+exec bash "$impl" "$@"
