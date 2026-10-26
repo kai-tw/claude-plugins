@@ -26,7 +26,3 @@ law; one that cannot must first amend the charter (`CONVENTIONS.md`).
   sentence from the source language** — Check: Back-translated into the source language,
   does the value's word order align segment by segment with the source sentence? Alignment
   usually means transcription, violating charter U3.1.
-- **U3.3-ja Nothing there is 「ありません」** — Check: Where the value says something
-  doesn't exist, is it 「〜はありません」? 「見つかりませんでした」 says a search the user ran
-  came back empty; using it for plain absence violates charter U3.5. Example:
-  「書き出せるファイルはありません。」

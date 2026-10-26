@@ -110,6 +110,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    else** — after ③ they are copied into tests and mockups, and changing one word
    means changing dozens of assertion lines. A string first created in the wire
    phase comes back from the builder as a strings-only ② supplement, not a re-render.
+   Once the founder answers, record every key and locale with `asst-strings record
+   <slug>` — the draft is the value the builder wrote, the outcome what the founder
+   did with it — before wiring starts: those pairs are what the next draft is
+   written from, and the rate they add up to says whether drafts are getting closer.
 5. **Wire + tests** (`builder`): one checkpoint per slice (§Dispatch rules), gated by the adapter's
    `gate` — on git a commit (the hook runs it), on svn a diff saved under
    `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
@@ -203,8 +207,8 @@ counts. Show it to the founder; only what they approve goes into the canon file
 
 `.claude/.assistant/lessons.md`, under the project root, is what the project has
 taught you. Add a line to it, unasked, as soon as one of these happens:
-- the founder sends work back at ② or ③, rewrites a string, overrules a `Decided`
-  line, or picks against your recommendation;
+- the founder sends work back at ② or ③, overrules a `Decided` line, or picks
+  against your recommendation (a string's outcome goes to `asst-strings` instead);
 - a script refuses you (`asst-pr` NOT READY, an `asst-cite` FAIL), or a check you
   relied on turns out wrong;
 - a fix round is spent on a finding the brief or the builder could have prevented.

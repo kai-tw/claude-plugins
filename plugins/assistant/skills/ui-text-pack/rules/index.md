@@ -134,6 +134,9 @@ into several locales, at least half of them read unlike anything a person would 
   with the same meaning, in the written register the app's shipped strings use? A
   drawn-out spoken form where a short written one exists violates this rule. Example:
   「無可匯出的檔案」, not 「沒有找到可匯出的檔案」.
+- **U3.8 What the founder rewrote isn't written again** — Check: Does the value make the
+  same choice as a draft the founder rewrote or dropped, in the same role and locale?
+  Where it does, it violates this rule; follow the founder's version.
 
 ## U4 — One concept, one word across the app
 

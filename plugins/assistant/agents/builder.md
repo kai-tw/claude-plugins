@@ -82,6 +82,9 @@ default branch (svn: the last committed revision), never this task's own values.
 A shipped value with the same meaning and UI role is reused word for word (U4.4);
 a new one matches the length, set phrases and terms its shipped siblings in that
 role use. A concept the OS or app store owns takes the platform's own term (U4.5).
+Then run `asst-strings examples <role> <locale>` for each role and locale you
+write, and read every pair: the founder's rewrites of earlier drafts. Write the way
+the finals are written, and never make a choice a draft there made (U3.8).
 
 A tone-sensitive string (error, guidance, confirmation, empty state) gets 2–3
 side-by-side options per locale, listed in the report with a one-line trade-off
@@ -120,7 +123,7 @@ forks: <none, or one line each>
 debt: <none, or one line each>
 declined: <none, or one line each: [<block>.<n>] file:line — reason>
 strings: <none, or one block each>
-  <key> · <where it renders> · <available width>
+  <key> · <role> · <where it renders> · <available width>
   - <locale> <value written>
   - options <locale>: <A> ｜ <B> ｜ <C> — <one-line trade-off>   (tone-sensitive only)
 ```

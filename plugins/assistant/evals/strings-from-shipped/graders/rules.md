@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^rules=U1\.5,U3\.7,U4\.4,U4\.5,U3\.7-zhHant,U3\.8-zhHant,U3\.3-ja$'
+pattern: '^rules=U1\.5,U3\.7,U3\.8,U4\.4,U4\.5$'
 flags: m
 arm: with-only
 ---
-The charter and the zh-Hant and ja layers carry the rules learned from the founder's rewrites.
+The charter carries the rules learned from the founder's rewrites, and no locale layer turns word choices into rules.

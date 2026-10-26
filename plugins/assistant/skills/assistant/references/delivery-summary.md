@@ -22,6 +22,7 @@ reports. Anything a linter or a passed check already settled is one line.
 
 ## Text (changed since the ② approval?)
 <n> strings · approved at ② · meaning changed since: <n>   (or no string changes)
+accepted as drafted: <this task's line and the `all` line from `asst-strings rate`>
 ### <key> · <where it renders> · <available width>       (only those changed since)
 - <locale> <value>          (one line per locale, source first)
 - value approved at ②: <value> → change: <one sentence> · awaiting re-approval

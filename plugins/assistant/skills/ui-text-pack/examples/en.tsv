@@ -1,0 +1,3 @@
+# The founder's rewrites that hold in every project — read with `asst-strings examples`.
+# Columns (tab-separated): locale · role · where it renders · draft · final (`-` = dropped)
+en	toast	thanks after a purchase	Thanks for your support!	Thanks for your support.
