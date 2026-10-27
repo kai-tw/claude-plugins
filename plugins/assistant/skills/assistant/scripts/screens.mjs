@@ -11,9 +11,12 @@
 // <screen>-<state>[-<locale>].<ext> (e.g. `sign-in-empty-zh-TW.png`). The state
 // is the last of empty · loading · error · populated in the name: what comes
 // before it is the screen, what comes after is the locale, so either may hold a
-// dash. The page has one section per screen, states in that order, and every
-// image gets a number, so the founder can answer "which cell" with one. A name
-// with none of the four states is a screen with no state.
+// dash. Any other state name works too: the locale is then the longest tail that
+// is a BCP 47 tag (`zh-TW`, `zh-Hant`, `ja`), the state the segment before it,
+// and with no such tail the last segment is the state. The page has one section
+// per screen, states in that order (any other state sorts by file name), and
+// every image gets a number, so the founder can answer "which cell" with one. A
+// name with a single segment is a screen with no state.
 //
 // Cells are phone-width (at least 220px), so a portrait screenshot is never
 // stretched to the page's width. A sticky bar shows one locale at a time (the
@@ -30,6 +33,7 @@ import { fileURLToPath } from 'node:url';
 
 const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif' };
 const STATES = ['empty', 'loading', 'error', 'populated'];
+const LOCALE = /^[a-z]{2,3}(-[A-Za-z]{4})?(-([A-Z]{2}|\d{3}))?$/;
 
 const [slug, imageDir] = process.argv.slice(2);
 if (!slug || !imageDir || process.argv.length > 4) {
@@ -64,7 +68,11 @@ const shots = readdirSync(src)
     const ext = extname(file).toLowerCase();
     const name = file.slice(0, -ext.length);
     const parts = name.split('-');
-    const at = parts.findLastIndex((p) => STATES.includes(p));
+    let at = parts.findLastIndex((p) => STATES.includes(p));
+    if (at < 0 && parts.length > 1) {
+      const tail = parts.findIndex((_, i) => i >= 2 && LOCALE.test(parts.slice(i).join('-')));
+      at = tail < 0 ? parts.length - 1 : tail - 1;
+    }
     const [screen, state, locale] = at < 0 ? [name, '', '']
       : [parts.slice(0, at).join('-') || name, parts[at], parts.slice(at + 1).join('-')];
     const buf = readFileSync(join(src, file));
