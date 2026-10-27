@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: screens-custom-states
+description: asst-screens groups screenshots named <screen>-<state>-<locale> by screen and locale even when the state is none of empty · loading · error · populated — one section per screen, one button per locale and screen, never one section per file.
+tags: [asst-screens]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: p=$(asst-screens demo shots); echo "screens=$(grep -oE "<h2>[^<]*" "$p" | sed "s,<h2>,," | paste -sd, -)"; echo "cells=$(grep -oE "#[0-9]+</b> [^<]*" "$p" | sed "s,</b>,," | paste -sd, -)"; echo "filters=$(grep -oE "<button type=\"button\" data-(locale|screen)=\"[^\"]*\"" "$p" | sed "s/.* //" | paste -sd, -)"
+  prompt: |
+    Build the screens page for task demo from the shots directory, then list its screens, its numbered images in order, and the filter buttons.
+context:
+  scaffold_script: fixture.sh
