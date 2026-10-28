@@ -1,6 +1,11 @@
 ---
 type: regex
-pattern: '^cells=#1 retrying · en,#2 failed · zh-TW,#3 retrying · zh-TW,#4 offline · zh-TW$'
+pattern: '^cells=#1 failed,#2 retrying,#2 retrying,#3 offline
+flags: m
+arm: with-only
+---
+Each image keeps its own state in the caption; a state shares one number across locales.
+
 flags: m
 arm: with-only
 ---

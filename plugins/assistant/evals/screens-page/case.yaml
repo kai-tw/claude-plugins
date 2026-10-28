@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: screens-page
-description: asst-screens builds one page from a directory of screenshots named <screen>-<state>-<locale> — one image per file, embedded byte for byte, grouped by screen (a dash in the screen name or the locale is kept), states in the order empty · loading · error · populated, each numbered, in phone-width cells with a locale and a screen filter; a directory with no images exits 1.
+description: asst-screens builds one page from a directory of screenshots named <screen>-<state>-<locale> — one image per file, copied byte for byte into screens/ beside the page, grouped by screen (a dash in the screen name or the locale is kept), states in the order empty · loading · error · populated, each numbered, in phone-width cells with a locale and a screen filter; a directory with no images exits 1.
 tags: [asst-screens]
 plugins: ["../.."]
 runs: 1
@@ -8,7 +8,7 @@ execution:
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Bash]
   env:
-    EVAL_CMD: p=$(asst-screens demo shots); echo "path=$p"; echo "cells=$(grep -oE "#[0-9]+</b> [^<]*" "$p" | sed "s,</b>,," | paste -sd, -)"; echo "screens=$(grep -oE "<h2>[^<]*" "$p" | sed "s,<h2>,," | paste -sd, -)"; echo "imgs=$(grep -c "<img src=\"data:image/png;base64," "$p")"; n=0; for f in shots/*.png; do grep -qF "base64,$(base64 < "$f" | tr -d "\n")\"" "$p" && n=$((n+1)); done; echo "same=$n"; echo "cell=$(grep -oE "minmax\(min\(100%, [0-9]+px\)" "$p")"; echo "filters=$(grep -oE "<button type=\"button\" data-(locale|screen)=\"[^\"]*\"" "$p" | sed "s/.* //" | paste -sd, -)"; asst-screens demo empty; echo "exit=$?"
+    EVAL_CMD: p=$(asst-screens demo shots); echo "path=$p"; echo "cells=$(grep -oE "#[0-9]+</b> [^<]*" "$p" | sed "s,</b>,," | paste -sd, -)"; echo "screens=$(grep -oE "<h2>[^<]*" "$p" | sed "s,<h2>,," | paste -sd, -)"; echo "imgs=$(grep -c "<img src=\"screens/" "$p")"; n=0; for f in shots/*.png; do grep -qF "<img src=\"screens/$(basename "$f")\"" "$p" && cmp -s "$f" "$(dirname "$p")/screens/$(basename "$f")" && n=$((n+1)); done; echo "same=$n"; echo "cell=$(grep -oE "minmax\(min\(100%, [0-9]+px\)" "$p")"; echo "filters=$(grep -oE "<button type=\"button\" data-(locale|screen)=\"[^\"]*\"" "$p" | sed "s/.* //" | paste -sd, -)"; asst-screens demo empty; echo "exit=$?"
   prompt: |
     Build the screens page for task demo from the shots directory, list its numbered images in order, check every image is embedded unchanged, then try a directory with no images.
 context:
