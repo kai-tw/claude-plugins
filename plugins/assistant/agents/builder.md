@@ -43,8 +43,11 @@ Phases (run only the one named):
 - **ui** — the screens as real widgets, every state (empty / loading / error /
   populated), no data wiring. Run the adapter's `render`, which writes one image
   per screen × state × locale into one directory, named
-  `<screen>-<state>-<locale>.png`; then `asst-screens <slug> <that directory>`
-  builds the page and prints its path. Never combine the images into one, and
+  `<screen>-<state>-<locale>.png` or `<screen>__<state…>__<theme>__<locale>.png`.
+  Beside them write `labels.json` — `{"lang", "title", "summary", "screens":
+  {key: name}, "states": {key: name}}` in the language you write to the founder,
+  every screen and state key named the way the founder would say it; then
+  `asst-screens <slug> <that directory>` builds the page and prints its path. Never combine the images into one, and
   never write a page of your own.
   Strings are real from here on, in every locale — the founder reads the screens
   in the locale they ship in, not in a placeholder.

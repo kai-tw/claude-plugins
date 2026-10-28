@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: screens-labels
+description: asst-screens reads names like <screen>__<size>__<state>__<theme>__<locale> — one section per screen with a light/dark filter, never one section per file — and labels.json puts the page in the founder's language, with readable screen and state names above each file name.
+tags: [asst-screens]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: p=$(asst-screens demo shots); echo "screens=$(grep -oE "<h2>[^<]*" "$p" | sed "s,<h2>,," | paste -sd, -)"; echo "cells=$(grep -oE "#[0-9]+</b> [^<]*" "$p" | sed "s,</b>,," | paste -sd, -)"; echo "filters=$(grep -oE "<button type=\"button\" data-(locale|mode|screen)=\"[^\"]*\">[^<]*" "$p" | sed "s/.* //" | paste -sd, -)"; echo "title=$(grep -oE "<h1>[^<]*" "$p" | sed "s,<h1>,,")"; echo "lang=$(grep -oE "<html lang=\"[^\"]*\"" "$p")"
+  prompt: |
+    Build the screens page for task demo from the shots directory, then list its screens, its numbered images in order, the filter buttons and the page title.
+context:
+  scaffold_script: fixture.sh

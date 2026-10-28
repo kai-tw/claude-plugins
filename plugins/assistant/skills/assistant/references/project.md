@@ -16,7 +16,7 @@ device_test: <command or none>            # runs the on-device suite on one phon
 devices:    android ios                    # device_test non-none: the platforms whose phone must pass (both by default)
 device_tests: <dir>                        # where the tester puts on-device tests (e.g. integration_test/)
 features:   <path or none>                 # the app's feature list, `- <feature> · <on-device test file | none — why>`; the tester adds to it
-render:     <command or none>              # writes one image per screen × state × locale into one directory, named <screen>-<state>-<locale>.png; asst-screens builds the ② page from them
+render:     <command or none>              # writes one image per screen × state × locale into one directory, named <screen>-<state>-<locale>.png or <screen>__<state…>__<theme>__<locale>.png; asst-screens builds the ② page from them
 ui_strings: <glob or none>                 # where the user-visible strings live (ARB); none = this project has none yet, the text leg is skipped
 locales:    <source> [→ <targets…>]       # ui_strings non-none: the source locale and every locale a key must carry
 strings_canon: <path or none>             # the project's own string canon when it sits outside rules: (the regulation layer under ui-text-pack §Precedence)
