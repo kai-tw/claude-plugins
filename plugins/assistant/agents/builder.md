@@ -45,8 +45,9 @@ Phases (run only the one named):
   per screen × state × locale into one directory, named
   `<screen>-<state>-<locale>.png` or `<screen>__<state…>__<theme>__<locale>.png`.
   Beside them write `labels.json` — `{"lang", "title", "summary", "screens":
-  {key: name}, "states": {key: name}}` in the language you write to the founder,
-  every screen and state key named the way the founder would say it; then
+  {key: name}, "states": {key: name}, "locales": {code: name}}` in the language
+  you write to the founder, every key named the way the founder would say it and
+  listed in the order the page should show it; then
   `asst-screens <slug> <that directory>` builds the page and prints its path. Never combine the images into one, and
   never write a page of your own.
   Strings are real from here on, in every locale — the founder reads the screens

@@ -97,8 +97,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    every string in every locale, beside the existing screen that does the same
    job; what breaks a rule or a lesson goes back to the builder, and every fork it
    reports that changes what the user sees is a `Needs you` → **② stop for the founder**:
-   publish the page with the `Artifact` tool and give the founder its link — never
-   the file or its path, which open as source. Publish the page as `asst-screens`
+   publish the page with the `Artifact` tool, every image in its `screens/`
+   directory passed as `files` with `root` set to the page's directory (at most 255
+   files a call: publish the rest to the same `url`), and give the founder its
+   link — never the file or its path, which open as source. Publish the page as `asst-screens`
    built it, never a page of your own: page-wide images are too tall to read. A re-render republishes the same
    path, so the link stays. Without the `Artifact` tool, ② is a blocker: say so
    instead of sending the file. Never stitch the images into one: a combined sheet is

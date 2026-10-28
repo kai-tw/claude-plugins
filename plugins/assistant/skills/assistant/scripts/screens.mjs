@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // asst-screens — build the ② screens page: one web page showing every rendered
 // screenshot as its own image, at its original resolution. The images are
-// embedded byte for byte (no re-encoding, no stitching), so nothing is scaled
-// down before the founder sees it, and the page is one file the assistant
-// publishes as an Artifact.
+// copied byte for byte (no re-encoding, no stitching) into `screens/` beside the
+// page, so nothing is scaled down before the founder sees it; the assistant
+// publishes the page as an Artifact with those files. They aren't embedded:
+// a page holding every locale's images outgrows an Artifact's 16MB.
 //
 // Usage: asst-screens <task-slug> <image-dir>   → prints the page's path
 //
@@ -23,24 +24,27 @@
 //
 // labels.json in <image-dir> (optional) gives the page in the founder's
 // language: {"lang": "zh-Hant", "title": "…", "summary": "…",
-// "screens": {"<screen>": "…"}, "states": {"<state>": "…"}}. Without it the
-// page shows the keys, in English.
+// "screens": {"<screen>": "…"}, "states": {"<state>": "…"},
+// "locales": {"<locale>": "…"}}. Screens, states and locales appear in the
+// order they're listed there. Without it the page shows the keys, in English,
+// and locales by their language names.
 //
 // The page has one section per screen, headed by its label and its number of
-// states; states in the order empty · loading · error · populated (any other
-// state sorts by file name). Every image gets a number, so the founder can answer
-// "which cell" with one, and its caption gives the state's label (with the theme
-// and locale when there is more than one) above the file name. Cells are phone-width (at least 220px), so a portrait screenshot is never
-// stretched to the page's width. A sticky bar shows one locale at a time (the
-// first, until the founder picks another), one theme (light first) and one
-// screen or all of them; numbers don't change when a filter hides a cell.
+// states; listed states first, then empty · loading · error · populated, then
+// the rest by name. Every screen × state × theme gets a number, the same in
+// every locale, so the founder can answer "which cell" with one; a caption gives
+// the state's label (with the theme when there are both) above the state's key. Cells are
+// phone-width (at least 220px), so a portrait screenshot is never stretched to
+// the page's width. A sticky bar shows one locale at a time (the first, until
+// the founder picks another), one theme (light first) or both, and one screen
+// or all of them; numbers don't change when a filter hides a cell.
 //
-// The page lands at <root>/.claude/.assistant/tasks/<slug>/screens.html and is
-// overwritten on each run. Exit: 0 = written, 1 = no images, 2 = usage or a
+// The page lands at <root>/.claude/.assistant/tasks/<slug>/screens.html, its
+// images in screens/ beside it; both are replaced on each run. Exit: 0 = written, 1 = no images, 2 = usage or a
 // labels.json that isn't valid JSON.
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -51,14 +55,14 @@ const LOCALE = /^[a-z]{2,3}(-[A-Za-z]{4})?(-([A-Z]{2}|\d{3}))?$/;
 
 // The page's own words, by labels.json's `lang`.
 const UI = {
-  en: { filter: 'Filter', screens: 'All screens', locales: 'All locales', themes: 'Both themes', light: 'Light', dark: 'Dark',
-    count: (n) => ` (${n})`, summary: (i, s) => `${i} images · ${s} screens · click an image for full size (← → to step, Esc to close)` },
-  'zh-Hant': { filter: '篩選', screens: '全部畫面', locales: '全部語言', themes: '淺色與深色', light: '淺色', dark: '深色',
-    count: (n) => `（${n}）`, summary: (i, s) => `${s} 個畫面，共 ${i} 張圖。點圖看原尺寸（← → 切換，Esc 關閉）。` },
-  'zh-Hans': { filter: '筛选', screens: '全部画面', locales: '全部语言', themes: '浅色与深色', light: '浅色', dark: '深色',
-    count: (n) => `（${n}）`, summary: (i, s) => `${s} 个画面，共 ${i} 张图。点图看原尺寸（← → 切换，Esc 关闭）。` },
-  ja: { filter: '絞り込み', screens: 'すべての画面', locales: 'すべての言語', themes: 'ライトとダーク', light: 'ライト', dark: 'ダーク',
-    count: (n) => `（${n}）`, summary: (i, s) => `${s} 画面・${i} 枚。画像をクリックで原寸表示（← → で切り替え、Esc で閉じる）。` },
+  en: { filter: 'Filter', screens: 'All screens', themes: 'Both themes', light: 'Light', dark: 'Dark',
+    count: (n) => ` (${n})`, summary: (i, s) => `${s} screens, ${i} states · click an image for full size (← → to step, Esc to close)` },
+  'zh-Hant': { filter: '篩選', screens: '全部畫面', themes: '淺色與深色', light: '淺色', dark: '深色',
+    count: (n) => `（${n}）`, summary: (i, s) => `${s} 個畫面、${i} 個狀態。點圖看原尺寸（← → 切換，Esc 關閉）。` },
+  'zh-Hans': { filter: '筛选', screens: '全部画面', themes: '浅色与深色', light: '浅色', dark: '深色',
+    count: (n) => `（${n}）`, summary: (i, s) => `${s} 个画面、${i} 个状态。点图看原尺寸（← → 切换，Esc 关闭）。` },
+  ja: { filter: '絞り込み', screens: 'すべての画面', themes: 'ライトとダーク', light: 'ライト', dark: 'ダーク',
+    count: (n) => `（${n}）`, summary: (i, s) => `${s} 画面・${i} 状態。画像をクリックで原寸表示（← → で切り替え、Esc で閉じる）。` },
 };
 
 const [slug, imageDir] = process.argv.slice(2);
@@ -90,22 +94,12 @@ try {
   const names = new Intl.DisplayNames([lang], { type: 'language' });
   languageName = (l) => { try { return names.of(l); } catch { return l; } };
 } catch {}
-
-// Pixel size from the file header, so the caption shows what was rendered.
-function size(buf, ext) {
-  if (ext === '.png' && buf.length >= 24) return [buf.readUInt32BE(16), buf.readUInt32BE(20)];
-  if (ext === '.gif' && buf.length >= 10) return [buf.readUInt16LE(6), buf.readUInt16LE(8)];
-  if (ext === '.jpg' || ext === '.jpeg') {
-    for (let i = 2; i + 9 < buf.length; ) {
-      if (buf[i] !== 0xff) return null;
-      const marker = buf[i + 1];
-      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker))
-        return [buf.readUInt16BE(i + 7), buf.readUInt16BE(i + 5)];
-      i += 2 + buf.readUInt16BE(i + 2);
-    }
-  }
-  return null;
-}
+const localeLabel = (l) => labels.locales?.[l] ?? languageName(l);
+// Position in labels.json's list; anything unlisted sorts after it.
+const listed = (group, key) => {
+  const i = Object.keys(labels[group] ?? {}).indexOf(key);
+  return i < 0 ? Infinity : i;
+};
 
 // `__` separates the parts; a single `-` may sit inside a screen or a locale.
 function underscored(name) {
@@ -137,8 +131,7 @@ const shots = readdirSync(src)
   .map((file) => {
     const ext = extname(file).toLowerCase();
     const name = file.slice(0, -ext.length);
-    const buf = readFileSync(join(src, file));
-    return { file, ext, ...(name.includes('__') ? underscored(name) : dashed(name)), buf, px: size(buf, ext) };
+    return { file, ...(name.includes('__') ? underscored(name) : dashed(name)) };
   });
 if (!shots.length) {
   console.error(`asst-screens: no images in ${src} (looked for ${Object.keys(MIME).join(' ')})`);
@@ -146,34 +139,43 @@ if (!shots.length) {
 }
 
 const rank = (s) => (STATES.includes(s) ? STATES.indexOf(s) : -1);
+const byLocale = (a, b) => listed('locales', a) - listed('locales', b) || a.localeCompare(b);
 shots.sort((a, b) =>
-  a.screen.localeCompare(b.screen) || rank(a.state) - rank(b.state)
-  || a.locale.localeCompare(b.locale) || a.file.localeCompare(b.file));
-shots.forEach((s, i) => (s.n = i + 1));
+  listed('screens', a.screen) - listed('screens', b.screen) || a.screen.localeCompare(b.screen)
+  || listed('states', a.state) - listed('states', b.state) || rank(a.state) - rank(b.state)
+  || a.state.localeCompare(b.state) || THEMES.indexOf(a.theme) - THEMES.indexOf(b.theme)
+  || byLocale(a.locale, b.locale) || a.file.localeCompare(b.file));
+// One number per screen × state × theme: the same state shares it in every locale.
+const numbers = new Map();
+for (const s of shots) {
+  const key = [s.screen, s.state, s.theme].join('\n');
+  if (!numbers.has(key)) numbers.set(key, numbers.size + 1);
+  s.n = numbers.get(key);
+}
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const screens = [...new Set(shots.map((s) => s.screen))];
-const locales = [...new Set(shots.map((s) => s.locale).filter(Boolean))].sort();
+const locales = [...new Set(shots.map((s) => s.locale).filter(Boolean))].sort(byLocale);
 const themes = THEMES.filter((t) => shots.some((s) => s.theme === t));
 const bar = (group, items) => `
     <div class="group">${items.map(([key, label]) =>
       `<button type="button" data-${group}="${esc(key)}">${esc(label)}</button>`).join('')}</div>`;
 const filters = [
-  locales.length > 1 ? bar('locale', [...locales.map((l) => [l, languageName(l)]), ['all', ui.locales]]) : '',
+  locales.length > 1 ? bar('locale', locales.map((l) => [l, localeLabel(l)])) : '',
   themes.length > 1 ? bar('mode', [...themes.map((t) => [t, ui[t]]), ['all', ui.themes]]) : '',
   screens.length > 1 ? bar('screen', [['all', ui.screens], ...screens.map((s) => [s, screenLabel(s)])]) : '',
 ].join('');
 
 const sections = screens.map((screen) => {
   const cells = shots.filter((s) => s.screen === screen).map((s) => {
-    const label = [s.state && stateLabel(s.state), themes.length > 1 && ui[s.theme], locales.length > 1 && s.locale].filter(Boolean).join(' · ') || s.file;
-    const px = s.px ? `${s.px[0]} × ${s.px[1]}` : '';
+    const label = [s.state && stateLabel(s.state), themes.length > 1 && ui[s.theme]].filter(Boolean).join(' · ') || s.file;
+    const alt = [screenLabel(screen), label, locales.length > 1 && localeLabel(s.locale)].filter(Boolean).join(' — ');
     return `
-      <figure id="cell-${s.n}" data-locale="${esc(s.locale)}" data-mode="${esc(s.theme)}">
+      <figure data-locale="${esc(s.locale)}" data-mode="${esc(s.theme)}">
         <button type="button" class="shot" data-n="${s.n}" aria-label="#${s.n}">
-          <img src="data:${MIME[s.ext]};base64,${s.buf.toString('base64')}" alt="${esc(screenLabel(screen))} — ${esc(label)}" loading="lazy" decoding="async">
+          <img src="screens/${esc(encodeURIComponent(s.file))}" title="${esc(s.file)}" alt="${esc(alt)}" loading="lazy" decoding="async">
         </button>
-        <figcaption><b>#${s.n}</b> ${esc(label)}<code>${esc(s.file)}${px ? ' · ' : ''}${esc(px)}</code></figcaption>
+        <figcaption><b>#${s.n}</b> ${esc(label)}<code>${esc(s.state || s.file)}</code></figcaption>
       </figure>`;
   }).join('');
   return `
@@ -214,7 +216,6 @@ const html = `<!doctype html>
   [hidden] { display: none !important; }
   .grid { display: grid; gap: 20px 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); align-items: start; }
   figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  figure:target img { outline: 3px solid var(--accent); }
   .shot { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
   .shot img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
   figcaption { font-size: 0.85rem; }
@@ -228,7 +229,7 @@ const html = `<!doctype html>
 <body>
 <header>
   <h1>${esc(title)}</h1>
-  <p>${esc(summary)}${esc(ui.summary(shots.length, screens.length))}</p>
+  <p>${esc(summary)}${esc(ui.summary(numbers.size, screens.length))}</p>
 </header>${filters ? `
 <div class="bar" role="toolbar" aria-label="${esc(ui.filter)}">${filters}
 </div>` : ''}
@@ -237,9 +238,10 @@ const html = `<!doctype html>
 <div id="full" role="dialog" aria-modal="true"><p></p><img alt=""></div>
 <script>
   const count = ${JSON.stringify(ui.count(0))};
-  const pick = { locale: ${JSON.stringify(locales[0] ?? 'all')}, mode: ${JSON.stringify(themes[0] ?? 'all')}, screen: 'all' };
-  try { pick.locale = localStorage.getItem('screens-locale') || pick.locale; } catch (e) {}
-  if (!document.querySelector('[data-locale="' + CSS.escape(pick.locale) + '"]')) pick.locale = 'all';
+  const first = ${JSON.stringify(locales[0] ?? 'all')};
+  const pick = { locale: first, mode: ${JSON.stringify(themes[0] ?? 'all')}, screen: 'all' };
+  try { pick.locale = localStorage.getItem('screens-locale') || first; } catch (e) {}
+  if (!document.querySelector('figure[data-locale="' + CSS.escape(pick.locale) + '"]')) pick.locale = first;
   function filter() {
     for (const b of document.querySelectorAll('.bar button')) {
       const [group, key] = Object.entries(b.dataset)[0];
@@ -298,6 +300,10 @@ const html = `<!doctype html>
 const here = dirname(fileURLToPath(import.meta.url));
 const root = execFileSync('bash', [join(here, 'root.sh')], { encoding: 'utf8' }).trim();
 const out = join(root, '.claude/.assistant/tasks', slug, 'screens.html');
-mkdirSync(dirname(out), { recursive: true });
+const images = join(dirname(out), 'screens');
+// A fresh copy each run, so no image from an earlier render lingers.
+rmSync(images, { recursive: true, force: true });
+mkdirSync(images, { recursive: true });
+for (const s of shots) copyFileSync(join(src, s.file), join(images, s.file));
 writeFileSync(out, html);
 console.log(out);
