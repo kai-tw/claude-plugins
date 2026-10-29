@@ -1,8 +1,10 @@
 # Decision brief — the one page the founder approves
 
 Under 40 lines. Every line is a decision, never a description. Two marks:
-`Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (listed
-for veto, silence accepts). Once answered, each `Needs you` line ends with `Picked A`
+`Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
+call, listed for veto; the founder's silence never makes it theirs). A user-visible
+ruling that differs from how an existing mechanism already behaves is `Needs you`, with
+the current behaviour quoted in the line. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
 Labels and marks are written in the founder's language (SKILL.md §Language); later
 steps find sections by meaning, so a filed brief may carry them in any language.
