@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: board-notion-blocked-by
+description: notion backend — Blocked by is written as the TaskList's Dependencies relation and a row's description goes into its page body; a workspace without Dependencies gets told to turn it on; list shows the blockers still on the board; trash turns In Progress only the Next row it was the last blocker of, before trashing.
+tags: [asst-board, asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export NTN_BIN=$PWD/ntn; asst-board create t9 "Name=Upload retry" Status=Next "Blocked by=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" --body found.md 2>&1; echo "no_deps=$?"; touch deps; asst-board create t9 "Name=Upload retry" Status=Next "Blocked by=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" --body found.md >/dev/null; echo "create=$?"; asst-board list; asst-board trash aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa > trash.out 2>&1; echo "trash=$?"; grep "^unblocked" trash.out; echo "order=$(grep -oE "^(PATCH|TRASH) [a-e]" ntn.log | paste -sd, -)"; echo "--- log"; cat ntn.log
+  prompt: |
+    The adapter says the board is in Notion; ./ntn stands in for the Notion CLI (export NTN_BIN=$PWD/ntn). Create a Next row t9 blocked by page aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa with found.md as its body, once before Dependencies exist and once after (touch deps); list the board; trash page aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; print the ntn log.
+context:
+  scaffold_script: fixture.sh

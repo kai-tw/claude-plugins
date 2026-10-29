@@ -9,7 +9,7 @@ mkdir -p notion/.claude file/.claude/.assistant/tasks/t1 stub
 printf 'board: notion\nnotion_root: 11111111111111111111111111111111\n' > notion/.claude/assistant.md
 printf 'board: file\nkb: docs\n' > file/.claude/assistant.md
 cat > file/.claude/.assistant/board.md <<'MD'
-| Slug | Name | Status | Stage | Trigger |
+| Slug | Name | Status | Stage | Blocked by |
 |---|---|---|---|---|
 | t1 | Local task | In Progress | Review |  |
 MD
@@ -18,7 +18,7 @@ cat > stub/ntn <<'SH'
 #!/usr/bin/env bash
 echo "$*" >> "$EVAL_WS/ntn.log"
 case "$1 $2" in
-  "api v1/pages/"*) echo '{"object":"page","id":"p9","url":"u9","properties":{"Name":{"type":"title","title":[{"plain_text":"Remote task"}]},"Status":{"type":"status","status":{"name":"Next"}},"Trigger":{"type":"rich_text","rich_text":[]}}}' ;;
+  "api v1/pages/"*) echo '{"object":"page","id":"p9","url":"u9","properties":{"Name":{"type":"title","title":[{"plain_text":"Remote task"}]},"Status":{"type":"status","status":{"name":"Next"}},"Blocked by":{"type":"relation","relation":[]}}}' ;;
   "pages get") printf '## 系統設計\nthe remote brief\n' ;;
   *) echo '{}' ;;
 esac

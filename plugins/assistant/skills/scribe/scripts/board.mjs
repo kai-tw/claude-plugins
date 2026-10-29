@@ -4,21 +4,27 @@
 //   notion  the project's TaskList under `notion_root` (writes via asst-notion)
 //   file    the personal, unversioned .claude/.assistant/board.md (+ tasks/<slug>/)
 //
-// Usage: asst-board create  <slug> Name=<…> [Status=<…>] [Stage=<…>] [Trigger=<…>]
+// Usage: asst-board create  <slug> Name=<…> [Status=<…>] [Stage=<…>] ["Blocked by=<slug>[,…]"] [--body <file.md>]
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
 //        asst-board archive <slug> <archive.md>                at close: the archive + its decisions
-//        asst-board trash   <slug|page-id>                     at close, after archive: the row leaves the board
-//        asst-board show    <slug|page-id> [--body]           one row whole; --body adds its brief after ---
+//        asst-board trash   <slug|page-id>                     at close, after archive: the row leaves the board,
+//                                                              and a Next row it was the last blocker of turns In Progress
+//        asst-board show    <slug|page-id> [--body]           one row whole; --body adds its body after ---
 //        asst-board list [--all]                               the live rows (In Progress · Next), or every row
 //        asst-board --help                    Any op takes --dry-run: print, write nothing.
+//
+// `Blocked by` names only the rows this one waits for: slugs, or page ids on Notion,
+// where it is the TaskList's built-in Dependencies relation. A `Next` row needs one.
+// Everything else about a row goes in its body (`--body` at create, `brief` later);
+// the file board keeps no property but Name · Status · Stage · Blocked by.
 //
 // archive.md: the five archive sections (## Overview · ## Problem · ## Final Approach
 // · ## Key Decisions · ## Deferred Items) then `## Decisions`, one `### <fork>` each
 // with **Context** / **Decision** / **Consequence** paragraphs. file: copied verbatim
 // to <kb>/<date>-<slug>.md; notion: one feature-archive row + one decision-log row
 // per fork.
-// Exit 2 = no adapter / bad op / unknown slug; asst-notion failures pass through.
+// Exit 2 = no adapter / bad op / unknown slug / bad property; asst-notion failures pass through.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
@@ -29,7 +35,11 @@ const fail = (m) => { console.error(`asst-board: ${m}`); process.exit(2); };
 const argv = process.argv.slice(2);
 const dry = argv.includes('--dry-run'); const args = argv.filter(a => a !== '--dry-run');
 const [op, ...rest] = args;
-if (!op || op === '--help' || op === '-h') { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 21).join('\n').replace(/^\/\/ ?/gm, '')); process.exit(0); }
+if (!op || op === '--help' || op === '-h') {
+  const src = readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n');
+  console.log(src.slice(1, src.findIndex((l, i) => i > 0 && !l.startsWith('//'))).join('\n').replace(/^\/\/ ?/gm, ''));
+  process.exit(0);
+}
 
 const root = spawnSync('bash', [join(here, '../../assistant/scripts/root.sh')], { encoding: 'utf8' }).stdout.trim();
 const adapterPath = join(root, '.claude/assistant.md');
@@ -42,6 +52,15 @@ const stateDir = join(root, '.claude/.assistant');
 const today = new Date().toISOString().slice(0, 10);
 const kv = (xs) => Object.fromEntries(xs.map(x => { const i = x.indexOf('='); if (i < 1) fail(`expected Key=Val, got "${x}"`); return [x.slice(0, i), x.slice(i + 1)]; }));
 const isPageId = (s) => /^[0-9a-f]{32}$|^[0-9a-f-]{36}$/i.test(s);
+const bare = (id) => String(id).replace(/-/g, '').toLowerCase();
+const blockers = (v) => (Array.isArray(v) ? v : String(v ?? '').split(',')).map(s => s.trim()).filter(Boolean);
+const FILE_PROPS = ['Name', 'Status', 'Stage', 'Blocked by'];
+function checkProps(p, { creating }) {
+  const bad = backend === 'file' ? Object.keys(p).filter(k => !FILE_PROPS.includes(k)) : [];
+  if (bad.length) fail(`unknown property ${bad.join(', ')}: a row keeps ${FILE_PROPS.join(' · ')}; anything else goes in its body (--body at create, brief later).`);
+  if (creating && p.Status === 'Next' && !blockers(p['Blocked by']).length)
+    fail('a Next row waits on another row: pass "Blocked by=<slug>". A wait on anything outside the board is Deferred, with its condition in the body (--body).');
+}
 
 // ── notion backend: every write is an asst-notion command; --dry-run prints it.
 function notion(cmdArgs, stdin, { write = true } = {}) {
@@ -90,12 +109,16 @@ function decisions(md) { // "### fork" blocks under ## Decisions → {Name, Cont
 
 // ── file backend: one markdown table, brief and archive as files.
 const boardFile = join(stateDir, 'board.md');
-const COLS = ['Slug', 'Name', 'Status', 'Stage', 'Trigger'];
+const COLS = ['Slug', ...FILE_PROPS];
+// Columns are read by their header, so a column the board doesn't keep stops here
+// instead of being read as another one or dropped on the next write.
 function readRows() {
   if (!existsSync(boardFile)) return [];
-  return readFileSync(boardFile, 'utf8').split('\n').filter(l => l.startsWith('|')).slice(2)
-    .map(l => l.split('|').slice(1, -1).map(c => c.trim())).filter(c => c.length === COLS.length)
-    .map(c => Object.fromEntries(COLS.map((k, i) => [k, c[i]])));
+  const [head = [], , ...body] = readFileSync(boardFile, 'utf8').split('\n').filter(l => l.startsWith('|'))
+    .map(l => l.split('|').slice(1, -1).map(c => c.trim()));
+  const extra = head.filter(h => !COLS.includes(h));
+  if (extra.length) fail(`${boardFile} has column ${extra.join(', ')}, which the board doesn't keep: move what it holds into each row's body (asst-board brief) or "Blocked by", then delete the column.`);
+  return body.filter(c => c.length === head.length).map(c => Object.fromEntries(COLS.map(k => [k, c[head.indexOf(k)] ?? ''])));
 }
 function writeRows(rows) {
   if (dry) { console.log(rows.map(r => COLS.map(k => r[k] ?? '').join(' | ')).join('\n')); return; }
@@ -110,9 +133,21 @@ function put(dest, src) {
 
 switch (op) {
   case 'create': {
-    const [slug, ...props] = rest; if (!slug || !props.length) fail('create <slug> Name=<…> …');
+    const bi = rest.indexOf('--body'); const body = bi < 0 ? null : rest[bi + 1];
+    if (bi >= 0 && !(body && existsSync(body))) fail('--body needs a Markdown file that exists');
+    const [slug, ...props] = bi < 0 ? rest : [...rest.slice(0, bi), ...rest.slice(bi + 2)];
+    if (!slug || !props.length) fail('create <slug> Name=<…> …');
     const p = { Status: 'In Progress', Stage: 'Product Plan', ...kv(props) }; if (!p.Name) fail('create needs Name=');
-    if (backend === 'file') { const rows = readRows(); if (rows.some(r => r.Slug === slug)) fail(`row "${slug}" exists`); rows.push({ Slug: slug, ...p }); writeRows(rows); console.log(`create ${slug} → ${boardFile}`); break; }
+    checkProps(p, { creating: true });
+    if (backend === 'file') {
+      const rows = readRows(); if (rows.some(r => r.Slug === slug)) fail(`row "${slug}" exists`);
+      for (const b of blockers(p['Blocked by'])) if (!rows.some(r => r.Slug === b)) fail(`no row "${b}" to wait on`);
+      rows.push({ Slug: slug, ...p }); writeRows(rows); console.log(`create ${slug} → ${boardFile}`);
+      if (body) put(join(stateDir, 'tasks', slug, 'brief.md'), resolve(body));
+      break;
+    }
+    if (p['Blocked by']) p['Blocked by'] = blockers(p['Blocked by']).map(pageIdOf);
+    if (body) p.bodyFile = resolve(body);
     const out = notion(['create', '-'], JSON.stringify({ db: 'tasklist', rows: [p] }));
     const id = (out.match(/[0-9a-f]{32}/) ?? [])[0];
     if (id && !dry) { mkdirSync(dirname(pageFile(slug)), { recursive: true }); writeFileSync(pageFile(slug), id + '\n'); }
@@ -120,9 +155,14 @@ switch (op) {
   }
   case 'set': {
     const [ref, ...props] = rest; if (!ref || !props.length) fail('set <slug|page-id> Key=Val …');
-    const p = kv(props);
-    if (backend === 'file') { const rows = readRows(); const r = rows.find(x => x.Slug === ref); if (!r) fail(`no row "${ref}"`); Object.assign(r, p); writeRows(rows); console.log(`set ${ref} ${props.join(' ')} → ${boardFile}`); break; }
-    notion(['set', 'tasklist', pageIdOf(ref), ...props]); break;
+    const p = kv(props); checkProps(p, { creating: false });
+    if (backend === 'file') {
+      const rows = readRows(); const r = rows.find(x => x.Slug === ref); if (!r) fail(`no row "${ref}"`);
+      for (const b of blockers(p['Blocked by'])) if (!rows.some(x => x.Slug === b)) fail(`no row "${b}" to wait on`);
+      Object.assign(r, p); writeRows(rows); console.log(`set ${ref} ${props.join(' ')} → ${boardFile}`); break;
+    }
+    const args = props.map(x => x.startsWith('Blocked by=') ? `Blocked by=${blockers(p['Blocked by']).map(pageIdOf).join(',')}` : x);
+    notion(['set', 'tasklist', pageIdOf(ref), ...args]); break;
   }
   case 'brief': {
     const [ref, file] = rest; if (!ref || !file || !existsSync(file)) fail('brief <slug|page-id> <brief.md>');
@@ -148,7 +188,7 @@ switch (op) {
       const r = readRows().find(x => x.Slug === ref); if (!r) fail(`no row "${ref}"`);
       console.log(JSON.stringify(r));
       const brief = join(stateDir, 'tasks', ref, 'brief.md');
-      if (body) { console.log('---'); console.log(existsSync(brief) ? readFileSync(brief, 'utf8').trimEnd() : '(no brief filed)'); }
+      if (body) { console.log('---'); console.log(existsSync(brief) ? readFileSync(brief, 'utf8').trimEnd() : '(no body filed)'); }
       break;
     }
     notion(['get', pageIdOf(ref), ...(body ? ['--body'] : [])], undefined, { write: false }); break;
@@ -158,16 +198,41 @@ switch (op) {
     const live = (r) => ['In Progress', 'Next'].includes(r.Status);
     // The count leads, so a list cut short on screen still says how long it is.
     const print = (lines) => console.log([`${lines.length} rows (${all ? 'all' : 'live'})`, ...lines].join('\n'));
-    if (backend === 'file') { print(readRows().filter(r => all || live(r)).map(r => COLS.map(k => r[k]).join(' · '))); break; }
-    // One query per status, each followed to its last page by asst-notion query.
-    const rows = (all ? [[]] : [['Status=In Progress'], ['Status=Next']]).flatMap(notionRows);
-    if (!dry) print(rows.map(r => [r.Name, r.Status, r.Stage, r.Trigger, r.id].map(v => v ?? '').join(' · ')));
+    // A row's `Blocked by` shows only the blockers still on the board.
+    if (backend === 'file') {
+      const rows = readRows(); const on = new Set(rows.map(r => r.Slug));
+      print(rows.filter(r => all || live(r)).map(r => [r.Slug, r.Name, r.Status, r.Stage, blockers(r['Blocked by']).filter(b => on.has(b)).join(', ')].join(' · ')));
+      break;
+    }
+    // One query for every row, followed to its last page: which blockers are still on the board needs them all.
+    const rows = notionRows([]);
+    if (dry) break;
+    const byId = new Map(rows.map(r => [bare(r.id), r]));
+    print(rows.filter(r => all || live(r)).map(r => [r.Name, r.Status, r.Stage,
+      blockers(r['Blocked by']).map(id => byId.get(bare(id))?.Name).filter(Boolean).join(', '), r.id].map(v => v ?? '').join(' · ')));
     break;
   }
   case 'trash': {
     const [ref] = rest; if (!ref) fail('trash <slug|page-id>');
-    if (backend === 'file') { const rows = readRows(); const i = rows.findIndex(x => x.Slug === ref); if (i < 0) fail(`no row "${ref}"`); rows.splice(i, 1); writeRows(rows); console.log(`trash ${ref} → ${boardFile}`); break; }
-    notion(['trash', pageIdOf(ref)]); break;
+    // A Next row whose last blocker this was turns In Progress. That happens before the
+    // trash, so a failed trash leaves the closed row to retry, never a Next row waiting on nothing.
+    if (backend === 'file') {
+      const rows = readRows(); const i = rows.findIndex(x => x.Slug === ref); if (i < 0) fail(`no row "${ref}"`);
+      rows.splice(i, 1); const on = new Set(rows.map(r => r.Slug));
+      for (const r of rows) {
+        const was = blockers(r['Blocked by']); if (!was.includes(ref)) continue;
+        r['Blocked by'] = was.filter(b => b !== ref).join(',');
+        if (r.Status === 'Next' && !was.some(b => b !== ref && on.has(b))) { r.Status = 'In Progress'; console.log(`unblocked ${r.Slug} → In Progress`); }
+      }
+      writeRows(rows); console.log(`trash ${ref} → ${boardFile}`); break;
+    }
+    const id = bare(pageIdOf(ref)); const rows = notionRows([]); const on = new Set(rows.map(r => bare(r.id)));
+    for (const r of rows) {
+      const was = blockers(r['Blocked by']).map(bare);
+      if (r.Status !== 'Next' || !was.includes(id) || was.some(b => b !== id && on.has(b))) continue;
+      notion(['set', 'tasklist', bare(r.id), 'Status=In Progress']); console.log(`unblocked ${r.Name} (${r.id}) → In Progress`);
+    }
+    notion(['trash', id]); break;
   }
   default: fail(`unknown op "${op}" (create · set · brief · archive · trash · show · list)`);
 }
