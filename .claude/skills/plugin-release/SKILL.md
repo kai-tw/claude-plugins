@@ -30,6 +30,9 @@ Ask what an existing user experiences when they upgrade.
 Left digit increments, everything right of it resets: 1.1.3 plus a feature is
 1.2.0, not 1.1.4.
 
+Below 1.0.0, a breaking change is `minor` (0.58.0 → 0.59.0): a plugin reaches
+1.0.0 only when it's declared stable, never as a side effect of a bump.
+
 If a change is purely repo infrastructure — `.github/`, this skill, the root
 README — **no plugin was released**; do not bump anything.
 
