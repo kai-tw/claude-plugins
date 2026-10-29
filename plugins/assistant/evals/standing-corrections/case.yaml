@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: standing-corrections
-description: The shipped skill, agents and ui-text-pack carry the founder's standing corrections — a closed row is archived then trashed, the PR text is rewritten before ready and a merge is a pinned squash, screens are checked before ②, forks never fall to Decided for lack of room, agents run only what finishes in their turn and file reports under their own names, and the text rules on wraps, guessed causes, misattributed failures, objects that act and 「變更」.
+description: The shipped skill, agents and ui-text-pack carry the founder's standing corrections — a closed row is archived then trashed, the PR text is rewritten before ready and a merge is a pinned squash, screens are checked before ②, forks never fall to Decided for lack of room, nothing waits in a sleep loop and reports are filed under their own names, and the text rules on wraps, guessed causes, misattributed failures, objects that act and 「變更」.
 tags: [flow, ui-text-pack]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: for f in skills/assistant/SKILL.md agents/builder.md agents/verifier.md skills/ui-text-pack/rules/index.md skills/ui-text-pack/rules/zh-Hant.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/build.md agents/verifier.md skills/ui-text-pack/rules/index.md skills/ui-text-pack/rules/zh-Hant.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
   prompt: |
-    Print the assistant skill, the builder and verifier, and the ui-text-pack charter and zh-Hant layer, one file per line.
+    Print the assistant skill, its build reference, the verifier, and the ui-text-pack charter and zh-Hant layer, one file per line.
 context:
   scaffold_script: fixture.sh
