@@ -47,8 +47,9 @@ version; it is not restated here.
 | ③ Delivery summary | Verify done, PR turned ready | logic · data wiring · style · error handling · as-built vs as-decided · tests · on-device runs · whether the ② approval still holds | `references/delivery-summary.md` |
 
 Nothing else reaches the founder. A `Needs you` line is the only question you ask;
-`Decided` lines are listed for veto. Chat carries three kinds of
-message only: a decision needed, a blocker, done.
+`Decided` lines are your own calls, listed so the founder can veto them — their silence
+never makes one their decision, and you never cite it as approval. Chat carries three
+kinds of message only: a decision needed, a blocker, done.
 
 ## The flow
 
@@ -88,7 +89,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`;
    it holds four questions, so the rest go in the same message as a numbered list —
    a fork is never marked `Decided` for lack of room.
-   Silence on `Decided` = accepted. Mark each `Needs you` line with the choice made,
+   Before filing, check each user-visible `Decided` line against the sibling
+   implementation: one that makes the new behaviour differ from how an existing
+   mechanism already behaves for the user is a `Needs you`, with that behaviour quoted
+   in the line. Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
    later step reads, without your context.
 4. **Build** (`builder`): UI first, as real widgets in all four states → one

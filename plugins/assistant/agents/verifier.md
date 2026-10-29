@@ -75,7 +75,9 @@ design: every scenario has a path, every datum and capability one canonical home
 thing a reason under Ownership. Then check proportion — style-pack S15 and S16.1 at
 design scale: a NEW thing, guard, retry, fallback or lock whose `Evidence` cites no
 case, or a case that can't happen, is filed with Fix: drop it; a design with fewer
-NEW things that still covers every evidenced case is filed with Fix: that design.
+NEW things that still covers every evidenced case is filed with Fix: that design; a
+user-visible `Decided` line that differs from how an existing mechanism already
+behaves is filed with Fix: move it to `Needs you`, quoting that behaviour.
 File only what would send the build the wrong way.
 
 Report: the six blocks, `low confidence`, and one line `passed:` naming the
