@@ -106,7 +106,11 @@ const DB = {
       Stage: SEL('Product Plan', 'Design Plan', 'Engineering Plan', 'Implementation', 'Review',
         'Shipped', 'Blocked', 'Translation', 'Security', 'Privacy', 'QA', 'Archived'),
       Area: MULTI(), // live-populated; see PROJECT_VOCAB
-      Trigger: { type: 'text' },
+      // The rows this one waits for: Notion's built-in Dependencies relation, which
+      // keeps the reverse side (`Blocking`) itself. A workspace that hasn't turned
+      // it on loses the property at resolve time (see `enable`).
+      'Blocked by': { type: 'relation',
+        enable: 'turn on Dependencies in the TaskList (Database settings → More settings → Dependencies) and keep the property it adds named "Blocked by"' },
       // Tracing-task fields (Status = Tracing): the next observation date + the
       // goal to evaluate against on that date.
       'Check Date': { type: 'date' },
@@ -118,9 +122,10 @@ const DB = {
       // The ② screens page — the task's design trail. Empty for non-UI work.
       'Design Sheet': { type: 'url' },
     },
-    // Relation props on this DB are Notion-managed reverse relations — not
+    // Other relation props on this DB are Notion-managed reverse relations — not
     // builder-written.
-    // body: optional `content` — the approved brief is appended here.
+    // body: optional `content` or `bodyFile` — a row's description at create; the
+    // approved brief is appended here.
   },
 
   'release-log': {
@@ -392,7 +397,7 @@ function buildRow(dbKey, def, row, mode) {
 
   for (const k of Object.keys(row))
     if (!reserved.has(k))
-      fail(`${dbKey}: unknown field "${k}" (row ${rowLabel}). Known: ${[...reserved].filter((x) => x !== 'page_id' && x !== 'icon' && x !== 'cover').join(', ')}`);
+      fail(MISSING_PROP.has(`${dbKey}.${k}`) ? missingProp(dbKey, k) : `${dbKey}: unknown field "${k}" (row ${rowLabel}). Known: ${[...reserved].filter((x) => x !== 'page_id' && x !== 'icon' && x !== 'cover').join(', ')}`);
 
   for (const [name, spec] of Object.entries(def.props))
     encodeProp(dbKey, name, spec, row[name], properties, rowLabel);
@@ -811,7 +816,7 @@ function buildFilter(dbKey, pairs) {
     const [, name, op, rawVal] = m;
     let val = rawVal;
     const spec = def.props[name];
-    if (!spec) fail(`${dbKey}: unknown property "${name}". Known: ${Object.keys(def.props).join(', ')}`);
+    if (!spec) fail(MISSING_PROP.has(`${dbKey}.${name}`) ? missingProp(dbKey, name) : `${dbKey}: unknown property "${name}". Known: ${Object.keys(def.props).join(', ')}`);
     const property = spec.notionName ?? name;
     if (op !== '=' && spec.type !== 'date')
       fail(`${dbKey}.${name}: operator "${op}" only applies to date properties (type is "${spec.type}")`);
@@ -951,7 +956,8 @@ function schemaLive(only) {
     if (!def) { console.error(unknownDb(k)); process.exitCode = 1; return; }
     const live = JSON.parse(ntn(['api', `v1/data_sources/${def.ds}`]));
     const liveProps = live.properties || {};
-    const drift = [];
+    const drift = [...MISSING_PROP].filter(([at]) => at.startsWith(`${k}.`))
+      .map(([at, how]) => `MISSING in Notion: "${at.slice(k.length + 1)}" — ${how}`);
     for (const [name, spec] of Object.entries(def.props)) {
       const liveName = spec.notionName ?? name;
       const lp = liveProps[liveName];
@@ -1091,6 +1097,14 @@ function unknownDb(key) {
     + `    ${key} = <the exact title in Notion>`;
 }
 
+// Registry props with an `enable` hint that this workspace's database lacks,
+// dropped during resolution like a missing DB. Kept so a write to one says how to
+// add it instead of calling it unknown.
+const MISSING_PROP = new Map(); // "<db>.<prop>" → spec.enable
+function missingProp(dbKey, name) {
+  return `${dbKey}: this workspace's ${DB_TITLE[dbKey]} has no "${name}" property — ${MISSING_PROP.get(`${dbKey}.${name}`)}.`;
+}
+
 // Property names whose option list belongs to the project, not the workflow.
 // Everything else keeps the registry's static vocabulary so a typo fails fast,
 // locally, before any network call.
@@ -1137,10 +1151,17 @@ function resolveRegistry(rootId) {
     resolvedDs[key] = dsId;
   }
 
-  // Late-bind relation targets now that every ds id is known, and adopt the
-  // live option list for the project-owned taxonomies.
+  // Late-bind relation targets now that every ds id is known, adopt the live
+  // option list for the project-owned taxonomies, and drop a prop with an
+  // `enable` hint that the live database lacks.
   for (const [key, def] of Object.entries(DB)) {
+    let live;
+    const liveProps = () => (live ??= JSON.parse(ntn(['api', `v1/data_sources/${def.ds}`])).properties ?? {});
     for (const [propName, spec] of Object.entries(def.props || {})) {
+      if (spec.enable) {
+        const lp = liveProps()[spec.notionName ?? propName];
+        if (lp?.type !== REGISTRY_TO_NOTION[spec.type]) { MISSING_PROP.set(`${key}.${propName}`, spec.enable); delete def.props[propName]; continue; }
+      }
       if (spec.dsRef) {
         const target = resolvedDs[spec.dsRef];
         if (!target) {
@@ -1150,8 +1171,7 @@ function resolveRegistry(rootId) {
         spec.ds = target;
       }
       if (PROJECT_VOCAB.has(propName) && spec.options) {
-        const live = JSON.parse(ntn(['api', `v1/data_sources/${def.ds}`]));
-        const p = live.properties?.[propName];
+        const p = liveProps()[propName];
         const opts = p?.multi_select?.options ?? p?.select?.options;
         if (opts) spec.options = opts.map((o) => o.name);
       }
@@ -1260,11 +1280,12 @@ function main() {
         const name = p.slice(0, i);
         const raw = p.slice(i + 1);
         const spec = def.props[name];
-        if (!spec) fail(`${pos[0]}: unknown property "${name}". Known: ${Object.keys(def.props).join(', ')}`);
-        // CLI args arrive as strings — coerce the two non-string property shapes
-        // (multi_select comma-splits; checkbox parses true/1). Everything else
-        // passes through for encodeProp's own validation.
-        row[name] = spec.type === 'multi_select' ? raw.split(',').map((s) => s.trim()).filter(Boolean)
+        if (!spec) fail(MISSING_PROP.has(`${pos[0]}.${name}`) ? missingProp(pos[0], name) : `${pos[0]}: unknown property "${name}". Known: ${Object.keys(def.props).join(', ')}`);
+        // CLI args arrive as strings — coerce the non-string property shapes
+        // (multi_select and relation comma-split, an empty relation clears it;
+        // checkbox parses true/1). Everything else passes through for encodeProp's
+        // own validation.
+        row[name] = spec.type === 'multi_select' || spec.type === 'relation' ? raw.split(',').map((s) => s.trim()).filter(Boolean)
           : spec.type === 'checkbox' ? raw === 'true' || raw === '1'
           : raw;
       }

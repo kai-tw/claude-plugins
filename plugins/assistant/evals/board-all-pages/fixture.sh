@@ -10,7 +10,7 @@ mkdir -p .claude stub
 printf 'board: notion\nnotion_root: 11111111111111111111111111111111\n' > .claude/assistant.md
 cat > stub/ntn <<'SH'
 #!/usr/bin/env bash
-row() { printf '{"id":"p%s","url":"u%s","properties":{"Name":{"type":"title","title":[{"plain_text":"Task %s"}]},"Status":{"type":"status","status":{"name":"%s"}},"Stage":{"type":"status","status":{"name":"Review"}},"Trigger":{"type":"rich_text","rich_text":[]}}}' "$1" "$1" "$1" "$2"; }
+row() { printf '{"id":"p%s","url":"u%s","properties":{"Name":{"type":"title","title":[{"plain_text":"Task %s"}]},"Status":{"type":"status","status":{"name":"%s"}},"Stage":{"type":"status","status":{"name":"Review"}},"Blocked by":{"type":"relation","relation":[]}}}' "$1" "$1" "$1" "$2"; }
 case "$1 $2" in
   "api v1/blocks/"*) echo '{"results":[{"type":"child_database","id":"db1","child_database":{"title":"TaskList"}}]}' ;;
   "datasources resolve") echo '{"data_sources":[{"id":"ds1"}]}' ;;

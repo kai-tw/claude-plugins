@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: board-trash
-description: file backend — asst-board trash takes a closed row off the board, leaves the row waiting on it, and exits 2 on an unknown slug.
+description: file backend — asst-board trash takes a closed row off the board, turns the Next row it was the last blocker of In Progress, and exits 2 on an unknown slug.
 tags: [asst-board]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 6
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: asst-board create t1 "Name=First task" && asst-board create t2 "Name=Second task" Status=Next Trigger=t1 && asst-board trash t1 && asst-board list --all; asst-board trash nope; echo "missing=$?"
+    EVAL_CMD: asst-board create t1 "Name=First task" && asst-board create t2 "Name=Second task" Status=Next "Blocked by=t1" && asst-board trash t1 && asst-board list --all; asst-board trash nope; echo "missing=$?"
   prompt: |
-    The adapter says the board is a local file. Create t1 and a Next row t2 waiting on it, trash t1, list every row, then trash a slug that does not exist and print its exit code.
+    The adapter says the board is a local file. Create t1 and a Next row t2 blocked by it, trash t1, list every row, then trash a slug that does not exist and print its exit code.
 context:
   scaffold_script: fixture.sh

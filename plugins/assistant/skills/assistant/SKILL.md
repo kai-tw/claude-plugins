@@ -71,7 +71,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    recommend anything.
    A request one brief cannot hold — more than 5 `Needs you` forks, or a design that
    touches more than one persisted format — becomes several task statements in order: each
-   its own row and worktree; the later rows are `Status=Next` with `Trigger`
+   its own row and worktree; the later rows are `Status=Next` with `Blocked by`
    naming the row they wait for. The split itself is a `Decided` in the first
    brief. Read the project's lessons (§Lessons) first; every dispatch for the task
    quotes the ones that bear on it.
@@ -155,7 +155,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    touched; only residue that changes scope or design becomes one `Needs you` line instead.
    Anything found outside the task's boundary (step 1) — a defect, a gap, an
    improvement — is never just mentioned and never fixed here: `asst-board create` a row
-   for it at once (`Status=Backlog`, `Trigger` naming the task that found it), and
+   for it at once (`Status=Backlog`, `--body` a file saying what was found and by
+   which task), and
    the next message to the founder names that row. When a check should have caught
    the defect earlier, the same message proposes the mechanism fix: which agent,
    rule or check to change, in one line.
@@ -246,18 +247,23 @@ say the same thing.
 
 The board is whatever the adapter's `board:` names — the project's Notion
 TaskList, or the personal `.claude/.assistant/board.md` — read and written only
-through `asst-board`, same columns either way (Status · Stage · Trigger). One row
+through `asst-board`, same columns either way (Status · Stage · Blocked by). One row
 per task, `Stage` mapped as: task statement → Product Plan · brief → Engineering Plan ·
 screens → Design Plan · build → Implementation · verify → Review · deliver → QA;
-a closed row is trashed. `Trigger` holds only what the row waits for, in one line,
-empty when nothing does; a description, scope or evidence goes in the row's body
-(`asst-board brief`). `list` is the summary (Name · Status · Stage · Trigger); one row's
-every property, and with `--body` its brief, is `asst-board show <slug> [--body]` —
+a closed row is trashed. `Blocked by` names only the rows this one waits for (on
+Notion, the TaskList's built-in Dependencies), and a `Next` row needs one. Everything
+else about a row — what it is, who found it, scope, evidence, a wait on anything
+outside the board — goes in its body: `asst-board create … --body <file>`, or
+`asst-board brief` later. A row that waits on something outside the board is
+`Deferred`, its condition in the body. `list` is the summary (Name · Status · Stage ·
+the blockers still on the board); one row's
+every property, and with `--body` its body, is `asst-board show <slug> [--body]` —
 never a whole-board query read for one row. Every turn you take is a scheduler pass: `asst-board list` and
 `asst-intake <project-dir>` → file new candidates → advance or
 dispatch each live row → surface new `Needs you` lines together.
-Live = `In Progress`, or `Next` whose `Trigger` names a row no longer on the board (flip it
-to `In Progress` and start at Scout). A Close changes the board, so the pass runs
+Live = `In Progress`. `asst-board trash` turns a `Next` row In Progress when it takes
+that row's last blocker off the board and prints `unblocked <row>`: start that row at
+Scout. A Close changes the board, so the pass runs
 again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet
 board, never at a Close. A row's progress is what the board and the disk hold, never
 what you remember: a row waiting on a report reads `asst-report latest <slug>

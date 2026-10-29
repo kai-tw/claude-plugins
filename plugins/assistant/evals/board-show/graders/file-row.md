@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^\{"Slug":"t1","Name":"Local task","Status":"In Progress","Stage":"Review","Trigger":""\}$'
+pattern: '^\{"Slug":"t1","Name":"Local task","Status":"In Progress","Stage":"Review","Blocked by":""\}$'
 flags: m
 arm: with-only
 ---
