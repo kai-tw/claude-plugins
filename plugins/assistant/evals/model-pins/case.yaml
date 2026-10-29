@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: model-pins
-description: The leader picks the builder's model per dispatch — haiku for exempt, sonnet by default, opus for a finding a previous fix round didn't clear; the verifier stays on opus.
+description: Every dispatch pins its model: the verifier on opus, the tester on sonnet.
 tags: [agents]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: for a in builder verifier; do sed -n "s/^model: /$a-default=/p" "$root/agents/$a.md"; done; sed -n "/^- Pin the model at/,/verifier opus\./p" "$root/skills/assistant/SKILL.md" | tr -s " \n" " " | sed "s/^/pin=/"
+    EVAL_CMD: for a in tester verifier; do sed -n "s/^model: /$a-default=/p" "$root/agents/$a.md"; done; sed -n "/^- Pin the model at/,/tester sonnet\./p" "$root/skills/assistant/SKILL.md" | tr -s " \n" " " | sed "s/^/pin=/"
   prompt: |
-    Say which model each assistant agent runs on by default, how the assistant picks the builder's model, and which model it pins for the verifier.
+    Say which model each assistant agent runs on by default, and which model the skill pins for each.
 context:
   scaffold_script: fixture.sh

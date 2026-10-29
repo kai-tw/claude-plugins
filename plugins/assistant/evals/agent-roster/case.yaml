@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: agent-roster
-description: Three agents do the work — builder (scout through fix), tester (tests from the brief) and verifier (code and text legs, self-scored) — and nothing in the assistant dispatches the retired roles or spawns an agent per finding.
+description: Two agents work beside the assistant — tester (tests from the brief) and verifier (code and text legs, self-scored); the assistant builds each task itself from references/build.md, picking up earlier work from git log and git status; nothing in the assistant dispatches the retired roles or spawns an agent per finding.
 tags: [agents]
 plugins: ["../.."]
 runs: 1
@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: echo "agents=$(cd "$root/agents" && ls | sed "s|\.md$||" | paste -sd " " -)"; grep -lE "^  - Agent$" "$root"/agents/*.md | sed "s/^/spawns=/"; grep -rnoE "\`(scribe|code-verifier|text-verifier)\`|general-purpose" "$root/agents" "$root/skills/assistant" | sed "s/^/stale=/"; grep -c "^- \*\*scout\*\*" "$root/agents/builder.md" | sed "s/^/scout-phase=/"
+    EVAL_CMD: echo "agents=$(cd "$root/agents" && ls | sed "s|\.md$||" | paste -sd " " -)"; grep -lE "^  - Agent$" "$root"/agents/*.md | sed "s/^/spawns=/"; grep -rnoE "\`(scribe|code-verifier|text-verifier)\`|general-purpose" "$root/agents" "$root/skills/assistant" | sed "s/^/stale=/"; grep -c "^- \*\*scout\*\*" "$root/skills/assistant/references/build.md" | sed "s/^/scout-phase=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -c "build each task yourself in its worktree.*reading \`references/build.md\` before each phase" | sed "s/^/skill-build=/"; tr -s " \n" " " < "$root/skills/assistant/references/build.md" | grep -c "start from \`git log\` and \`git status\`" | sed "s/^/resume=/"
   prompt: |
     List assistant's agents, any agent that may spawn further agents, and any mention of an agent the assistant no longer has.
 context:

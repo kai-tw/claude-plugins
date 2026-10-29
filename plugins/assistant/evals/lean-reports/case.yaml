@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: for a in builder verifier; do grep -c "return only the paths\? it prints" "$root/agents/$a.md" | sed "s/^/$a-path-only=/"; done; grep -c "verbatim output" "$root/agents/verifier.md" | sed "s/^/retyped=/"; grep -c "^## Strings (only keys a finding changes)$" "$root/agents/verifier.md" | sed "s/^/strings-changed-only=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "An \`exempt\` diff skips the code leg: check it yourself[^.]*" | sed "s/^/exempt=/"
+    EVAL_CMD: for a in verifier; do grep -c "return only the paths\? it prints" "$root/agents/$a.md" | sed "s/^/$a-path-only=/"; done; grep -c "verbatim output" "$root/agents/verifier.md" | sed "s/^/retyped=/"; grep -c "^## Strings (only keys a finding changes)$" "$root/agents/verifier.md" | sed "s/^/strings-changed-only=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "An \`exempt\` diff skips the code leg: check it yourself[^.]*" | sed "s/^/exempt=/"
   prompt: |
     Say what each assistant agent returns after filing a report, how strings_check output gets into the text report, which string values the verifier lists, and who verifies an exempt diff.
 context:

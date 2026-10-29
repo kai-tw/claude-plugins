@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^agents=builder tester verifier$'
+pattern: '^agents=tester verifier$'
 flags: m
 arm: with-only
 ---
-The assistant has exactly three agents: builder, tester and verifier.
+The assistant has exactly two agents, tester and verifier; it builds itself.
