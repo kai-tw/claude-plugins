@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: rules-before-code
-description: The assistant loads style-pack for the files it will touch before its first edit and names that run on its build report; every fix round's checkpoint, CI-driven ones included, goes back to the verifier, and the assistant never writes a verify report itself except an exempt verdict.
+description: The builder loads style-pack for the files it will touch before its first edit and names that run on its report; every fix round's checkpoint, CI-driven ones included, goes back to the verifier, and the assistant never writes a verify report itself except an exempt verdict.
 tags: [agents]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: tr -s " \n" " " < "$root/skills/assistant/references/build.md" | grep -o "before your first edit run \`style-pack --paths[^.]*" | sed "s/^/build=/"; grep -c "^rules: style-pack --paths" "$root/skills/assistant/references/build.md" | sed "s/^/report-line=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "every fix round.s checkpoint — a CI-driven one too[^;]*" | sed "s/^/fix-rounds=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "you never write one yourself, whatever the round" | sed "s/^/self=/"
+    EVAL_CMD: tr -s " \n" " " < "$root/agents/builder.md" | grep -o "before your first edit run \`style-pack --paths[^.]*" | sed "s/^/builder=/"; grep -c "^rules: style-pack --paths" "$root/agents/builder.md" | sed "s/^/report-line=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "every fix round.s checkpoint — a CI-driven one too[^;]*" | sed "s/^/fix-rounds=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "you never write one yourself, whatever the round" | sed "s/^/self=/"
   prompt: |
-    Say when the build loads style-pack, and who verifies each fix round.
+    Say when the builder loads style-pack, and who verifies each fix round.
 context:
   scaffold_script: fixture.sh

@@ -1,7 +1,7 @@
 ---
 name: verifier
 description: |
-  Reviews a diff (or a brief's System design) independently of the assistant that wrote it, in
+  Reviews a diff (or a brief's System design) independently of the builder, in
   two legs: code — logic, data wiring, code style, error handling, as-built vs
   as-decided, tests — and text — the user-visible strings in every locale
   against charter U1–U5 and the project's string canon. Files each finding with
@@ -9,6 +9,7 @@ description: |
   pass and drops those under 80. Never edits the project, never marks a locale
   approved; files one report per leg with `asst-report`.
 model: opus
+effort: high
 tools:
   - Bash
   - Read
@@ -67,7 +68,7 @@ what is wrong · failure scenario · Fix: <the change>`:
    after it (or none); per block-4 failure event, the assertion on what the user
    sees; test data that skips a boundary the brief's Boundaries names (empty / old
    format / order); a test that asserts nothing, or only that a method was
-   called; a test still skipped `until wired`; a test the wiring changed beyond
+   called; a test still skipped `until wired`; a test the builder changed beyond
    removing that marker.
 
 On the decision brief alone (`brief-review`), walk blocks 1, 2 and 5 against the
@@ -112,7 +113,7 @@ the founder approves strings at ②, and cannot approve a complaint.
 For a key whose value one of your findings changes, also report the row the
 delivery summary needs: the key, where it renders, the available width, and each
 locale's value as it stands after your findings are applied. Every other key
-stands as the build report's `strings:` block lists it. Approval status is not part of
+stands as the builder's `strings:` block lists it. Approval status is not part of
 this report — ② gives it.
 
 A line no rule you can cite catches, but that you still believe no native

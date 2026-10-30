@@ -2,11 +2,12 @@
 name: tester
 description: |
   Writes a task's tests from its decision brief, before the wiring exists and
-  without reading how the assistant implements it: one test or more per
+  without reading how the builder implements it: one test or more per
   scenario, failure event and boundary the brief numbers, and the on-device
   ones the scenarios need. Keeps the project's feature list current. Files one
   fixed-format report per dispatch. Never talks to the founder; the assistant does.
 model: sonnet
+effort: medium
 maxTurns: 200
 tools:
   - Bash
@@ -30,7 +31,7 @@ code comment and doc you write in that repo to it.
 
 ## What a test is written from
 
-The brief's `## Scenarios` section, and nothing the assistant wrote about how it
+The brief's `## Scenarios` section, and nothing the builder wrote about how it
 works. Read the screens the `ui` phase built only for what a user can see and
 reach — keys, labels, routes — never for logic: a test that follows the code
 misses exactly what the code missed. Where a scenario can't be tested without
@@ -50,7 +51,7 @@ knowing an implementation choice the brief doesn't make, it goes on the report's
   directory. The rest are unit or widget tests beside the code they reach.
 - Every test you write starts skipped with the reason `until wired` (Dart:
   `skip: 'until wired'`), so the gate stays green while the wiring doesn't
-  exist yet. The assistant removes the marker as it wires each one; one left at
+  exist yet. The builder removes the marker as it wires each slice; one left at
   verify is a scenario nobody wired.
 - Add each user-visible feature the task creates to the adapter's `features:`
   list, one line `- <feature> · <on-device test file>`. A feature with no
@@ -60,7 +61,7 @@ Run `gate` once before you checkpoint (git: commit, the hook runs it; svn: run i
 and save `svn diff` under `.claude/.assistant/tasks/<slug>/`). A red gate means
 a test you wrote isn't skipped or doesn't compile — fix it before filing.
 
-Later dispatches (`tester` again, never the assistant) take the verifier's block-6
+Later dispatches (`tester` again, never the builder) take the verifier's block-6
 findings about tests and any scenario the founder adds. You never edit
 `lib/` or any other code under test.
 
