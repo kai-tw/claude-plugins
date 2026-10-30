@@ -30,9 +30,10 @@
 # JS / TS FILES
 #   Changed `.js .jsx .ts .tsx .mjs .cjs .mts .cts` files go to StrykerJS, run in
 #   the nearest directory holding a `package.json`, which must have
-#   `@stryker-mutator/core` installed. From the diff, a file counts when it sits
-#   under that package's `src/` or `lib/` and is not a `.d.ts`, a `*.test.*` /
-#   `*.spec.*` or under `__tests__/` — Stryker's own default `mutate`. Stryker
+#   `@stryker-mutator/core` installed. From the diff, a file counts when it is
+#   not a `.d.ts`, a `*.test.*` / `*.spec.*` or under `__tests__/`, and the
+#   `mutate` list of the package's Stryker config takes it — with no such list,
+#   when it sits under the package's `src/` or `lib/`, Stryker's default. Stryker
 #   runs the tests its config names, so the `--` test command is for Dart files
 #   only. Its report is graded by the same per-file table and threshold:
 #   Killed and Timeout are detected, Survived and NoCoverage are survivors,
@@ -61,8 +62,8 @@
 #   --diff <ref> is review mode, after Google's: mutate only the lines this
 #   branch changed since its merge base with <ref> (uncommitted edits to
 #   tracked files too),
-#   at most --per-line (default 1) mutants a line, in the Dart files that
-#   changed. JS/TS files are mutated whole. --review <file> writes the
+#   at most --per-line (default 1) mutants a line in Dart files, every mutant
+#   on a changed line in JS/TS files. --review <file> writes the
 #   survivors a test reaches but doesn't catch as a JSON list of
 #   {path, line, body} for plan-mutation-review to post on the PR, and the
 #   run exits 0 whatever the scores. Survivors no test reaches are left out
@@ -138,6 +139,7 @@
 #   pause: a frozen run's budgets keep counting, and the tree stays mutated.
 
 set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 # Every process below <pid>.
 descendants() {
@@ -432,10 +434,27 @@ while IFS= read -r f; do
   fi
   pkg=$(dirname "$pj")
   rel=${f#"$pkg/"}
-  # From the diff, only what Stryker's default `mutate` would take: package source.
-  [ -n "$EXPLICIT_FILES" ] || case "$rel" in src/*|lib/*) ;; *) continue ;; esac
   js_rows+="$pkg"$'\t'"$rel"$'\n'
 done <<<"$files"
+# From the diff, only what Stryker would mutate: the `mutate` list of the
+# package's Stryker config when it has one, else Stryker's default, package
+# source. `--mutate` below replaces the config's list, so a file the config
+# leaves out (one its Babel cannot load, say) would otherwise be mutated anyway.
+if [ -z "$EXPLICIT_FILES" ] && [ -n "$js_rows" ]; then
+  scoped=""
+  while IFS= read -r pkg; do
+    [ -n "$pkg" ] || continue
+    rels=$(printf '%s' "$js_rows" | awk -F'\t' -v p="$pkg" '$1 == p { print $2 }')
+    sel=$(printf '%s\n' "$rels" | node "$here/stryker_mutate.mjs" "$pkg"); rc=$?
+    case $rc in
+      0) ;;
+      3|127) sel=$(printf '%s\n' "$rels" | grep -E '^(src|lib)/') ;;   # no list; no node means no Stryker either, reported below
+      *) exit 2 ;;
+    esac
+    while IFS= read -r r; do [ -n "$r" ] && scoped+="$pkg"$'\t'"$r"$'\n'; done <<<"$sel"
+  done <<<"$(printf '%s' "$js_rows" | cut -f1 | sort -u)"
+  js_rows=$scoped
+fi
 files=$( { printf '%s\n' "$dart_files"
            printf '%s' "$js_rows" | awk -F'\t' '{ print ($1 == "." ? $2 : $1 "/" $2) }'; } | grep -v '^$')
 
@@ -724,23 +743,41 @@ if [ -n "$BY_DIR" ] && [ -z "${PLAN_MUTATION_GROUP:-}" ]; then
   echo "plan-mutation: $n group(s) done — exit $worst (the worst group's: 2 nothing measured · 1 failed · 0 passed)"
   exit "$worst"
 fi
-# Review mode: each Dart file's changed lines, from the merge base to the
-# working tree, as the engine's `--lines <file>:<ranges>`. A file whose change
-# only deleted lines has none, so nothing in it is new to ask about.
-if [ -n "$DIFF_BASE" ] && [ -n "$dart_files" ]; then
+# Review mode: each file's changed lines, from the merge base to the working
+# tree — for Dart as the engine's `--lines <file>:<ranges>`, for JS/TS as
+# Stryker's `--mutate <file>:<start>-<end>` entries in a third js_rows column
+# (Stryker has no per-line cap: every mutant on a changed line runs). A file
+# whose change only deleted lines has none, so nothing in it is new to ask about.
+changed_ranges() {   # <path from the repo root> → 2-3,10-10
+  git diff -U0 "$mbase" -- "$1" 2>/dev/null \
+    | sed -nE 's/^@@ -[0-9,]+ \+([0-9]+)(,([0-9]+))? @@.*/\1 \3/p' \
+    | awk '{ n = ($2 == "") ? 1 : $2; if (n > 0) printf "%s%d-%d", (c++ ? "," : ""), $1, $1 + n - 1 }'
+}
+if [ -n "$DIFF_BASE" ] && [ -n "$files" ]; then
   mbase=$(git merge-base "$base" HEAD 2>/dev/null) || mbase=$base
   kept_dart=""
   while IFS= read -r f; do
-    ranges=$(git diff -U0 "$mbase" -- "$f" 2>/dev/null \
-      | sed -nE 's/^@@ -[0-9,]+ \+([0-9]+)(,([0-9]+))? @@.*/\1 \3/p' \
-      | awk '{ n = ($2 == "") ? 1 : $2; if (n > 0) printf "%s%d-%d", (c++ ? "," : ""), $1, $1 + n - 1 }')
+    [ -n "$f" ] || continue
+    ranges=$(changed_ranges "$f")
     [ -n "$ranges" ] || continue
     ENGINE_EXTRA+=("--lines" "$f:$ranges")
     kept_dart="$kept_dart$f"$'\n'
   done <<< "$dart_files"
-  ENGINE_EXTRA+=("--per-line" "${PER_LINE:-1}")
+  [ -n "$dart_files" ] && ENGINE_EXTRA+=("--per-line" "${PER_LINE:-1}")
   dart_files=$(printf '%s' "$kept_dart" | grep -v '^$')
-  files=$( { printf '%s\n' "$dart_files"; printf '%s\n' "$files" | grep -vE '\.dart$'; } | grep -v '^$')
+  kept_js=""
+  while IFS=$'\t' read -r p r; do
+    [ -n "$p" ] || continue
+    if [ "$p" = . ]; then f=$r; else f="$p/$r"; fi
+    ranges=$(changed_ranges "$f")
+    [ -n "$ranges" ] || continue
+    spec=$(printf '%s\n' "$ranges" | tr , '\n' | sed "s|^|$r:|" | paste -sd, -)
+    kept_js+="$p"$'\t'"$r"$'\t'"$spec"$'\n'
+  done <<< "$js_rows"
+  js_rows=$kept_js
+  js_pkgs=$(printf '%s\n' "$js_rows" | cut -f1 | grep -v '^$' | sort -u)
+  files=$( { printf '%s\n' "$dart_files"
+             printf '%s' "$js_rows" | awk -F'\t' '{ print ($1 == "." ? $2 : $1 "/" $2) }'; } | grep -v '^$')
   [ -n "$files" ] || { echo "plan-mutation: the diff since $base only deletes lines — nothing new to mutate."; [ -n "$REVIEW_OUT" ] && echo '[]' > "$REVIEW_OUT"; exit 0; }
 elif [ -n "$PER_LINE" ]; then
   ENGINE_EXTRA+=("--per-line" "$PER_LINE")
@@ -1049,7 +1086,9 @@ STRYKER_TO_REPORT='
   && echo "plan-mutation: NOTE —$DART_ONLY apply to the Dart engine only; the JS/TS files run without them." >&2
 while IFS= read -r pkg; do
   [ -n "$pkg" ] || continue
-  mutate=$(printf '%s\n' "$js_rows" | awk -F'\t' -v p="$pkg" '$1 == p { print $2 }' | paste -sd, -)
+  # Its files, and what --mutate gets: the files, or in review mode their changed lines.
+  rels=$(printf '%s\n' "$js_rows" | awk -F'\t' -v p="$pkg" '$1 == p { print $2 }' | paste -sd, -)
+  mutate=$(printf '%s\n' "$js_rows" | awk -F'\t' -v p="$pkg" '$1 == p { print ($3 != "" ? $3 : $2) }' | paste -sd, -)
   prefix="$pkg/"; slug=$(printf '%s' "$pkg" | tr -c 'A-Za-z0-9._-' '_')
   [ "$pkg" = . ] && { prefix=""; slug=root; }
   js_report="$pkg/reports/mutation/mutation.json"
@@ -1088,7 +1127,7 @@ EOF
   mv -f "$js_report" "$js_keep"
   rmdir "$pkg/reports/mutation" "$pkg/reports" 2>/dev/null
   KEPT="${KEPT:+$KEPT }$js_keep"
-  req=$(printf '%s' "$mutate" | tr , '\n' | jq -R . | jq -sc .)
+  req=$(printf '%s' "$rels" | tr , '\n' | jq -R . | jq -sc .)
   jq --arg prefix "$prefix" --argjson req "$req" "$STRYKER_TO_REPORT" "$js_keep" > "$out/js.json" 2> "$out/js.err" || {
     cat >&2 <<EOF
 plan-mutation: Stryker's report for $pkg cannot be graded. Nothing was measured

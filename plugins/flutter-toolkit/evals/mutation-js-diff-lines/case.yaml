@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: mutation-js-diff-lines
+description: With --diff, plan-mutation gives Stryker only the lines each JS/TS file changed (file:start-end per hunk, a file that only lost lines dropped), and leaves out files the package's Stryker config excludes from `mutate` — read from a JSON or an ESM config, `!` patterns honoured — instead of mutating whole files and every changed source file.
+tags: [plan-mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0; plan-mutation --diff main 2>&1; echo "rc=$?"; while read -r l; do echo "args: $l"; done < stryker-args.txt
+  prompt: |
+    Run plan-mutation --diff main on a branch that changed a few lines in JS/TS files of two packages whose Stryker configs exclude some files from `mutate`; print the output, the exit code and the arguments each Stryker run received.
+context:
+  scaffold_script: fixture.sh
