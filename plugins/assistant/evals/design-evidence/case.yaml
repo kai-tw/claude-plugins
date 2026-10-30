@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; echo "brief-evidence=$(grep -c "^- Evidence: " "$root/skills/assistant/references/brief.md")"; echo "brief-simplest=$(f skills/assistant/references/brief.md | grep -cF "the simplest design that could work")"; echo "skill-cut=$(f skills/assistant/SKILL.md | grep -cF "a case still unshown is cut, not handled")"; echo "scout-measures=$(f skills/assistant/references/build.md | grep -cF "an \`experiment:\` row you ran, never by opinion")"; echo "review-drop=$(f agents/verifier.md | grep -cF "is filed with Fix: drop it")"; echo "review-simpler=$(f agents/verifier.md | grep -cF "a design with fewer NEW things that still covers every evidenced case")"
+    EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; echo "brief-evidence=$(grep -c "^- Evidence: " "$root/skills/assistant/references/brief.md")"; echo "brief-simplest=$(f skills/assistant/references/brief.md | grep -cF "the simplest design that could work")"; echo "skill-cut=$(f skills/assistant/SKILL.md | grep -cF "a case still unshown is cut, not handled")"; echo "scout-measures=$(f agents/builder.md | grep -cF "an \`experiment:\` row you ran, never by opinion")"; echo "review-drop=$(f agents/verifier.md | grep -cF "is filed with Fix: drop it")"; echo "review-simpler=$(f agents/verifier.md | grep -cF "a design with fewer NEW things that still covers every evidenced case")"
   prompt: |
     Say how a decision brief keeps its design to the cases that actually happen, and who checks it.
 context:

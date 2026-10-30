@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: one-home-and-deferred-rows
-description: A capability has one home — the build reuses or changes it and never writes a second one beside it, and the verifier files a second implementation as a finding; anything found outside a task's boundary becomes a board row at once, with the mechanism fix proposed when a check should have caught it.
+description: A capability has one home — the builder reuses or changes it and never writes a second one beside it, and the verifier files a second implementation as a finding; anything found outside a task's boundary becomes a board row at once, with the mechanism fix proposed when a check should have caught it.
 tags: [flow]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: for f in skills/assistant/references/build.md agents/verifier.md skills/assistant/SKILL.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+    EVAL_CMD: for f in agents/builder.md agents/verifier.md skills/assistant/SKILL.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
   prompt: |
-    Print the build reference, verifier and assistant skill text, one file per line.
+    Print the builder, verifier and assistant skill text, one file per line.
 context:
   scaffold_script: fixture.sh

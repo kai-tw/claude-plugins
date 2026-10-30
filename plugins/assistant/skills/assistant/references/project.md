@@ -6,7 +6,7 @@ directory holding this file (`.claude/.assistant/`, personal and unversioned).
 `style-rules/*.md` under it: personal style rules, loaded by `style-pack`.
 
 ```
-vcs:        git | svn                      # git: worktree per task, checkpoint = commit, hook runs `gate`; svn: working copy per task, checkpoint = saved diff, you run `gate`, nothing committed before ③
+vcs:        git | svn                      # git: worktree per task, checkpoint = commit, hook runs `gate`; svn: working copy per task, checkpoint = saved diff, builder runs `gate`, nothing committed before ③
 board:      notion | file                  # where task rows live — the TaskList under notion_root, or .claude/.assistant/board.md; asst-board hides the difference
 notion_root: <page-id>                     # board=notion: the KB root; TaskList / feature-archive / decision-log resolve by title under it
 kb:         <dir>                          # board=file: where `asst-board archive` lands (e.g. docs/decisions)
