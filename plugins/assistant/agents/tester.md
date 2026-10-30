@@ -7,6 +7,7 @@ description: |
   ones the scenarios need. Keeps the project's feature list current. Files one
   fixed-format report per dispatch. Never talks to the founder; the assistant does.
 model: sonnet
+effort: medium
 maxTurns: 200
 tools:
   - Bash

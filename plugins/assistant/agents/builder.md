@@ -6,6 +6,7 @@ description: |
   wiring that makes the tester's tests pass, the fixes the verifier asks for. Files one fixed-format
   report per dispatch. Never talks to the founder; the assistant does.
 model: sonnet
+effort: medium
 maxTurns: 300
 tools:
   - Bash

@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'The builder.s is yours to pick for the work in hand — haiku for `exempt`, sonnet by default'
+pattern: 'haiku / `low` for `exempt` and edits you can describe exactly .*sonnet / `medium` for a clear-scope `scout`, `ui` or `wire`; sonnet / `high` for `fix`'
 arm: with-only
 ---
-The leader picks the builder's model per dispatch: haiku for exempt, sonnet by default.
+The builder's model and effort follow the work: haiku/low for exact edits, sonnet/medium for a scoped phase, sonnet/high for fix.

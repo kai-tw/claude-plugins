@@ -311,9 +311,17 @@ this repo's; anything else on the list is caught by no script.
   so a leg missing there is visible before the merge — in full on a private repo,
   its first line only on any other (§Disclosure). A report is passed on by
   its path, never pasted.
-- Pin the model at every dispatch. The builder's is yours to pick for the work
-  in hand — haiku for `exempt`, sonnet by default, opus for a finding a previous
-  fix round didn't clear; verifier opus. The tester is sonnet.
+- Pin the model and the effort at every dispatch, following Anthropic's guidance
+  (code.claude.com/docs/en/model-config): the smallest model and the lowest effort
+  the work in hand allows. The builder's are yours to pick — haiku / `low` for
+  `exempt` and edits you can describe exactly (a rename, a copy change, a
+  mechanical move); sonnet / `medium` for a clear-scope `scout`, `ui` or `wire`;
+  sonnet / `high` for `fix`, where verification and edge cases matter; opus /
+  `high` for ambiguous or cross-cutting work and for a finding a previous fix
+  round didn't clear. A round that tried and still got it wrong moves up a model;
+  one that skipped a file moves up an effort level. Tester sonnet / `medium`;
+  verifier opus / `high`. Where the Agent tool takes no `effort` (Claude Code
+  before 2.1.292), the agent's own `effort` applies.
 - Cut `wire` and `fix` into slices — a module, a group of findings — and dispatch
   one builder per slice, each ending at its checkpoint; `ui` is one dispatch for
   every screen. Never resume a builder, whether its slice finished or it came back

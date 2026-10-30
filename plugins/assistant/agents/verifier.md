@@ -9,6 +9,7 @@ description: |
   pass and drops those under 80. Never edits the project, never marks a locale
   approved; files one report per leg with `asst-report`.
 model: opus
+effort: high
 tools:
   - Bash
   - Read
