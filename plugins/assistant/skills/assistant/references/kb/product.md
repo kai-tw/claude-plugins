@@ -2,18 +2,17 @@
 
 Load at: ① brief (step 3) · Close (step 8) · a founder's request for a page.
 
-The adapter's `kb_pages:` entry `product = <where>` says where the pages live:
-- **Notion** (`board: notion`): page titles — the product page under
-  `notion_root`, the child holding a page per feature, then the child holding a
-  page per shared design (a screen or interaction rule several features use).
-  Find them by title in `ntn api v1/blocks/<id>/children`; record no page id.
-- **A directory in the repo** (e.g. `docs/product/`): `features/<feature>.md`
-  and `shared/<design>.md`, changed on the task's own branch, so a page merges
-  with the code that follows it.
+The pages are titled in the founder's language:
+- **Notion** (`board: notion`): a page titled Product under `notion_root`; under
+  it, Features (a page per feature) and Shared designs (a page per screen or
+  interaction rule several features use). Find them by title in
+  `ntn api v1/blocks/<id>/children`; record no page id.
+- **File board**: `<kb>/product/features/<feature>.md` and
+  `<kb>/product/shared/<design>.md`, changed on the task's own branch, so a page
+  merges with the code that follows it.
 
-A project with no shared designs leaves that part out (the third title, or
-`shared/`); a behaviour two features share is then written on the first one's
-page, and the other links to it.
+A project with no shared designs leaves that part out; a behaviour two features
+share is then written on the first one's page, and the other links to it.
 
 ## What a page holds
 

@@ -221,11 +221,13 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
 
 ## KB modules
 
-The project's knowledge base is split into modules, one file each under
-`references/kb/`; the adapter's `kb_pages:` lists the ones this project keeps
-and where each one's pages live. A module's first line names the steps it is
-loaded at: read it before those steps, and never read a module `kb_pages:`
-doesn't list. Modules: `product` (how each feature behaves).
+The project's knowledge base has five modules: `frontend` · `backend` ·
+`product` · `marketing` · `design`. The adapter's `kb_pages:` lists the ones
+this project keeps. A module's pages live under `notion_root` on a Notion board,
+or under the adapter's `kb:` directory on a file board. A module with rules has a
+file under `references/kb/`, whose first line names the steps it is loaded at:
+read it before those steps, and never read a module `kb_pages:` doesn't list. Only
+`product` has rules so far; listing another one changes nothing.
 
 ## House style for strings
 
