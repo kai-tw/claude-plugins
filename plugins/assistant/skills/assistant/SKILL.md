@@ -79,9 +79,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    (`file:line` or `unread`) and the intent forks it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
    goes back to Scout once; still failing, it enters the brief as `unread`.
-3. **① Brief** (you): from the facts, the forks and the product pages
-   (`references/product-pages.md`) of every feature and shared design the task
-   touches, `references/brief.md`. Design
+3. **① Brief** (you): from the facts, the forks and the KB modules loaded at ①
+   (§KB modules), `references/brief.md`. Design
    only for cases shown to happen: each NEW thing, guard, retry, fallback or lock
    cites its evidence on the brief's `Evidence` line. When the design hinges on
    whether a case happens and no fact row shows it, send Scout back once to
@@ -95,10 +94,10 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    `Decided` (`references/brief.md`).
    Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
-   later step reads, without your context — and write each decided mechanism onto
-   its product page before Build starts. Build, wire and fix rounds never change a
-   decided mechanism: a change one needs is a `Needs you` first, and the answer
-   goes onto the page before the code.
+   later step reads, without your context — then run each loaded module's ① step.
+   Build, wire and fix rounds never change a decided mechanism: a change one needs
+   is a `Needs you` first, and the answer is recorded where the decided one was
+   before the code changes.
 4. **Build** (`builder`): UI first, as real widgets in all four states → one
    image per screen × state × locale → the page `asst-screens` builds from them
    (its path is on the report's `screens:` line) → you open every image and read
@@ -211,7 +210,7 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    moves to the archive (`asst-board archive`) and then the row is deleted
    (`asst-board trash <slug>`) — a row never moves to `Shipped`, and the archive goes
    first because until then the row's body is the only copy of its decisions.
-   Delete the task's line from the last section of each product page step 3 wrote.
+   Run each loaded module's Close step.
    Delete the PR's worktree, local branch and remote branch, unasked, once
    `HEAD` matches the merged PR's head. The archive: Overview · Problem ·
    Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
@@ -219,6 +218,14 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    fork (Context · Decision · Consequence, the rejected option and its cost in
    Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
    task's cost appended to `.claude/.assistant/ledger.md`.
+
+## KB modules
+
+The project's knowledge base is split into modules, one file each under
+`references/kb/`; the adapter's `kb_pages:` lists the ones this project keeps
+and where each one's pages live. A module's first line names the steps it is
+loaded at: read it before those steps, and never read a module `kb_pages:`
+doesn't list. Modules: `product` (how each feature behaves).
 
 ## House style for strings
 
