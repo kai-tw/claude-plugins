@@ -21,7 +21,7 @@ multi-project desk — spend it on decisions.
 Three agents do the work: `builder` (in the task's worktree, one phase per
 dispatch — scout · ui · wire · fix), `tester` (writes the task's tests from the
 brief, never from the builder's code) and `verifier` (reads, never edits — the
-code and text legs). The board, the brief and the archive you write yourself
+code and text legs). The board, the brief and the decisions you write yourself
 with `asst-board`. Tasks run side by side: each has its own worktree and its own
 agents, dispatched with `run_in_background: true`, so one task's wait never
 holds up another's.
@@ -94,10 +94,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    `Decided` (`references/brief.md`).
    Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
-   later step reads, without your context — then run each loaded module's ① step.
+   later step reads, without your context — and file each answered fork as a decision
+   (`asst-board decide`: Context · Decision · Consequence, the rejected option and its
+   cost in Consequence), then run each loaded module's ① step.
    Build, wire and fix rounds never change a decided mechanism: a change one needs
-   is a `Needs you` first, and the answer is recorded where the decided one was
-   before the code changes.
+   is a `Needs you` first, and the answer is recorded where the decided one was,
+   and filed with `asst-board decide`, before the code changes.
 4. **Build** (`builder`): UI first, as real widgets in all four states → one
    image per screen × state × locale → the page `asst-screens` builds from them
    (its path is on the report's `screens:` line) → you open every image and read
@@ -206,25 +208,23 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    that PR, with each sibling of the same shape. Told to merge one PR, squash-merge
    that PR only, pinned to the head you checked (`gh pr merge <n> --squash
    --match-head-commit <sha>`); the founder saying the PR merged → step 8.
-8. **Close** (you, through `asst-board`): the task row is disposable, so the brief
-   moves to the archive (`asst-board archive`) and then the row is deleted
-   (`asst-board trash <slug>`) — a row never moves to `Shipped`, and the archive goes
-   first because until then the row's body is the only copy of its decisions.
+8. **Close** (you, through `asst-board`): the task row is disposable, so it is
+   deleted (`asst-board trash <slug>`) and no record of the task is kept — a row
+   never moves to `Shipped`. What outlives it was written earlier: its decisions
+   (`asst-board decide`) and the KB pages its modules changed.
    Run each loaded module's Close step.
    Delete the PR's worktree, local branch and remote branch, unasked, once
-   `HEAD` matches the merged PR's head. The archive: Overview · Problem ·
-   Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
-   with the choice made · Deferred Items = one decision per `Needs you`
-   fork (Context · Decision · Consequence, the rejected option and its cost in
-   Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
-   task's cost appended to `.claude/.assistant/ledger.md`.
+   `HEAD` matches the merged PR's head. Append the task's cost to
+   `.claude/.assistant/ledger.md`.
 
 ## KB modules
 
 The project's knowledge base has five modules: `frontend` · `backend` ·
 `product` · `marketing` · `design`. The adapter's `kb_pages:` lists the ones
-this project keeps. A module's pages live under `notion_root` on a Notion board,
-or under the adapter's `kb:` directory on a file board. A module with rules has a
+this project keeps. On a Notion board every module's pages are rows of one KB Pages
+database under `notion_root`, its `Module` naming the module in the founder's
+language (`asst-notion query kb-pages Module=<module>`), so a decision can relate
+to the page it governs. On a file board they live under the adapter's `kb:` directory. A module with rules has a
 file under `references/kb/`, whose first line names the steps it is loaded at:
 read it before those steps, and never read a module `kb_pages:` doesn't list. Only
 `product` has rules so far; listing another one changes nothing.
@@ -343,7 +343,7 @@ this repo's; anything else on the list is caught by no script.
   growing. Brief the next one with the slice and only what the code and the filed
   reports can't show — a ruling it needs, a dead end the last run hit.
 - Board writes go through `asst-board` (`--dry-run` prints without writing; on
-  Notion every write re-reads and verifies); `asst-board --help` has the archive
+  Notion every write re-reads and verifies); `asst-board --help` has the decisions
   shape. A failed verify is reported as failed. The ledger line is
   `<date> · <slug> · <tokens>`.
 - Work sent off this machine — a message into a cloud session the founder has

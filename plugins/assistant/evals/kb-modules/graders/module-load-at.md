@@ -4,4 +4,4 @@ pattern: '^module-load-at=1$'
 flags: m
 arm: with-only
 ---
-The product module names the steps it is loaded at.
+The product module names the steps it is loaded at: ① and a founder request, not Close.
