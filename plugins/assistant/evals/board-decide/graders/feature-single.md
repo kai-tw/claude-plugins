@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '"Name":"quota","Feature":"Read aloud"'
+pattern: '"Name":"quota","Feature":\["Read aloud"\]'
 flags: m
 arm: with-only
 ---

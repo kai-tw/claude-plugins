@@ -46,7 +46,8 @@ app doesn't follow the rule.
   Build starts. Each fork filed with `asst-board decide` names those pages on its
   `**Feature**:` line, by their exact titles (`none` if it changes no page), so the
   page's Related decisions show it. A feature with no page gets one holding only what this task
-  decided, its intro saying so. On Notion, the page's last section also names the
+  decided, its intro saying so; on Notion, its title also becomes an option of the
+  Decision Log's Feature property, or `decide` stops on it. On Notion, the page's last section also names the
   task row as code that doesn't match yet, until the PR merges.
 
 ## At Close

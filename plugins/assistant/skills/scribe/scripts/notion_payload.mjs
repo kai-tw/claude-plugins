@@ -86,18 +86,18 @@ const DB = {
     title: 'Name',
     props: {
       Name: { type: 'title' },
-      Area: MULTI(), // live-populated; see PROJECT_VOCAB
       Status: SEL('Active', 'Superseded', 'Deferred'),
-      // The product feature pages the decision governs, ", "-joined: a page's
-      // linked view filters on `Feature contains <page title>`.
-      Feature: { type: 'text' },
+      // The product feature pages the decision governs, one option per page title
+      // (live-populated; see PROJECT_VOCAB): a page's linked view filters on it.
+      Feature: { ...MULTI(), enable: 'add a multi-select property to the Decision Log with one option per product feature page title (or map an existing one in .claude/kb-databases.txt: decision-log.Feature = <name>)' },
+      // The task the decision was made in.
+      Task: { type: 'text', enable: 'add a text property to the Decision Log for the task a decision came from (or map an existing one in .claude/kb-databases.txt: decision-log.Task = <name>)' },
       Decided: { type: 'date' },
     },
     body: [
       { key: 'Context', kind: 'para', required: true },
       { key: 'Decision', kind: 'para', required: true },
       { key: 'Consequence', kind: 'para', required: true },
-      { key: 'Task', kind: 'para', required: false }, // the task it was decided in: its Feature Archive title
     ],
   },
 
@@ -1051,14 +1051,15 @@ const DB_TITLE = {
   'analytics-catalog': 'Analytics Event Catalog',
 };
 
-// A project may title its databases in its own language. Those titles are the
-// project's, not the workflow's, so they are read from an optional file rather
-// than baked in here — the same split as `.claude/pm-vocabulary.txt`.
+// A project may name its databases and their properties in its own language.
+// Those names are the project's, not the workflow's, so they are read from an
+// optional file rather than baked in here — the same split as `.claude/pm-vocabulary.txt`.
 //
 //   .claude/kb-databases.txt
 //   <registry-key> = <exact Notion database title>
+//   <registry-key>.<property> = <exact Notion property name>
 //
-// Blank lines and #-comments ignored. Absent file → the English titles above.
+// Blank lines and #-comments ignored. Absent file → the English names above.
 const DB_TITLE_OVERRIDE_FILE = '.claude/kb-databases.txt';
 
 function loadTitleOverrides() {
@@ -1069,9 +1070,20 @@ function loadTitleOverrides() {
     const s = line.trim();
     if (!s || s.startsWith('#')) continue;
     const i = s.indexOf('=');
-    if (i < 1) fail(`${DB_TITLE_OVERRIDE_FILE}: bad line "${s}", expected <key> = <title>`);
+    if (i < 1) fail(`${DB_TITLE_OVERRIDE_FILE}: bad line "${s}", expected <key> = <title> or <key>.<property> = <name>`);
     const key = s.slice(0, i).trim();
     const title = s.slice(i + 1).trim();
+    const dot = key.indexOf('.');
+    if (dot > 0) {
+      const [db, prop] = [key.slice(0, dot), key.slice(dot + 1)];
+      const spec = DB[db]?.props[prop];
+      if (!spec || prop === DB[db].title)
+        fail(`${DB_TITLE_OVERRIDE_FILE}: unknown property "${key}". Valid: ${Object.entries(DB)
+          .flatMap(([d, def]) => Object.keys(def.props).filter((p) => p !== def.title).map((p) => `${d}.${p}`)).join(', ')}`);
+      if (!title) fail(`${DB_TITLE_OVERRIDE_FILE}: "${key}" has an empty name`);
+      spec.notionName = title;
+      continue;
+    }
     if (!(key in DB_TITLE)) {
       fail(`${DB_TITLE_OVERRIDE_FILE}: unknown key "${key}". `
         + `Valid: ${Object.keys(DB_TITLE).join(', ')}`);
@@ -1174,7 +1186,7 @@ function resolveRegistry(rootId) {
         spec.ds = target;
       }
       if (PROJECT_VOCAB.has(propName) && spec.options) {
-        const p = liveProps()[propName];
+        const p = liveProps()[spec.notionName ?? propName];
         const opts = p?.multi_select?.options ?? p?.select?.options;
         if (opts) spec.options = opts.map((o) => o.name);
       }
@@ -1210,9 +1222,11 @@ function main() {
   const NEEDS_KB = new Set(['create', 'update', 'set', 'filter', 'query']);
   // `schema` is the discovery command: keep it usable offline, but resolve when
   // the caller supplied a root (then it reports real ds ids + live vocabulary).
-  if (NEEDS_KB.has(cmd) || (cmd === 'schema' && (flags.has('--live') || rootId))) {
+  if (NEEDS_KB.has(cmd) || cmd === 'schema') {
     try {
-      resolveRegistry(rootId);
+      // Offline, `schema` still shows the project's own names.
+      if (cmd === 'schema' && !flags.has('--live') && !rootId) loadTitleOverrides();
+      else resolveRegistry(rootId);
     } catch (e) {
       if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; return; }
       throw e;

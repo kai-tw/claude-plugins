@@ -24,8 +24,8 @@
 // `**Feature**: <page>[, <page>]` line naming the product feature pages it governs
 // (`none` when it governs none; required when the adapter's kb_pages lists product)
 // and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
-// row per fork, Feature = its pages, Task section = the task name; file: appended to
-// <kb>/decisions/<slug>.md.
+// row per fork, Feature (multi-select) = its pages, Task = the task name; file:
+// appended to <kb>/decisions/<slug>.md.
 // archive.md: `# <task name>` and the five archive sections (## Overview · ## Problem ·
 // ## Final Approach · ## Key Decisions · ## Deferred Items). file: copied verbatim to
 // <kb>/<date>-<slug>.md; notion: one Feature Archive row.
@@ -102,12 +102,12 @@ function sections(md) { // "## H" → body text, in order
   for (const l of md.split('\n')) { const m = l.match(/^## (.+)$/); if (m) { h = m[1].trim(); out[h] = ''; } else if (h) out[h] += l + '\n'; }
   for (const k in out) out[k] = out[k].trim(); return out;
 }
-function decisions(md) { // "### fork" blocks → {Name, Feature?, Context, Decision, Consequence}; Feature '' = none
+function decisions(md) { // "### fork" blocks → {Name, Feature?: [page…], Context, Decision, Consequence}; Feature [] = none
   const rows = []; let cur = null;
   for (const l of md.split('\n')) {
     const h = l.match(/^### (.+)$/); if (h) { cur = { Name: h[1].trim() }; rows.push(cur); continue; }
     const ft = l.match(/^\*\*Feature\*\*:?\s*(.*)$/);
-    if (ft && cur) { const v = ft[1].trim(); cur.Feature = v === 'none' ? '' : v.split(/[,，、]/).map(x => x.trim()).filter(Boolean).join(', '); cur._last = null; continue; }
+    if (ft && cur) { const v = ft[1].trim(); cur.Feature = v === 'none' ? [] : v.split(/[,，、]/).map(x => x.trim()).filter(Boolean); cur._last = null; continue; }
     const f = l.match(/^\*\*(Context|Decision|Consequence)\*\*:?\s*(.*)$/); if (f && cur) { cur[f[1]] = f[2]; cur._last = f[1]; continue; }
     if (cur && cur._last && l.trim()) cur[cur._last] += '\n' + l;
   }
@@ -193,7 +193,7 @@ switch (op) {
       break;
     }
     notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs.map(({ Name, Feature, ...d }) =>
-      ({ Name, ...(Feature ? { Feature } : {}), ...d, Task: name, Status: 'Active', Decided: today })) }));
+      ({ Name, ...(Feature?.length ? { Feature } : {}), ...d, Task: name, Status: 'Active', Decided: today })) }));
     break;
   }
   case 'archive': {

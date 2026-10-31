@@ -18,7 +18,10 @@ description: >-
 - `asst-notion <cmd> … --root <page-id>` — `node` builder over Notion's `ntn` CLI.
   Property encoding, DB registry, option validation, verify-after-write live in
   the script; `asst-notion --help` lists the commands. Writes are dry-run until
-  `--commit`.
+  `--commit`. A project that names its databases or properties in its own
+  language maps them in `.claude/kb-databases.txt`, one per line:
+  `decision-log = <title>`, `decision-log.Feature = <property name>`;
+  `asst-notion schema <db>` shows the names in use.
 - `asst-section replace|append|get <file> <heading> [md|-]` — edit one section of
   a body file; upload afterwards with `asst-notion update`.
 - `ntn` gotchas the CLI does not tell you: any `ntn` call hangs or eats a loop's
