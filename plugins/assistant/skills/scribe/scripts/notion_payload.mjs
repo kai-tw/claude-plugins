@@ -6,9 +6,7 @@
 //   Notion REST API). A page's `properties` map still has a non-obvious wire
 //   shape — title/text as rich_text arrays, select/status as {name}, multi_select
 //   as [{name}], dates as {start,end}, relations as [{id}], checkboxes as bools,
-//   url props under their LITERAL property name (one property is live-named
-//   `userDefined:Linked Archive` — an artifact of the old MCP encoder). This
-//   script is the SINGLE SOURCE OF TRUTH for that encoding and the DB registry:
+//   url props under their literal property name. This script is the SINGLE SOURCE OF TRUTH for that encoding and the DB registry:
 //   feed it clean synthesized rows and it validates every option against the DB's
 //   vocabulary, assembles the section body, and (with --commit) drives `ntn` to
 //   create/update the pages.
@@ -58,38 +56,18 @@ const SEL = (...o) => ({ type: 'select', options: o });
 const MULTI = (...o) => ({ type: 'multi_select', options: o });
 
 const DB = {
-  'feature-archive': {
-    title: 'Name',
-    props: {
-      Name: { type: 'title' },
-      Status: SEL('Shipped', 'Abandoned', 'Superseded'),
-      // Populated live from the project's own database (see PROJECT_VOCAB).
-      // Empty is deliberate: if that fetch fails, every value is rejected rather
-      // than silently validated against some other project's taxonomy.
-      'Feature Area': MULTI(),
-      'Shipped Date': { type: 'date' },
-      'Security Review': { type: 'checkbox' },
-      // Copied from the task at close-out — the task row is trashed there, and
-      // the design trail would die with it. Empty for non-UI cycles.
-      'Design Sheet': { type: 'url' },
-    },
-    body: [
-      { key: 'Overview', kind: 'para', required: true },
-      { key: 'Problem', kind: 'para', required: true },
-      { key: 'Final Approach', kind: 'para', required: true },
-      { key: 'Key Decisions', kind: 'bullets', required: true },
-      { key: 'Deferred Items', kind: 'bullets', required: false },
-    ],
-  },
-
   'decision-log': {
     title: 'Name',
     props: {
       Name: { type: 'title' },
       Status: SEL('Active', 'Superseded', 'Deferred'),
-      // The product feature pages the decision governs, one option per page title
-      // (live-populated; see PROJECT_VOCAB): a page's linked view filters on it.
+      // The product feature pages the decision governs, one option per page title.
+      // Populated live from the project's own database (see PROJECT_VOCAB). Empty is
+      // deliberate: if that fetch fails, every value is rejected rather than
+      // silently validated against some other project's taxonomy.
       Feature: { ...MULTI(), enable: 'add a multi-select property to the Decision Log with one option per product feature page title (or map an existing one in .claude/kb-databases.txt: decision-log.Feature = <name>)' },
+      // The TaskList row the decision was made in. Empty once that row is trashed at close.
+      Task: { type: 'relation', dsRef: 'tasklist', enable: 'add a relation property to the Decision Log pointing at the TaskList (or map an existing one in .claude/kb-databases.txt: decision-log.Task = <name>)' },
       Decided: { type: 'date' },
     },
     body: [
@@ -116,7 +94,6 @@ const DB = {
       // goal to evaluate against on that date.
       'Check Date': { type: 'date' },
       'Check Target': { type: 'text' },
-      'Linked Archive': { type: 'url' },
       // The git-side anchor: the issue the task's PR closes (`Fixes #N`).
       // Empty for Tracing rows — nothing to link.
       'GitHub Issue': { type: 'url' },
@@ -1007,7 +984,7 @@ create/update without --commit print the plan only (no writes). --commit drives 
   update → ntn api v1/pages/<id> (PATCH properties only), per row.
 Reads: \`query <db> [Prop=Val …]\` — never a bare \`ntn datasources query\`, which stops at 25 rows.
 
-Manifest (create): { "db": "feature-archive", "rows": [ { …props + body sections } ] }
+Manifest (create): { "db": "decision-log", "rows": [ { …props + body sections } ] }
 Manifest (update): { "db": "tasklist", "rows": [ { "page_id": "…", "Stage": "Review" } ] }
 
 bodyFile — author the body ONCE in a Markdown file, upload it byte-exact (never
@@ -1015,7 +992,7 @@ re-typed into the manifest → CJK-safe). Put "bodyFile": "<path>" on a row inst
 of inline body sections / "content"; its "## Heading"s must match the DB schema.
 On UPDATE, a bodyFile does a safe full-body replace (the file is the SoT); without
 it, update stays properties-only. Convention: .claude/.assistant/tasks/<slug>/<artifact>.md.
-  create: { "db":"feature-archive", "rows":[ { "Name":"…", "bodyFile":".claude/.assistant/tasks/<slug>/archive.md" } ] }
+  create: { "db":"tasklist", "rows":[ { "Name":"…", "bodyFile":".claude/.assistant/tasks/<slug>/brief.md" } ] }
 Use "-" to read the manifest from stdin.`;
 
 // ── Project KB resolution ───────────────────────────────────────────────────────
@@ -1025,7 +1002,7 @@ Use "-" to read the manifest from stdin.`;
 // workflow's contract and are identical in every project.
 //
 // Two things are NOT: which Notion data sources to write to, and the feature
-// taxonomy (Area / Feature Area), which mirrors each project's own modules.
+// taxonomy (Area / Feature), which mirrors each project's own modules.
 // Both are resolved here at startup from ONE input — the KB root page id — so a
 // project configures a single value instead of one id per database that can silently rot.
 //
@@ -1042,7 +1019,6 @@ Use "-" to read the manifest from stdin.`;
 // to keep.
 
 const DB_TITLE = {
-  'feature-archive': 'Feature Archive',
   'decision-log': 'Decision Log',
   'tasklist': 'TaskList',
   'release-log': 'Release Log',
@@ -1121,7 +1097,7 @@ function missingProp(dbKey, name) {
 // Property names whose option list belongs to the project, not the workflow.
 // Everything else keeps the registry's static vocabulary so a typo fails fast,
 // locally, before any network call.
-const PROJECT_VOCAB = new Set(['Area', 'Feature Area', 'Feature']);
+const PROJECT_VOCAB = new Set(['Area', 'Feature']);
 
 function resolveRegistry(rootId) {
   if (!rootId) {

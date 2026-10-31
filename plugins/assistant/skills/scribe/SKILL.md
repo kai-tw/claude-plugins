@@ -1,7 +1,7 @@
 ---
 name: scribe
 description: >-
-  The assistant's persistence toolbelt: `asst-board` (task rows, brief, archive —
+  The assistant's persistence toolbelt: `asst-board` (task rows, brief, decisions —
   Notion or a local board file, per the adapter), `asst-notion` (the Notion
   request builder + writer behind it), `asst-section` (edit one `## ` section of a
   local Markdown body). Used by the assistant and the `builder` agent; not a user
@@ -10,11 +10,11 @@ description: >-
 
 # Scribe toolbelt
 
-- `asst-board create|set|brief|decide|archive|list … [--dry-run]` — the board behind one
+- `asst-board create|set|brief|decide|trash|list … [--dry-run]` — the board behind one
   op vocabulary; the adapter's `board:` picks Notion (via `asst-notion`) or
   `.claude/.assistant/board.md`. A row's properties are Name · Status · Stage ·
   `Blocked by` (the rows it waits for); what the row is goes in its body
-  (`create … --body <file>`). `asst-board --help` has the decisions and archive shapes.
+  (`create … --body <file>`). `asst-board --help` has the decisions shape.
 - `asst-notion <cmd> … --root <page-id>` — `node` builder over Notion's `ntn` CLI.
   Property encoding, DB registry, option validation, verify-after-write live in
   the script; `asst-notion --help` lists the commands. Writes are dry-run until

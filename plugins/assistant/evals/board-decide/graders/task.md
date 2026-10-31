@@ -1,8 +1,7 @@
 ---
 type: regex
-pattern: '"Task"'
-match: not_contains
+pattern: '"Name":"voice pick","Feature":\[[^]]*\],"Task":"11112222333344445555666677778888"'
 flags: m
 arm: with-only
 ---
-A Decision Log row carries no task name: Feature alone ties it to its product pages.
+Task is a relation to the task's TaskList row: the page id recorded for the slug.

@@ -1,8 +1,7 @@
 ---
 type: regex
-pattern: '^ +Task '
-match: not_contains
+pattern: 'Task +relation.*\(notion: 任務\)'
 flags: m
 arm: with-only
 ---
-The Decision Log registry has no Task property.
+Task is a relation, and the mapped name shows.

@@ -7,9 +7,8 @@
 // Usage: asst-board create  <slug> Name=<…> [Status=<…>] [Stage=<…>] ["Blocked by=<slug>[,…]"] [--body <file.md>]
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
-//        asst-board decide  <slug> <decisions.md>              each fork the founder rules on, the moment they rule
-//        asst-board archive <slug> <archive.md>                at close: the archive
-//        asst-board trash   <slug|page-id>                     at close, after archive: the row leaves the board,
+//        asst-board decide  <slug|page-id> <decisions.md>      each fork the founder rules on, the moment they rule
+//        asst-board trash   <slug|page-id>                     at close: the row leaves the board, no record kept,
 //                                                              and a Next row it was the last blocker of turns In Progress
 //        asst-board show    <slug|page-id> [--body]           one row whole; --body adds its body after ---
 //        asst-board list [--all]                               the live rows (In Progress · Next), or every row
@@ -24,11 +23,9 @@
 // `**Feature**: <page>[, <page>]` line naming the product feature pages it governs
 // (`none` when it governs none; required when the adapter's kb_pages lists product)
 // and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
-// row per fork, Feature (multi-select) = its pages; file: appended to
+// row per fork, Feature (multi-select) = its pages, Task = a relation to the task's
+// TaskList row, empty once that row is trashed; file: appended to
 // <kb>/decisions/<slug>.md, under the # heading.
-// archive.md: `# <task name>` and the five archive sections (## Overview · ## Problem ·
-// ## Final Approach · ## Key Decisions · ## Deferred Items). file: copied verbatim to
-// <kb>/<date>-<slug>.md; notion: one Feature Archive row.
 // Exit 2 = no adapter / bad op / unknown slug / bad property; asst-notion failures pass through.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -97,11 +94,6 @@ function pageIdOf(ref) {
   if (existsSync(f)) return readFileSync(f, 'utf8').trim();
   fail(`no page id recorded for "${ref}" (${f}) — pass the page id instead.`);
 }
-function sections(md) { // "## H" → body text, in order
-  const out = {}; let h = null;
-  for (const l of md.split('\n')) { const m = l.match(/^## (.+)$/); if (m) { h = m[1].trim(); out[h] = ''; } else if (h) out[h] += l + '\n'; }
-  for (const k in out) out[k] = out[k].trim(); return out;
-}
 function decisions(md) { // "### fork" blocks → {Name, Feature?: [page…], Context, Decision, Consequence}; Feature [] = none
   const rows = []; let cur = null;
   for (const l of md.split('\n')) {
@@ -114,7 +106,7 @@ function decisions(md) { // "### fork" blocks → {Name, Feature?: [page…], Co
   return rows.map(({ _last, ...r }) => r);
 }
 
-// ── file backend: one markdown table, brief and archive as files.
+// ── file backend: one markdown table, the brief as a file.
 const boardFile = join(stateDir, 'board.md');
 const COLS = ['Slug', ...FILE_PROPS];
 // Columns are read by their header, so a column the board doesn't keep stops here
@@ -177,7 +169,7 @@ switch (op) {
     notion(['append', pageIdOf(ref), resolve(file)]); break;
   }
   case 'decide': {
-    const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('decide <slug> <decisions.md>');
+    const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('decide <slug|page-id> <decisions.md>');
     const md = readFileSync(file, 'utf8'); const decs = decisions(md);
     if (!decs.length) fail(`${file} has no "### <fork>" block`);
     // A product page lists its decisions by Feature, so a decision without one never shows on any page.
@@ -192,19 +184,9 @@ switch (op) {
       writeFileSync(dest, existsSync(dest) ? readFileSync(dest, 'utf8').trimEnd() + '\n\n' + forks : `# ${name}\n\n${forks}`); console.log(dest);
       break;
     }
+    const task = pageIdOf(slug);
     notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs.map(({ Name, Feature, ...d }) =>
-      ({ Name, ...(Feature?.length ? { Feature } : {}), ...d, Status: 'Active', Decided: today })) }));
-    break;
-  }
-  case 'archive': {
-    const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('archive <slug> <archive.md>');
-    const md = readFileSync(file, 'utf8');
-    if (sections(md).Decisions) fail(`${file} has a "## Decisions" section: file each fork with "asst-board decide <slug> <decisions.md>" (already filed ones skip this), then delete the section.`);
-    if (backend === 'file') { if (!adapter.kb) fail('adapter board: file needs kb: <dir>'); put(join(root, adapter.kb, `${today}-${slug}.md`), resolve(file)); break; }
-    const s = sections(md); const name = (md.match(/^# (.+)$/m) ?? [, slug])[1].trim();
-    const archiveRow = { Name: name, Status: 'Shipped', 'Shipped Date': today };
-    for (const k of ['Overview', 'Problem', 'Final Approach', 'Key Decisions', 'Deferred Items']) if (s[k]) archiveRow[k] = s[k];
-    notion(['create', '-'], JSON.stringify({ db: 'feature-archive', rows: [archiveRow] }));
+      ({ Name, ...(Feature?.length ? { Feature } : {}), Task: task, ...d, Status: 'Active', Decided: today })) }));
     break;
   }
   case 'show': {
@@ -260,5 +242,5 @@ switch (op) {
     }
     notion(['trash', id]); break;
   }
-  default: fail(`unknown op "${op}" (create · set · brief · decide · archive · trash · show · list)`);
+  default: fail(`unknown op "${op}" (create · set · brief · decide · trash · show · list)`);
 }

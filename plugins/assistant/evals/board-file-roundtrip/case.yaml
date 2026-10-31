@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: board-file-roundtrip
-description: file backend: create a row → change Stage → file the brief → file decisions twice → archive to kb → list shows the row.
+description: file backend: create a row → change Stage → file the brief → file decisions twice → list shows the row.
 tags: [asst-board]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Bash]
   env:
-    EVAL_CMD: asst-board create t1 "Name=Trash restore" && asst-board set t1 Stage=Review && asst-board brief t1 brief.md && asst-board decide t1 decisions.md && asst-board decide t1 decisions2.md && asst-board archive t1 archive.md && asst-board list && ls docs/decisions .claude/.assistant/tasks/t1 && grep -c "^### " docs/decisions/decisions/t1.md
+    EVAL_CMD: asst-board create t1 "Name=Trash restore" && asst-board set t1 Stage=Review && asst-board brief t1 brief.md && asst-board decide t1 decisions.md && asst-board decide t1 decisions2.md && asst-board list && ls .claude/.assistant/tasks/t1 && grep -c "^### " docs/kb/decisions/t1.md
   prompt: |
-    This project has no Notion; the adapter says the board is a local file. For task t1 (Trash restore), create a row, set Stage to Review, file brief.md, file decisions.md and then decisions2.md as its decisions, archive archive.md, then list the board and the files produced.
+    This project has no Notion; the adapter says the board is a local file. For task t1 (Trash restore), create a row, set Stage to Review, file brief.md, file decisions.md and then decisions2.md as its decisions, then list the board and the files produced.
 context:
   scaffold_script: fixture.sh
