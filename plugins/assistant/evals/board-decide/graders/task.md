@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '"Name":"voice pick","Feature":\[[^]]*\],"Task":"11112222333344445555666677778888"'
+pattern: '"Name":"voice pick","Pages":\[[^]]*\],"Task":"11112222333344445555666677778888"'
 flags: m
 arm: with-only
 ---

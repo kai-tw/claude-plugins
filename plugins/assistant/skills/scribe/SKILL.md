@@ -20,7 +20,7 @@ description: >-
   the script; `asst-notion --help` lists the commands. Writes are dry-run until
   `--commit`. A project that names its databases or properties in its own
   language maps them in `.claude/kb-databases.txt`, one per line:
-  `decision-log = <title>`, `decision-log.Feature = <property name>`;
+  `decision-log = <title>`, `decision-log.Pages = <property name>`;
   `asst-notion schema <db>` shows the names in use.
 - `asst-section replace|append|get <file> <heading> [md|-]` — edit one section of
   a body file; upload afterwards with `asst-notion update`.

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: notion-property-names
-description: .claude/kb-databases.txt maps a registry property to the project's own Notion property name (`decision-log.Feature = 功能`); an unknown property in it fails and lists the valid ones.
+description: .claude/kb-databases.txt maps a registry property to the project's own Notion property name (`decision-log.Pages = 相關頁面`); an unknown property in it fails and lists the valid ones.
 tags: [asst-notion]
 plugins: ["../.."]
 runs: 1

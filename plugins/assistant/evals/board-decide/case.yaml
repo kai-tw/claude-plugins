@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: board-decide
-description: decide on Notion files one Decision Log row per fork, its Feature the **Feature** pages and its Task a relation to the task's TaskList row; with product pages kept, a fork naming no page stops it before any write; archive is gone.
+description: decide on Notion files one Decision Log row per fork, its Pages the **Pages** titles and its Task a relation to the task's TaskList row; with product pages kept, a fork naming no page while the project keeps KB pages stops it before any write; archive is gone.
 tags: [asst-board]
 plugins: ["../.."]
 runs: 1

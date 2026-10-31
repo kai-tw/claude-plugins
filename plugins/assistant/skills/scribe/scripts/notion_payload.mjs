@@ -56,16 +56,27 @@ const SEL = (...o) => ({ type: 'select', options: o });
 const MULTI = (...o) => ({ type: 'multi_select', options: o });
 
 const DB = {
+  // Every KB module's pages (SKILL.md §KB modules), one row each, so a decision can
+  // relate to the page it governs. The body is the page itself.
+  'kb-pages': {
+    title: 'Name',
+    props: {
+      Name: { type: 'title' },
+      // Option lists are the project's own, in its language, populated live (see
+      // PROJECT_VOCAB). Empty is deliberate: if that fetch fails, every value is
+      // rejected rather than silently validated against some other project's.
+      Module: SEL(), // frontend · backend · product · marketing · design
+      Kind: { ...SEL(), enable: 'add a select property to KB Pages for the kind of page within its module, e.g. feature or shared design (or map an existing one in .claude/kb-databases.txt: kb-pages.Kind = <name>)' },
+    },
+  },
+
   'decision-log': {
     title: 'Name',
     props: {
       Name: { type: 'title' },
       Status: SEL('Active', 'Superseded', 'Deferred'),
-      // The product feature pages the decision governs, one option per page title.
-      // Populated live from the project's own database (see PROJECT_VOCAB). Empty is
-      // deliberate: if that fetch fails, every value is rejected rather than
-      // silently validated against some other project's taxonomy.
-      Feature: { ...MULTI(), enable: 'add a multi-select property to the Decision Log with one option per product feature page title (or map an existing one in .claude/kb-databases.txt: decision-log.Feature = <name>)' },
+      // The KB pages the decision governs; each page's linked view filters on it.
+      Pages: { type: 'relation', dsRef: 'kb-pages', enable: 'add a relation property to the Decision Log pointing at KB Pages (or map an existing one in .claude/kb-databases.txt: decision-log.Pages = <name>)' },
       // The TaskList row the decision was made in. Empty once that row is trashed at close.
       Task: { type: 'relation', dsRef: 'tasklist', enable: 'add a relation property to the Decision Log pointing at the TaskList (or map an existing one in .claude/kb-databases.txt: decision-log.Task = <name>)' },
       Decided: { type: 'date' },
@@ -202,7 +213,9 @@ function encodeProp(dbKey, name, spec, value, out, rowLabel) {
     }
     case 'relation': {
       const arr = Array.isArray(value) ? value : [value];
-      out[key] = { relation: arr.map((v) => ({ id: normalizeRelationId(String(v)) })) };
+      out[key] = { relation: arr.map((v) => ({ id: looksLikePageRef(String(v)) ? normalizeRelationId(String(v))
+        : spec.dsRef ? pageIdByTitle(spec.dsRef, String(v), where)
+        : fail(`${where}: "${v}" is not a page id or URL`) })) };
       return;
     }
     case 'url':
@@ -227,6 +240,24 @@ function normalizeRelationId(v) {
   if (!/^[0-9a-f]{32}$/i.test(hex))
     fail(`relation value must be a notion.so URL or a 32-hex page id, got "${v}"`);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+const looksLikePageRef = (v) => /^https?:\/\//.test(v) || /^[0-9a-f]{32}$/i.test(v.replace(/-/g, ''));
+
+// A relation into a registry DB (`dsRef`) also takes a row's exact title: it must
+// match exactly one row, so a typo or a duplicate fails instead of linking nothing.
+const TITLE_INDEX = new Map(); // dbKey → Map(title → [page id])
+function pageIdByTitle(dbKey, title, where) {
+  if (!TITLE_INDEX.has(dbKey)) {
+    const live = DB[dbKey].props[DB[dbKey].title]?.notionName ?? DB[dbKey].title;
+    const index = new Map();
+    for (const r of queryRows(dbKey, [])) index.set(r[live], [...(index.get(r[live]) ?? []), r.id]);
+    TITLE_INDEX.set(dbKey, index);
+  }
+  const ids = TITLE_INDEX.get(dbKey).get(title) ?? [];
+  if (ids.length !== 1)
+    fail(`${where}: ${ids.length ? `${ids.length} rows` : 'no row'} titled "${title}" in ${DB_TITLE[dbKey]}${ids.length ? '' : ` — add the page there first, or fix the title. Titles: ${[...TITLE_INDEX.get(dbKey).keys()].join(', ')}`}`);
+  return ids[0];
 }
 
 // ── body assembly (Markdown; ntn pages edit converts it to blocks) ──────────────
@@ -1002,7 +1033,7 @@ Use "-" to read the manifest from stdin.`;
 // workflow's contract and are identical in every project.
 //
 // Two things are NOT: which Notion data sources to write to, and the feature
-// taxonomy (Area / Feature), which mirrors each project's own modules.
+// taxonomy (Area / Feature / Module / Kind), which mirrors each project's own modules.
 // Both are resolved here at startup from ONE input — the KB root page id — so a
 // project configures a single value instead of one id per database that can silently rot.
 //
@@ -1019,6 +1050,7 @@ Use "-" to read the manifest from stdin.`;
 // to keep.
 
 const DB_TITLE = {
+  'kb-pages': 'KB Pages',
   'decision-log': 'Decision Log',
   'tasklist': 'TaskList',
   'release-log': 'Release Log',
@@ -1097,7 +1129,7 @@ function missingProp(dbKey, name) {
 // Property names whose option list belongs to the project, not the workflow.
 // Everything else keeps the registry's static vocabulary so a typo fails fast,
 // locally, before any network call.
-const PROJECT_VOCAB = new Set(['Area', 'Feature']);
+const PROJECT_VOCAB = new Set(['Area', 'Feature', 'Module', 'Kind']);
 
 function resolveRegistry(rootId) {
   if (!rootId) {
@@ -1153,6 +1185,10 @@ function resolveRegistry(rootId) {
       }
       if (spec.dsRef) {
         const target = resolvedDs[spec.dsRef];
+        if (!target && spec.enable) {
+          MISSING_PROP.set(`${key}.${propName}`, `${spec.enable}; "${DB_TITLE[spec.dsRef]}" itself is absent under the KB root`);
+          delete def.props[propName]; continue;
+        }
         if (!target) {
           fail(`${key}.${propName} relates to "${DB_TITLE[spec.dsRef]}", which is `
             + `absent under the KB root — the relation cannot be written.`);

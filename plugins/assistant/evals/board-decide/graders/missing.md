@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'palette.*no \*\*Feature\*\*'
+pattern: 'palette.*no \*\*Pages\*\*'
 flags: m
 arm: with-only
 ---
-With product pages kept, a fork with no **Feature** line is named in the error.
+With KB pages kept, a fork with no **Pages** line is named in the error.

@@ -3,10 +3,12 @@
 Load at: ① brief (step 3) · Close (step 8) · a founder's request for a page.
 
 The pages are titled in the founder's language:
-- **Notion** (`board: notion`): a page titled Product under `notion_root`; under
-  it, Features (a page per feature) and Shared designs (a page per screen or
-  interaction rule several features use). Find them by title in
-  `ntn api v1/blocks/<id>/children`; record no page id.
+- **Notion** (`board: notion`): rows of KB Pages whose `Module` is the product
+  module, and whose `Kind` is feature (a page per feature) or shared design (a page
+  per screen or interaction rule several features use). Find them with
+  `asst-notion query kb-pages Module=<product module>`; record no page id. A new
+  page is a new row: `asst-notion create` with `"db":"kb-pages"`, its Module and
+  Kind, and the page as `bodyFile`.
 - **File board**: `<kb>/product/features/<feature>.md` and
   `<kb>/product/shared/<design>.md`, changed on the task's own branch, so a page
   merges with the code that follows it.
@@ -43,12 +45,12 @@ app doesn't follow the rule.
 - Read the pages of every feature and shared design the task touches before
   writing the brief; its mechanism lines quote or link them (`brief.md`).
 - Once the founder answers, write each decided mechanism onto its page before
-  Build starts. Each fork filed with `asst-board decide` names those pages on its
-  `**Feature**:` line, by their exact titles (`none` if it changes no page), so the
-  page's Related decisions show it. A feature with no page gets one holding only what this task
-  decided, its intro saying so; on Notion, its title also becomes an option of the
-  Decision Log's Feature property, or `decide` stops on it. On Notion, the page's last section also names the
-  task row as code that doesn't match yet, until the PR merges.
+  Build starts. A feature with no page gets one holding only what this task
+  decided, its intro saying so. Each fork filed with `asst-board decide` names those
+  pages on its `**Pages**:` line, by their exact titles, so the page's Related
+  decisions show it; a new page is created first, or `decide` stops on its title.
+  On Notion, the page's last section also names the task row as code that doesn't
+  match yet, until the PR merges.
 
 ## At Close
 

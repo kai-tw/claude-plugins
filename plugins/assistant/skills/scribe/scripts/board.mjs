@@ -20,10 +20,10 @@
 // the file board keeps no property but Name · Status · Stage · Blocked by.
 //
 // decisions.md: `# <task name>`, then one `### <fork>` per ruling with a
-// `**Feature**: <page>[, <page>]` line naming the product feature pages it governs
-// (`none` when it governs none; required when the adapter's kb_pages lists product)
+// `**Pages**: <title>[, <title>]` line naming the KB pages it governs, any module
+// (`none` when it governs none; required unless the adapter's kb_pages is none)
 // and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
-// row per fork, Feature (multi-select) = its pages, Task = a relation to the task's
+// row per fork, Pages = a relation to those KB Pages rows, Task = a relation to the task's
 // TaskList row, empty once that row is trashed; file: appended to
 // <kb>/decisions/<slug>.md, under the # heading.
 // Exit 2 = no adapter / bad op / unknown slug / bad property; asst-notion failures pass through.
@@ -94,12 +94,12 @@ function pageIdOf(ref) {
   if (existsSync(f)) return readFileSync(f, 'utf8').trim();
   fail(`no page id recorded for "${ref}" (${f}) — pass the page id instead.`);
 }
-function decisions(md) { // "### fork" blocks → {Name, Feature?: [page…], Context, Decision, Consequence}; Feature [] = none
+function decisions(md) { // "### fork" blocks → {Name, Pages?: [title…], Context, Decision, Consequence}; Pages [] = none
   const rows = []; let cur = null;
   for (const l of md.split('\n')) {
     const h = l.match(/^### (.+)$/); if (h) { cur = { Name: h[1].trim() }; rows.push(cur); continue; }
-    const ft = l.match(/^\*\*Feature\*\*:?\s*(.*)$/);
-    if (ft && cur) { const v = ft[1].trim(); cur.Feature = v === 'none' ? [] : v.split(/[,，、]/).map(x => x.trim()).filter(Boolean); cur._last = null; continue; }
+    const pg = l.match(/^\*\*Pages\*\*:?\s*(.*)$/);
+    if (pg && cur) { const v = pg[1].trim(); cur.Pages = v === 'none' ? [] : v.split(/[,，、]/).map(x => x.trim()).filter(Boolean); cur._last = null; continue; }
     const f = l.match(/^\*\*(Context|Decision|Consequence)\*\*:?\s*(.*)$/); if (f && cur) { cur[f[1]] = f[2]; cur._last = f[1]; continue; }
     if (cur && cur._last && l.trim()) cur[cur._last] += '\n' + l;
   }
@@ -172,9 +172,10 @@ switch (op) {
     const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('decide <slug|page-id> <decisions.md>');
     const md = readFileSync(file, 'utf8'); const decs = decisions(md);
     if (!decs.length) fail(`${file} has no "### <fork>" block`);
-    // A product page lists its decisions by Feature, so a decision without one never shows on any page.
-    const unplaced = /\bproduct\b/.test(adapter.kb_pages ?? '') ? decs.filter(d => d.Feature === undefined).map(d => `"${d.Name}"`) : [];
-    if (unplaced.length) fail(`decision ${unplaced.join(', ')} has no **Feature** line: under its ### heading, name the product feature pages it governs, "**Feature**: <page>[, <page>]", or "**Feature**: none".`);
+    // A KB page lists its decisions by Pages, so a decision without one never shows on any page.
+    const keepsPages = !['', 'none'].includes((adapter.kb_pages ?? '').trim());
+    const unplaced = keepsPages ? decs.filter(d => d.Pages === undefined).map(d => `"${d.Name}"`) : [];
+    if (unplaced.length) fail(`decision ${unplaced.join(', ')} has no **Pages** line: under its ### heading, name the KB pages it governs by their exact titles, "**Pages**: <title>[, <title>]", or "**Pages**: none".`);
     const name = (md.match(/^# (.+)$/m) ?? [, slug])[1].trim();
     if (backend === 'file') {
       if (!adapter.kb) fail('adapter board: file needs kb: <dir>');
@@ -185,8 +186,8 @@ switch (op) {
       break;
     }
     const task = pageIdOf(slug);
-    notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs.map(({ Name, Feature, ...d }) =>
-      ({ Name, ...(Feature?.length ? { Feature } : {}), Task: task, ...d, Status: 'Active', Decided: today })) }));
+    notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs.map(({ Name, Pages, ...d }) =>
+      ({ Name, ...(Pages?.length ? { Pages } : {}), Task: task, ...d, Status: 'Active', Decided: today })) }));
     break;
   }
   case 'show': {

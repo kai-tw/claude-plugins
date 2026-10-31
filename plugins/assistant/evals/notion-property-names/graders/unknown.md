@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'unknown property "decision-log\.Area".*decision-log\.Task'
+pattern: 'unknown property "decision-log\.Area".*decision-log\.Pages'
 flags: m
 arm: with-only
 ---
