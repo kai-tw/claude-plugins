@@ -131,20 +131,6 @@ const DB = {
       Highlights: { type: 'text' },
     },
   },
-
-  'analytics-catalog': {
-    title: 'Event',
-    props: {
-      Event: { type: 'title' },
-      Feature: MULTI('Cloud Sync', 'Reader', 'Books', 'Translation', 'Preference', 'Explore',
-        'Homepage', 'Book Storage', 'Auth', 'Infra'),
-      Kind: SEL('Built-in', 'Counter', 'Observation', 'Canary'),
-      Status: SEL('Live', 'Deferred', 'Retired'),
-      'Weekly Review': { type: 'checkbox' },
-      Payload: { type: 'text' },
-      Rationale: { type: 'text' },
-    },
-  },
 };
 
 const MARKER = '<!-- archivist-generated -->';
@@ -1036,7 +1022,7 @@ Use "-" to read the manifest from stdin.`;
 // workflow's contract and are identical in every project.
 //
 // Two things are NOT: which Notion data sources to write to, and the feature
-// taxonomy (Area / Feature / Module / Kind), which mirrors each project's own modules.
+// taxonomy (Area / Module / Kind), which mirrors each project's own modules.
 // Both are resolved here at startup from ONE input — the KB root page id — so a
 // project configures a single value instead of one id per database that can silently rot.
 //
@@ -1057,7 +1043,6 @@ const DB_TITLE = {
   'decision-log': 'Decision Log',
   'tasklist': 'TaskList',
   'release-log': 'Release Log',
-  'analytics-catalog': 'Analytics Event Catalog',
 };
 
 // A project may name its databases and their properties in its own language.
@@ -1132,7 +1117,7 @@ function missingProp(dbKey, name) {
 // Property names whose option list belongs to the project, not the workflow.
 // Everything else keeps the registry's static vocabulary so a typo fails fast,
 // locally, before any network call.
-const PROJECT_VOCAB = new Set(['Area', 'Feature', 'Module', 'Kind']);
+const PROJECT_VOCAB = new Set(['Area', 'Module', 'Kind']);
 
 function resolveRegistry(rootId) {
   if (!rootId) {

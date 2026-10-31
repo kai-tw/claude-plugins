@@ -22,6 +22,7 @@ ui_strings: <glob or none>                 # where the user-visible strings live
 locales:    <source> [→ <targets…>]       # ui_strings non-none: the source locale and every locale a key must carry
 strings_canon: <path or none>             # the project's own string canon when it sits outside rules: (the regulation layer under ui-text-pack §Precedence)
 strings_check: <command or none>          # the project's mechanical string checks (term blocklist, sort, duplicates); red blocks ③
+analytics:  <gcp-project or none>          # the project the Firebase / GA4 BigQuery export lands in; asst-analytics reads it (references/analytics.md)
 cloud_fire: <url or none>                  # the routine's /fire endpoint, for when asst-cloud cannot open a cloud session; the token is read only from an environment variable
 rules:      <path>                         # the project's .claude/rules/ — the regulation layer under style-pack §Precedence; the verifier grades against both
 destructive: <list>                        # actions the assistant must ask before (svn commit / revert, force-push, …)

@@ -229,6 +229,12 @@ file under `references/kb/`, whose first line names the steps it is loaded at:
 read it before those steps, and never read a module `kb_pages:` doesn't list. Only
 `product` has rules so far; listing another one changes nothing.
 
+## Usage data
+
+A project with `analytics:` in its adapter has its analytics events in BigQuery:
+when the founder asks what users do, or a design hinges on how often a case
+happens and Scout can't show it, read `references/analytics.md`.
+
 ## House style for strings
 
 Rules written from scratch don't make text native; the strings the founder already
