@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: board-decide
-description: decide on Notion files one Decision Log row per fork, its Pages the **Pages** titles and its Task a relation to the task's TaskList row; with product pages kept, a fork naming no page while the project keeps KB pages stops it before any write; archive is gone.
+description: decide on Notion files one Decision Log row per fork, its Pages the **Pages** titles and its Task a relation to the task's TaskList row; a fork naming no page while the project keeps KB pages stops it before any write; archive is gone; a task row's Pages are sent as a list of titles.
 tags: [asst-board]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Bash]
   env:
-    EVAL_CMD: asst-board decide t2 nofeature.md --dry-run; echo "decide-exit=$?"; asst-board archive t1 archive.md --dry-run; echo "archive-exit=$?"; asst-board decide t1 decisions.md --dry-run
+    EVAL_CMD: asst-board decide t2 nofeature.md --dry-run; echo "decide-exit=$?"; asst-board archive t1 archive.md --dry-run; echo "archive-exit=$?"; asst-board decide t1 decisions.md --dry-run; asst-board create t3 Name=Fix "Pages=Read aloud,Human voice" --dry-run
   prompt: |
-    The adapter says the board is in Notion and the project keeps product pages. Dry-run filing nofeature.md as t2's decisions, try archiving t1, then dry-run filing decisions.md as t1's decisions, and show what would be written.
+    The adapter says the board is in Notion and the project keeps product pages. Dry-run filing nofeature.md as t2's decisions, try archiving t1, dry-run filing decisions.md as t1's decisions, then dry-run creating task t3 (Fix) on the Read aloud and Human voice pages, and show what would be written.
 context:
   scaffold_script: fixture.sh

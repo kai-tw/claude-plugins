@@ -146,6 +146,7 @@ switch (op) {
       break;
     }
     if (p['Blocked by']) p['Blocked by'] = blockers(p['Blocked by']).map(pageIdOf);
+    if (p.Pages) p.Pages = blockers(p.Pages); // KB page titles; asst-notion links them
     if (body) p.bodyFile = resolve(body);
     const out = notion(['create', '-'], JSON.stringify({ db: 'tasklist', rows: [p] }));
     const id = (out.match(/[0-9a-f]{32}/) ?? [])[0];

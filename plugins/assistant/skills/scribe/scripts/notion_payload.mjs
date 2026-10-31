@@ -110,6 +110,9 @@ const DB = {
       'GitHub Issue': { type: 'url' },
       // The ② screens page — the task's design trail. Empty for non-UI work.
       'Design Sheet': { type: 'url' },
+      // The KB pages the task changes or was found on; each page's last section
+      // is a TaskList view filtered on it.
+      Pages: { type: 'relation', dsRef: 'kb-pages', enable: 'add a relation property to the TaskList pointing at KB Pages (or map an existing one in .claude/kb-databases.txt: tasklist.Pages = <name>)' },
     },
     // Other relation props on this DB are Notion-managed reverse relations — not
     // builder-written.
