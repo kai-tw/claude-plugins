@@ -21,7 +21,7 @@
 //   notion-payload filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
 //   notion-payload query    <db> [Prop=Val …]      # every matching row, all pages: {db,count}, then one JSON row per line
 //   notion-payload get      <page-id> [--body]     # one row: its properties as JSON, with --body its page after ---
-//       date props also accept <,<=,>,>= and the literal `today`, e.g. "Check Date<=today"
+//       date props also accept <,<=,>,>= and the literal `today`, e.g. "Decided<=today"
 //   notion-payload schema   [db]                  # print embedded schema(s)
 //   notion-payload --help
 //
@@ -95,21 +95,15 @@ const DB = {
       Status: SEL('In Progress', 'Next', 'Backlog', 'Deferred', 'Tracing'),
       Stage: SEL('Product Plan', 'Design Plan', 'Engineering Plan', 'Implementation', 'Review',
         'Shipped', 'Blocked', 'Translation', 'Security', 'Privacy', 'QA', 'Archived'),
-      Area: MULTI(), // live-populated; see PROJECT_VOCAB
       // The rows this one waits for: Notion's built-in Dependencies relation, which
       // keeps the reverse side (`Blocking`) itself. A workspace that hasn't turned
       // it on loses the property at resolve time (see `enable`).
       'Blocked by': { type: 'relation',
         enable: 'turn on Dependencies in the TaskList (Database settings → More settings → Dependencies) and keep the property it adds named "Blocked by"' },
-      // Tracing-task fields (Status = Tracing): the next observation date + the
-      // goal to evaluate against on that date.
-      'Check Date': { type: 'date' },
-      'Check Target': { type: 'text' },
-      // The git-side anchor: the issue the task's PR closes (`Fixes #N`).
-      // Empty for Tracing rows — nothing to link.
-      'GitHub Issue': { type: 'url' },
-      // The ② screens page — the task's design trail. Empty for non-UI work.
-      'Design Sheet': { type: 'url' },
+      // The row holding the whole request this one is a piece of: Notion's built-in
+      // Sub-items, which keeps the reverse side (`Sub-item`) itself.
+      'Parent item': { type: 'relation',
+        enable: 'turn on Sub-items in the TaskList (Database settings → More settings → Sub-items) and keep the property it adds named "Parent item"' },
       // The KB pages the task changes or was found on; each page's last section
       // is a TaskList view filtered on it.
       Pages: { type: 'relation', dsRef: 'kb-pages', enable: 'add a relation property to the TaskList pointing at KB Pages (or map an existing one in .claude/kb-databases.txt: tasklist.Pages = <name>)' },
@@ -129,6 +123,9 @@ const DB = {
       Platform: MULTI('Android', 'iOS', 'TestFlight'),
       'Release Date': { type: 'date' },
       Highlights: { type: 'text' },
+      // The KB pages the version's highlights change; a feature page's Releases
+      // section is a Release Log view filtered on it.
+      Pages: { type: 'relation', dsRef: 'kb-pages', enable: 'add a relation property to the Release Log pointing at KB Pages (or map an existing one in .claude/kb-databases.txt: release-log.Pages = <name>)' },
     },
   },
 };
@@ -796,7 +793,7 @@ function postComment(pageId, text, commit) {
 // `filter <db> Prop=Val …` → a Notion query filter, using the registry to pick the
 // right operator per property type. `query` below runs it.
 // Date properties also accept the comparison operators `<`, `<=`, `>`, `>=`
-// (e.g. `"Check Date<=today"` for overdue+due), and the literal `today` on either
+// (e.g. `"Decided<=today"`), and the literal `today` on either
 // side of the operator resolves to the system's local date.
 const DATE_OP = { '<': 'before', '<=': 'on_or_before', '>': 'after', '>=': 'on_or_after' };
 const todayISO = () => {
@@ -1022,7 +1019,7 @@ Use "-" to read the manifest from stdin.`;
 // workflow's contract and are identical in every project.
 //
 // Two things are NOT: which Notion data sources to write to, and the feature
-// taxonomy (Area / Module / Kind), which mirrors each project's own modules.
+// taxonomy (KB Pages' Module / Kind), which mirrors each project's own modules.
 // Both are resolved here at startup from ONE input — the KB root page id — so a
 // project configures a single value instead of one id per database that can silently rot.
 //
@@ -1117,7 +1114,7 @@ function missingProp(dbKey, name) {
 // Property names whose option list belongs to the project, not the workflow.
 // Everything else keeps the registry's static vocabulary so a typo fails fast,
 // locally, before any network call.
-const PROJECT_VOCAB = new Set(['Area', 'Module', 'Kind']);
+const PROJECT_VOCAB = new Set(['Module', 'Kind']);
 
 function resolveRegistry(rootId) {
   if (!rootId) {

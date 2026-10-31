@@ -31,15 +31,18 @@ share is then written on the first one's page, and the other links to it.
 - A founder ruling is a line of its own: `Founder ruling (<date>): …`.
 - `Checked against: <repo> <branch> @ <sha> (<date>)` names the commit the whole
   page was last read against.
-- On Notion, two sections are linked views filtered on Pages contains this page:
-  Related decisions (the Decision Log) and the last section (the TaskList). A new
-  page gets both (`ntn api v1/views -X POST` with `create_database`). In the page's
-  Markdown each is one `<database url=…>` line: keep both when rewriting the page,
-  and never pass `--allow-deleting-content`, which deletes them.
+- On Notion, these sections are linked views filtered on Pages contains this page:
+  Releases (the Release Log, feature pages only), Related decisions (the Decision
+  Log) and the last section (the TaskList). A new page gets them (`ntn api v1/views
+  -X POST` with `create_database`). In the page's Markdown each is one
+  `<database url=…>` line: keep them when rewriting the page, and never pass
+  `--allow-deleting-content`, which deletes them.
+- A Release Log row names the pages its highlights change (`Pages`), so a feature
+  page's Releases lists the versions that changed it.
 
 Feature page: intro · Checked against · Entry points · Mechanism · States and
 screens · Edge cases · Settings and defaults · Data · Permissions and billing ·
-Relations to other features · Related decisions · Known issues and to-dos.
+Relations to other features · Releases · Related decisions · Known issues and to-dos.
 
 Shared-design page: intro · Status (`current`, or `kept, not used for new work`) ·
 Checked against · Screen rules · Details · Features using this design · Where the

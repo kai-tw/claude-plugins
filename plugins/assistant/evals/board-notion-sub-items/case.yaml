@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: board-notion-sub-items
+description: notion backend — Parent item is the TaskList's Sub-items relation; list marks a parent and its sub-items; a parent can't be trashed while a sub-item is on the board; trashing the last sub-item trashes the parent after it.
+tags: [asst-board, asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export NTN_BIN=$PWD/ntn; asst-board create s3 "Name=Sync docs" "Parent item=dddddddddddddddddddddddddddddddd" >/dev/null; asst-board list; asst-board trash dddddddddddddddddddddddddddddddd; echo "early=$?"; asst-board trash aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; asst-board trash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb; echo "order=$(grep -oE "^(PATCH|TRASH) [a-d]" ntn.log | paste -sd, -)"; echo "--- log"; cat ntn.log
+  prompt: |
+    The adapter says the board is in Notion; ./ntn stands in for the Notion CLI (export NTN_BIN=$PWD/ntn). Create s3 (Sync docs) under parent page dddddddddddddddddddddddddddddddd, list the board, try trashing the parent, then trash a… and b…, and print the ntn log.
+context:
+  scaffold_script: fixture.sh

@@ -70,10 +70,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    option changes code outside the boundary is checked against this before you
    recommend anything.
    A request one brief cannot hold — more than 5 `Needs you` forks, or a design that
-   touches more than one persisted format — becomes several task statements in order: each
-   its own row and worktree; the later rows are `Status=Next` with `Blocked by`
-   naming the row they wait for. The split itself is a `Decided` in the first
-   brief. Read the project's lessons (§Lessons) first; every dispatch for the task
+   touches more than one persisted format — becomes a parent row holding the request
+   in its body, and under it one sub-item per task statement, in order (`asst-board
+   create <slug> … "Parent item=<parent>"`): each its own row and worktree; the later
+   sub-items are `Status=Next` with `Blocked by` naming the sub-item they wait for.
+   The parent is never dispatched, and trashing its last sub-item trashes it too.
+   The split itself is a `Decided` in the first brief. Read the project's lessons (§Lessons) first; every dispatch for the task
    quotes the ones that bear on it.
 2. **Scout** (`builder`, phase `scout`) returns ≤10 fact rows
    (`file:line` or `unread`) and the intent forks it could not settle.
@@ -267,7 +269,8 @@ say the same thing.
 
 The board is whatever the adapter's `board:` names — the project's Notion
 TaskList, or the personal `.claude/.assistant/board.md` — read and written only
-through `asst-board`, same columns either way (Status · Stage · Blocked by). One row
+through `asst-board`, same columns either way (Status · Stage · Blocked by · Parent
+item; on Notion also Pages, the KB pages the task touches). One row
 per task, `Stage` mapped as: task statement → Product Plan · brief → Engineering Plan ·
 screens → Design Plan · build → Implementation · verify → Review · deliver → QA;
 a closed row is trashed. `Blocked by` names only the rows this one waits for (on
@@ -276,12 +279,14 @@ else about a row — what it is, who found it, scope, evidence, a wait on anythi
 outside the board — goes in its body: `asst-board create … --body <file>`, or
 `asst-board brief` later. A row that waits on something outside the board is
 `Deferred`, its condition in the body. `list` is the summary (Name · Status · Stage ·
-the blockers still on the board); one row's
+the blockers still on the board, then `in <parent>` on a sub-item and `parent of <n>`
+on a parent); one row's
 every property, and with `--body` its body, is `asst-board show <slug> [--body]` —
 never a whole-board query read for one row. Every turn you take is a scheduler pass: `asst-board list` and
 `asst-intake <project-dir>` → file new candidates → advance or
 dispatch each live row → surface new `Needs you` lines together.
-Live = `In Progress`. `asst-board trash` turns a `Next` row In Progress when it takes
+Live = `In Progress`, apart from a parent, whose sub-items are the work.
+`asst-board trash` turns a `Next` row In Progress when it takes
 that row's last blocker off the board and prints `unblocked <row>`: start that row at
 Scout. A Close changes the board, so the pass runs
 again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet

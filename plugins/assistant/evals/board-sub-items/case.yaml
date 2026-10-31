@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: board-sub-items
+description: file backend — a split request is a parent row with sub-items under it; list marks both sides; the parent can't be trashed while a sub-item is on the board; trashing the last sub-item trashes the parent too, after unblocking the next sub-item.
+tags: [asst-board]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: asst-board create big "Name=Sync rework" && asst-board create s1 "Name=Sync schema" "Parent item=big" && asst-board create s2 "Name=Sync UI" Status=Next "Blocked by=s1" "Parent item=big" && asst-board list; asst-board trash big; echo "early=$?"; asst-board trash s1; asst-board list; asst-board trash s2; asst-board list --all
+  prompt: |
+    The adapter says the board is a local file. Create a parent row big (Sync rework) with sub-items s1 (Sync schema) and s2 (Sync UI, Next, blocked by s1); list the board; try trashing big; trash s1, list, trash s2, and list every row.
+context:
+  scaffold_script: fixture.sh

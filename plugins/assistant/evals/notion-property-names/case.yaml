@@ -8,7 +8,7 @@ execution:
   max_turns: 6
   allowed_tools: [Read, Glob, Grep, Bash]
   env:
-    EVAL_CMD: asst-notion schema decision-log; cp bad.txt .claude/kb-databases.txt; asst-notion schema decision-log; echo "bad-exit=$?"
+    EVAL_CMD: asst-notion schema decision-log; echo "release-pages=$(asst-notion schema release-log | grep -c "Pages  *relation")"; cp bad.txt .claude/kb-databases.txt; asst-notion schema decision-log; echo "bad-exit=$?"
   prompt: |
     This project names its Decision Log properties in Chinese. Show the decision-log schema asst-notion uses, then try it with bad.txt as the mapping file.
 context:
