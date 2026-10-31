@@ -31,6 +31,11 @@ share is then written on the first one's page, and the other links to it.
 - A founder ruling is a line of its own: `Founder ruling (<date>): …`.
 - `Checked against: <repo> <branch> @ <sha> (<date>)` names the commit the whole
   page was last read against.
+- On Notion, Related decisions is a linked Decision Log view filtered on Pages
+  contains this page; a new page gets one (`ntn api v1/views -X POST` with
+  `create_database`). In the page's Markdown it is one `<database url=…>` line:
+  keep that line when rewriting the page, and never pass
+  `--allow-deleting-content`, which deletes the view.
 
 Feature page: intro · Checked against · Entry points · Mechanism · States and
 screens · Edge cases · Settings and defaults · Data · Permissions and billing ·
@@ -65,5 +70,6 @@ One page at a time, written from the code.
   page's differences go into one row, `asst-board create … Status=Backlog
   Stage="Product Plan" --body <file>`: where it was found, what the app does now,
   the ruling, a to-do list. The page links to that row.
-- On Notion, upload with `ntn pages edit <id> < page.md`, then read the blocks back
+- On Notion, upload with `ntn pages edit <id> < page.md` (the Related decisions
+  line kept), then read the blocks back
   (scribe); in a directory, commit it on a branch like any other doc change.
