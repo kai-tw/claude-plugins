@@ -6,9 +6,7 @@
 //   Notion REST API). A page's `properties` map still has a non-obvious wire
 //   shape — title/text as rich_text arrays, select/status as {name}, multi_select
 //   as [{name}], dates as {start,end}, relations as [{id}], checkboxes as bools,
-//   url props under their LITERAL property name (one property is live-named
-//   `userDefined:Linked Archive` — an artifact of the old MCP encoder). This
-//   script is the SINGLE SOURCE OF TRUTH for that encoding and the DB registry:
+//   url props under their literal property name. This script is the SINGLE SOURCE OF TRUTH for that encoding and the DB registry:
 //   feed it clean synthesized rows and it validates every option against the DB's
 //   vocabulary, assembles the section body, and (with --commit) drives `ntn` to
 //   create/update the pages.
@@ -23,7 +21,7 @@
 //   notion-payload filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
 //   notion-payload query    <db> [Prop=Val …]      # every matching row, all pages: {db,count}, then one JSON row per line
 //   notion-payload get      <page-id> [--body]     # one row: its properties as JSON, with --body its page after ---
-//       date props also accept <,<=,>,>= and the literal `today`, e.g. "Check Date<=today"
+//       date props also accept <,<=,>,>= and the literal `today`, e.g. "Decided<=today"
 //   notion-payload schema   [db]                  # print embedded schema(s)
 //   notion-payload --help
 //
@@ -58,37 +56,29 @@ const SEL = (...o) => ({ type: 'select', options: o });
 const MULTI = (...o) => ({ type: 'multi_select', options: o });
 
 const DB = {
-  'feature-archive': {
+  // Every KB module's pages (SKILL.md §KB modules), one row each, so a decision can
+  // relate to the page it governs. The body is the page itself.
+  'kb-pages': {
     title: 'Name',
     props: {
       Name: { type: 'title' },
-      Status: SEL('Shipped', 'Abandoned', 'Superseded'),
-      // Populated live from the project's own database (see PROJECT_VOCAB).
-      // Empty is deliberate: if that fetch fails, every value is rejected rather
-      // than silently validated against some other project's taxonomy.
-      'Feature Area': MULTI(),
-      'Shipped Date': { type: 'date' },
-      'Security Review': { type: 'checkbox' },
-      // Copied from the task at close-out — the task row is trashed there, and
-      // the design trail would die with it. Empty for non-UI cycles.
-      'Design Sheet': { type: 'url' },
+      // Option lists are the project's own, in its language, populated live (see
+      // PROJECT_VOCAB). Empty is deliberate: if that fetch fails, every value is
+      // rejected rather than silently validated against some other project's.
+      Module: SEL(), // frontend · backend · product · marketing · design
+      Kind: { ...SEL(), enable: 'add a select property to KB Pages for the kind of page within its module, e.g. feature or shared design (or map an existing one in .claude/kb-databases.txt: kb-pages.Kind = <name>)' },
     },
-    body: [
-      { key: 'Overview', kind: 'para', required: true },
-      { key: 'Problem', kind: 'para', required: true },
-      { key: 'Final Approach', kind: 'para', required: true },
-      { key: 'Key Decisions', kind: 'bullets', required: true },
-      { key: 'Deferred Items', kind: 'bullets', required: false },
-    ],
   },
 
   'decision-log': {
     title: 'Name',
     props: {
       Name: { type: 'title' },
-      Area: MULTI(), // live-populated; see PROJECT_VOCAB
       Status: SEL('Active', 'Superseded', 'Deferred'),
-      Feature: { type: 'text' },
+      // The KB pages the decision governs; each page's linked view filters on it.
+      Pages: { type: 'relation', dsRef: 'kb-pages', enable: 'add a relation property to the Decision Log pointing at KB Pages (or map an existing one in .claude/kb-databases.txt: decision-log.Pages = <name>)' },
+      // The TaskList row the decision was made in. Empty once that row is trashed at close.
+      Task: { type: 'relation', dsRef: 'tasklist', enable: 'add a relation property to the Decision Log pointing at the TaskList (or map an existing one in .claude/kb-databases.txt: decision-log.Task = <name>)' },
       Decided: { type: 'date' },
     },
     body: [
@@ -105,22 +95,18 @@ const DB = {
       Status: SEL('In Progress', 'Next', 'Backlog', 'Deferred', 'Tracing'),
       Stage: SEL('Product Plan', 'Design Plan', 'Engineering Plan', 'Implementation', 'Review',
         'Shipped', 'Blocked', 'Translation', 'Security', 'Privacy', 'QA', 'Archived'),
-      Area: MULTI(), // live-populated; see PROJECT_VOCAB
       // The rows this one waits for: Notion's built-in Dependencies relation, which
       // keeps the reverse side (`Blocking`) itself. A workspace that hasn't turned
       // it on loses the property at resolve time (see `enable`).
       'Blocked by': { type: 'relation',
         enable: 'turn on Dependencies in the TaskList (Database settings → More settings → Dependencies) and keep the property it adds named "Blocked by"' },
-      // Tracing-task fields (Status = Tracing): the next observation date + the
-      // goal to evaluate against on that date.
-      'Check Date': { type: 'date' },
-      'Check Target': { type: 'text' },
-      'Linked Archive': { type: 'url' },
-      // The git-side anchor: the issue the task's PR closes (`Fixes #N`).
-      // Empty for Tracing rows — nothing to link.
-      'GitHub Issue': { type: 'url' },
-      // The ② screens page — the task's design trail. Empty for non-UI work.
-      'Design Sheet': { type: 'url' },
+      // The row holding the whole request this one is a piece of: Notion's built-in
+      // Sub-items, which keeps the reverse side (`Sub-item`) itself.
+      'Parent item': { type: 'relation',
+        enable: 'turn on Sub-items in the TaskList (Database settings → More settings → Sub-items) and keep the property it adds named "Parent item"' },
+      // The KB pages the task changes or was found on; each page's last section
+      // is a TaskList view filtered on it.
+      Pages: { type: 'relation', dsRef: 'kb-pages', enable: 'add a relation property to the TaskList pointing at KB Pages (or map an existing one in .claude/kb-databases.txt: tasklist.Pages = <name>)' },
     },
     // Other relation props on this DB are Notion-managed reverse relations — not
     // builder-written.
@@ -137,20 +123,9 @@ const DB = {
       Platform: MULTI('Android', 'iOS', 'TestFlight'),
       'Release Date': { type: 'date' },
       Highlights: { type: 'text' },
-    },
-  },
-
-  'analytics-catalog': {
-    title: 'Event',
-    props: {
-      Event: { type: 'title' },
-      Feature: MULTI('Cloud Sync', 'Reader', 'Books', 'Translation', 'Preference', 'Explore',
-        'Homepage', 'Book Storage', 'Auth', 'Infra'),
-      Kind: SEL('Built-in', 'Counter', 'Observation', 'Canary'),
-      Status: SEL('Live', 'Deferred', 'Retired'),
-      'Weekly Review': { type: 'checkbox' },
-      Payload: { type: 'text' },
-      Rationale: { type: 'text' },
+      // The KB pages the version's highlights change; a feature page's Releases
+      // section is a Release Log view filtered on it.
+      Pages: { type: 'relation', dsRef: 'kb-pages', enable: 'add a relation property to the Release Log pointing at KB Pages (or map an existing one in .claude/kb-databases.txt: release-log.Pages = <name>)' },
     },
   },
 };
@@ -224,7 +199,9 @@ function encodeProp(dbKey, name, spec, value, out, rowLabel) {
     }
     case 'relation': {
       const arr = Array.isArray(value) ? value : [value];
-      out[key] = { relation: arr.map((v) => ({ id: normalizeRelationId(String(v)) })) };
+      out[key] = { relation: arr.map((v) => ({ id: looksLikePageRef(String(v)) ? normalizeRelationId(String(v))
+        : spec.dsRef ? pageIdByTitle(spec.dsRef, String(v), where)
+        : fail(`${where}: "${v}" is not a page id or URL`) })) };
       return;
     }
     case 'url':
@@ -249,6 +226,24 @@ function normalizeRelationId(v) {
   if (!/^[0-9a-f]{32}$/i.test(hex))
     fail(`relation value must be a notion.so URL or a 32-hex page id, got "${v}"`);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+const looksLikePageRef = (v) => /^https?:\/\//.test(v) || /^[0-9a-f]{32}$/i.test(v.replace(/-/g, ''));
+
+// A relation into a registry DB (`dsRef`) also takes a row's exact title: it must
+// match exactly one row, so a typo or a duplicate fails instead of linking nothing.
+const TITLE_INDEX = new Map(); // dbKey → Map(title → [page id])
+function pageIdByTitle(dbKey, title, where) {
+  if (!TITLE_INDEX.has(dbKey)) {
+    const live = DB[dbKey].props[DB[dbKey].title]?.notionName ?? DB[dbKey].title;
+    const index = new Map();
+    for (const r of queryRows(dbKey, [])) index.set(r[live], [...(index.get(r[live]) ?? []), r.id]);
+    TITLE_INDEX.set(dbKey, index);
+  }
+  const ids = TITLE_INDEX.get(dbKey).get(title) ?? [];
+  if (ids.length !== 1)
+    fail(`${where}: ${ids.length ? `${ids.length} rows` : 'no row'} titled "${title}" in ${DB_TITLE[dbKey]}${ids.length ? '' : ` — add the page there first, or fix the title. Titles: ${[...TITLE_INDEX.get(dbKey).keys()].join(', ')}`}`);
+  return ids[0];
 }
 
 // ── body assembly (Markdown; ntn pages edit converts it to blocks) ──────────────
@@ -798,7 +793,7 @@ function postComment(pageId, text, commit) {
 // `filter <db> Prop=Val …` → a Notion query filter, using the registry to pick the
 // right operator per property type. `query` below runs it.
 // Date properties also accept the comparison operators `<`, `<=`, `>`, `>=`
-// (e.g. `"Check Date<=today"` for overdue+due), and the literal `today` on either
+// (e.g. `"Decided<=today"`), and the literal `today` on either
 // side of the operator resolves to the system's local date.
 const DATE_OP = { '<': 'before', '<=': 'on_or_before', '>': 'after', '>=': 'on_or_after' };
 const todayISO = () => {
@@ -1006,7 +1001,7 @@ create/update without --commit print the plan only (no writes). --commit drives 
   update → ntn api v1/pages/<id> (PATCH properties only), per row.
 Reads: \`query <db> [Prop=Val …]\` — never a bare \`ntn datasources query\`, which stops at 25 rows.
 
-Manifest (create): { "db": "feature-archive", "rows": [ { …props + body sections } ] }
+Manifest (create): { "db": "decision-log", "rows": [ { …props + body sections } ] }
 Manifest (update): { "db": "tasklist", "rows": [ { "page_id": "…", "Stage": "Review" } ] }
 
 bodyFile — author the body ONCE in a Markdown file, upload it byte-exact (never
@@ -1014,7 +1009,7 @@ re-typed into the manifest → CJK-safe). Put "bodyFile": "<path>" on a row inst
 of inline body sections / "content"; its "## Heading"s must match the DB schema.
 On UPDATE, a bodyFile does a safe full-body replace (the file is the SoT); without
 it, update stays properties-only. Convention: .claude/.assistant/tasks/<slug>/<artifact>.md.
-  create: { "db":"feature-archive", "rows":[ { "Name":"…", "bodyFile":".claude/.assistant/tasks/<slug>/archive.md" } ] }
+  create: { "db":"tasklist", "rows":[ { "Name":"…", "bodyFile":".claude/.assistant/tasks/<slug>/brief.md" } ] }
 Use "-" to read the manifest from stdin.`;
 
 // ── Project KB resolution ───────────────────────────────────────────────────────
@@ -1024,7 +1019,7 @@ Use "-" to read the manifest from stdin.`;
 // workflow's contract and are identical in every project.
 //
 // Two things are NOT: which Notion data sources to write to, and the feature
-// taxonomy (Area / Feature Area), which mirrors each project's own modules.
+// taxonomy (KB Pages' Module / Kind), which mirrors each project's own modules.
 // Both are resolved here at startup from ONE input — the KB root page id — so a
 // project configures a single value instead of one id per database that can silently rot.
 //
@@ -1041,21 +1036,21 @@ Use "-" to read the manifest from stdin.`;
 // to keep.
 
 const DB_TITLE = {
-  'feature-archive': 'Feature Archive',
+  'kb-pages': 'KB Pages',
   'decision-log': 'Decision Log',
   'tasklist': 'TaskList',
   'release-log': 'Release Log',
-  'analytics-catalog': 'Analytics Event Catalog',
 };
 
-// A project may title its databases in its own language. Those titles are the
-// project's, not the workflow's, so they are read from an optional file rather
-// than baked in here — the same split as `.claude/pm-vocabulary.txt`.
+// A project may name its databases and their properties in its own language.
+// Those names are the project's, not the workflow's, so they are read from an
+// optional file rather than baked in here — the same split as `.claude/pm-vocabulary.txt`.
 //
 //   .claude/kb-databases.txt
 //   <registry-key> = <exact Notion database title>
+//   <registry-key>.<property> = <exact Notion property name>
 //
-// Blank lines and #-comments ignored. Absent file → the English titles above.
+// Blank lines and #-comments ignored. Absent file → the English names above.
 const DB_TITLE_OVERRIDE_FILE = '.claude/kb-databases.txt';
 
 function loadTitleOverrides() {
@@ -1066,9 +1061,20 @@ function loadTitleOverrides() {
     const s = line.trim();
     if (!s || s.startsWith('#')) continue;
     const i = s.indexOf('=');
-    if (i < 1) fail(`${DB_TITLE_OVERRIDE_FILE}: bad line "${s}", expected <key> = <title>`);
+    if (i < 1) fail(`${DB_TITLE_OVERRIDE_FILE}: bad line "${s}", expected <key> = <title> or <key>.<property> = <name>`);
     const key = s.slice(0, i).trim();
     const title = s.slice(i + 1).trim();
+    const dot = key.indexOf('.');
+    if (dot > 0) {
+      const [db, prop] = [key.slice(0, dot), key.slice(dot + 1)];
+      const spec = DB[db]?.props[prop];
+      if (!spec || prop === DB[db].title)
+        fail(`${DB_TITLE_OVERRIDE_FILE}: unknown property "${key}". Valid: ${Object.entries(DB)
+          .flatMap(([d, def]) => Object.keys(def.props).filter((p) => p !== def.title).map((p) => `${d}.${p}`)).join(', ')}`);
+      if (!title) fail(`${DB_TITLE_OVERRIDE_FILE}: "${key}" has an empty name`);
+      spec.notionName = title;
+      continue;
+    }
     if (!(key in DB_TITLE)) {
       fail(`${DB_TITLE_OVERRIDE_FILE}: unknown key "${key}". `
         + `Valid: ${Object.keys(DB_TITLE).join(', ')}`);
@@ -1108,7 +1114,7 @@ function missingProp(dbKey, name) {
 // Property names whose option list belongs to the project, not the workflow.
 // Everything else keeps the registry's static vocabulary so a typo fails fast,
 // locally, before any network call.
-const PROJECT_VOCAB = new Set(['Area', 'Feature Area', 'Feature']);
+const PROJECT_VOCAB = new Set(['Module', 'Kind']);
 
 function resolveRegistry(rootId) {
   if (!rootId) {
@@ -1164,6 +1170,10 @@ function resolveRegistry(rootId) {
       }
       if (spec.dsRef) {
         const target = resolvedDs[spec.dsRef];
+        if (!target && spec.enable) {
+          MISSING_PROP.set(`${key}.${propName}`, `${spec.enable}; "${DB_TITLE[spec.dsRef]}" itself is absent under the KB root`);
+          delete def.props[propName]; continue;
+        }
         if (!target) {
           fail(`${key}.${propName} relates to "${DB_TITLE[spec.dsRef]}", which is `
             + `absent under the KB root — the relation cannot be written.`);
@@ -1171,7 +1181,7 @@ function resolveRegistry(rootId) {
         spec.ds = target;
       }
       if (PROJECT_VOCAB.has(propName) && spec.options) {
-        const p = liveProps()[propName];
+        const p = liveProps()[spec.notionName ?? propName];
         const opts = p?.multi_select?.options ?? p?.select?.options;
         if (opts) spec.options = opts.map((o) => o.name);
       }
@@ -1207,9 +1217,11 @@ function main() {
   const NEEDS_KB = new Set(['create', 'update', 'set', 'filter', 'query']);
   // `schema` is the discovery command: keep it usable offline, but resolve when
   // the caller supplied a root (then it reports real ds ids + live vocabulary).
-  if (NEEDS_KB.has(cmd) || (cmd === 'schema' && (flags.has('--live') || rootId))) {
+  if (NEEDS_KB.has(cmd) || cmd === 'schema') {
     try {
-      resolveRegistry(rootId);
+      // Offline, `schema` still shows the project's own names.
+      if (cmd === 'schema' && !flags.has('--live') && !rootId) loadTitleOverrides();
+      else resolveRegistry(rootId);
     } catch (e) {
       if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; return; }
       throw e;

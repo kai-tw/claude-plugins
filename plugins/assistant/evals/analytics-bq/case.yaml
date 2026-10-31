@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: analytics-bq
+description: asst-analytics finds the adapter project's analytics_<property> dataset and reads its events_* tables through bq, every query capped in bytes billed; params takes only an event name; sql fills in {events}; no dataset yet says how to link the export.
+tags: [asst-analytics]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export PATH=$PWD:$PATH; asst-analytics events --days 90; asst-analytics params book_open; asst-analytics params "x;DROP"; echo "bad=$?"; asst-analytics sql "SELECT COUNT(*) AS n FROM {events}"; touch nodataset; asst-analytics events 2>&1; echo "nods=$?"; echo "--- log"; cat bq.log
+  prompt: |
+    ./bq stands in for the BigQuery CLI (export PATH=$PWD:$PATH). With asst-analytics, list the events of the last 90 days, the parameters of book_open, try the parameters of "x;DROP", run a count over {events}, then try again once the dataset is gone (touch nodataset). Print bq.log.
+context:
+  scaffold_script: fixture.sh

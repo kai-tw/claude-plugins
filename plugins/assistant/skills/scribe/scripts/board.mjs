@@ -4,26 +4,31 @@
 //   notion  the project's TaskList under `notion_root` (writes via asst-notion)
 //   file    the personal, unversioned .claude/.assistant/board.md (+ tasks/<slug>/)
 //
-// Usage: asst-board create  <slug> Name=<…> [Status=<…>] [Stage=<…>] ["Blocked by=<slug>[,…]"] [--body <file.md>]
+// Usage: asst-board create  <slug> Name=<…> [Status=<…>] [Stage=<…>] ["Blocked by=<slug>[,…]"] ["Parent item=<slug>"] [--body <file.md>]
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
-//        asst-board archive <slug> <archive.md>                at close: the archive + its decisions
-//        asst-board trash   <slug|page-id>                     at close, after archive: the row leaves the board,
-//                                                              and a Next row it was the last blocker of turns In Progress
+//        asst-board decide  <slug|page-id> <decisions.md>      each fork the founder rules on, the moment they rule
+//        asst-board trash   <slug|page-id>                     at close: the row leaves the board, no record kept,
+//                                                              a Next row it was the last blocker of turns In Progress,
+//                                                              and a parent it was the last sub-item of leaves too
 //        asst-board show    <slug|page-id> [--body]           one row whole; --body adds its body after ---
 //        asst-board list [--all]                               the live rows (In Progress · Next), or every row
 //        asst-board --help                    Any op takes --dry-run: print, write nothing.
 //
 // `Blocked by` names only the rows this one waits for: slugs, or page ids on Notion,
 // where it is the TaskList's built-in Dependencies relation. A `Next` row needs one.
-// Everything else about a row goes in its body (`--body` at create, `brief` later);
-// the file board keeps no property but Name · Status · Stage · Blocked by.
+// `Parent item` puts a row under the one holding the whole request (Notion's
+// built-in Sub-items); `list` marks both sides. Everything else about a row goes in
+// its body (`--body` at create, `brief` later); the file board keeps no property but
+// Name · Status · Stage · Blocked by · Parent item.
 //
-// archive.md: the five archive sections (## Overview · ## Problem · ## Final Approach
-// · ## Key Decisions · ## Deferred Items) then `## Decisions`, one `### <fork>` each
-// with **Context** / **Decision** / **Consequence** paragraphs. file: copied verbatim
-// to <kb>/<date>-<slug>.md; notion: one feature-archive row + one decision-log row
-// per fork.
+// decisions.md: `# <task name>`, then one `### <fork>` per ruling with a
+// `**Pages**: <title>[, <title>]` line naming the KB pages it governs, any module
+// (`none` when it governs none; required unless the adapter's kb_pages is none)
+// and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
+// row per fork, Pages = a relation to those KB Pages rows, Task = a relation to the task's
+// TaskList row, empty once that row is trashed; file: appended to
+// <kb>/decisions/<slug>.md, under the # heading.
 // Exit 2 = no adapter / bad op / unknown slug / bad property; asst-notion failures pass through.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -54,7 +59,8 @@ const kv = (xs) => Object.fromEntries(xs.map(x => { const i = x.indexOf('='); if
 const isPageId = (s) => /^[0-9a-f]{32}$|^[0-9a-f-]{36}$/i.test(s);
 const bare = (id) => String(id).replace(/-/g, '').toLowerCase();
 const blockers = (v) => (Array.isArray(v) ? v : String(v ?? '').split(',')).map(s => s.trim()).filter(Boolean);
-const FILE_PROPS = ['Name', 'Status', 'Stage', 'Blocked by'];
+const FILE_PROPS = ['Name', 'Status', 'Stage', 'Blocked by', 'Parent item'];
+const parentOf = (r) => blockers(r['Parent item'])[0];
 function checkProps(p, { creating }) {
   const bad = backend === 'file' ? Object.keys(p).filter(k => !FILE_PROPS.includes(k)) : [];
   if (bad.length) fail(`unknown property ${bad.join(', ')}: a row keeps ${FILE_PROPS.join(' · ')}; anything else goes in its body (--body at create, brief later).`);
@@ -92,22 +98,19 @@ function pageIdOf(ref) {
   if (existsSync(f)) return readFileSync(f, 'utf8').trim();
   fail(`no page id recorded for "${ref}" (${f}) — pass the page id instead.`);
 }
-function sections(md) { // "## H" → body text, in order
-  const out = {}; let h = null;
-  for (const l of md.split('\n')) { const m = l.match(/^## (.+)$/); if (m) { h = m[1].trim(); out[h] = ''; } else if (h) out[h] += l + '\n'; }
-  for (const k in out) out[k] = out[k].trim(); return out;
-}
-function decisions(md) { // "### fork" blocks under ## Decisions → {Name, Context, Decision, Consequence}
-  const body = sections(md).Decisions ?? ''; const rows = []; let cur = null;
-  for (const l of body.split('\n')) {
+function decisions(md) { // "### fork" blocks → {Name, Pages?: [title…], Context, Decision, Consequence}; Pages [] = none
+  const rows = []; let cur = null;
+  for (const l of md.split('\n')) {
     const h = l.match(/^### (.+)$/); if (h) { cur = { Name: h[1].trim() }; rows.push(cur); continue; }
+    const pg = l.match(/^\*\*Pages\*\*:?\s*(.*)$/);
+    if (pg && cur) { const v = pg[1].trim(); cur.Pages = v === 'none' ? [] : v.split(/[,，、]/).map(x => x.trim()).filter(Boolean); cur._last = null; continue; }
     const f = l.match(/^\*\*(Context|Decision|Consequence)\*\*:?\s*(.*)$/); if (f && cur) { cur[f[1]] = f[2]; cur._last = f[1]; continue; }
     if (cur && cur._last && l.trim()) cur[cur._last] += '\n' + l;
   }
   return rows.map(({ _last, ...r }) => r);
 }
 
-// ── file backend: one markdown table, brief and archive as files.
+// ── file backend: one markdown table, the brief as a file.
 const boardFile = join(stateDir, 'board.md');
 const COLS = ['Slug', ...FILE_PROPS];
 // Columns are read by their header, so a column the board doesn't keep stops here
@@ -142,11 +145,14 @@ switch (op) {
     if (backend === 'file') {
       const rows = readRows(); if (rows.some(r => r.Slug === slug)) fail(`row "${slug}" exists`);
       for (const b of blockers(p['Blocked by'])) if (!rows.some(r => r.Slug === b)) fail(`no row "${b}" to wait on`);
+      if (parentOf(p) && !rows.some(r => r.Slug === parentOf(p))) fail(`no row "${parentOf(p)}" to be a sub-item of`);
       rows.push({ Slug: slug, ...p }); writeRows(rows); console.log(`create ${slug} → ${boardFile}`);
       if (body) put(join(stateDir, 'tasks', slug, 'brief.md'), resolve(body));
       break;
     }
     if (p['Blocked by']) p['Blocked by'] = blockers(p['Blocked by']).map(pageIdOf);
+    if (p['Parent item']) p['Parent item'] = [pageIdOf(parentOf(p))];
+    if (p.Pages) p.Pages = blockers(p.Pages); // KB page titles; asst-notion links them
     if (body) p.bodyFile = resolve(body);
     const out = notion(['create', '-'], JSON.stringify({ db: 'tasklist', rows: [p] }));
     const id = (out.match(/[0-9a-f]{32}/) ?? [])[0];
@@ -159,9 +165,11 @@ switch (op) {
     if (backend === 'file') {
       const rows = readRows(); const r = rows.find(x => x.Slug === ref); if (!r) fail(`no row "${ref}"`);
       for (const b of blockers(p['Blocked by'])) if (!rows.some(x => x.Slug === b)) fail(`no row "${b}" to wait on`);
+      if (parentOf(p) && !rows.some(x => x.Slug === parentOf(p))) fail(`no row "${parentOf(p)}" to be a sub-item of`);
       Object.assign(r, p); writeRows(rows); console.log(`set ${ref} ${props.join(' ')} → ${boardFile}`); break;
     }
-    const args = props.map(x => x.startsWith('Blocked by=') ? `Blocked by=${blockers(p['Blocked by']).map(pageIdOf).join(',')}` : x);
+    const args = props.map(x => x.startsWith('Blocked by=') ? `Blocked by=${blockers(p['Blocked by']).map(pageIdOf).join(',')}`
+      : x.startsWith('Parent item=') ? `Parent item=${blockers(p['Parent item']).map(pageIdOf).join(',')}` : x);
     notion(['set', 'tasklist', pageIdOf(ref), ...args]); break;
   }
   case 'brief': {
@@ -169,16 +177,26 @@ switch (op) {
     if (backend === 'file') { put(join(stateDir, 'tasks', ref, 'brief.md'), resolve(file)); break; }
     notion(['append', pageIdOf(ref), resolve(file)]); break;
   }
-  case 'archive': {
-    const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('archive <slug> <archive.md>');
-    const md = readFileSync(file, 'utf8');
-    if (backend === 'file') { if (!adapter.kb) fail('adapter board: file needs kb: <dir>'); put(join(root, adapter.kb, `${today}-${slug}.md`), resolve(file)); break; }
-    const s = sections(md); const name = (md.match(/^# (.+)$/m) ?? [, slug])[1].trim();
-    const archiveRow = { Name: name, Status: 'Shipped', 'Shipped Date': today };
-    for (const k of ['Overview', 'Problem', 'Final Approach', 'Key Decisions', 'Deferred Items']) if (s[k]) archiveRow[k] = s[k];
-    notion(['create', '-'], JSON.stringify({ db: 'feature-archive', rows: [archiveRow] }));
-    const decs = decisions(md).map(d => ({ ...d, Status: 'Active', Feature: name, Decided: today }));
-    if (decs.length) notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs }));
+  case 'decide': {
+    const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('decide <slug|page-id> <decisions.md>');
+    const md = readFileSync(file, 'utf8'); const decs = decisions(md);
+    if (!decs.length) fail(`${file} has no "### <fork>" block`);
+    // A KB page lists its decisions by Pages, so a decision without one never shows on any page.
+    const keepsPages = !['', 'none'].includes((adapter.kb_pages ?? '').trim());
+    const unplaced = keepsPages ? decs.filter(d => d.Pages === undefined).map(d => `"${d.Name}"`) : [];
+    if (unplaced.length) fail(`decision ${unplaced.join(', ')} has no **Pages** line: under its ### heading, name the KB pages it governs by their exact titles, "**Pages**: <title>[, <title>]", or "**Pages**: none".`);
+    const name = (md.match(/^# (.+)$/m) ?? [, slug])[1].trim();
+    if (backend === 'file') {
+      if (!adapter.kb) fail('adapter board: file needs kb: <dir>');
+      const dest = join(root, adapter.kb, 'decisions', `${slug}.md`); const forks = md.slice(md.search(/^### /m)).trimEnd() + '\n';
+      if (dry) { console.log(`would append ${decs.length} decisions to ${dest}`); break; }
+      mkdirSync(dirname(dest), { recursive: true });
+      writeFileSync(dest, existsSync(dest) ? readFileSync(dest, 'utf8').trimEnd() + '\n\n' + forks : `# ${name}\n\n${forks}`); console.log(dest);
+      break;
+    }
+    const task = pageIdOf(slug);
+    notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs.map(({ Name, Pages, ...d }) =>
+      ({ Name, ...(Pages?.length ? { Pages } : {}), Task: task, ...d, Status: 'Active', Decided: today })) }));
     break;
   }
   case 'show': {
@@ -198,10 +216,18 @@ switch (op) {
     const live = (r) => ['In Progress', 'Next'].includes(r.Status);
     // The count leads, so a list cut short on screen still says how long it is.
     const print = (lines) => console.log([`${lines.length} rows (${all ? 'all' : 'live'})`, ...lines].join('\n'));
-    // A row's `Blocked by` shows only the blockers still on the board.
+    // A row's `Blocked by` shows only the blockers still on the board; a sub-item ends
+    // with `in <parent>`, and a parent with `parent of <n>` — it is never dispatched itself.
+    // key: a row's own ref; norm: a ref as Parent item holds it (a slug, or a page id on Notion).
+    const family = (rows, key, norm, r) => {
+      const up = parentOf(r) && rows.find(x => key(x) === norm(parentOf(r)));
+      const n = rows.filter(x => parentOf(x) && norm(parentOf(x)) === key(r)).length;
+      return [...(up ? [`in ${up.Name}`] : []), ...(n ? [`parent of ${n}`] : [])];
+    };
     if (backend === 'file') {
       const rows = readRows(); const on = new Set(rows.map(r => r.Slug));
-      print(rows.filter(r => all || live(r)).map(r => [r.Slug, r.Name, r.Status, r.Stage, blockers(r['Blocked by']).filter(b => on.has(b)).join(', ')].join(' · ')));
+      print(rows.filter(r => all || live(r)).map(r => [r.Slug, r.Name, r.Status, r.Stage,
+        blockers(r['Blocked by']).filter(b => on.has(b)).join(', '), ...family(rows, (x) => x.Slug, (v) => v, r)].join(' · ')));
       break;
     }
     // One query for every row, followed to its last page: which blockers are still on the board needs them all.
@@ -209,30 +235,48 @@ switch (op) {
     if (dry) break;
     const byId = new Map(rows.map(r => [bare(r.id), r]));
     print(rows.filter(r => all || live(r)).map(r => [r.Name, r.Status, r.Stage,
-      blockers(r['Blocked by']).map(id => byId.get(bare(id))?.Name).filter(Boolean).join(', '), r.id].map(v => v ?? '').join(' · ')));
+      blockers(r['Blocked by']).map(id => byId.get(bare(id))?.Name).filter(Boolean).join(', '), r.id,
+      ...family(rows, (x) => bare(x.id), bare, r)].map(v => v ?? '').join(' · ')));
     break;
   }
   case 'trash': {
     const [ref] = rest; if (!ref) fail('trash <slug|page-id>');
     // A Next row whose last blocker this was turns In Progress. That happens before the
     // trash, so a failed trash leaves the closed row to retry, never a Next row waiting on nothing.
+    // A parent closes with its last sub-item, never before.
+    const stillUnder = (names) => fail(`"${ref}" still has sub-items on the board (${names.join(', ')}): trash those; the last one takes its parent with it.`);
     if (backend === 'file') {
-      const rows = readRows(); const i = rows.findIndex(x => x.Slug === ref); if (i < 0) fail(`no row "${ref}"`);
-      rows.splice(i, 1); const on = new Set(rows.map(r => r.Slug));
-      for (const r of rows) {
-        const was = blockers(r['Blocked by']); if (!was.includes(ref)) continue;
-        r['Blocked by'] = was.filter(b => b !== ref).join(',');
-        if (r.Status === 'Next' && !was.some(b => b !== ref && on.has(b))) { r.Status = 'In Progress'; console.log(`unblocked ${r.Slug} → In Progress`); }
-      }
+      const rows = readRows(); const me = rows.find(x => x.Slug === ref); if (!me) fail(`no row "${ref}"`);
+      const under = rows.filter(r => parentOf(r) === ref); if (under.length) stillUnder(under.map(r => r.Slug));
+      const close = (slug) => {
+        rows.splice(rows.findIndex(x => x.Slug === slug), 1); const on = new Set(rows.map(r => r.Slug));
+        for (const r of rows) {
+          const was = blockers(r['Blocked by']); if (!was.includes(slug)) continue;
+          r['Blocked by'] = was.filter(b => b !== slug).join(',');
+          if (r.Status === 'Next' && !was.some(b => b !== slug && on.has(b))) { r.Status = 'In Progress'; console.log(`unblocked ${r.Slug} → In Progress`); }
+        }
+      };
+      close(ref); const up = parentOf(me);
+      if (up && rows.some(r => r.Slug === up) && !rows.some(r => parentOf(r) === up)) { close(up); console.log(`trash ${up}: its last sub-item closed`); }
       writeRows(rows); console.log(`trash ${ref} → ${boardFile}`); break;
     }
     const id = bare(pageIdOf(ref)); const rows = notionRows([]); const on = new Set(rows.map(r => bare(r.id)));
-    for (const r of rows) {
-      const was = blockers(r['Blocked by']).map(bare);
-      if (r.Status !== 'Next' || !was.includes(id) || was.some(b => b !== id && on.has(b))) continue;
-      notion(['set', 'tasklist', bare(r.id), 'Status=In Progress']); console.log(`unblocked ${r.Name} (${r.id}) → In Progress`);
+    const under = rows.filter(r => bare(parentOf(r) ?? '') === id); if (under.length) stillUnder(under.map(r => r.Name));
+    const close = (cid) => {
+      on.delete(cid);
+      for (const r of rows) {
+        const was = blockers(r['Blocked by']).map(bare);
+        if (r.Status !== 'Next' || !on.has(bare(r.id)) || !was.includes(cid) || was.some(b => on.has(b))) continue;
+        notion(['set', 'tasklist', bare(r.id), 'Status=In Progress']); console.log(`unblocked ${r.Name} (${r.id}) → In Progress`);
+      }
+      notion(['trash', cid]);
+    };
+    close(id);
+    const me = rows.find(r => bare(r.id) === id); const up = me && parentOf(me) ? bare(parentOf(me)) : null;
+    if (up && on.has(up) && !rows.some(r => on.has(bare(r.id)) && bare(parentOf(r) ?? '') === up)) {
+      const p = rows.find(r => bare(r.id) === up); close(up); console.log(`trash ${p.Name} (${p.id}): its last sub-item closed`);
     }
-    notion(['trash', id]); break;
+    break;
   }
-  default: fail(`unknown op "${op}" (create · set · brief · archive · trash · show · list)`);
+  default: fail(`unknown op "${op}" (create · set · brief · decide · trash · show · list)`);
 }

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: notion-relation-titles
+description: a Decision Log row's Pages relation takes KB Pages titles and sends their page ids; a title with no row, or with two, stops the write and says which.
+tags: [asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export NTN_BIN=$PWD/ntn; asst-notion create ok.json --root abcdefabcdefabcdefabcdefabcdefab | tr -d " \n"; echo; asst-notion create missing.json --root abcdefabcdefabcdefabcdefabcdefab; echo "missing=$?"; asst-notion create dup.json --root abcdefabcdefabcdefabcdefabcdefab; echo "dup=$?"
+  prompt: |
+    ./ntn stands in for the Notion CLI (export NTN_BIN=$PWD/ntn). Dry-run creating the Decision Log rows in ok.json, missing.json and dup.json with asst-notion, root abcdefabcdefabcdefabcdefabcdefab.
+context:
+  scaffold_script: fixture.sh

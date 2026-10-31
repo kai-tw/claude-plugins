@@ -21,7 +21,7 @@ multi-project desk — spend it on decisions.
 Three agents do the work: `builder` (in the task's worktree, one phase per
 dispatch — scout · ui · wire · fix), `tester` (writes the task's tests from the
 brief, never from the builder's code) and `verifier` (reads, never edits — the
-code and text legs). The board, the brief and the archive you write yourself
+code and text legs). The board, the brief and the decisions you write yourself
 with `asst-board`. Tasks run side by side: each has its own worktree and its own
 agents, dispatched with `run_in_background: true`, so one task's wait never
 holds up another's.
@@ -70,10 +70,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    option changes code outside the boundary is checked against this before you
    recommend anything.
    A request one brief cannot hold — more than 5 `Needs you` forks, or a design that
-   touches more than one persisted format — becomes several task statements in order: each
-   its own row and worktree; the later rows are `Status=Next` with `Blocked by`
-   naming the row they wait for. The split itself is a `Decided` in the first
-   brief. Read the project's lessons (§Lessons) first; every dispatch for the task
+   touches more than one persisted format — becomes a parent row holding the request
+   in its body, and under it one sub-item per task statement, in order (`asst-board
+   create <slug> … "Parent item=<parent>"`): each its own row and worktree; the later
+   sub-items are `Status=Next` with `Blocked by` naming the sub-item they wait for.
+   The parent is never dispatched, and trashing its last sub-item trashes it too.
+   The split itself is a `Decided` in the first brief. Read the project's lessons (§Lessons) first; every dispatch for the task
    quotes the ones that bear on it.
 2. **Scout** (`builder`, phase `scout`) returns ≤10 fact rows
    (`file:line` or `unread`) and the intent forks it could not settle.
@@ -94,10 +96,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    `Decided` (`references/brief.md`).
    Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
-   later step reads, without your context — then run each loaded module's ① step.
+   later step reads, without your context — and file each answered fork as a decision
+   (`asst-board decide`: Context · Decision · Consequence, the rejected option and its
+   cost in Consequence), then run each loaded module's ① step.
    Build, wire and fix rounds never change a decided mechanism: a change one needs
-   is a `Needs you` first, and the answer is recorded where the decided one was
-   before the code changes.
+   is a `Needs you` first, and the answer is recorded where the decided one was,
+   and filed with `asst-board decide`, before the code changes.
 4. **Build** (`builder`): UI first, as real widgets in all four states → one
    image per screen × state × locale → the page `asst-screens` builds from them
    (its path is on the report's `screens:` line) → you open every image and read
@@ -206,28 +210,32 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    that PR, with each sibling of the same shape. Told to merge one PR, squash-merge
    that PR only, pinned to the head you checked (`gh pr merge <n> --squash
    --match-head-commit <sha>`); the founder saying the PR merged → step 8.
-8. **Close** (you, through `asst-board`): the task row is disposable, so the brief
-   moves to the archive (`asst-board archive`) and then the row is deleted
-   (`asst-board trash <slug>`) — a row never moves to `Shipped`, and the archive goes
-   first because until then the row's body is the only copy of its decisions.
+8. **Close** (you, through `asst-board`): the task row is disposable, so it is
+   deleted (`asst-board trash <slug>`) and no record of the task is kept — a row
+   never moves to `Shipped`. What outlives it was written earlier: its decisions
+   (`asst-board decide`) and the KB pages its modules changed.
    Run each loaded module's Close step.
    Delete the PR's worktree, local branch and remote branch, unasked, once
-   `HEAD` matches the merged PR's head. The archive: Overview · Problem ·
-   Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
-   with the choice made · Deferred Items = one decision per `Needs you`
-   fork (Context · Decision · Consequence, the rejected option and its cost in
-   Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
-   task's cost appended to `.claude/.assistant/ledger.md`.
+   `HEAD` matches the merged PR's head. Append the task's cost to
+   `.claude/.assistant/ledger.md`.
 
 ## KB modules
 
 The project's knowledge base has five modules: `frontend` · `backend` ·
 `product` · `marketing` · `design`. The adapter's `kb_pages:` lists the ones
-this project keeps. A module's pages live under `notion_root` on a Notion board,
-or under the adapter's `kb:` directory on a file board. A module with rules has a
+this project keeps. On a Notion board every module's pages are rows of one KB Pages
+database under `notion_root`, its `Module` naming the module in the founder's
+language (`asst-notion query kb-pages Module=<module>`), so a decision can relate
+to the page it governs. On a file board they live under the adapter's `kb:` directory. A module with rules has a
 file under `references/kb/`, whose first line names the steps it is loaded at:
 read it before those steps, and never read a module `kb_pages:` doesn't list. Only
 `product` has rules so far; listing another one changes nothing.
+
+## Usage data
+
+A project with `analytics:` in its adapter has its analytics events in BigQuery:
+when the founder asks what users do, or a design hinges on how often a case
+happens and Scout can't show it, read `references/analytics.md`.
 
 ## House style for strings
 
@@ -261,7 +269,8 @@ say the same thing.
 
 The board is whatever the adapter's `board:` names — the project's Notion
 TaskList, or the personal `.claude/.assistant/board.md` — read and written only
-through `asst-board`, same columns either way (Status · Stage · Blocked by). One row
+through `asst-board`, same columns either way (Status · Stage · Blocked by · Parent
+item; on Notion also Pages, the KB pages the task touches). One row
 per task, `Stage` mapped as: task statement → Product Plan · brief → Engineering Plan ·
 screens → Design Plan · build → Implementation · verify → Review · deliver → QA;
 a closed row is trashed. `Blocked by` names only the rows this one waits for (on
@@ -270,12 +279,14 @@ else about a row — what it is, who found it, scope, evidence, a wait on anythi
 outside the board — goes in its body: `asst-board create … --body <file>`, or
 `asst-board brief` later. A row that waits on something outside the board is
 `Deferred`, its condition in the body. `list` is the summary (Name · Status · Stage ·
-the blockers still on the board); one row's
+the blockers still on the board, then `in <parent>` on a sub-item and `parent of <n>`
+on a parent); one row's
 every property, and with `--body` its body, is `asst-board show <slug> [--body]` —
 never a whole-board query read for one row. Every turn you take is a scheduler pass: `asst-board list` and
 `asst-intake <project-dir>` → file new candidates → advance or
 dispatch each live row → surface new `Needs you` lines together.
-Live = `In Progress`. `asst-board trash` turns a `Next` row In Progress when it takes
+Live = `In Progress`, apart from a parent, whose sub-items are the work.
+`asst-board trash` turns a `Next` row In Progress when it takes
 that row's last blocker off the board and prints `unblocked <row>`: start that row at
 Scout. A Close changes the board, so the pass runs
 again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet
@@ -343,7 +354,7 @@ this repo's; anything else on the list is caught by no script.
   growing. Brief the next one with the slice and only what the code and the filed
   reports can't show — a ruling it needs, a dead end the last run hit.
 - Board writes go through `asst-board` (`--dry-run` prints without writing; on
-  Notion every write re-reads and verifies); `asst-board --help` has the archive
+  Notion every write re-reads and verifies); `asst-board --help` has the decisions
   shape. A failed verify is reported as failed. The ledger line is
   `<date> · <slug> · <tokens>`.
 - Work sent off this machine — a message into a cloud session the founder has
