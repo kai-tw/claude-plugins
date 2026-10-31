@@ -1,7 +1,8 @@
 ---
 type: regex
-pattern: 'Task +text.*\(notion: 任務\)'
+pattern: '^ +Task '
+match: not_contains
 flags: m
 arm: with-only
 ---
-The mapped Task property shows its Notion name.
+The Decision Log registry has no Task property.

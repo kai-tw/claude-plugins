@@ -1,7 +1,8 @@
 ---
 type: regex
-pattern: '"Task":"Pro tier"'
+pattern: '"Task"'
+match: not_contains
 flags: m
 arm: with-only
 ---
-The task name goes into the Task section, not Feature.
+A Decision Log row carries no task name: Feature alone ties it to its product pages.

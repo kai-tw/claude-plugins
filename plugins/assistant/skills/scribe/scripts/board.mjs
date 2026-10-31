@@ -24,8 +24,8 @@
 // `**Feature**: <page>[, <page>]` line naming the product feature pages it governs
 // (`none` when it governs none; required when the adapter's kb_pages lists product)
 // and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
-// row per fork, Feature (multi-select) = its pages, Task = the task name; file:
-// appended to <kb>/decisions/<slug>.md.
+// row per fork, Feature (multi-select) = its pages; file: appended to
+// <kb>/decisions/<slug>.md, under the # heading.
 // archive.md: `# <task name>` and the five archive sections (## Overview · ## Problem ·
 // ## Final Approach · ## Key Decisions · ## Deferred Items). file: copied verbatim to
 // <kb>/<date>-<slug>.md; notion: one Feature Archive row.
@@ -193,7 +193,7 @@ switch (op) {
       break;
     }
     notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs.map(({ Name, Feature, ...d }) =>
-      ({ Name, ...(Feature?.length ? { Feature } : {}), ...d, Task: name, Status: 'Active', Decided: today })) }));
+      ({ Name, ...(Feature?.length ? { Feature } : {}), ...d, Status: 'Active', Decided: today })) }));
     break;
   }
   case 'archive': {

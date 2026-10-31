@@ -90,8 +90,6 @@ const DB = {
       // The product feature pages the decision governs, one option per page title
       // (live-populated; see PROJECT_VOCAB): a page's linked view filters on it.
       Feature: { ...MULTI(), enable: 'add a multi-select property to the Decision Log with one option per product feature page title (or map an existing one in .claude/kb-databases.txt: decision-log.Feature = <name>)' },
-      // The task the decision was made in.
-      Task: { type: 'text', enable: 'add a text property to the Decision Log for the task a decision came from (or map an existing one in .claude/kb-databases.txt: decision-log.Task = <name>)' },
       Decided: { type: 'date' },
     },
     body: [
