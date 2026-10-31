@@ -61,7 +61,9 @@ what is wrong · failure scenario · Fix: <the change>`:
    is filed with Fix: remove that state at its source (make the step idempotent,
    report the settled outcome, order the steps so the window can't open).
 5. **As built vs as decided** — each deviation from the brief's System design, with
-   the reason found in the code or `no reason found`; and each hunk outside the
+   the reason found in the code or `no reason found`; each place the code differs
+   from a mechanism on a product page the brief links or wrote, with Fix: change
+   the code to match the page; and each hunk outside the
    task statement's boundary, filed unless a filed fact row shows this task's
    diff changed the behaviour there, with Fix: revert it and file a `Backlog` row.
 6. **Tests** — per `S`/`F`/`B` line of the brief's Scenarios, the test named
@@ -77,8 +79,9 @@ thing a reason under Ownership. Then check proportion — style-pack S15 and S16
 design scale: a NEW thing, guard, retry, fallback or lock whose `Evidence` cites no
 case, or a case that can't happen, is filed with Fix: drop it; a design with fewer
 NEW things that still covers every evidenced case is filed with Fix: that design; a
-user-visible `Decided` line that differs from how an existing mechanism already
-behaves is filed with Fix: move it to `Needs you`, quoting that behaviour.
+`Decided` line that adds or changes a product mechanism (what the user sees, or how
+a feature behaves) is filed with Fix: move it to `Needs you`, quoting the current
+behaviour.
 File only what would send the build the wrong way.
 
 Report: the six blocks, `low confidence`, and one line `passed:` naming the
