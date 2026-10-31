@@ -94,10 +94,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    `Decided` (`references/brief.md`).
    Mark each `Needs you` line with the choice made,
    then append the brief to the task row's body (`asst-board brief`) — the as-decided every
-   later step reads, without your context — then run each loaded module's ① step.
+   later step reads, without your context — and file each answered fork as a decision
+   (`asst-board decide`: Context · Decision · Consequence, the rejected option and its
+   cost in Consequence), then run each loaded module's ① step.
    Build, wire and fix rounds never change a decided mechanism: a change one needs
-   is a `Needs you` first, and the answer is recorded where the decided one was
-   before the code changes.
+   is a `Needs you` first, and the answer is recorded where the decided one was,
+   and filed with `asst-board decide`, before the code changes.
 4. **Build** (`builder`): UI first, as real widgets in all four states → one
    image per screen × state × locale → the page `asst-screens` builds from them
    (its path is on the report's `screens:` line) → you open every image and read
@@ -209,14 +211,13 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
 8. **Close** (you, through `asst-board`): the task row is disposable, so the brief
    moves to the archive (`asst-board archive`) and then the row is deleted
    (`asst-board trash <slug>`) — a row never moves to `Shipped`, and the archive goes
-   first because until then the row's body is the only copy of its decisions.
+   first because until then the row's body is the only copy of its brief.
    Run each loaded module's Close step.
    Delete the PR's worktree, local branch and remote branch, unasked, once
    `HEAD` matches the merged PR's head. The archive: Overview · Problem ·
    Final Approach = the brief's System design verbatim · Key Decisions = its Intent lines
-   with the choice made · Deferred Items = one decision per `Needs you`
-   fork (Context · Decision · Consequence, the rejected option and its cost in
-   Consequence) — Notion DBs or `kb:` files, per the adapter; one retro line; the
+   with the choice made · Deferred Items, and no decisions, which `decide` filed when
+   the founder ruled — Notion DBs or `kb:` files, per the adapter; one retro line; the
    task's cost appended to `.claude/.assistant/ledger.md`.
 
 ## KB modules

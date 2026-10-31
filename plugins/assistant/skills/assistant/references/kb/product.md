@@ -43,7 +43,9 @@ app doesn't follow the rule.
 - Read the pages of every feature and shared design the task touches before
   writing the brief; its mechanism lines quote or link them (`brief.md`).
 - Once the founder answers, write each decided mechanism onto its page before
-  Build starts. A feature with no page gets one holding only what this task
+  Build starts. Each fork filed with `asst-board decide` names those pages on its
+  `**Feature**:` line, by their exact titles (`none` if it changes no page), so the
+  page's Related decisions show it. A feature with no page gets one holding only what this task
   decided, its intro saying so. On Notion, the page's last section also names the
   task row as code that doesn't match yet, until the PR merges.
 

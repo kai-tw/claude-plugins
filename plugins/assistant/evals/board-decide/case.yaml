@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: board-decide
+description: decide on Notion files one Decision Log row per fork, its Feature the **Feature** pages and its Task section the task name; with product pages kept, a fork naming no page stops it before any write; archive stops on a leftover ## Decisions section.
+tags: [asst-board]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: asst-board decide t2 nofeature.md --dry-run; echo "decide-exit=$?"; asst-board archive t1 old-archive.md --dry-run; echo "archive-exit=$?"; asst-board decide t1 decisions.md --dry-run
+  prompt: |
+    The adapter says the board is in Notion and the project keeps product pages. Dry-run filing nofeature.md as t2's decisions, archiving old-archive.md for t1, then filing decisions.md as t1's decisions, and show what would be written.
+context:
+  scaffold_script: fixture.sh

@@ -88,6 +88,8 @@ const DB = {
       Name: { type: 'title' },
       Area: MULTI(), // live-populated; see PROJECT_VOCAB
       Status: SEL('Active', 'Superseded', 'Deferred'),
+      // The product feature pages the decision governs, ", "-joined: a page's
+      // linked view filters on `Feature contains <page title>`.
       Feature: { type: 'text' },
       Decided: { type: 'date' },
     },
@@ -95,6 +97,7 @@ const DB = {
       { key: 'Context', kind: 'para', required: true },
       { key: 'Decision', kind: 'para', required: true },
       { key: 'Consequence', kind: 'para', required: true },
+      { key: 'Task', kind: 'para', required: false }, // the task it was decided in: its Feature Archive title
     ],
   },
 

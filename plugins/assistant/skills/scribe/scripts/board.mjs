@@ -7,7 +7,8 @@
 // Usage: asst-board create  <slug> Name=<…> [Status=<…>] [Stage=<…>] ["Blocked by=<slug>[,…]"] [--body <file.md>]
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
-//        asst-board archive <slug> <archive.md>                at close: the archive + its decisions
+//        asst-board decide  <slug> <decisions.md>              each fork the founder rules on, the moment they rule
+//        asst-board archive <slug> <archive.md>                at close: the archive
 //        asst-board trash   <slug|page-id>                     at close, after archive: the row leaves the board,
 //                                                              and a Next row it was the last blocker of turns In Progress
 //        asst-board show    <slug|page-id> [--body]           one row whole; --body adds its body after ---
@@ -19,11 +20,15 @@
 // Everything else about a row goes in its body (`--body` at create, `brief` later);
 // the file board keeps no property but Name · Status · Stage · Blocked by.
 //
-// archive.md: the five archive sections (## Overview · ## Problem · ## Final Approach
-// · ## Key Decisions · ## Deferred Items) then `## Decisions`, one `### <fork>` each
-// with **Context** / **Decision** / **Consequence** paragraphs. file: copied verbatim
-// to <kb>/<date>-<slug>.md; notion: one feature-archive row + one decision-log row
-// per fork.
+// decisions.md: `# <task name>`, then one `### <fork>` per ruling with a
+// `**Feature**: <page>[, <page>]` line naming the product feature pages it governs
+// (`none` when it governs none; required when the adapter's kb_pages lists product)
+// and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
+// row per fork, Feature = its pages, Task section = the task name; file: appended to
+// <kb>/decisions/<slug>.md.
+// archive.md: `# <task name>` and the five archive sections (## Overview · ## Problem ·
+// ## Final Approach · ## Key Decisions · ## Deferred Items). file: copied verbatim to
+// <kb>/<date>-<slug>.md; notion: one Feature Archive row.
 // Exit 2 = no adapter / bad op / unknown slug / bad property; asst-notion failures pass through.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -97,10 +102,12 @@ function sections(md) { // "## H" → body text, in order
   for (const l of md.split('\n')) { const m = l.match(/^## (.+)$/); if (m) { h = m[1].trim(); out[h] = ''; } else if (h) out[h] += l + '\n'; }
   for (const k in out) out[k] = out[k].trim(); return out;
 }
-function decisions(md) { // "### fork" blocks under ## Decisions → {Name, Context, Decision, Consequence}
-  const body = sections(md).Decisions ?? ''; const rows = []; let cur = null;
-  for (const l of body.split('\n')) {
+function decisions(md) { // "### fork" blocks → {Name, Feature?, Context, Decision, Consequence}; Feature '' = none
+  const rows = []; let cur = null;
+  for (const l of md.split('\n')) {
     const h = l.match(/^### (.+)$/); if (h) { cur = { Name: h[1].trim() }; rows.push(cur); continue; }
+    const ft = l.match(/^\*\*Feature\*\*:?\s*(.*)$/);
+    if (ft && cur) { const v = ft[1].trim(); cur.Feature = v === 'none' ? '' : v.split(/[,，、]/).map(x => x.trim()).filter(Boolean).join(', '); cur._last = null; continue; }
     const f = l.match(/^\*\*(Context|Decision|Consequence)\*\*:?\s*(.*)$/); if (f && cur) { cur[f[1]] = f[2]; cur._last = f[1]; continue; }
     if (cur && cur._last && l.trim()) cur[cur._last] += '\n' + l;
   }
@@ -169,16 +176,35 @@ switch (op) {
     if (backend === 'file') { put(join(stateDir, 'tasks', ref, 'brief.md'), resolve(file)); break; }
     notion(['append', pageIdOf(ref), resolve(file)]); break;
   }
+  case 'decide': {
+    const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('decide <slug> <decisions.md>');
+    const md = readFileSync(file, 'utf8'); const decs = decisions(md);
+    if (!decs.length) fail(`${file} has no "### <fork>" block`);
+    // A product page lists its decisions by Feature, so a decision without one never shows on any page.
+    const unplaced = /\bproduct\b/.test(adapter.kb_pages ?? '') ? decs.filter(d => d.Feature === undefined).map(d => `"${d.Name}"`) : [];
+    if (unplaced.length) fail(`decision ${unplaced.join(', ')} has no **Feature** line: under its ### heading, name the product feature pages it governs, "**Feature**: <page>[, <page>]", or "**Feature**: none".`);
+    const name = (md.match(/^# (.+)$/m) ?? [, slug])[1].trim();
+    if (backend === 'file') {
+      if (!adapter.kb) fail('adapter board: file needs kb: <dir>');
+      const dest = join(root, adapter.kb, 'decisions', `${slug}.md`); const forks = md.slice(md.search(/^### /m)).trimEnd() + '\n';
+      if (dry) { console.log(`would append ${decs.length} decisions to ${dest}`); break; }
+      mkdirSync(dirname(dest), { recursive: true });
+      writeFileSync(dest, existsSync(dest) ? readFileSync(dest, 'utf8').trimEnd() + '\n\n' + forks : `# ${name}\n\n${forks}`); console.log(dest);
+      break;
+    }
+    notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs.map(({ Name, Feature, ...d }) =>
+      ({ Name, ...(Feature ? { Feature } : {}), ...d, Task: name, Status: 'Active', Decided: today })) }));
+    break;
+  }
   case 'archive': {
     const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('archive <slug> <archive.md>');
     const md = readFileSync(file, 'utf8');
+    if (sections(md).Decisions) fail(`${file} has a "## Decisions" section: file each fork with "asst-board decide <slug> <decisions.md>" (already filed ones skip this), then delete the section.`);
     if (backend === 'file') { if (!adapter.kb) fail('adapter board: file needs kb: <dir>'); put(join(root, adapter.kb, `${today}-${slug}.md`), resolve(file)); break; }
     const s = sections(md); const name = (md.match(/^# (.+)$/m) ?? [, slug])[1].trim();
     const archiveRow = { Name: name, Status: 'Shipped', 'Shipped Date': today };
     for (const k of ['Overview', 'Problem', 'Final Approach', 'Key Decisions', 'Deferred Items']) if (s[k]) archiveRow[k] = s[k];
     notion(['create', '-'], JSON.stringify({ db: 'feature-archive', rows: [archiveRow] }));
-    const decs = decisions(md).map(d => ({ ...d, Status: 'Active', Feature: name, Decided: today }));
-    if (decs.length) notion(['create', '-'], JSON.stringify({ db: 'decision-log', rows: decs }));
     break;
   }
   case 'show': {
@@ -234,5 +260,5 @@ switch (op) {
     }
     notion(['trash', id]); break;
   }
-  default: fail(`unknown op "${op}" (create · set · brief · archive · trash · show · list)`);
+  default: fail(`unknown op "${op}" (create · set · brief · decide · archive · trash · show · list)`);
 }

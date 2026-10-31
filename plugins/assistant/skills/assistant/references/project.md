@@ -10,7 +10,7 @@ vcs:        git | svn                      # git: worktree per task, checkpoint 
 board:      notion | file                  # where task rows live — the TaskList under notion_root, or .claude/.assistant/board.md; asst-board hides the difference
 notion_root: <page-id>                     # board=notion: the KB root; TaskList / feature-archive / decision-log resolve by title under it
 kb_pages:   <modules> or none                # the KB modules this project keeps, picked from frontend · backend · product · marketing · design (SKILL.md §KB modules); none = no KB pages
-kb:         <dir>                          # board=file: the KB directory — `asst-board archive` lands here (e.g. docs/decisions), and each kb_pages module's pages under <dir>/<module>/
+kb:         <dir>                          # board=file: the KB directory — `asst-board archive` lands here (e.g. docs/decisions), `asst-board decide` under <dir>/decisions/, and each kb_pages module's pages under <dir>/<module>/
 gate:       <command>                      # lint · format · tests in one command; red blocks the checkpoint
 coverage:   <command, ci or none>          # per-line reach on the diff; gate: every changed line executed, no markers; ci = the PR's CI measures it, so there is no verify-coverage leg
 device_test: <command or none>            # runs the on-device suite on one phone, `{device}` = its id from `flutter devices`; asst-device runs it per platform and files verify-device
