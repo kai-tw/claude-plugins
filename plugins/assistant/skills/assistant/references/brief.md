@@ -2,9 +2,11 @@
 
 Under 40 lines. Every line is a decision, never a description. Two marks:
 `Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
-call, listed for veto; the founder's silence never makes it theirs). A user-visible
-ruling that differs from how an existing mechanism already behaves is `Needs you`, with
-the current behaviour quoted in the line. Once answered, each `Needs you` line ends with `Picked A`
+engineering call, listed for veto; the founder's silence never makes it theirs).
+Every product mechanism the task adds or changes — what the user sees, or how a
+feature behaves — is `Needs you`, quoting the product page's current text (or,
+where no page covers it, how the app behaves now); one the task keeps as is gets
+a link to its page section, never a restatement. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
 Labels and marks are written in the founder's language (SKILL.md §Language); later
 steps find sections by meaning, so a filed brief may carry them in any language.

@@ -9,6 +9,7 @@ directory holding this file (`.claude/.assistant/`, personal and unversioned).
 vcs:        git | svn                      # git: worktree per task, checkpoint = commit, hook runs `gate`; svn: working copy per task, checkpoint = saved diff, builder runs `gate`, nothing committed before ③
 board:      notion | file                  # where task rows live — the TaskList under notion_root, or .claude/.assistant/board.md; asst-board hides the difference
 notion_root: <page-id>                     # board=notion: the KB root; TaskList / feature-archive / decision-log resolve by title under it
+kb_pages:   <module> = <where> [· …] or none  # the KB modules this project keeps (SKILL.md §KB modules), each with where its pages live — e.g. product = 產品 / 功能 / 共用設計 on Notion, or product = docs/product/; none = no KB pages
 kb:         <dir>                          # board=file: where `asst-board archive` lands (e.g. docs/decisions)
 gate:       <command>                      # lint · format · tests in one command; red blocks the checkpoint
 coverage:   <command, ci or none>          # per-line reach on the diff; gate: every changed line executed, no markers; ci = the PR's CI measures it, so there is no verify-coverage leg

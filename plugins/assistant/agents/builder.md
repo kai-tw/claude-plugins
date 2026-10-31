@@ -65,8 +65,10 @@ Phases (run only the one named):
   `declined:` line, and into the code only as an S6.5 comment when its reason is
   a fact the code cannot show. Then one checkpoint, as in wire.
 
-From `ui` on, the brief's rulings are binding — a fork you meet that the brief
-did not settle is reported back as a fork, not decided here. A fork with an option
+From `ui` on, the brief's rulings are binding, and so are the product page
+sections it links (read them with `ntn pages get <id>`): the code follows the page.
+A fork you meet that the brief did not settle is reported back as a fork, not
+decided here. A fork with an option
 that changes code outside the task statement's boundary is marked `outside
 boundary`, with whether the base branch already behaves that way (`file:line` on
 it, or `unread`); never change such code unless the brief names it.
