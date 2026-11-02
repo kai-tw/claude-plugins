@@ -17,9 +17,11 @@
 #          (default 1440) and print which. Start it with run_in_background: true,
 #          and its exit wakes the session. One per PR and kind, any number of PRs
 #          at once (pr-watch.mjs)
-#        asst-pr release <label> <checkout>
-#          base_branch: projects only — open (or find) the PR from base_branch
-#          into the default branch, listing what it carries → prints the URL
+#        asst-pr release <label> <checkout> [--dry-run]
+#          base_branch: projects only — list what base_branch's head carries
+#          that the default branch lacks, then start the repo's release.yml on
+#          that commit (it fast-forwards the default branch and deploys);
+#          --dry-run lists and starts nothing
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists, targets
 #          the adapter's base_branch (else the default branch) and has a
@@ -44,7 +46,7 @@ set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"; source "$here/node.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,38p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,40p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
@@ -112,19 +114,25 @@ case "$op" in
     (cd "$wt" && gh pr create --draft --base "$target" --head "$branch" "$@") ;;
   release)
     [ "$target" != "$default" ] || { echo "asst-pr: the adapter names no base_branch — task PRs go straight into $default, so there is nothing to release" >&2; exit 2; }
-    github "The release PR is the founder's to open — report it as a \`Needs you\` line."
+    dry=""; [ "${1:-}" = --dry-run ] && dry=1
     g fetch --quiet origin "$default" "$target" || { echo "asst-pr: can't fetch $default and $target" >&2; exit 2; }
-    carried=$(g log --first-parent --format='- %s' "origin/$default..origin/$target")
+    sha=$(g rev-parse "origin/$target")
+    # Only a fast-forward is released: a release PR would make base_branch its
+    # head, and a repo that deletes head branches after merge deletes it.
+    g merge-base --is-ancestor "origin/$default" "$sha" \
+      || { echo "asst-pr: $target doesn't contain $default — merge $default into $target first" >&2; exit 1; }
+    carried=$(g log --first-parent --format='- %s' "origin/$default..$sha")
     [ -n "$carried" ] || { echo "asst-pr: $target has nothing that $default lacks — nothing to release"; exit 0; }
-    url=$(cd "$wt" && gh pr list --head "$target" --base "$default" --state open --json url --jq '.[0].url // empty' 2>/dev/null)
-    if [ -z "$url" ]; then
-      url=$(cd "$wt" && gh pr create --base "$default" --head "$target" --title "Release $slug" \
-        --body "Carries into $default what $target has that it lacks:"$'\n\n'"$carried") || exit 2
-    fi
-    echo "$url"
-    # A squash puts the same changes on the default branch in other commits,
-    # so the base branch never contains it again.
-    echo "asst-pr: merge it with a merge commit (gh pr merge <n> --merge), never --squash" ;;
+    echo "asst-pr: release $slug carries ${sha:0:7} into $default:"
+    echo "$carried"
+    [ -z "$dry" ] || exit 0
+    [ -f "$wt/.github/workflows/release.yml" ] \
+      || { echo "asst-pr: no .github/workflows/release.yml here — the founder fast-forwards $default: git push origin $sha:refs/heads/$default" >&2; exit 2; }
+    github "The release is the founder's to start — report it as a \`Needs you\` line."
+    # The commit listed above is the one released, whatever reaches the
+    # branch meanwhile.
+    (cd "$wt" && gh workflow run release.yml --ref "$default" -f "sha=$sha") || exit 2
+    echo "asst-pr: release.yml started on ${sha:0:7}" ;;
   checks)
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
     github "There is no CI to read."

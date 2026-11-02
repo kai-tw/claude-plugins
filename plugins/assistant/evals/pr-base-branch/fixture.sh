@@ -12,6 +12,7 @@ git config user.email e@e; git config user.name e
 mkdir -p .claude
 printf 'vcs: git\nbase_branch: staging\n' > .claude/assistant.md
 printf '.claude/.assistant/\n' > .gitignore
+mkdir -p .github/workflows; printf 'on: workflow_dispatch\n' > .github/workflows/release.yml
 git add -A; git commit -qm base; git push -q origin HEAD:main 2>/dev/null
 git remote set-head origin main 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 git switch -qc staging
@@ -36,7 +37,7 @@ case "$1 $2" in
       *) echo "https://github.com/o/r/pull/7" ;;
     esac ;;
   "pr create") echo "https://github.com/o/r/pull/8" ;;
-  "pr list") exit 0 ;;
+  "pr list"|"workflow run") exit 0 ;;
   *) exit 1 ;;
 esac
 SH

@@ -224,12 +224,12 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
 
 Only where the adapter sets `base_branch:`. A task branch starts from it, its PR
 goes into it (`asst-pr open` and `ready` hold both to it), and merging it ships to
-the test environment, not to production. When the founder asks to release, run
-`asst-pr release <label> <checkout>`: it opens, or finds, the PR from
-`base_branch` into the default branch and lists what it carries. Merging it is
-the founder's; told to merge it, run `gh pr merge <n> --merge
---match-head-commit <sha>`, never `--squash`, which puts the same changes on the
-default branch in other commits so `base_branch` never contains it again.
+the test environment, not to production. There is no release PR: the default
+branch is fast-forwarded to `base_branch`'s head by the repo's `release.yml`,
+which then deploys production. When the founder asks what a release would carry,
+run `asst-pr release <label> <checkout> --dry-run` and show them its list; when
+they say to release, run it without `--dry-run`, which starts `release.yml` on
+the commit it lists.
 
 ## KB modules
 
