@@ -174,10 +174,11 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    that does not ship.
    Rewrite the PR's title and body from ③ first (`gh pr edit`): the draft's
    describe the plan, not what shipped.
-   A backend change an app relies on is deployed only after the app task that
-   calls it filed `device: passed`: the backend task's ③ names that app task and
-   quotes its `verify-device` first line, and until it reads `device: passed` the
-   deploy isn't offered.
+   A backend change an app relies on reaches production only after the app task
+   that calls it filed `device: passed`: the backend task's ③ names that app task
+   and quotes its `verify-device` first line, and until it reads `device: passed`
+   the merge (or, where the adapter sets `base_branch:`, the release that carries
+   it) isn't offered.
    Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft, and
    write ③ only once it exits 0, with `PR #<n> ready` in its header. A draft
    means work is still in progress, so a ③ sent while the PR is a draft tells
@@ -218,6 +219,17 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
    Delete the PR's worktree, local branch and remote branch, unasked, once
    `HEAD` matches the merged PR's head. Append the task's cost to
    `.claude/.assistant/ledger.md`.
+
+## Release
+
+Only where the adapter sets `base_branch:`. A task branch starts from it, its PR
+goes into it (`asst-pr open` and `ready` hold both to it), and merging it ships to
+the test environment, not to production. When the founder asks to release, run
+`asst-pr release <label> <checkout>`: it opens, or finds, the PR from
+`base_branch` into the default branch and lists what it carries. Merging it is
+the founder's; told to merge it, run `gh pr merge <n> --merge
+--match-head-commit <sha>`, never `--squash`, which puts the same changes on the
+default branch in other commits so `base_branch` never contains it again.
 
 ## KB modules
 

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pr-base-branch
+description: With base_branch set in the adapter, asst-pr open creates the draft PR into that branch, ready refuses a PR that targets the default branch instead, and release opens the PR from base_branch into the default branch listing the commits it carries.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; GH_HAS_PR=0 asst-pr open x wt --title t --body b >/dev/null 2>&1; echo "open=$?"; grep "^gh pr create" gh.log; : > gh.log; GH_BASE=main asst-pr ready x wt 2>&1; echo "ready-main=$?"; asst-pr release r1 wt 2>&1; echo "release=$?"; cat gh.log
+  prompt: |
+    With a fake gh and an adapter whose base_branch is staging, run asst-pr open on a task branch, asst-pr ready on a PR that targets main, and asst-pr release. Print every output, exit code and gh pr create call.
+context:
+  scaffold_script: fixture.sh

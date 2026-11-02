@@ -7,6 +7,7 @@ directory holding this file (`.claude/.assistant/`, personal and unversioned).
 
 ```
 vcs:        git | svn                      # git: worktree per task, checkpoint = commit, hook runs `gate`; svn: working copy per task, checkpoint = saved diff, builder runs `gate`, nothing committed before ③
+base_branch: <branch or none>             # git: the branch task branches start from and task PRs go into (e.g. staging, deployed to a test environment); none = the default branch. Production gets it by a release (SKILL.md §Release)
 board:      notion | file                  # where task rows live — the TaskList under notion_root, or .claude/.assistant/board.md; asst-board hides the difference
 notion_root: <page-id>                     # board=notion: the KB root; TaskList / decision-log / KB Pages resolve by title under it
 kb_pages:   <modules> or none                # the KB modules this project keeps, picked from frontend · backend · product · marketing · design (SKILL.md §KB modules); none = no KB pages
