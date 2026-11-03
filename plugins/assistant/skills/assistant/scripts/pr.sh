@@ -17,9 +17,15 @@
 #          (default 1440) and print which. Start it with run_in_background: true,
 #          and its exit wakes the session. One per PR and kind, any number of PRs
 #          at once (pr-watch.mjs)
+#        asst-pr release <label> <checkout> [--dry-run]
+#          base_branch: projects only — list what base_branch's head carries
+#          that the default branch lacks, then start the repo's release.yml on
+#          that commit (it fast-forwards the default branch and deploys);
+#          --dry-run lists and starts nothing
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists, targets
-#          the default branch and has a description; every verify leg the
+#          the adapter's base_branch (else the default branch) and has a
+#          description; every verify leg the
 #          adapter requires has a report filed after HEAD's commit, and an
 #          `exempt:` verify-code covers at most 20 changed lines; CI on HEAD
 #          passed. A PR that is already ready is checked the same way. A draft
@@ -40,17 +46,25 @@ set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"; source "$here/node.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,34p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,40p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
 root=$(cd "$wt" && asst_root)
 adapter="$root/.claude/assistant.md"
 field() { sed -nE "s/^$1:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" "$adapter" 2>/dev/null | head -1; }
-[ "$(field vcs)" = svn ] && { echo "asst-pr: vcs is svn — there is no PR; ③ ends in svn commit" >&2; exit 2; }
+if [ "$(field vcs)" = svn ]; then
+  [ "$op" = release ] && { echo "asst-pr: vcs is svn — base_branch and releases are git only; an svn task ends in svn commit at ③" >&2; exit 2; }
+  echo "asst-pr: vcs is svn — there is no PR; ③ ends in svn commit" >&2; exit 2
+fi
 
 g() { git -C "$wt" "$@"; }
 branch=$(g symbolic-ref --quiet --short HEAD) || { echo "asst-pr: $wt is on a detached HEAD" >&2; exit 2; }
+default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); default=${default#origin/}; default=${default:-main}
+# Task PRs go into the adapter's base_branch when it names one (e.g. staging,
+# which deploys to a test environment); a release then carries it into the
+# default branch.
+target=$(field base_branch); case "$target" in ""|none) target=$default ;; esac
 refuse() { printf 'asst-pr: NOT READY — %s\n' "$1" >&2; exit 1; }
 github() {
   local why; why=$(gh_unusable "$wt")
@@ -87,20 +101,41 @@ ci() {
 
 case "$op" in
   open)
-    default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); default=${default#origin/}
-    [ "$branch" != "${default:-main}" ] || { echo "asst-pr: $branch is the default branch — a task PR comes from its own branch" >&2; exit 2; }
+    [ "$branch" != "$default" ] && [ "$branch" != "$target" ] \
+      || { echo "asst-pr: $branch is the branch task PRs go into — a task PR comes from its own branch" >&2; exit 2; }
     body="" prev=""
     for a in "$@"; do
       case "$prev" in --body|-b) body+="$a"$'\n' ;; --body-file|-F) body+="$(cat -- "$a" 2>/dev/null)"$'\n' ;; esac
       prev=$a
     done
-    leaks=$(disclosure_leaks "$wt" "origin/${default:-main}" "$body")
+    leaks=$(disclosure_leaks "$wt" "origin/$target" "$body")
     [ -z "$leaks" ] || { printf 'asst-pr: NOT PUSHED — this repo is not known to be private, and this would publish (SKILL.md §Disclosure):\n%s\n' "$leaks" >&2; exit 1; }
     g push --quiet -u origin HEAD || { echo "asst-pr: push failed" >&2; exit 1; }
     github "$branch is pushed; the PR is the founder's to open — report it as a \`Needs you\` line."
     url=$(cd "$wt" && gh pr view "$branch" --json url --jq .url 2>/dev/null) && { echo "$url"; exit 0; }
     case " $* " in *" --title "*|*" -t "*|*" --fill "*) ;; *) set -- "$@" --fill ;; esac
-    (cd "$wt" && gh pr create --draft --head "$branch" "$@") ;;
+    (cd "$wt" && gh pr create --draft --base "$target" --head "$branch" "$@") ;;
+  release)
+    [ "$target" != "$default" ] || { echo "asst-pr: the adapter names no base_branch — task PRs go straight into $default, so there is nothing to release" >&2; exit 2; }
+    dry=""; [ "${1:-}" = --dry-run ] && dry=1
+    g fetch --quiet origin "$default" "$target" || { echo "asst-pr: can't fetch $default and $target" >&2; exit 2; }
+    sha=$(g rev-parse "origin/$target")
+    # Only a fast-forward is released: a release PR would make base_branch its
+    # head, and a repo that deletes head branches after merge deletes it.
+    g merge-base --is-ancestor "origin/$default" "$sha" \
+      || { echo "asst-pr: $target doesn't contain $default — merge $default into $target first" >&2; exit 1; }
+    carried=$(g log --first-parent --format='- %s' "origin/$default..$sha")
+    [ -n "$carried" ] || { echo "asst-pr: $target has nothing that $default lacks — nothing to release"; exit 0; }
+    echo "asst-pr: release $slug carries ${sha:0:7} into $default:"
+    echo "$carried"
+    [ -z "$dry" ] || exit 0
+    [ -f "$wt/.github/workflows/release.yml" ] \
+      || { echo "asst-pr: no .github/workflows/release.yml here — the founder fast-forwards $default: git push origin $sha:refs/heads/$default" >&2; exit 2; }
+    github "The release is the founder's to start — report it as a \`Needs you\` line."
+    # The commit listed above is the one released, whatever reaches the
+    # branch meanwhile.
+    (cd "$wt" && gh workflow run release.yml --ref "$default" -f "sha=$sha") || exit 2
+    echo "asst-pr: release.yml started on ${sha:0:7}" ;;
   checks)
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
     github "There is no CI to read."
@@ -138,8 +173,10 @@ case "$op" in
     read -r num draft base <<< "$pr"
     # A PR on top of an unmerged one looks mergeable on its own, and merging it
     # first lands the other PR's unfinished commits with it.
-    default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); default=${default#origin/}
-    [ "$base" = "${default:-main}" ] || refuse "#$num is stacked on $base — it stays a draft until that PR merges and this branch is merged with ${default:-main}"
+    if [ "$base" != "$target" ]; then
+      [ "$base" = "$default" ] && refuse "#$num targets $default, but this project's task PRs go into $target — gh pr edit $num --base $target"
+      refuse "#$num is stacked on $base — it stays a draft until that PR merges and this branch is merged with $target"
+    fi
     body=$(cd "$wt" && gh pr view "$branch" --json body --jq .body 2>/dev/null)
     [ -n "${body//[[:space:]]/}" ] || refuse "#$num has no description — write its title and body from ③ first (gh pr edit)"
     g fetch --quiet origin "$base" 2>/dev/null
