@@ -54,6 +54,9 @@ export function joinHub({ repo, events, pick, onEvent, onConnected, onFail }) {
   const note = (ev) => appendFileSync(eventsFile, JSON.stringify(ev) + '\n');
   let fwd = null;
   let stopped = false;
+  // Restarts since a connected forwarder last dropped; 0 = none.
+  const RETRY_MS = [1000, 5000, 15000, 30000];
+  let retries = 0;
 
   function lead() {
     fwd = spawn('gh', ['webhook', 'forward', `--events=${events}`, `--repo=${repo}`], {
@@ -75,6 +78,19 @@ export function joinHub({ repo, events, pick, onEvent, onConnected, onFail }) {
     fwd.on('exit', () => {
       fwd = null;
       if (stopped) return;
+      // A forwarder that had connected and then dropped (measured: `websocket:
+      // close 1006`, minutes into a wait) is started again; the next connect
+      // reads the state afresh, so nothing in between is missed. One that never
+      // connects after a drop is tried a few more times, since GitHub may still
+      // hold the dropped one's hook for a moment.
+      const connected = /^Forwarding/m.test(err);
+      if (connected) retries = 0;
+      if ((connected || retries > 0) && retries < RETRY_MS.length) {
+        release(leaderFile);
+        setTimeout(tryLead, RETRY_MS[retries]);
+        retries += 1;
+        return;
+      }
       onFail(/Hook already exists/.test(err)
         ? `a webhook forwarder for ${events} already exists on ${repo} that nothing here owns — another machine, or one a killed forwarder left behind (gh api repos/${repo}/hooks lists it)`
         : `webhook forwarder failed: ${forwarderError(err)}`);

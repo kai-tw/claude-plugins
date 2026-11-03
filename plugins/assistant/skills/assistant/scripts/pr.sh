@@ -17,11 +17,14 @@
 #          (default 1440) and print which. Start it with run_in_background: true,
 #          and its exit wakes the session. One per PR and kind, any number of PRs
 #          at once (pr-watch.mjs)
-#        asst-pr release <label> <checkout> [--dry-run]
+#        asst-pr release <label> <checkout> [--dry-run] [--timeout <minutes>]
 #          base_branch: projects only — list what base_branch's head carries
 #          that the default branch lacks, then start the repo's release.yml on
-#          that commit (it fast-forwards the default branch and deploys);
-#          --dry-run lists and starts nothing
+#          that commit (it fast-forwards the default branch and deploys) and
+#          wait for that run (default 120 minutes; run_in_background: true):
+#          RELEASED, or RELEASE NOT PUSHED with the founder's push command when
+#          the default branch never moved, or RELEASE FAILED with the run's
+#          link when it moved; --dry-run lists and starts nothing
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists, targets
 #          the adapter's base_branch (else the default branch) and has a
@@ -37,7 +40,8 @@
 # Exit: 0 done (--merge: merged) · 1 refused, a check failed, or (--merge) closed
 # without merging · 2 usage, not a git task, CI unreadable, or no PR possible here
 # (gh missing or unauthenticated, no GitHub remote), or the PR already watched ·
-# 3 CI still running or not yet run on HEAD, or (--merge) the PR still open at the timeout.
+# 3 CI still running or not yet run on HEAD, or (--merge) the PR still open at the
+# timeout, or (release) the run still going at the timeout.
 #
 # On a repo not known to be private, `open` refuses to push, and `ready` to turn
 # ready, while the commits, the diff or the PR body name something from outside
@@ -46,7 +50,7 @@ set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"; source "$here/node.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,40p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,44p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
@@ -117,7 +121,14 @@ case "$op" in
     (cd "$wt" && gh pr create --draft --base "$target" --head "$branch" "$@") ;;
   release)
     [ "$target" != "$default" ] || { echo "asst-pr: the adapter names no base_branch — task PRs go straight into $default, so there is nothing to release" >&2; exit 2; }
-    dry=""; [ "${1:-}" = --dry-run ] && dry=1
+    dry="" mins=120
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --dry-run) dry=1; shift ;;
+        --timeout) mins=${2:-}; [[ $mins =~ ^[0-9]+(\.[0-9]+)?$ ]] || usage; shift 2 ;;
+        *) usage ;;
+      esac
+    done
     g fetch --quiet origin "$default" "$target" || { echo "asst-pr: can't fetch $default and $target" >&2; exit 2; }
     sha=$(g rev-parse "origin/$target")
     # Only a fast-forward is released: a release PR would make base_branch its
@@ -135,7 +146,37 @@ case "$op" in
     # The commit listed above is the one released, whatever reaches the
     # branch meanwhile.
     (cd "$wt" && gh workflow run release.yml --ref "$default" -f "sha=$sha") || exit 2
-    echo "asst-pr: release.yml started on ${sha:0:7}" ;;
+    echo "asst-pr: release.yml started on ${sha:0:7}"
+    repo=$(cd "$wt" && gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
+    [ -n "$repo" ] || { echo "asst-pr: can't tell which GitHub repo $wt is — check the run in Actions" >&2; exit 2; }
+    # The run is found by its title, which release.yml sets to carry the SHA
+    # (run-name); a just-dispatched run takes a moment to be listed.
+    run=""
+    for wait_s in 2 3 5 10; do
+      sleep "$wait_s"
+      run=$(gh run list --repo "$repo" --workflow release.yml --event workflow_dispatch --limit 20 \
+        --json databaseId,displayTitle --jq ".[] | select(.displayTitle | contains(\"$sha\")) | .databaseId" 2>/dev/null | head -1)
+      [ -n "$run" ] && break
+    done
+    [ -n "$run" ] || { echo "asst-pr: no release.yml run titled with $sha — give release.yml \`run-name: Release \${{ inputs.sha }}\`, and check the run in Actions" >&2; exit 2; }
+    n=$(asst_node) || { echo "asst-pr: node not found — run $run was started; check it in Actions" >&2; exit 2; }
+    out=$("$n" "$here/pr-watch.mjs" run "$repo" "$run" "$mins"); code=$?
+    printf '%s\n' "$out"
+    case $code in
+      0) echo "asst-pr: RELEASED — $default is at ${sha:0:7} and production is deployed" ;;
+      1)
+        # Whether the default branch moved tells a refused push from a failed
+        # deploy, whatever each repo names its steps. GITHUB_TOKEN can't push a
+        # commit that changes .github/workflows/, so such a release always ends
+        # here, and the founder's own push does what release.yml couldn't.
+        at=$(g ls-remote origin "refs/heads/$default" | cut -f1)
+        if [ "$at" != "$sha" ]; then
+          echo "asst-pr: RELEASE NOT PUSHED — $default never moved to ${sha:0:7}. The founder pushes it, and that push deploys: git fetch origin && git push origin $sha:refs/heads/$default"
+        else
+          echo "asst-pr: RELEASE FAILED — $default is at ${sha:0:7}, but the run failed after that; see its link above"
+        fi ;;
+    esac
+    exit "$code" ;;
   checks)
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
     github "There is no CI to read."

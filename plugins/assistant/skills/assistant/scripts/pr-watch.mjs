@@ -1,22 +1,26 @@
 #!/usr/bin/env node
-// pr-watch — wait for one PR to reach an end state, then exit with the verdict.
-// `asst-pr watch` is the entry point; start it with run_in_background: true, and
-// its exit wakes the session. Two modes:
+// pr-watch — wait for one PR, or one workflow run, to reach an end state, then
+// exit with the verdict. `asst-pr watch` and `asst-pr release` are the entry
+// points; start them with run_in_background: true, and their exit wakes the
+// session. Three modes:
 //   ci     CI on the PR's head commit finished; the verdict is the check command's
 //          (`asst-pr checks`)
 //   merge  the PR merged or closed
+//   run    a workflow run (the <pr> argument is its run id) completed
 //
-// One watcher per PR and mode, any number of PRs at once: the watchers of one repo
-// share one webhook forwarder (hub.mjs). Each reads the PR once when it joins and
-// whenever a forwarder connects, so nothing that happened in between is missed.
-// This repo's after-merge.mjs imports watchPr for its merge wait.
+// One watcher per PR (or run) and mode, any number at once: the watchers of one
+// repo share one webhook forwarder (hub.mjs). Each reads the state once when it
+// joins and whenever a forwarder connects, so nothing that happened in between is
+// missed. This repo's after-merge.mjs imports watchPr for its merge wait.
 //
 // Usage: node pr-watch.mjs ci    <owner/repo> <pr> <timeout-minutes> <head-sha> <check command…>
 //        node pr-watch.mjs merge <owner/repo> <pr> <timeout-minutes>
+//        node pr-watch.mjs run   <owner/repo> <run-id> <timeout-minutes>
 // Exit: ci — the check command's own 0 passed · 1 failed · 2 unreadable · 3 still
 // running at the timeout; merge — 0 merged · 1 closed without merging · 2 unreadable
-// · 3 still open at the timeout; also 2 when the PR is already watched or the
-// forwarder can't start.
+// · 3 still open at the timeout; run — 0 succeeded · 1 any other conclusion ·
+// 2 unreadable · 3 still running at the timeout; also 2 when it is already
+// watched or the forwarder can't start.
 
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -31,6 +35,16 @@ function mergeState(repo, pr) {
   if (state === 'OPEN') return { status: 3 };
   if (state === 'MERGED') return { status: 0, stdout: `asst-pr: #${pr} MERGED as ${oid.slice(0, 7)}\n` };
   return { status: 1, stdout: `asst-pr: #${pr} CLOSED without merging\n` };
+}
+
+// One look at a workflow run, shaped the same way.
+function runState(repo, id) {
+  const r = spawnSync('gh', ['run', 'view', id, '--repo', repo, '--json', 'status,conclusion,url', '--jq', '[.status, .conclusion, .url] | join(" ")'], { encoding: 'utf8' });
+  if (r.status !== 0) return { status: 2, stderr: `asst-pr: can't read run ${id} — ${(r.stderr || '').trim()}\n` };
+  const [status, conclusion, url = ''] = r.stdout.trim().split(' ');
+  if (status !== 'completed') return { status: 3 };
+  if (conclusion === 'success') return { status: 0, stdout: `asst-pr: run ${id} SUCCEEDED — ${url}\n` };
+  return { status: 1, stdout: `asst-pr: run ${id} ${conclusion.toUpperCase() || 'ENDED'} — ${url}\n` };
 }
 
 // What each mode waits on: the webhook events that can end it, which of them
@@ -52,6 +66,14 @@ const modes = {
     mine: (ev) => String(ev.closed) === pr,
     look: () => mergeState(repo, pr),
     late: (min) => `asst-pr: #${pr} still open after ${min} min — watch again\n`,
+  }),
+  run: ({ repo, pr: id }) => ({
+    name: 'run',
+    events: 'workflow_run',
+    pick: (ev) => (ev.action === 'completed' && ev.workflow_run ? { run: ev.workflow_run.id } : null),
+    mine: (ev) => String(ev.run) === id,
+    look: () => runState(repo, id),
+    late: (min) => `asst-pr: run ${id} still running after ${min} min — watch again, or check the run\n`,
   }),
 };
 
@@ -110,7 +132,7 @@ export function watchPr({ mode, repo, pr, timeoutMin, sha, check }) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [mode, repo, pr, timeoutMin, sha, ...check] = process.argv.slice(2);
   if (!modes[mode] || !repo || !/^\d+$/.test(pr ?? '') || !(Number(timeoutMin) > 0) || (mode === 'ci' && !(sha && check.length))) {
-    console.error('Usage: pr-watch.mjs ci <owner/repo> <pr> <timeout-minutes> <head-sha> <check command…>\n       pr-watch.mjs merge <owner/repo> <pr> <timeout-minutes>');
+    console.error('Usage: pr-watch.mjs ci <owner/repo> <pr> <timeout-minutes> <head-sha> <check command…>\n       pr-watch.mjs merge <owner/repo> <pr> <timeout-minutes>\n       pr-watch.mjs run   <owner/repo> <run-id> <timeout-minutes>');
     process.exit(2);
   }
   const { code, out } = await watchPr({ mode, repo, pr, timeoutMin: Number(timeoutMin), sha, check });
