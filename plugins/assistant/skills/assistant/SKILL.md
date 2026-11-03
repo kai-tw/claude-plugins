@@ -222,7 +222,8 @@ request ─▶ task statement ─▶ Scout ─▶ ① brief ─▶ Build ─▶ 
 
 ## Release
 
-Only where the adapter sets `base_branch:`. A task branch starts from it, its PR
+Only on git, where the adapter sets `base_branch:`; an svn project has none, and
+its task ends in `svn commit` at ③. A task branch starts from it, its PR
 goes into it (`asst-pr open` and `ready` hold both to it), and merging it ships to
 the test environment, not to production. There is no release PR: the default
 branch is fast-forwarded to `base_branch`'s head by the repo's `release.yml`,

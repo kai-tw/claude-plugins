@@ -53,7 +53,10 @@ shift 3
 root=$(cd "$wt" && asst_root)
 adapter="$root/.claude/assistant.md"
 field() { sed -nE "s/^$1:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" "$adapter" 2>/dev/null | head -1; }
-[ "$(field vcs)" = svn ] && { echo "asst-pr: vcs is svn — there is no PR; ③ ends in svn commit" >&2; exit 2; }
+if [ "$(field vcs)" = svn ]; then
+  [ "$op" = release ] && { echo "asst-pr: vcs is svn — base_branch and releases are git only; an svn task ends in svn commit at ③" >&2; exit 2; }
+  echo "asst-pr: vcs is svn — there is no PR; ③ ends in svn commit" >&2; exit 2
+fi
 
 g() { git -C "$wt" "$@"; }
 branch=$(g symbolic-ref --quiet --short HEAD) || { echo "asst-pr: $wt is on a detached HEAD" >&2; exit 2; }

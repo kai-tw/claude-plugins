@@ -42,3 +42,7 @@ case "$1 $2" in
 esac
 SH
 chmod +x stub/gh
+
+# An svn project, to check that release says it is git only.
+mkdir -p svnproj/.claude
+printf 'vcs: svn\nbase_branch: staging\n' > svnproj/.claude/assistant.md
