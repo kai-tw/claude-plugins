@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: release-watch
+description: asst-pr release waits for the release.yml run it started. A run that succeeds is RELEASED, even when the webhook forwarder drops mid-wait and has to reconnect. A run that fails while the default branch never moved is RELEASE NOT PUSHED, with the founder's push command. A run that fails after the default branch moved is RELEASE FAILED, with the run's link and no push command.
+tags: [asst-pr]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH" XDG_CACHE_HOME="$PWD/cache"; sha=$(git -C wt rev-parse origin/staging); touch drop.once; ./state in_progress; asst-pr release r1 wt > a.out 2>&1 & pa=$!; ./connected 2; echo "up=$?"; ./finish success; wait $pa; echo "a=$?"; sed "s/^/a: /" a.out; echo "starts=$(grep -c start fwd.log)"; ./state completed failure; asst-pr release r1 wt > b.out 2>&1; echo "b=$?"; sed "s/^/b: /" b.out; ./state in_progress; asst-pr release r1 wt > c.out 2>&1 & pc=$!; ./connected 4; git -C wt push -q origin "$sha:refs/heads/main" 2>/dev/null; ./finish failure; wait $pc; echo "c=$?"; sed "s/^/c: /" c.out
+  prompt: |
+    With a fake gh, run asst-pr release three times: a run that succeeds while the webhook forwarder drops once, a run that fails with main never moved, and a run that fails after main moved to staging's head. Print every output and exit code.
+context:
+  scaffold_script: fixture.sh
