@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: pack-csharp
-description: --paths picks language files by extension — .cs brings only csharp.md, not dart.md or js.md, with the charter first.
+description: --paths picks language files by extension — .cs brings only csharp.md, not dart.md or js.md, with the core rules first.
 tags: [style-pack]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: style-pack --paths src/Spins/SpinEngine.cs
   prompt: |
-    Print the style-code rules a review of src/Spins/SpinEngine.cs should cite.
+    Print the style rules a review of src/Spins/SpinEngine.cs should cite.
 context:
   scaffold_script: fixture.sh

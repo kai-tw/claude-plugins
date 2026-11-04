@@ -1,16 +1,16 @@
-# Style rules — JS / TS statute layer
+# Style rules — JS / TS language rules
 
 Loaded when: the diff contains `.js` · `.mjs` · `.cjs` · `.jsx` · `.ts` · `.tsx`. Each rule
-must hang under an existing charter `S<N>`; if it cannot, amend the charter first
+is filed under an existing core rule `S<N>`; if none fits, add the core rule first
 (`CONVENTIONS.md`).
 
-## S3 — Every collapse must be justified at each consumption point
+## S3 — Every collapse must be justified at each use site
 
 - **S3.1-js `??` and `||` collapse different states; each must be justified** — Check: does
   this code collapse "`null` / `undefined`", or every falsy value? With `||`, `0`, `''`,
   `NaN` and `false` are collapsed into the default as well, so wherever any of them is a
   valid input, it violates this rule. `??` collapses only `null` and `undefined`, and its
-  validity must still be justified at each consumption point per charter S3.1.
+  validity must still be justified at each use site per core rule S3.1.
 - **S3.2-js `null`, `undefined` and a missing key are three states and must not be assumed
   equivalent** — Check: is the value's "absence" an explicit `null` (known to be none),
   `undefined` (not given), or a key the object simply lacks (this path was never taken)?
@@ -38,6 +38,6 @@ must hang under an existing charter `S<N>`; if it cannot, amend the charter firs
 - **S7.1-js `catch` has no type filter; non-matching errors must be rethrown explicitly** —
   Check: inside the `catch` block, does the code first establish that what was caught is an
   error this place can recover from, and `throw` the rest? Handling everything without that
-  check violates charter S7.3: a JS `catch` binds everything, so programming errors like
+  check violates core rule S7.3: a JS `catch` binds everything, so programming errors like
   `TypeError` and `ReferenceError` land in the same block as expected environmental errors,
-  and the charter requires the former to propagate.
+  and S7 requires the former to propagate.

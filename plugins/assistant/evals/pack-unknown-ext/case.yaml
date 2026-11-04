@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: style-pack --paths lib/a.py; echo "exit=$?"
   prompt: |
-    Print the style-code rules a review of lib/a.py should cite; print the exit code.
+    Print the style rules a review of lib/a.py should cite; print the exit code.
 context:
   scaffold_script: fixture.sh

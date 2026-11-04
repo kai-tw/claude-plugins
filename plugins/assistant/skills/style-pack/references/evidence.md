@@ -1,15 +1,15 @@
 # Evidence rules for a finding
 
-Binds every verdict a reviewer returns — scored and non-scored alike. A report
+Applies to every verdict a reviewer returns — scored and non-scored alike. A report
 that breaks one of these is invalid even when every citation in it resolves.
 
-- **`undeterminable` is a verdict; "absent" is not its synonym.** When you looked and
-  still cannot tell, return `undeterminable` and name who closes it (the author, which
+- **`inconclusive` is a verdict; "absent" is not its synonym.** When you looked and
+  still cannot tell, return `inconclusive` and name who closes it (the author, which
   document, which command) — never upgrade it to "no mechanism" / "not
-  implemented" / "nothing covers this". Without this arm every failure to find
+  implemented" / "nothing covers this". Without this clause every failure to find
   becomes a reported defect, and the author acts on a defect that isn't there.
 
-- **An absence claim needs a sweep, not a grep.** Only · all · none · never ·
+- **A negative claim needs an exhaustive search, not a grep.** Only · all · none · never ·
   N of them (只有・全部・沒有・從來・N 個) —
   a grep proves existence and can never prove absence or completeness, because it
   cannot report what it did not look at. Either dispatch `Explore` over the whole
@@ -22,7 +22,7 @@ that breaks one of these is invalid even when every citation in it resolves.
   not — the number is not the evidence, the list behind it is. State a count
   only attached to what it counts: one citable item (`file:line` or
   equivalent) per unit claimed, printed with it. Fewer citable items than the
-  stated count, or a count with no list at all, is `undeterminable` — never round it
+  stated count, or a count with no list at all, is `inconclusive` — never round it
   up to the number written.
 
 - **Name the question you actually searched.** The common failure is silent

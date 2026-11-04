@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: for f in skills/assistant/SKILL.md agents/builder.md agents/verifier.md skills/ui-text-pack/rules/index.md skills/ui-text-pack/rules/zh-Hant.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
   prompt: |
-    Print the assistant skill, the builder and verifier, and the ui-text-pack charter and zh-Hant layer, one file per line.
+    Print the assistant skill, the builder and verifier, and the ui-text-pack core rules and zh-Hant locale rules, one file per line.
 context:
   scaffold_script: fixture.sh

@@ -1,45 +1,45 @@
-# Charter of user-visible text
+# User-visible text — core rules
 
-This law holds the rules for writing user-visible text that mechanical checks cannot
-decide and that need judgment.
+These core rules cover writing user-visible text that mechanical checks cannot decide
+and that needs judgment.
 
 **Scope.** Text the app renders on screen at runtime for users to read: labels, titles,
 buttons, field names, hints, error messages, empty states. Logs, exception messages that
-only reach crash reports, store listings and marketing material are outside this law.
+only reach crash reports, store listings and marketing material are outside these rules.
 
-**Severity.** This law **sets no severity levels** — the review procedure assigns the
+**Severity.** These rules **set no severity levels** — the review procedure assigns the
 severity of a violation.
 
 ## Precedence
 
-Three layers; the higher prevails. **This section is the only version of the precedence
-rules**; lower layers and procedural files cite it.
+Three levels; the higher prevails. **This section is the only version of the precedence
+rules**; the lower levels and the rule-format file cite it.
 
-| Rank | Contains | Authority |
+| Level | Contains | May |
 |---|---|---|
-| Constitution | this law's `U<N>`: general rules that hold in every locale and every project | the only place a base rule may be made |
-| Statute | locale layer: that locale's concrete criteria, each attached to one `U<N>` | may only **make a base rule concrete** |
-| Regulation | project layer: that project's facts (glossary, each screen's labels, string storage format, its own check scripts) | may only **tighten** or **supply facts** |
+| Core rules | the `U<N>` in this file: general rules that hold in every locale and every project | the only place a core rule may be added |
+| Locale rules | that locale's concrete criteria, each filed under one `U<N>` | only **make a core rule concrete** |
+| Project rules | that project's facts (glossary, each screen's labels, string storage format, its own check scripts) | only **tighten** or **supply facts** |
 
-**Conflict test.** Can the two rules **be satisfied at once**? If yes, they stack
-lawfully; if not, they conflict.
+**Conflict test.** Can the two rules **be satisfied at once**? If yes, both apply; if not,
+they conflict.
 
-**No exemption clauses.** A conflict has only three outcomes, all amendments: narrow the
-base rule (add a condition, or move it down to the locale layer) · repeal the base rule ·
-the project changes the string.
+**No exemption clauses.** A conflict has only three outcomes: narrow the core rule (add a
+condition, or move it down to the locale rules) · delete the core rule · the project
+changes the string.
 
-**Conflict found during review.** That item is ruled **`undeterminable`**,
-naming who must amend at which layer; the amendment is filed separately. It is not
-`passed`, nor a `critical` aimed at the author.
+**Conflict found during review.** Report that item as **`inconclusive`**, naming who must
+change which level's rule; propose the rule change separately. It is not `passed`, nor a
+`critical` aimed at the author.
 
 **Burden of proof.** Whoever claims a conflict must **quote both rules verbatim and state
 why they cannot both be satisfied**.
 
-## Base rules
+## Core rules
 
-**An empty lower layer does not mean the locale has no rules** — the base rules still
-apply. Conversely, reviewers **must not invent a finding** from a text preference this law
-does not legislate: no provision does not mean free discretion.
+**An empty lower level does not mean the locale has no rules** — the core rules still
+apply. Conversely, reviewers **must not invent a finding** from a text preference these
+rules do not state: no rule text does not mean free discretion.
 
 ## U1 — How a string is written is decided by where it renders
 
@@ -59,8 +59,8 @@ is a manual, not an interface.
   but must not pass for each other.
 - **U1.3 Position and available width must be recorded with the string** — Check: Is the
   component the string renders in, and how many characters and lines it has, recorded
-  where both the string's writer and other locales' writers can read it (where is a
-  regulation-layer matter)? Where it is not recorded and the spot truncates, this violates
+  where both the string's writer and other locales' writers can read it (where is for the
+  project rules to say)? Where it is not recorded and the spot truncates, this violates
   this rule: a writer of only the source language cannot see which locale truncates.
 - **U1.4 A string is never changed for where it wraps** — Check: Is a string shortened or
   reworded only so that its last line does not hold a lone word or character? That
@@ -99,10 +99,10 @@ the three hands the judgment back to the user.
 ## U3 — Each locale is written natively
 
 **Principle:** Translation retells the same thing in another locale; it is not swapping
-words in a source-language sentence. When one source sentence is transcribed word for word
+words in a source-language sentence. When one source sentence is translated literally
 into several locales, at least half of them read unlike anything a person would say.
 
-- **U3.1 No word-for-word transcription** — Check: Back-translated into the source
+- **U3.1 No literal translation** — Check: Back-translated into the source
   language, does the locale's value change meaning? Where it does not, but its word order,
   sentence pattern or punctuation do not follow that locale's usage, it still violates
   this rule.
@@ -116,7 +116,7 @@ into several locales, at least half of them read unlike anything a person would 
 - **U3.3 Proposals are produced per locale in parallel** — Check: When offering options
   for approval, are options produced separately for each locale? Fixing one
   source-language sentence and translating the other locales from it violates this rule.
-- **U3.4 This base rule applies to values with no source-language value** — Check: Where
+- **U3.4 This core rule applies to values with no source-language value** — Check: Where
   a value is written directly in its locale, with no other locale's source in the string
   file, are its word order, conjunctions and sentence breaks the locale's own? The source
   is not limited to strings — type names, code comments and the language the string's
@@ -134,9 +134,9 @@ into several locales, at least half of them read unlike anything a person would 
   with the same meaning, in the written register the app's shipped strings use? A
   drawn-out spoken form where a short written one exists violates this rule. Example:
   「無可匯出的檔案」, not 「沒有找到可匯出的檔案」.
-- **U3.8 What the founder rewrote isn't written again** — Check: Does the value make the
-  same choice as a draft the founder rewrote or dropped, in the same role and locale?
-  Where it does, it violates this rule; follow the founder's version.
+- **U3.8 What the user rewrote isn't written again** — Check: Does the value make the
+  same choice as a draft the user rewrote or dropped, in the same role and locale?
+  Where it does, it violates this rule; follow the user's version.
 
 ## U4 — One concept, one word across the app
 
@@ -145,7 +145,7 @@ think it is a different thing.
 
 - **U4.1 Terms must not drift between screens** — Check: Does the concept use the same
   word on every screen this change touches? Where the project has a glossary, the glossary
-  governs (it belongs to the regulation layer).
+  decides (it is part of the project rules).
 - **U4.2 A reference to another screen must use that screen's actual label in the same
   locale** — Check: Do the tabs, pages, buttons and settings the string mentions use,
   verbatim, the label that screen actually shows in that locale? Keeping the
