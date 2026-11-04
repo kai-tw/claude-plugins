@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# intercept.sh — PreToolUse(Bash): warn at the moment a known-silent idiom is
-# about to run, and Stop(--reset) to re-arm.
+# intercept.sh — PreToolUse(Bash): warn just before a command pattern known to
+# fail silently runs, and Stop(--reset) to re-arm.
 #
 # WHY AT PreToolUse AND NOT IN A DOCUMENT
 #   A rule in a file has to be read to work, and the failures these prevent are
 #   exactly the ones where the operator does not know to look it up. Firing on
-#   the command itself needs no trigger judgment.
+#   the command itself doesn't rely on the model deciding to look it up.
 #
 # WHY IT MUST STAY QUIET
-#   A rule that fires on healthy commands teaches the reader to dismiss the
-#   warning, and then the one that mattered is dismissed too. Hence: patterns
+#   A rule that gives false positives teaches the reader to ignore the
+#   warning, and then the one that mattered is ignored too. Hence: patterns
 #   are tested in BOTH directions before they land, and each rule speaks at most
 #   once per turn.
 #

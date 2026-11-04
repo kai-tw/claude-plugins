@@ -17,8 +17,8 @@
 # WHAT IT DOESN'T SEE
 #   Only the command itself. A script it calls can push without passing
 #   through here — the same limit as `charon.sh`, for the same reason: it
-#   catches the reflex of typing the command; it isn't a firewall on remote
-#   writes. Claiming otherwise would be the false confidence it exists to
+#   catches the reflex of typing the command; it isn't a complete block on
+#   remote writes. Claiming otherwise would be the false confidence it exists to
 #   remove.
 #
 # WHERE IT FAILS CLOSED
@@ -43,8 +43,12 @@ PROTECTED='^(main|master)$'
 # exit 2, not a JSON `permissionDecision: "deny"`: only exit 2 is documented to
 # override a `permissions.allow` rule, and both consumer projects have an allow
 # rule that covers the commands this hook checks. The reason goes to stderr,
-# which is what Claude sees.
-deny() { printf '%s\n' "$1" >&2; exit 2; }
+# which is what Claude sees. Every message opens with what the name means, since
+# any one of them can be the first the reader sees.
+deny() {
+  printf '%s\n\n%s\n' "🛡️ guardrails · palimpsest — a palimpsest is a page scraped clean and written over; force-pushing \`main\` or \`master\` does that to the history everyone else has built on." "$1" >&2
+  exit 2
+}
 
 # One statement per line, so a push buried after && or ; is still examined.
 # Written for bash 3.2 (macOS's /bin/bash): no `mapfile`, and awk rather than
@@ -79,7 +83,7 @@ for seg in "${segs[@]}"; do
   done
   # A leading + on a refspec is itself a force, with no flag in the command.
   for tok in "${targets[@]:-}"; do case "$tok" in +*) force=1 ;; esac; done
-  [ -n "$dry" ] && continue   # writes nothing; denying it would fire on a healthy command
+  [ -n "$dry" ] && continue   # writes nothing; denying it would be a false positive
   [ -z "$force$deleting" ] && continue
 
   # The first bare token is the remote; the rest are refspecs. A refspec's
@@ -87,7 +91,7 @@ for seg in "${segs[@]}"; do
   refs=(); [ ${#targets[@]} -gt 1 ] && refs=("${targets[@]:1}")
 
   if [ "$wildcard" = 1 ] && [ -n "$force" ]; then
-    deny "🛡️ guardrails · palimpsest — \`--all\` / \`--mirror\` would overwrite \`main\` too, so it's blocked. Name the branch you mean to push."
+    deny "\`--all\` / \`--mirror\` would overwrite \`main\` too, so it's blocked. Name the branch you mean to push."
   fi
 
   if [ ${#refs[@]} -eq 0 ]; then
@@ -95,12 +99,12 @@ for seg in "${segs[@]}"; do
     # pattern is blind to.
     cur="$(git -C "${repo:-$cwd}" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
     if [ -z "$cur" ]; then
-      deny "🛡️ guardrails · palimpsest — this push has no refspec and the current branch can't be read here (not a git repo, or a detached HEAD), so there's no telling whether it hits \`main\`. Name the branch: \`git push --force origin <branch>\`."
+      deny "This push has no refspec and the current branch can't be read here (not a git repo, or a detached HEAD), so there's no telling whether it hits \`main\`. Name the branch: \`git push --force origin <branch>\`."
     fi
     printf '%s' "$cur" | grep -qE "$PROTECTED" && deny \
-"🛡️ guardrails · palimpsest — this would force-push over \`$cur\`.
+"This would force-push over \`$cur\`.
 
-\`$cur\` isn't anywhere in the command: with no refspec, git pushes the **current branch**, and you're on it. Force-pushing a branch is fine; scraping \`$cur\` clean and writing over the history everyone else has built on is not."
+\`$cur\` isn't anywhere in the command: with no refspec, git pushes the **current branch**, and you're on it. Force-pushing another branch is fine; force-pushing \`$cur\` is not."
     continue
   fi
 
@@ -109,13 +113,13 @@ for seg in "${segs[@]}"; do
     dst="${ref##*:}"
     case "$dst" in *'$'*|*'`'*)
       [ -n "$force$plus" ] && deny \
-"🛡️ guardrails · palimpsest — this push forces, but its target \`$dst\` is a variable that can't be expanded here, so there's no telling whether it's \`main\`.
+"This push forces, but its target \`$dst\` is a variable that can't be expanded here, so there's no telling whether it's \`main\`.
 
 Write the branch name out and run it again. Letting a push through unchecked would defeat the point of this hook." ;;
     esac
     printf '%s' "$dst" | grep -qE "$PROTECTED" || continue
-    [ -n "$deleting" ] && deny "🛡️ guardrails · palimpsest — this would **delete** \`$dst\` on the remote. Deleting a feature branch is fine; deleting \`$dst\` is not."
-    deny "🛡️ guardrails · palimpsest — this would force-push over \`$dst\`. Force-pushing a branch is fine; rewriting the history everyone else has built on is not."
+    [ -n "$deleting" ] && deny "This would **delete** \`$dst\` on the remote. Deleting a feature branch is fine; deleting \`$dst\` is not."
+    deny "This would force-push over \`$dst\`. Force-pushing another branch is fine; force-pushing \`$dst\` is not."
   done
 done
 

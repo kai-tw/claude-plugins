@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-No healthy command is blocked.
+No correct command is blocked.

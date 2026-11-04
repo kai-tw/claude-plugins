@@ -34,7 +34,7 @@ claude plugin install dart-lsp@kai-tw
 | [assistant](plugins/assistant) | The founder's assistant: request → decision brief → screens → PR, across projects. Ships the cross-project rulebooks its reviewers grade against: `style-pack` (code style, charter S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, charter U1–U5 plus zh-Hant, ja and en) |
 | [reclaim-space](plugins/reclaim-space) | Developer-disk reclamation on macOS: regenerable build output and toolchain caches, with a free-space floor on new git worktrees |
 | [mother-tongue](plugins/mother-tongue) | Per-locale writing rules for the agent's own prose: detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies and commit messages that use its banned terms |
-| [guardrails](plugins/guardrails) | Turns corrections into rules that fire on their own: hooks that warn about or block a known mistake as it happens, and a short discipline loaded at session start |
+| [guardrails](plugins/guardrails) | Turns corrections into rules that fire on their own: hooks that warn about or block a known mistake as it happens, and short working rules loaded at session start |
 
 ## Scripts
 
