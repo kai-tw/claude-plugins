@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-# md_section.sh — edit ONE `## ` section of a local plan body (the bodyFile), so a
-# rev emits the changed section instead of the whole plan. Upload afterwards with
-# `notion-payload update <manifest> --commit` (bodyFile) or `plan-store put`.
+# md_section.sh (asst-section) — edit ONE `## ` section of a local body file (the
+# bodyFile), so an edit rewrites the changed section instead of the whole body.
+# Upload afterwards with `asst-notion update <manifest> --commit`.
 #
-# Usage: plan-section replace <file> <heading> [md|-]   body under `## <heading>` := input (heading kept)
-#        plan-section append  <file> <heading> [md|-]   input added at the section's end
-#        plan-section get     <file> <heading>          print heading + body
+# Usage: asst-section replace <file> <heading> [md|-]   body under `## <heading>` := input (heading kept)
+#        asst-section append  <file> <heading> [md|-]   input added at the section's end
+#        asst-section get     <file> <heading>          print heading + body
 # <heading> is the literal text after `## ` in the file. Exit 1 = heading absent (the
 # headings present are listed), 2 = bad usage. Written via a sibling + mv, so a failed
-# write never leaves a half-edited plan.
+# write never leaves a half-edited file.
 set -uo pipefail
 op="${1:-}"; file="${2:-}"; heading="${3:-}"; src="${4:--}"
-case "$op" in replace|append|get) ;; *) sed -n '5,7p' "$0" >&2; exit 2 ;; esac
-[ -n "$file" ] && [ -n "$heading" ] || { sed -n '5,7p' "$0" >&2; exit 2; }
-[ -f "$file" ] || { echo "plan-section: no such file: $file" >&2; exit 2; }
+case "$op" in replace|append|get) ;; *) sed -n '6,8p' "$0" >&2; exit 2 ;; esac
+[ -n "$file" ] && [ -n "$heading" ] || { sed -n '6,8p' "$0" >&2; exit 2; }
+[ -f "$file" ] || { echo "asst-section: no such file: $file" >&2; exit 2; }
 if ! grep -qxF -- "## $heading" "$file"; then
-  echo "plan-section: no section \"## $heading\" in $file. Headings present:" >&2
+  echo "asst-section: no section \"## $heading\" in $file. Headings present:" >&2
   grep -E '^## ' "$file" | sed 's/^/  /' >&2; exit 1
 fi
 if [ "$op" = get ]; then
@@ -34,4 +34,4 @@ awk -v h="## $heading" -v op="$op" -v inf="$in" '
   END { if (insec) flush() }
 ' "$file" > "$tmp" && mv -f "$tmp" "$file" || { rm -f "$tmp" "$in"; exit 2; }
 rm -f "$in"
-echo "plan-section: $op \"## $heading\" in $file"
+echo "asst-section: $op \"## $heading\" in $file"
