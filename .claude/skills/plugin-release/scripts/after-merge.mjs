@@ -41,9 +41,19 @@ const git = (args, cwd = main) => execFileSync('git', args, { cwd, encoding: 'ut
 const main = git(['worktree', 'list', '--porcelain'], here).match(/^worktree (.*)$/m)[1];
 const view = () => {
   try {
-    return JSON.parse(execFileSync('gh', ['pr', 'view', pr, '--json', 'state,mergeCommit,headRefName,files,url'], { cwd: main, encoding: 'utf8' }));
+    return JSON.parse(execFileSync('gh', ['pr', 'view', pr, '--json', 'state,mergeCommit,headRefName,url'], { cwd: main, encoding: 'utf8' }));
   } catch (e) {
     die(`gh pr view ${pr} failed — ${(e.stderr || e.message).trim()}`);
+  }
+};
+// Every path the PR touched, old names of renamed files included. `gh pr view --json
+// files` stops at 100 files, so a large PR (#88 touched 350) lost most of its plugins.
+const files = () => {
+  try {
+    return execFileSync('gh', ['api', '--paginate', `repos/{owner}/{repo}/pulls/${pr}/files`, '--jq', '.[] | .filename, (.previous_filename // empty)'], { cwd: main, encoding: 'utf8' })
+      .split('\n').filter(Boolean);
+  } catch (e) {
+    die(`gh api pulls/${pr}/files failed — ${(e.stderr || e.message).trim()}`);
   }
 };
 try {
@@ -107,7 +117,7 @@ try {
 
 // 3. Install what the PR changed, then uninstall what it deleted — in that order,
 // so a plugin that moved into another is never missing in between.
-const changed = [...new Set(pull.files.map((f) => f.path.match(/^plugins\/([^/]+)\//)?.[1]).filter(Boolean))];
+const changed = [...new Set(files().map((f) => f.match(/^plugins\/([^/]+)\//)?.[1]).filter(Boolean))];
 const exists = (plugin) => {
   try {
     git(['cat-file', '-e', `${ref}:plugins/${plugin}/.claude-plugin/plugin.json`]);
