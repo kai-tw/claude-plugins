@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: strings-log
-description: asst-strings records what the founder did with each string at ②, refuses a whole batch when one line is bad, prints the founder's changes for a role and locale (this project's newest first, then the shipped examples), and reports per task how many strings were accepted as drafted.
+description: asst-strings records what the user did with each string at the screen review, refuses a whole batch when one line is bad, prints the user's changes for a role and locale (this project's newest first, then the shipped examples), and reports per task how many strings were accepted as drafted.
 tags: [asst-strings]
 plugins: ["../.."]
 runs: 1

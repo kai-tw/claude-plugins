@@ -6,13 +6,13 @@
 //        asst-analytics sql "<query>"               any SELECT; {events} stands for the export's events_* tables
 //        asst-analytics --help
 //
-// The adapter's `analytics: <gcp-project>` names the project the Firebase / GA4
+// The project config's `analytics: <gcp-project>` names the project the Firebase / GA4
 // daily export lands in; the dataset is its one analytics_<property> dataset.
 // Days count back from yesterday (N days, default 28), since a day's table lands
 // the day after. Every query caps bytes billed at 1 GB (ASST_ANALYTICS_MAX_BYTES
 // overrides), so a query that would cost money fails instead.
 // Output: a {op, project, dataset, count} line, then one JSON row per line.
-// Exit 2 = no adapter entry, no dataset or bad arguments; bq failures pass through.
+// Exit 2 = no project config entry, no dataset or bad arguments; bq failures pass through.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -29,11 +29,11 @@ if (!op || op === '--help' || op === '-h') {
 }
 
 const root = execFileSync('bash', [join(here, 'root.sh')], { encoding: 'utf8' }).trim();
-const adapterPath = join(root, '.claude/assistant.md');
-const adapter = existsSync(adapterPath) ? readFileSync(adapterPath, 'utf8') : '';
-const project = adapter.match(/^analytics:[ \t]*([^#\n]*[^#\s])/m)?.[1] ?? '';
+const configPath = join(root, '.claude/assistant.md');
+const config = existsSync(configPath) ? readFileSync(configPath, 'utf8') : '';
+const project = config.match(/^analytics:[ \t]*([^#\n]*[^#\s])/m)?.[1] ?? '';
 if (!project || project === 'none')
-  fail(`the adapter has no analytics: <gcp-project> (${adapterPath}) — the project whose Firebase / GA4 BigQuery export holds the events.`);
+  fail(`the project config has no analytics: <gcp-project> (${configPath}) — the project whose Firebase / GA4 BigQuery export holds the events.`);
 
 const daysAt = args.indexOf('--days');
 const days = daysAt < 0 ? 28 : Number(args[daysAt + 1]);

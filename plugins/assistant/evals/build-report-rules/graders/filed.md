@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^filed=build-wire-1.md,scout-1.md$'
+pattern: '^filed=build-integration-1.md,investigation-1.md$'
 flags: m
 arm: with-only
 ---

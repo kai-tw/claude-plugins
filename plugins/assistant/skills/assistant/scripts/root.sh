@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # asst_root — the project root every asst-* script keys its state on: the nearest
-# ancestor holding `.claude/assistant.md` (the adapter), searched from cwd and then
+# ancestor holding `.claude/assistant.md` (the project config), searched from cwd and then
 # from the main checkout; else the main checkout; else cwd. The main checkout, not
 # the git toplevel, because agents run in worktrees and a worktree-local root
 # would split one task's counters and reports between them and the assistant.

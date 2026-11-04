@@ -4,4 +4,4 @@ pattern: '^module-writes-page=1$'
 flags: m
 arm: with-only
 ---
-At ①, each decided mechanism goes onto its product page before Build starts.
+At the decision brief, each decided behaviour goes onto its product page before Build starts.

@@ -4,4 +4,4 @@ pattern: '^filters=data-locale="zh-TW">繁中,data-locale="en">英文,data-mode=
 flags: m
 arm: with-only
 ---
-One button per locale (its name from labels.json, no "all"), a light/dark filter and one button per screen, in the founder's language and labels.json's order.
+One button per locale (its name from labels.json, no "all"), a light/dark filter and one button per screen, in the user's language and labels.json's order.

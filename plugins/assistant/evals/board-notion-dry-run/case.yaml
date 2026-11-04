@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-board set 12345678123456781234567812345678 Stage=Review --dry-run; asst-board create t2 "Name=Sync" --dry-run | head -1
   prompt: |
-    The adapter says the board is in Notion. Use dry-run to see what commands would be sent to set page 12345678123456781234567812345678's Stage to Review and to create t2 (Sync).
+    The project config says the board is in Notion. Use dry-run to see what commands would be sent to set page 12345678123456781234567812345678's Stage to Review and to create t2 (Sync).
 context:
   scaffold_script: fixture.sh

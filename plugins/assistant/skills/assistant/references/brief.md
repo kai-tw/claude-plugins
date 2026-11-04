@@ -1,14 +1,14 @@
-# Decision brief — the one page the founder approves
+# Decision brief — the one page the user approves
 
 Under 40 lines. Every line is a decision, never a description. Two marks:
 `Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
-engineering call, listed for veto; the founder's silence never makes it theirs).
-Every product mechanism the task adds or changes — what the user sees, or how a
+engineering call, listed for veto; the user's silence never makes it theirs).
+Every product behaviour the task adds or changes — what the user sees, or how a
 feature behaves — is `Needs you`, quoting the product page's current text (or,
 where no page covers it, how the app behaves now); one the task keeps as is gets
 a link to its page section, never a restatement. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
-Labels and marks are written in the founder's language (SKILL.md §Language); later
+Labels and marks are written in the user's language (SKILL.md §Language); later
 steps find sections by meaning, so a filed brief may carry them in any language.
 The design covers the cases shown to happen and nothing more: a NEW thing, guard,
 retry, fallback or lock with no evidence on the `Evidence` line is cut.
@@ -17,7 +17,7 @@ retry, fallback or lock with no evidence on the `Evidence` line is cut.
 # <Task> — Decision brief            <project> · <tier> · <date>
 
 ## Intent
-- Needs you  <the fork, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause>
+- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause>
 - Decided <the ruling, one line> · Reason: <one clause>
 
 ## System design

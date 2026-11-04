@@ -7,7 +7,7 @@
 #        asst-section append  <file> <heading> [md|-]   input added at the section's end
 #        asst-section get     <file> <heading>          print heading + body
 # <heading> is the literal text after `## ` in the file. Exit 1 = heading absent (the
-# headings present are listed), 2 = bad usage. Written via a sibling + mv, so a failed
+# headings present are listed), 2 = bad usage. Written to a temp file beside it, then mv, so a failed
 # write never leaves a half-edited file.
 set -uo pipefail
 op="${1:-}"; file="${2:-}"; heading="${3:-}"; src="${4:--}"

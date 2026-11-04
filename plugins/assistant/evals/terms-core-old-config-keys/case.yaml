@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: terms-core-old-config-keys
+description: A project config written by an older version, with `gate:` and `strings_canon:`, works the same as one with `check:` and `strings_glossary:` — the reference documents the new keys, says the old ones are read as them, and tells the assistant to leave the file alone; the scripts run against such a config as before.
+tags: [terms, config]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: p="$root/skills/assistant/references/project.md"; echo "check-key=$(grep -c "^check: " "$p")"; echo "glossary-key=$(grep -c "^strings_glossary: " "$p")"; echo "old-keys=$(grep -cF "Older configs: \`gate:\` is read as \`check:\` and \`strings_canon:\` as \`strings_glossary:\`; leave the file as it is." "$p")"; asst-board create t1 Name=One >/dev/null; asst-board list; echo "board=$?"; echo "config=$(paste -sd " " - < .claude/assistant.md)"
+  prompt: |
+    This project's .claude/assistant.md was written by an older version of the assistant: it has `gate: npm test` and `strings_canon: docs/glossary.md`, and no `check:` or `strings_glossary:` line. Following the assistant plugin's project config reference, what is this project's check command, which glossary file does the verifier read, and should the config file be edited?
+context:
+  scaffold_script: fixture.sh

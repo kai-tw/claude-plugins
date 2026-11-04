@@ -2,7 +2,7 @@
 name: scribe
 description: >-
   The assistant's persistence toolbelt: `asst-board` (task rows, brief, decisions —
-  Notion or a local board file, per the adapter), `asst-notion` (the Notion
+  Notion or a local board file, per the project config), `asst-notion` (the Notion
   request builder + writer behind it), `asst-section` (edit one `## ` section of a
   local Markdown body). Used by the assistant and the `builder` agent; not a user
   entry point.
@@ -11,7 +11,7 @@ description: >-
 # Scribe toolbelt
 
 - `asst-board create|set|brief|decide|trash|list … [--dry-run]` — the board behind one
-  op vocabulary; the adapter's `board:` picks Notion (via `asst-notion`) or
+  op vocabulary; the project config's `board:` picks Notion (via `asst-notion`) or
   `.claude/.assistant/board.md`. A row's properties are Name · Status · Stage ·
   `Blocked by` (the rows it waits for); what the row is goes in its body
   (`create … --body <file>`). `asst-board --help` has the decisions shape.
@@ -29,7 +29,7 @@ description: >-
   `ntn pages get` prints the generated marker backslash-escaped.
 - **`ntn api` lies about table blocks.** On a live page every `table` reports
   `in_trash: true`, and `v1/blocks/<table-id>/children` returns an empty list
-  even for healthy ones. Read tables from the parent page's block listing.
+  even for intact ones. Read tables from the parent page's block listing.
 - **Escape `|` inside a table cell as `\|`.** `ntn pages edit` sizes a table by
   its widest row, and each stray pipe adds a column — measured, one row of 901
   pipes under a 4-column header produced a 905-column table. It is lossless and

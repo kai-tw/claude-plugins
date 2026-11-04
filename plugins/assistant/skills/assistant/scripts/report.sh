@@ -7,11 +7,11 @@
 #                           (report on stdin) → prints the path
 #        asst-report latest <task-slug> <kind>   → prints the newest path; exit 1 if none
 #        asst-report list   <task-slug>
-# kind: scout · brief-review · build-<phase> · verify-<leg>
+# kind: investigation · brief-review · build-<phase> · tests · verify-<review>
 #
-# A verify-<leg> report is also posted to the task's PR as a comment: the founder
-# merges from the PR page, so a leg missing there is seen before the merge, not
-# found in a directory nobody opens. The file stays the record the gates read.
+# A verify-<review> report is also posted to the task's PR as a comment: the user
+# merges from the PR page, so a review missing there is seen before the merge, not
+# found in a directory nobody opens. The file stays the record asst-pr ready reads.
 # A repo not known to be private gets the first line only: a report carries what
 # its verifier read outside the repo, and how to break code already released.
 # --worktree names the task's checkout when the caller is not in it; --no-post
@@ -37,8 +37,12 @@ if [ "$op" = put ]; then
 fi
 root=$(cd "$wt" && asst_root)
 dir="$root/.claude/.assistant/reports/$slug"
-# Round numbers of <kind>, ascending — the n in <kind>-<n>.md.
-rounds() { ls "$dir" 2>/dev/null | sed -nE "s/^${kind}-([0-9]+)\.md$/\1/p" | sort -n; }
+# Older versions filed these kinds as scout and build-wire: a report under the old
+# name is filed under the new one, and `latest` falls back to the old files.
+case "$kind" in scout) kind=investigation ;; build-wire) kind=build-integration ;; esac
+case "$kind" in investigation) old=scout ;; build-integration) old=build-wire ;; *) old="" ;; esac
+# Round numbers of <kind> (default: $kind), ascending — the n in <kind>-<n>.md.
+rounds() { ls "$dir" 2>/dev/null | sed -nE "s/^${1:-$kind}-([0-9]+)\.md$/\1/p" | sort -n; }
 
 # Post $1 to the PR of the branch checked out in $wt, or say why not.
 post_to_pr() {
@@ -70,8 +74,8 @@ case "$op" in
       rm -f "$f.partial"; echo "asst-report: empty report on stdin — nothing filed" >&2; exit 1
     fi
     # A builder that never loaded the style pack writes code the verifier then
-    # grades against rules the builder never saw.
-    case "$kind" in build-ui|build-wire|build-fix)
+    # checks against rules the builder never saw.
+    case "$kind" in build-ui|build-integration|build-fix)
       grep -q '^rules: style-pack --paths ' "$f.partial" || {
         rm -f "$f.partial"
         echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit (builder.md)" >&2
@@ -82,9 +86,10 @@ case "$op" in
     case "$kind" in verify-*) [ "$post" = 1 ] && post_to_pr "$f" ;; esac ;;
   latest)
     [ -n "$kind" ] || usage
-    n=$(rounds | tail -1)
+    n=$(rounds | tail -1); k=$kind
+    [ -n "$n" ] || [ -z "$old" ] || { n=$(rounds "$old" | tail -1); k=$old; }
     [ -n "$n" ] || { echo "asst-report: no $kind report for $slug" >&2; exit 1; }
-    echo "$dir/$kind-$n.md" ;;
+    echo "$dir/$k-$n.md" ;;
   list) ls "$dir" 2>/dev/null ;;
   *) usage ;;
 esac

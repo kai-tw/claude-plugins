@@ -4,4 +4,4 @@ pattern: 'verify-code-1 posted to #9 \(first line only — repo not known privat
 flags: m
 arm: with-only
 ---
-A public repo still gets a comment, so a missing leg shows on the PR, and stderr says it is the first line only.
+A public repo still gets a comment, so a missing review shows on the PR, and stderr says it is the first line only.

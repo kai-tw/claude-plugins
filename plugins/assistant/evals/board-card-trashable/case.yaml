@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export NTN_BIN=$PWD/ntn; asst-board create t1 Name=Sync >/dev/null 2>&1; asst-notion trash $(cat .claude/.assistant/tasks/t1/page)
   prompt: |
-    The adapter says the board is in Notion; ./ntn stands in for the Notion CLI (export NTN_BIN=$PWD/ntn). Create task t1 (Sync) with asst-board, then dry-run asst-notion trash on the page id asst-board recorded for it.
+    The project config says the board is in Notion; ./ntn stands in for the Notion CLI (export NTN_BIN=$PWD/ntn). Create task t1 (Sync) with asst-board, then dry-run asst-notion trash on the page id asst-board recorded for it.
 context:
   scaffold_script: fixture.sh

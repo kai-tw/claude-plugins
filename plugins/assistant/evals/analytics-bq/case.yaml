@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: analytics-bq
-description: asst-analytics finds the adapter project's analytics_<property> dataset and reads its events_* tables through bq, every query capped in bytes billed; params takes only an event name; sql fills in {events}; no dataset yet says how to link the export.
+description: asst-analytics finds the project config's analytics_<property> dataset and reads its events_* tables through bq, every query capped in bytes billed; params takes only an event name; sql fills in {events}; no dataset yet says how to link the export.
 tags: [asst-analytics]
 plugins: ["../.."]
 runs: 1

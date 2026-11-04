@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# A project with an adapter, so asst-strings keys its log on this directory.
+# A project with a project config, so asst-strings keys its log on this directory.
 set -euo pipefail
 git init -q
 mkdir -p .claude

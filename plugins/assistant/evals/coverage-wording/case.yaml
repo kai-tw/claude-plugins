@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-wording
+description: The assistant states the coverage check the way plan-coverage does — every changed line executed, with no coverage-ignore comments — not "no exemptions", since plan-coverage leaves drift table definitions unmeasured.
+tags: [verify]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: grep -rhoE "every changed line executed, with no[[:space:]]+[a-z-]+" "$root/skills" | tr -s " \n" " "; echo
+  prompt: |
+    Print how the assistant skill describes the coverage check.
+context:
+  scaffold_script: fixture.sh

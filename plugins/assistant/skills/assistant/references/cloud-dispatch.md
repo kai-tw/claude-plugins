@@ -11,7 +11,7 @@ a dispatch ID `<slug>#<n>` is itself a dispatch and does not dispatch further.
 | Fits | Work already running, with its context | Stateless, long-running work whose output is one text report |
 
 One thing both routes share: **the other side cannot ask you**. Settle every
-forking decision before dispatch; a fork that surfaces after dispatch can only
+open question before dispatch; a question that surfaces after dispatch can only
 come back as `blocked`, handled as a `Needs you`.
 
 ## 1. An existing cloud session
@@ -56,7 +56,7 @@ adding `--no-post` when the address was the PR — the cloud's report is not a
 report but its source, and one already on the PR is not posted again.
 
 **Cadence.** Polling folds into the existing scheduler pass: read the task's
-report address once per pass, no separate mechanism. One cloud session per slug
+report address once per pass, nothing separate. One cloud session per slug
 at a time. Report address empty for a whole pass → re-dispatch under the board's
 missing-report rule (`SKILL.md` §The board); never blindly dispatch again.
 
@@ -129,7 +129,7 @@ environment with no `claude` login. Two other routes:
    ```
 
    It returns `claude_code_session_id` and the session URL — the handle you record
-   on the board. The URL goes in the adapter's `cloud_fire:`; **the token is read
+   on the board. The URL goes in the project config's `cloud_fire:`; **the token is read
    only from an environment variable and never enters the repo**.
 
    **Trap**: `text` arrives wrapped in `<routine-fire-payload>` and marked as
@@ -138,19 +138,19 @@ environment with no `claude` login. Two other routes:
    routine runs, does not do what you asked, and its status is green.
 2. **A follow-up to an existing session**: `claude -p "<message>" --cloud
    <session-id>` is itself non-interactive (officially documented for CI
-   scripts). It needs a session to exist; get the id from the founder or from
+   scripts). It needs a session to exist; get the id from the user or from
    route 1's response.
 
 `Agent`'s `isolation: "remote"` is not one of them: measured, it runs locally (see
 section 2).
 
-When neither route holds, this is one `Needs you` line (ask the founder to open a
+When neither route holds, this is one `Needs you` line (ask the user to open a
 session, or to create a routine) — not a blocker you can clear yourself.
 
 ## Permission boundary (every route)
 
 An action refused locally, or one you expect to be refused locally, **must not be
 handed to an off-machine session** — that is using another session to bypass the
-founder's decision. Every item on the adapter's `destructive:` counts: merge,
+user's decision. Every item on the project config's `destructive:` counts: merge,
 push to main, release, delete a branch. An off-machine report can only make a
-request; the button stays the founder's.
+request; the button stays the user's.
