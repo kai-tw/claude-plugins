@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// notion_payload.mjs — Archivist Notion request builder + writer.
+// notion_payload.mjs (asst-notion) — build and send Notion requests (via the ntn CLI).
 //
 // WHY THIS EXISTS
 //   The KB is reached through the official `ntn` CLI (a thin wrapper over the
@@ -16,14 +16,14 @@
 //   script never builds block JSON.
 //
 // USAGE
-//   notion-payload create   <manifest.json | -> [--commit]   # dry-run, or create via ntn
-//   notion-payload update   <manifest.json | -> [--commit]   # dry-run, or PATCH props via ntn
-//   notion-payload filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
-//   notion-payload query    <db> [Prop=Val …]      # every matching row, all pages: {db,count}, then one JSON row per line
-//   notion-payload get      <page-id> [--body]     # one row: its properties as JSON, with --body its page after ---
+//   asst-notion create   <manifest.json | -> [--commit]   # dry-run, or create via ntn
+//   asst-notion update   <manifest.json | -> [--commit]   # dry-run, or PATCH props via ntn
+//   asst-notion filter   <db> Prop=Val [Prop2=Val2 …] [--json]  # build a Notion query filter
+//   asst-notion query    <db> [Prop=Val …]      # every matching row, all pages: {db,count}, then one JSON row per line
+//   asst-notion get      <page-id> [--body]     # one row: its properties as JSON, with --body its page after ---
 //       date props also accept <,<=,>,>= and the literal `today`, e.g. "Decided<=today"
-//   notion-payload schema   [db]                  # print embedded schema(s)
-//   notion-payload --help
+//   asst-notion schema   [db]                  # print embedded schema(s)
+//   asst-notion --help
 //
 //   Manifest (create):  { "db": "<key>", "rows": [ {<props + body sections | content>}, … ] }
 //   Manifest (update):  { "db": "<key>", "rows": [ { "page_id": "…", <props> }, … ] }
@@ -615,7 +615,7 @@ function commitUpdate(dbKey, built) {
 }
 
 // ── trash a page (close-out) ─────────────────────────────────────────────────
-// Guard: refuse to trash a page that lacks the archivist marker (it
+// Guard: refuse to trash a page that lacks the generated marker (it
 // would be hand-authored). Dry-run by default; --commit actually trashes.
 function trashPage(pageId, commit) {
   const got = ntn(['pages', 'get', pageId]);
@@ -623,7 +623,7 @@ function trashPage(pageId, commit) {
   if (!marked)
     fail(`refusing to trash ${pageId}: no "${MARKER}" marker — it looks hand-authored. `
       + `If you are certain, trash it by hand: ntn pages trash ${pageId} --yes`);
-  if (!commit) { console.log(`would trash ${pageId} (archivist marker present). Re-run with --commit.`); return; }
+  if (!commit) { console.log(`would trash ${pageId} (generated marker present). Re-run with --commit.`); return; }
   ntn(['pages', 'trash', pageId, '--yes']);
   console.error(`✓ trashed ${pageId}`);
   console.log(JSON.stringify({ trashed: pageId }, null, 2));
@@ -979,20 +979,20 @@ function schemaLive(only) {
   if (anyDrift) process.exitCode = 3;
 }
 
-const HELP = `notion-payload — Archivist Notion request builder + writer (via the ntn CLI)
+const HELP = `asst-notion — build and send Notion requests (via the ntn CLI)
 
-  notion-payload create   <manifest.json | -> [--commit]   dry-run, or create pages via ntn
-  notion-payload update   <manifest.json | -> [--commit]   dry-run, or PATCH properties via ntn
-  notion-payload set      <db> <page-id> Prop=Val […] [--commit]     one-row property flip, no manifest
-  notion-payload filter   <db> Prop=Val […] [--json]       build a Notion query filter (+ ds id)
-  notion-payload query    <db> [Prop=Val …]               every matching row (all pages): a {db,count} line, then one JSON row per line
-  notion-payload get      <page-id> [--body]               one row: its properties as JSON; --body adds the page after a --- line
-  notion-payload trash    <page-id> [--commit]             trash a page (marker-guarded; close-out)
-  notion-payload check    <page-id> <match> [--uncheck] [--commit]   toggle one checklist box
-  notion-payload append   <page-id> [md-file|-] [--commit]           append blocks to a page body
-  notion-payload comment  <page-id> <text|-> [--commit]              post a comment (e.g. review findings)
-  notion-payload schema   [db] [--live]                    embedded schema, or --live drift vs Notion
-  notion-payload --help
+  asst-notion create   <manifest.json | -> [--commit]   dry-run, or create pages via ntn
+  asst-notion update   <manifest.json | -> [--commit]   dry-run, or PATCH properties via ntn
+  asst-notion set      <db> <page-id> Prop=Val […] [--commit]     set one row's properties, no manifest
+  asst-notion filter   <db> Prop=Val […] [--json]       build a Notion query filter (+ ds id)
+  asst-notion query    <db> [Prop=Val …]               every matching row (all pages): a {db,count} line, then one JSON row per line
+  asst-notion get      <page-id> [--body]               one row: its properties as JSON; --body adds the page after a --- line
+  asst-notion trash    <page-id> [--commit]             trash a page (marker-guarded; close-out)
+  asst-notion check    <page-id> <match> [--uncheck] [--commit]   toggle one checklist box
+  asst-notion append   <page-id> [md-file|-] [--commit]           append blocks to a page body
+  asst-notion comment  <page-id> <text|-> [--commit]              post a comment (e.g. review findings)
+  asst-notion schema   [db] [--live]                    embedded schema, or --live drift vs Notion
+  asst-notion --help
 
 DBs: ${Object.keys(DB).join(', ')}
 
@@ -1007,7 +1007,7 @@ Manifest (update): { "db": "tasklist", "rows": [ { "page_id": "…", "Stage": "R
 bodyFile — author the body ONCE in a Markdown file, upload it byte-exact (never
 re-typed into the manifest → CJK-safe). Put "bodyFile": "<path>" on a row instead
 of inline body sections / "content"; its "## Heading"s must match the DB schema.
-On UPDATE, a bodyFile does a safe full-body replace (the file is the SoT); without
+On UPDATE, a bodyFile does a safe full-body replace (the file is the source of truth); without
 it, update stays properties-only. Convention: .claude/.assistant/tasks/<slug>/<artifact>.md.
   create: { "db":"tasklist", "rows":[ { "Name":"…", "bodyFile":".claude/.assistant/tasks/<slug>/brief.md" } ] }
 Use "-" to read the manifest from stdin.`;
