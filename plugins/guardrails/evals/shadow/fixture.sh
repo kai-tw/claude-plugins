@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
-# check.sh feeds shadow.sh detaching and healthy commands and prints each exit code.
+# check.sh feeds shadow.sh detaching and correct commands and prints each exit code.
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1

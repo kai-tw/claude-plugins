@@ -11,7 +11,7 @@
 #   its own and holds exactly one rule.
 #
 # WHY IT ASKS THE MACHINE, NOT THE ENVIRONMENT
-#   `trash` keeps deletions recoverable and is the founder's rule where it
+#   `trash` keeps deletions recoverable and is the user's rule where it
 #   exists, but it doesn't exist everywhere — a cloud container has no `trash`
 #   at all. Branching on an "am I in the cloud" flag would test a proxy for the
 #   real question. Asking whether the binary is here answers it directly, stays
@@ -37,9 +37,9 @@ BIN='((/usr)?/bin/)?'
 
 # Three ways a command actually runs rm. This does NOT cover every way to delete
 # a file — `find -delete`, node's `fs.rmSync` and a python unlink all get
-# through. The hook is here to catch the reflex of typing `rm`, not to act as an
-# unlink firewall; claiming otherwise would be the false confidence it exists to
-# remove.
+# through. The hook is here to catch the reflex of typing `rm`, not to be a
+# complete block on deleting files; claiming otherwise would be the false
+# confidence it exists to remove.
 uses_rm() {
   printf '%s' "$1" | grep -qE "${POS}rm[[:space:]]"                                    && return 0
   printf '%s' "$1" | grep -qE "${POS}xargs[[:space:]]+(-[^[:space:]]+[[:space:]]+)*${BIN}rm([[:space:]]|$)" && return 0
@@ -55,14 +55,16 @@ deny() { printf '%s\n' "$1" >&2; exit 2; }
 
 if command -v trash >/dev/null 2>&1 || [ -x /usr/bin/trash ]; then
   uses_rm "$cmd" && deny \
-"🛡️ guardrails · charon — this machine has \`trash\`, so delete with it: \`/usr/bin/trash -v <targets…>\`.
+"🛡️ guardrails · charon — Charon is the ferryman who takes the dead across the Styx, one way only, like \`rm\`.
 
-\`rm\` is a one-way trip across the Styx; anything sent to the Trash can still come back. (Trash on the
+This machine has \`trash\`, so delete with it: \`/usr/bin/trash -v <targets…>\`. Anything sent to the Trash can still come back. (Trash on the
 same volume doesn't free any disk space until it's emptied, and only a person can empty it — ⌘⇧⌫ in
 Finder. The shell can't.)"
 else
   printf '%s' "$cmd" | grep -qE "${POS}trash[[:space:]]" && deny \
-"🛡️ guardrails · charon — this machine has **no** \`trash\` (\`command -v trash\` prints nothing), so use \`rm\`.
+"🛡️ guardrails · charon — Charon is the ferryman who takes the dead across the Styx, one way only; this hook makes deletion go through whichever tool this machine has.
+
+This machine has **no** \`trash\` (\`command -v trash\` prints nothing), so use \`rm\`.
 
 This is blocked instead of run because here \`trash … 2>/dev/null\` deletes nothing and still
 looks like it worked — on 2026-09-02 that made a tamper test look like it had passed."

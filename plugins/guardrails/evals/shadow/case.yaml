@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh "$root"
   prompt: |
-    Feed the shadow hook several detaching commands and several healthy ones, and print the exit code of each.
+    Feed the shadow hook several detaching commands and several correct ones, and print the exit code of each.
 context:
   scaffold_script: fixture.sh

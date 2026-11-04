@@ -61,8 +61,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/discipline.sh",
-            "statusMessage": "Loading guardrails discipline..."
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/working-rules.sh",
+            "statusMessage": "Loading guardrails working rules..."
           }
         ]
       }

@@ -45,7 +45,7 @@
     },
     {
       "name": "guardrails",
-      "description": "Rules that fire on their own: hooks that warn about or block known mistakes as a command runs, and a short discipline loaded at session start",
+      "description": "Rules that fire on their own: hooks that warn about or block known mistakes as a command runs, and short working rules loaded at session start",
       "source": "./plugins/guardrails",
       "category": "productivity",
       "author": {

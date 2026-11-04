@@ -2,9 +2,9 @@
 name: guardrails
 description: >-
   Rules that fire on their own — hooks that warn about or block known mistakes
-  as a command runs, and a short discipline loaded at session start. Use when a
-  correction should change what happens next time, when a rule fired and you
-  want to know why, or when a rule fires on healthy commands.
+  as a command runs, and short working rules loaded at session start. Use when
+  a correction should change what happens next time, when a rule fired and you
+  want to know why, or when a rule gives a false positive.
   TRIGGER: add a guardrail rule · remember this · why did that fire · why was
   I blocked · what are guardrails · this rule is too noisy · 記一條 guardrail ·
   這個要記起來 · 加一條規則 · 為什麼會擋我 · guardrails 是什麼
@@ -17,7 +17,7 @@ Two sets of rules, each loaded by its own hook. That's all.
 | Rules | Hook | When they speak up |
 |---|---|---|
 | `rules/tool.tsv` | `PreToolUse` on Bash | just before a matching command runs |
-| `rules/discipline.md` | `SessionStart` | loaded once, applies to every turn |
+| `rules/working-rules.md` | `SessionStart` | loaded once, applies to every turn |
 
 Five more rules live outside both sets because they **block** the command
 instead of warning. Each is a hook of its own, so `intercept.sh` can keep its
@@ -42,8 +42,8 @@ thing). Anything a warning can handle stays a warning.
 
 **A rule belongs here only if the mistake fails SILENTLY** — it hands back a
 confident wrong answer instead of an error. Anything that errors out already
-announces itself, and a rule that fires on healthy commands teaches the reader
-to ignore warnings; then the one that mattered gets ignored too. **A bloated
+announces itself, and a rule that gives false positives teaches the reader to
+ignore warnings; then the one that mattered gets ignored too. **A bloated
 rule set is worse than none.**
 
 It also has to pass two more tests: it **actually happened** (not a risk someone
@@ -56,10 +56,10 @@ Edit the file, then release: this is a plugin, so a rule only reaches anyone
 through a version bump (`.claude/rules/releasing.md`).
 
 **`tool.tsv`** — one tab-separated line: `id⇥ERE⇥message⇥incident`. Don't add a
-pattern until you've shown it catches the bad command **and leaves a healthy
-one alone**; untested patterns are how this turns into wallpaper.
+pattern until you've shown it catches the bad command **and leaves a correct
+one alone**; untested patterns are how this turns into noise that gets ignored.
 
-**`discipline.md`** — prose, loaded word for word. Keep it short for the same
+**`working-rules.md`** — prose, loaded word for word. Keep it short for the same
 reason: every line costs context in every session, and a line that doesn't
 change behaviour dilutes the ones that do.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
-# check.sh feeds godot.sh polling and healthy commands and prints each exit code.
+# check.sh feeds godot.sh polling and correct commands and prints each exit code.
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1

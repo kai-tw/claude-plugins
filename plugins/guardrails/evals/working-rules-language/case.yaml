@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: working-rules-language
+description: The working rules injected into every session carry no rule for one language — Traditional Chinese punctuation belongs to mother-tongue's zh-TW rules, which reach only sessions written in Chinese.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: grep -c -i "full-width" "$root/rules/working-rules.md" | sed "s/^/zh=/"
+  prompt: |
+    Count the lines of rules/working-rules.md that set a rule for full-width punctuation.
+context:
+  scaffold_script: fixture.sh

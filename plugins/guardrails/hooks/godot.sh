@@ -17,7 +17,7 @@
 #   Only the command itself. Quoted strings and heredoc bodies are dropped
 #   before matching, so a commit message that mentions `--watch` gets through —
 #   and so does a loop hidden in `bash -c '…'` or a script file. This catches
-#   the reflex of typing a wait; it isn't a firewall on waiting.
+#   the reflex of typing a wait; it isn't a complete block on waiting.
 
 set -uo pipefail
 [ "${GUARDRAILS:-on}" = "off" ] && exit 0
