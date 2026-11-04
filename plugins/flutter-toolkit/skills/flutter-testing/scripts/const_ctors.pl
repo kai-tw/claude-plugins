@@ -7,8 +7,8 @@
 # line depends on what else is loaded: measured, `const UseCase();` passed in a
 # run where every use was const, and was reported unexecuted in a run that
 # loaded a DI registration `() => const UseCase()` it never called. The same
-# line passed in one test scope and failed in another, so the gate graded the
-# scope, not the tests.
+# line passed in one test scope and failed in another, so the check measured
+# the test scope, not the tests.
 #
 # What counts, and nothing else: `const Name(…)` or `const Name.named(…)` that
 # starts a class member (after `;`, `{`, `}` or an annotation), declared in a

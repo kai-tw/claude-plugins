@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test-gate.sh — PreToolUse(Bash): a bare `flutter test` / `dart test` is denied
+# require-plan-test.sh — PreToolUse(Bash): a bare `flutter test` / `dart test` is denied
 # and pointed at `plan-test`, which holds one of this machine's test slots.
 #
 # WHY A HOOK AND NOT SKILL PROSE
@@ -8,8 +8,8 @@
 #   cannot decline to consult.
 #
 # WHY IT DENIES INSTEAD OF REWRITING
-#   PreToolUse can allow or deny but has no field for editing the command, so the
-#   gate refuses and names the command to run instead.
+#   PreToolUse can allow or deny but has no field for editing the command, so this
+#   hook refuses and names the command to run instead.
 #
 # WHY EVERY SURPRISE ALLOWS
 #   This runs on every Bash call. Everything here is string matching; the slot

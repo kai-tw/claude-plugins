@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # r/ is a repo on branch `work` off `main` that changed lib/a.dart. fake/dart
-# stands in for the engine: 6 mutants, 4 detected, 2 survivors a test reaches —
+# stands in for the engine: 6 mutants, 4 detected, 2 survivors on covered lines —
 # line 3 swaps a switch arm for an arm with the same result (equivalent), line 4
 # for an arm with a different one (a real survivor). Scored with the equivalent
 # the file is 66% (FAIL); without it, 80% (PASS).

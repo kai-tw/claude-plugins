@@ -1,5 +1,5 @@
 schema_version: "1.1"
-name: test-gate
+name: require-plan-test
 description: A bare flutter test is blocked and pointed to plan-test (with its arguments unchanged); a command that merely mentions the words passes.
 tags: [hooks]
 plugins: ["../.."]
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: "$root/hooks/test-gate.sh" < bare.json; "$root/hooks/test-gate.sh" < mention.json; echo "quiet=$?"
+    EVAL_CMD: "$root/hooks/require-plan-test.sh" < bare.json; "$root/hooks/require-plan-test.sh" < mention.json; echo "quiet=$?"
   prompt: |
-    Feed the test-gate hook two commands: one runs flutter test directly, one only echoes the words and then runs plan-test; print the hook's output.
+    Feed the require-plan-test hook two commands: one runs flutter test directly, one only echoes the words and then runs plan-test; print the hook's output.
 context:
   scaffold_script: fixture.sh

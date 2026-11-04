@@ -2,7 +2,7 @@
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # Two repos on a branch `work` off `main` that changed lines 2-3 of lib/a.dart.
 # fake/dart stands in for the engine and answers by the repo's directory name.
-# In r/ two mutants survive: line 2 reached by a test, line 3 by none. In eq/
+# In r/ two mutants survive: line 2 covered by a test, line 3 by none. In eq/
 # the only leftovers are an equivalent survivor (a switch arm replaced with
 # the same text) and a timed-out mutant.
 set -euo pipefail

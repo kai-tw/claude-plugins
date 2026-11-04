@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Did the tests REACH the lines this cycle changed? The half plan-mutation
+# Did the tests EXECUTE the lines this change touched? The half plan-mutation
 # cannot see — an unexecuted line produces no mutant, so it never survives.
 #
 # A launcher, not an implementation — the script lives with the skill that owns
@@ -10,12 +10,12 @@
 # from a project-relative reference and changes on every version bump.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-impl="$here/../skills/test-gates/scripts/coverage.sh"
+impl="$here/../skills/flutter-testing/scripts/coverage.sh"
 
-# `flutter test --coverage` is the slow shape of the suite (measured ~20 min vs
-# ~4 min plain on NovelGlide), and this script types it INSIDE itself where the
-# test-gate hook — which only sees the top-level Bash command — cannot. Route
-# it through the slot budget so it cannot spend the machine off the books.
+# `flutter test --coverage` is the slow way to run the suite (measured ~20 min
+# vs ~4 min plain on NovelGlide), and this script types it INSIDE itself where
+# the require-plan-test hook — which only sees the top-level Bash command —
+# cannot. It goes through a plan-test slot so it never runs without taking one.
 # The script takes the slot itself, once it knows a Dart file changed: help, a
 # usage error and a change with no Dart file never wait for one.
 exec bash "$impl" "$@"

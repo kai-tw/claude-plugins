@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: mutation-review-mode
-description: plan-mutation --diff <ref> mutates only the lines the branch changed, one mutant a line, skips a file whose change only deleted lines, and with --review writes the survivors a test reaches as {path, line, body} and exits 0; it refuses --diff on a dart_mutants older than 0.7.0.
+description: plan-mutation --diff <ref> mutates only the lines the branch changed, one mutant a line, skips a file whose change only deleted lines, and with --review writes the survivors on covered lines as {path, line, body} and exits 0; it refuses --diff on a dart_mutants older than 0.7.0.
 tags: [plan-mutation]
 plugins: ["../.."]
 runs: 1

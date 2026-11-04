@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# plan-test — a machine-wide concurrency budget for test runs.
+# plan-test — a machine-wide concurrency limit for test runs.
 #
 # WHY THIS EXISTS
 #   Several Claude sessions work on this machine at once, in different repos,
@@ -38,9 +38,9 @@
 #   plan-test --help
 #
 # WHY `--exec` EXISTS
-#   A budget with holes is not a budget. `plan-mutation` runs MANY suites
+#   A limit that some runs skip is no limit. `plan-mutation` runs MANY suites
 #   without ever typing `flutter test` at the top level, so the hook cannot see
-#   it and it would spend memory off the books. Its launcher routes through here
+#   it and it would use memory without taking a slot. Its launcher routes through here
 #   instead. `--exec` holds its slots for the whole operation, not per inner run:
 #   the inner loop must not thrash the semaphore. It holds one slot per suite
 #   that runs AT ONCE — `--slots n` for `plan-mutation --workers n` — taken all
@@ -50,7 +50,7 @@
 # Env:
 #   PLAN_TEST_SLOTS    slot count      (default: max(1, (RAM_GB - 8) / 4))
 #   PLAN_TEST_WAIT     seconds to wait (default: 120)
-#   PLAN_TEST_J        pin --concurrency (default: unset — leave the tool's own)
+#   PLAN_TEST_J        set --concurrency (default: unset — leave the tool's own)
 #   PLAN_TEST_DIR      slot directory  (default: $HOME/.claude/.flutter-toolkit/slots)
 set -uo pipefail
 
@@ -226,7 +226,7 @@ fi
 
 # ------------------------------------------------------------------ acquire
 
-# A slot store we cannot create is a tooling gap, not a budget decision. Run
+# A slot store we cannot create is a tooling gap, not a reason to refuse. Run
 # unthrottled and say so loudly on stderr — refusing here would mean a broken
 # helper could stop every test run in three repos.
 if ! mkdir -p "$SLOT_DIR" 2>/dev/null; then

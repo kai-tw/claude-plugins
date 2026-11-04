@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s"; f="$root/skills/test-gates/SKILL.md"; grep -c "run_in_background: true" "$f" | sed "s/^/named=/"; grep -c "nohup" "$f" | sed "s/^/forbids=/"; grep -c -- "--wait" "$f" | sed "s/^/wait-doc=/"; plan-mutation --wait >/dev/null 2>&1; echo "wait-flag: rc=$?"
+    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s"; f="$root/skills/flutter-testing/SKILL.md"; grep -c "run_in_background: true" "$f" | sed "s/^/named=/"; grep -c "nohup" "$f" | sed "s/^/forbids=/"; grep -c -- "--wait" "$f" | sed "s/^/wait-doc=/"; plan-mutation --wait >/dev/null 2>&1; echo "wait-flag: rc=$?"
   prompt: |
-    Check that the test-gates skill tells a long plan-mutation run to start with run_in_background and never nohup, that it no longer documents --wait, and print the exit code of plan-mutation --wait.
+    Check that the flutter-testing skill tells a long plan-mutation run to start with run_in_background and never nohup, that it no longer documents --wait, and print the exit code of plan-mutation --wait.
 context:
   scaffold_script: fixture.sh

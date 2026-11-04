@@ -3,7 +3,7 @@
 # app/ is a Flutter package (`sdk: flutter`) whose change adds an enum file
 # (lib/shade.dart, no executable line) and edits lib/count.dart. dart/ is a pure
 # Dart package with the same change. fake/flutter stands in for `flutter test`:
-# the suite's lcov records lib/count.dart only, and the probe's lcov records
+# the suite's lcov records lib/count.dart only, and the import-only test's lcov records
 # nothing, as a real run does for a declaration-only file.
 set -euo pipefail
 mkdir -p fake

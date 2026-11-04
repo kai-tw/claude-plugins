@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: launchers-resolve
-description: All three launchers resolve to the implementations under skills/test-gates/scripts; --help takes no slot.
+description: All three launchers resolve to the implementations under skills/flutter-testing/scripts; --help takes no slot.
 tags: [launchers]
 plugins: ["../.."]
 runs: 1

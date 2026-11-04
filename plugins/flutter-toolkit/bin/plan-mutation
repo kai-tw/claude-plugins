@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mutation-test the files this cycle changed — the check that tells a real test
+# Mutation-test the files this change touched — the check that tells a real test
 # from one that calls every line and asserts nothing.
 #
 # A launcher, not an implementation — the script lives with the skill that owns
@@ -10,12 +10,12 @@
 # from a project-relative reference and changes on every version bump.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-impl="$here/../skills/test-gates/scripts/mutation.sh"
+impl="$here/../skills/flutter-testing/scripts/mutation.sh"
 
 # Mutation is the heaviest thing this machine runs — one test suite per mutant,
 # in a loop — and it never types `flutter test` at the top level, so the
-# test-gate hook cannot see it. Route it through the slot budget so it
-# cannot spend memory off the books: one slot per worker for the whole run, not
+# require-plan-test hook cannot see it. Route it through plan-test so it
+# never runs without taking a slot: one slot per worker for the whole run, not
 # one per mutant — `plan-test --exec` exports PLAN_TEST_SLOT_HELD, so the inner
 # runs pass straight through instead of thrashing the semaphore.
 case "${1:-}" in
@@ -27,4 +27,4 @@ for a in "$@"; do
   [ "$prev" = "--workers" ] && slots="$a"
   prev="$a"
 done
-exec bash "$here/../skills/test-gates/scripts/plan_test.sh" --slots "$slots" --exec bash "$impl" "$@"
+exec bash "$here/../skills/flutter-testing/scripts/plan_test.sh" --slots "$slots" --exec bash "$impl" "$@"

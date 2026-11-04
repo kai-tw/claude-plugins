@@ -4,4 +4,4 @@
 # enabled.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec bash "$here/../skills/test-gates/scripts/review.sh" "$@"
+exec bash "$here/../skills/flutter-testing/scripts/review.sh" "$@"
