@@ -4,7 +4,7 @@
 # line in lib/core/db/store.dart and one in lib/ui/home/page.dart. test/ has
 # test/core/db and test/ui, but no test/ui/home, so page.dart falls back to test/ui.
 # fake/dart stands in for the engine: it appends its --test-command and --lines
-# to calls.txt and reports one survivor a test reaches on each line it was asked about.
+# to calls.txt and reports one survivor on a covered line for each line it was asked about.
 set -euo pipefail
 g() { git -c user.name=e -c user.email=e@e "$@"; }
 mkdir -p fake

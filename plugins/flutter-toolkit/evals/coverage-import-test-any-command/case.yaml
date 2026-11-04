@@ -1,6 +1,6 @@
 schema_version: "1.1"
-name: coverage-probe-any-command
-description: plan-coverage runs its import probe in any Flutter package, whatever the test command starts with, so a declaration-only file reached through `-- plan-test <scope>` is NO-CODE, not UNREACHED; outside a Flutter package it says on stderr that the probe did not run.
+name: coverage-import-test-any-command
+description: plan-coverage runs its import-only test in any Flutter package, whatever the test command starts with, so a declaration-only file tested through `-- plan-test <scope>` is NO-CODE, not NOT-LOADED; outside a Flutter package it says on stderr that the import-only test did not run.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1

@@ -4,8 +4,8 @@
 # branch changes lines 2-3 of lib/a.dart and only deletes a line of
 # lib/b.dart. old/ resolves 0.6.1.
 # fake/dart stands in for the engine: it records its arguments and writes a
-# report with two survivors in lib/a.dart — line 2 reached by a test, line 3
-# reached by none.
+# report with two survivors in lib/a.dart — line 2 covered by a test, line 3
+# covered by none.
 set -euo pipefail
 g() { git -c user.name=e -c user.email=e@e "$@"; }
 mkdir -p fake

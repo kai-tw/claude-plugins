@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mutation.sh — mutation-test the files this cycle actually changed.
+# mutation.sh — mutation-test the files this change touched.
 #
 # WHY THIS EXISTS
 #   Line coverage is not test strength: a suite that calls every line and
@@ -10,7 +10,7 @@
 # WHY IT IS SCOPED TO THE DIFF
 #   Runtime is mutants × (one analyze + one test run), and there is no way
 #   around that — each mutant needs its own. Whole-repo is an overnight job, not
-#   a gate. The files this cycle touched are both the affordable scope and the
+#   a check. The files this change touched are both the affordable scope and the
 #   one that matters.
 #
 # THE ENGINE
@@ -35,10 +35,10 @@
 #   `mutate` list of the package's Stryker config takes it — with no such list,
 #   when it sits under the package's `src/` or `lib/`, Stryker's default. Stryker
 #   runs the tests its config names, so the `--` test command is for Dart files
-#   only. Its report is graded by the same per-file table and threshold:
+#   only. Its report is scored by the same per-file table and threshold:
 #   Killed and Timeout are detected, Survived and NoCoverage are survivors,
 #   CompileError and RuntimeError are invalid. Timeout counts as detected, as
-#   in Stryker's own score, because its budget is derived from the measured time
+#   in Stryker's own score, because its timeout is derived from the measured time
 #   of the tests covering each mutant, so a timeout is a hang the tests caught —
 #   measured on a mutex, 10 of 18 mutants deadlock, and no --timeout answers them.
 #   `--workers n` is Stryker's `--concurrency`; `--timeout`, when given, its
@@ -64,20 +64,20 @@
 #   tracked files too),
 #   at most --per-line (default 1) mutants a line in Dart files, every mutant
 #   on a changed line in JS/TS files. --review <file> writes the
-#   survivors a test reaches but doesn't catch as a JSON list of
+#   survivors on covered lines that no test catches as a JSON list of
 #   {path, line, body} for plan-mutation-review to post on the PR, and the
-#   run exits 0 whatever the scores. Survivors no test reaches are left out
+#   run exits 0 whatever the scores. Survivors on lines no test executes are left out
 #   of the file: that's line coverage's finding (plan-coverage), not
 #   mutation's. --fail-on-survivors makes any survivor exit 1 once the file
-#   is written, including one no test reaches; equivalent and timed-out
+#   is written, including one on an uncovered line; equivalent and timed-out
 #   mutants don't count.
 #
-#   --timeout is the FLOOR on a mutant's budget; the engine raises it to
+#   --timeout is the FLOOR on a mutant's timeout; the engine raises it to
 #   --baseline-factor × the measured baseline, and the report prints what it
 #   actually used. --baseline-timeout bounds the cold baseline itself (default
 #   10× --timeout). --select-by-coverage runs each mutant only against the test
-#   files that reach it, gives each test selection its own baseline-derived
-#   budget, and scores a mutant no test reaches as undetected. A coverage run
+#   files that execute it, gives each test selection its own baseline-derived
+#   timeout, and scores a mutant no test executes as undetected. A coverage run
 #   that fails is run once more, and a selection that still cannot be made
 #   stops the run (`selection-unavailable`) instead of sending every mutant
 #   through the full suite.
@@ -90,15 +90,16 @@
 #   (~1 MB per few thousand mutants).
 #
 # HOW LONG IT WILL TAKE, AND CAPPING IT
-#   The engine prints two numbers. After the baseline, the plan says what the
-#   run costs at one baseline per mutant across the workers — an upper bound,
-#   since a mutant the gate rejects runs no test and a selected one runs a
-#   fraction of the suite. Then every `[k/N]` line carries a measured `left`,
-#   from the pace this run is actually holding.
+#   The engine prints two numbers. After the baseline, its first line (mutant
+#   count and time estimate) says what the run costs at one baseline per mutant
+#   across the workers — an upper bound, since a mutant the compile check
+#   rejects runs no test and a selected one runs a fraction of the suite. Then
+#   every `[k/N]` line carries a measured `left`, from the pace this run is
+#   actually holding.
 #
 #   --max-minutes n ends a run that will not fit: refused before the first
-#   mutant when the plan's floor alone is over it, otherwise stopped between
-#   mutants as soon as the measured pace says so, with the tree restored and
+#   mutant when even the fastest possible run would exceed it, otherwise stopped
+#   between mutants as soon as the measured pace says so, with the tree restored and
 #   NOTHING scored (`ABORTED (over-budget)`, exit 1 — not a low score).
 #   There is no dry run to estimate against first: both numbers need the
 #   baseline, which is the run's own first step, so a separate counting pass
@@ -114,8 +115,8 @@
 # WHILE IT RUNS, THE SOURCE ON DISK IS MUTATED
 #   A live mutant compiles and reads as authored code, so anyone else on this
 #   worktree — a reviewer, another session, an editor — can read it as the
-#   author's. `.mutation-in-progress` at the repo root is the probe: it names the
-#   pid, the sha, and the files. Read those paths with `git show <sha>:<path>`
+#   author's. `.mutation-in-progress` at the repo root is the lock file other
+#   sessions check: it names the pid, the sha, and the files. Read those paths with `git show <sha>:<path>`
 #   while it exists. Exit 3 means the tree was NOT restored.
 #
 # RUNNING IT IN THE BACKGROUND
@@ -136,7 +137,7 @@
 #   through Stryker's incremental file, both kept under
 #   $TMPDIR and reused only while the code and tests are unchanged. A finished
 #   run started again reuses every result, timeouts excepted. There is no
-#   pause: a frozen run's budgets keep counting, and the tree stays mutated.
+#   pause: a frozen run's timeouts keep counting, and the tree stays mutated.
 
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -151,8 +152,8 @@ descendants() {
 }
 
 # SIGTERM to the engines only — each restores its files and keeps what
-# finished on that signal. The marker line tells the run it was stopped, so it
-# says STOPPED instead of "the engine did not run", and starts no next engine.
+# finished on that signal. The `stop:` line in the lock file tells the run it
+# was stopped, so it says STOPPED instead of "the engine did not run", and starts no next engine.
 stop_run() {
   local pid="$1" root marker p hit=""
   root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "plan-mutation: not in a git repo" >&2; exit 2; }
@@ -197,7 +198,7 @@ wait_for_run() {
 
 MIN_SCORE=80        # every changed file must kill this share of its own mutants
 MIN_MUTANTS=5       # below this a percentage is arithmetic, not evidence
-# The FLOOR on a mutant's budget, not the budget: since engine 0.2.7 each mutant
+# The FLOOR on a mutant's timeout, not the timeout: since engine 0.2.7 each mutant
 # gets the larger of this and --baseline-factor × the baseline's own wall time,
 # so the number the run actually used is read back out of the report rather than
 # printed from here.
@@ -217,7 +218,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --min)      MIN_SCORE="${2:-80}"; shift 2 ;;
     --timeout)  MUTANT_TIMEOUT="${2:-30}"; TIMEOUT_GIVEN=1; shift 2 ;;
-    # The baseline is the COLD run and had no budget of its own until 0.2.7;
+    # The baseline is the COLD run and had no timeout of its own until 0.2.7;
     # it now defaults to 10× --timeout. Forwarded, not re-derived here.
     --baseline-timeout) ENGINE_EXTRA+=("--baseline-timeout" "${2:?--baseline-timeout needs seconds}"); DART_ONLY+=" $1"; shift 2 ;;
     --baseline-factor)  ENGINE_EXTRA+=("--baseline-factor" "${2:?--baseline-factor needs a number}"); DART_ONLY+=" $1"; shift 2 ;;
@@ -263,10 +264,10 @@ while [ $# -gt 0 ]; do
     -*)         case "$1" in
                   --budget|--yes)
                     why='
-  --budget / --yes were REMOVED with the regex engine: there is no dry-count
-  mode to approve, because counting needs the baseline the run itself starts
+  --budget / --yes were REMOVED with the regex engine: there is no dry run
+  that only counts mutants, because counting needs the baseline the run itself starts
   with. What caps a run now is --max-minutes, which stops it rather than asks:
-  before the first mutant when the plan is already over, and otherwise as soon
+  before the first mutant when the first estimate is already over, and otherwise as soon
   as the measured pace says it will not fit.' ;;
                   --test-command)
                     why='
@@ -287,7 +288,7 @@ EOF
 done
 
 [ -z "$FAIL_ON_SURVIVORS" ] || [ -n "$REVIEW_OUT" ] || {
-  echo "plan-mutation: --fail-on-survivors needs --diff <ref> --review <file> (outside review mode, --min is the gate)" >&2; exit 2; }
+  echo "plan-mutation: --fail-on-survivors needs --diff <ref> --review <file> (outside review mode, --min decides pass or fail)" >&2; exit 2; }
 
 TEST_CMD="$*"   # required once a Dart file is in scope; Stryker's config names its tests
 command -v jq >/dev/null 2>&1 || { echo "plan-mutation: jq is required" >&2; exit 2; }
@@ -300,9 +301,9 @@ cd "$root" || exit 2
 # carries no marker, and it reads as authored code. Measured as a near-miss — a
 # reviewer on this same worktree read one line twice minutes apart, got two
 # different relational operators, and almost filed "your rationale contradicts
-# your own code" off a mutant. Nothing in that chain lied. The marker written
-# below is what makes the state probe-able by everyone who is NOT the process
-# doing the measuring, which is where the whole hazard lives.
+# your own code" off a mutant. Nothing in that chain lied. The lock file written
+# below is what lets everyone who is NOT the process doing the measuring
+# check that state, which is where the whole hazard lives.
 MARKER="$root/.mutation-in-progress"
 if [ -f "$MARKER" ]; then
   mpid=$(sed -n 's/^pid:[[:space:]]*//p' "$MARKER" | head -1)
@@ -323,7 +324,7 @@ permanent.
 
 $(cat "$MARKER")
 
-Diff those paths, put back anything that is not yours, then remove the marker:
+Diff those paths, put back anything that is not yours, then remove the lock file:
   rm $MARKER
 EOF
   exit 2
@@ -378,7 +379,7 @@ else
   # the LOCAL branch of the same name only moves when someone checks it out and
   # pulls, which a squash-merge workflow never does. A stale local base drags
   # the three-dot merge-base backwards, so every PR merged since lands in
-  # scope and the gate grades files this branch never opened — loudly, by name,
+  # scope and the check measures files this branch never opened — loudly, by name,
   # with line counts. The base actually used is printed in the report header,
   # so the next wrong one is visible instead of inferred.
   base=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)
@@ -391,7 +392,7 @@ else
     git rev-parse --verify --quiet "$cand" >/dev/null 2>&1 && { resolved=$cand; break; }
   done
   # No base means no scope. Diffing an unresolvable ref yields an empty file
-  # list, which reads downstream as "nothing changed" and exits 0 — a gate that
+  # list, which reads downstream as "nothing changed" and exits 0 — a check that
   # could not run, wearing the face of one that passed.
   [ -n "$resolved" ] || {
     echo "plan-mutation: no base ref resolves (tried: $(printf %s\\n $tried | awk '!s[$0]++' | paste -sd' ' -)) — pass --files to say what to mutate." >&2
@@ -474,7 +475,7 @@ files=$( { printf '%s\n' "$dart_files"
 #   - yaml but no lock entry → declared, `pub get` never run
 #   - lock entry below the floor → an engine that runs, scores and reports
 #                              normally while measuring or costing the wrong
-#                              thing; see the two cases the gate distinguishes
+#                              thing; see the cases this check distinguishes
 #
 # Not `dart run dart_mutants --version`, which is what this comment used to
 # propose: that flag does not exist (measured — the engine answers "Could not
@@ -491,7 +492,7 @@ files=$( { printf '%s\n' "$dart_files"
 # the kill and 2.25 GB three seconds later, roughly 130 MB/s indefinitely, per
 # timed-out mutant, SURVIVING the run that created it. Two runs exhausted a
 # workstation. `trap cleanup` below cannot help: the escaped process is no
-# longer a descendant of anything this script can see. And the remedy this gate
+# longer a descendant of anything this script can see. And the remedy this script
 # prints for a timeout is a LARGER --timeout, which multiplies the exposure,
 # because a mutant allocates for the whole window.
 #
@@ -505,7 +506,7 @@ files=$( { printf '%s\n' "$dart_files"
 # lives never finishes.
 MIN_ENGINE=0.5.0
 
-# A older than B. Used by the gate and again by its explanation, which differs
+# A older than B. Used by the version check and again by its explanation, which differs
 # by how far back the resolved version is.
 older_than() { [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" != "$2" ]; }
 
@@ -526,7 +527,7 @@ else
   PUB="dart pub get"
 fi
 
-# THE NEWEST ENGINE — a reminder, never a gate. The floor above is what this
+# THE NEWEST ENGINE — a reminder, never a reason to refuse. The floor above is what this
 # script needs; a release past it fixes things the floor does not know about,
 # and a project only learns of it here. Offline or unreachable, `latest` stays
 # empty and nothing is said: a run must not depend on the network.
@@ -589,12 +590,12 @@ while the engine's progress goes to the terminal."
 SIGKILLs the direct child; the \`flutter_tester\` underneath is orphaned to init
 instead of killed, and goes on running the mutant at roughly 130 MB/s until the
 machine is out of memory. It outlives this run, so the cost accumulates across
-runs — and the remedy this gate prints for a timeout, a larger --timeout, makes
+runs — and the remedy this script prints for a timeout, a larger --timeout, makes
 each leak bigger."
   fi
   cat >&2 <<EOF
-plan-mutation: this project resolves dart_mutants $lock_ver, and this gate needs
-$MIN_ENGINE or newer. Nothing was measured.
+plan-mutation: this project resolves dart_mutants $lock_ver, and plan-mutation
+needs $MIN_ENGINE or newer. Nothing was measured.
 
 $why
 
@@ -676,7 +677,7 @@ done <<<"$js_pkgs"
 
 # A diff names files it deleted, and those are skipped. A path typed into
 # --files is the caller's scope: dropping a mistyped one silently passes a file
-# nobody measured — measured, `--files a.ts b.ts` with b.ts misspelt graded a
+# nobody measured — measured, `--files a.ts b.ts` with b.ts misspelt measured a
 # alone and exited 0.
 if [ -n "$EXPLICIT_FILES" ]; then
   absent=$(printf '%s\n' "$files" | while IFS= read -r f; do [ -z "$f" ] || [ -f "$f" ] || printf '%s\n' "$f"; done)
@@ -800,7 +801,7 @@ snap=$(mktemp -d) || exit 2
 # consecutive reports on one PR.
 #
 # A stable path, not `$out`'s random name — an unpredictable path is barely
-# better than a deleted one when the reader is a hand-back three messages later.
+# better than a deleted one when the reader is a final report three messages later.
 # One file, overwritten per run: this is the last run's evidence, not an archive.
 # Outside the repo, because `build/mutation-report.md` above is the standing
 # lesson about what a stale report at a canonical in-repo path does to a reader.
@@ -846,7 +847,7 @@ restore_sources() {
 
 # Restoring is not the same as having restored. A restore that silently failed
 # prints a score, exits 0, and leaves an edit that compiles and looks authored —
-# the same failure-shaped-like-success this gate exists to remove. Prove it
+# the same failure that looks like a pass, which this script exists to remove. Prove it
 # against the SNAPSHOT: that is the only correct baseline, because the pre-run
 # tree legitimately differs from HEAD (you are mutating files you just changed),
 # so comparing against a commit would flag your own work as a residue.
@@ -876,8 +877,8 @@ EOF
 
 # The exit status has to carry this. A run that scored PASS but left a mutant
 # behind is not a pass: the tree is contaminated, and a caller reading the exit
-# code would take exit 0 plus a score as a clean result — the failure shape this
-# whole script exists to remove. On that path the snapshot is deliberately NOT
+# code would take exit 0 plus a score as a clean result — a failure that looks
+# like a pass, which this whole script exists to remove. On that path the snapshot is deliberately NOT
 # deleted, because it is the only remaining copy of the pre-run source.
 cleanup() {
   rc=$?
@@ -902,8 +903,8 @@ done
 head_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 # Written to a sibling and moved into place, because `cat > "$MARKER"` creates
 # the file before it writes it: a poller that samples in that window sees a
-# zero-byte marker with no pid line. `mv` within one directory is atomic, so the
-# marker is never observable half-written. (Reading it empty fails safe — the
+# zero-byte lock file with no pid line. `mv` within one directory is atomic, so the
+# lock file is never observable half-written. (Reading it empty fails safe — the
 # guard above refuses on a missing pid — but "refuses for the wrong reason" is
 # not the same as correct.)
 cat > "$MARKER.tmp" <<EOF
@@ -920,19 +921,19 @@ marker, and looks like the author wrote it. While this file exists, read those
 paths with \`git show $head_sha:<path>\` rather than from disk. Uncommitted work
 in them was copied to the snapshot directory above before the run started.
 
-This marker is removed when the run ends. If it is still here and no process
+This lock file is removed when the run ends. If it is still here and no process
 holds the pid above, the run was killed and the tree may still hold a mutant.
 EOF
 mv -f "$MARKER.tmp" "$MARKER"
 
 # --- run --------------------------------------------------------------------
-# The engine's stdout goes straight to the caller: its first line is the plan
-# (mutant count, baseline, per-mutant cap), then one `[k/N] <verdict> …` line
+# The engine's stdout goes straight to the caller: its first line gives the
+# mutant count, baseline and per-mutant cap, then one `[k/N] <verdict> …` line
 # per mutant, so a long run shows how far it is. The report goes to a file.
 # Its stderr is kept for the failure message below and still shown.
 echo "plan-mutation: ${count_files} changed file(s) (Dart ${count_dart}, JS/TS $(( count_files - count_dart ))) vs ${base:---files}, threshold ${MIN_SCORE}% per file, ${MUTANT_TIMEOUT}s floor per Dart mutant."
-echo "plan-mutation: WHILE THIS RUNS the source on disk may be a live mutant. Read those files with \`git show ${head_sha}:<path>\`, not from the working tree — anyone sharing this worktree included. Marker: .mutation-in-progress"
-[ "$count_files" -gt 50 ] && echo "plan-mutation: ${count_files} files is a long run — the plan line below gives the mutant count and cap; split the files into batches if that is more than you can wait for."
+echo "plan-mutation: WHILE THIS RUNS the source on disk may be a live mutant. Read those files with \`git show ${head_sha}:<path>\`, not from the working tree — anyone sharing this worktree included. Lock file: .mutation-in-progress"
+[ "$count_files" -gt 50 ] && echo "plan-mutation: ${count_files} files is a long run — the engine's first line below gives the mutant count and time estimate; split the files into batches if that is more than you can wait for."
 started=$(date +%s)
 KEPT=""   # the raw reports this run leaves outside the repo
 if [ -n "$dart_files" ]; then
@@ -955,8 +956,8 @@ jq -e . "$out/report.json" >/dev/null 2>&1 || {
   # Say what happened, not what was declined. "Not scoring anything off that"
   # reads like a cautious judgement about a result; there IS no result — the
   # engine did not produce one, so nothing was measured at all. A message that
-  # sounds careful over a run that never happened is the failure shape this
-  # whole gate exists to remove.
+  # sounds careful over a run that never happened is a failure that looks like a
+  # pass, which this whole script exists to remove.
   cat >&2 <<EOF
 plan-mutation: THE ENGINE DID NOT RUN. Nothing was measured — this is not a low
 score, not a pass, and not a result of any kind. Its output was:
@@ -979,9 +980,9 @@ if [ -n "$abort" ] || [ -n "$kind" ]; then
   # was told "fix the suite first", and three rounds went hunting a slow test
   # that did not exist before someone read the engine's source.
   #
-  # `abortKind` is the engine's wire name for the cause, test-pinned upstream and
+  # `abortKind` is the engine's wire name for the cause, covered by tests upstream and
   # only ever added to. Engines that predate it carry prose alone, so the two
-  # prose shapes they are known to emit are mapped onto the same names; nothing
+  # prose messages they are known to emit are mapped onto the same names; nothing
   # else is guessed. An unrecognised kind gets NO diagnosis rather than the
   # graver one — a default of "red suite" is exactly the confident wrong answer
   # a new abort kind would otherwise receive, silently.
@@ -993,9 +994,9 @@ if [ -n "$abort" ] || [ -n "$kind" ]; then
   fi
   case "$kind" in
     # The BASELINE is the unmodified suite, run once before any mutant, and it is
-    # the COLD run — the longest of the session. Engine 0.2.7 gave it a budget of
+    # the COLD run — the longest of the session. Engine 0.2.7 gave it a timeout of
     # its own (10× --timeout by default); before that it was bounded by the
-    # per-mutant budget, which is calibrated for warm runs and aborted every run
+    # per-mutant timeout, which is calibrated for warm runs and aborted every run
     # of one project's green suite (9-15s warm against a 23-27s cold compile).
     baseline-timeout)
       cat >&2 <<EOF
@@ -1003,7 +1004,7 @@ plan-mutation: that was the BASELINE — the unmodified suite, run once before a
 mutant — and it is the COLD run, normally the longest of the session. Your tests
 are not necessarily slow, and the suite is not red.
 
-  Its budget is --baseline-timeout, which defaults to 10× --timeout
+  Its timeout is --baseline-timeout, which defaults to 10× --timeout
   (--timeout is ${MUTANT_TIMEOUT}s here, so the baseline had about $(( MUTANT_TIMEOUT * 10 ))s).
   Warm the build (run the suite once yourself), or give the baseline more:
 
@@ -1020,7 +1021,7 @@ EOF
       cat >&2 <<EOF
 plan-mutation: that was --max-minutes doing its job — the run was going to take
 longer than you allowed, so it stopped. Nothing is wrong with the suite, the
-budget or the code: NO FILE IN THIS DIFF HAS A SCORE, which is not a pass and
+timeout or the code: NO FILE IN THIS DIFF HAS A SCORE, which is not a pass and
 not a low score. The engine's line above says what it would have cost.
 
   Give it the time (--max-minutes), cut the scope (fewer --files, or a
@@ -1029,8 +1030,8 @@ EOF
       ;;
     gate-rejects-unmodified)
       cat >&2 <<EOF
-plan-mutation: the engine's compile-safety gate rejected a file BEFORE mutating
-it — the file as it stands does not pass the gate. Neither the budget nor the
+plan-mutation: the engine's compile check rejected a file BEFORE mutating
+it — the file as it stands does not pass that check. Neither the timeout nor the
 tests are the problem, so raising --timeout or editing tests will not move this.
 The engine's reason above names the file.
 EOF
@@ -1041,7 +1042,7 @@ plan-mutation: --select-by-coverage could not be applied, so the engine stopped
 before the first mutant rather than send every mutant through the full suite.
 NO FILE IN THIS DIFF HAS A SCORE. The engine's reason above names the cause: a
 test file that "failed twice" under coverage fails on its own — run it with
-plan-test — and a refused command shape is fixed in the command. Or run without
+plan-test — and a command form the engine refuses is fixed in the command. Or run without
 --select-by-coverage: one full test run per mutant.
 EOF
       ;;
@@ -1055,15 +1056,15 @@ fi
 # --- JS / TS: one Stryker run per package -----------------------------------
 # `--reporters` replaces the config's list, so only the JSON report is written,
 # at the default `jsonReporter.fileName`. It is deleted first, so a run that dies
-# is never graded on the previous run's file, and moved out after, so the gate
-# leaves nothing in the repo; a config that moves the report ends in "did not
+# is never scored from the previous run's file, and moved out after, so this
+# script leaves nothing in the repo; a config that moves the report ends in "did not
 # run", never in a stale score. Stryker's exit code is not read: a config's
 # `thresholds.break` fails a run whose report is complete.
 #
 # Its statuses are mapped onto the Dart engine's report, so every table below
-# reads one shape. A requested file the report does not list had no mutable
+# reads one format. A requested file the report does not list had no mutable
 # code (NO-MUTANTS); a listed file nobody requested means the keys do not match
-# the request, and nothing can be graded.
+# the request, and nothing can be scored.
 STRYKER_TO_REPORT='
   def entry($p): {filePath: $p, line: .location.start.line, column: .location.start.column,
     operatorName: .mutatorName,
@@ -1119,7 +1120,7 @@ low score, not a pass, and not a result of any kind. Its output from the first e
 
 $( if [ -n "$first" ]; then sed -n "${first},$(( first + 19 ))p" "$out/stryker.log"; else tail -20 "$out/stryker.log"; fi 2>/dev/null | sed 's/^/  /')
 
-This gate reads reports/mutation/mutation.json; a Stryker config that sets
+plan-mutation reads reports/mutation/mutation.json; a Stryker config that sets
 \`jsonReporter.fileName\` elsewhere ends here too.
 EOF
     exit 2
@@ -1130,7 +1131,7 @@ EOF
   req=$(printf '%s' "$rels" | tr , '\n' | jq -R . | jq -sc .)
   jq --arg prefix "$prefix" --argjson req "$req" "$STRYKER_TO_REPORT" "$js_keep" > "$out/js.json" 2> "$out/js.err" || {
     cat >&2 <<EOF
-plan-mutation: Stryker's report for $pkg cannot be graded. Nothing was measured
+plan-mutation: Stryker's report for $pkg cannot be parsed. Nothing was measured
 for its files:
 
 $(sed 's/^/  /' "$out/js.err")
@@ -1149,13 +1150,13 @@ elapsed=$(( $(date +%s) - started ))
 # `jq -e` above proves the report is parseable JSON, not that it contains
 # anything. A report of `{"files":{}}` passes that check, produces no rows, and
 # every read below treats no-rows as nothing-to-block — an empty table and
-# exit 0 over a run that measured nothing. Same shape as the leg-2 gate that was
-# printing "suite green" off an unparsed report: emptiness only means "clean"
+# exit 0 over a run that measured nothing. The same mistake as an earlier check that
+# printed "suite green" off an unparsed report: emptiness only means "clean"
 # once the thing that fills it is known to have run.
 #
 # The assertion is per file rather than a count, so a partial report — the engine
 # skipping one path it could not handle — names which file lost its score instead
-# of silently shrinking the scope of the gate.
+# of silently shrinking the scope of the check.
 missing=$(printf '%s\n' "$files" | while IFS= read -r f; do
   [ -n "$f" ] || continue
   jq -e --arg root "$root/" --arg f "$f" \
@@ -1215,7 +1216,7 @@ equiv=$(jq -r '.files | to_entries[] | .value.equivalentMutants[]?
 # file it is about.
 # WHAT THE RUN ACTUALLY USED, read back rather than restated.
 #
-# The per-mutant budget is derived — the larger of --timeout and a multiple of a
+# The per-mutant timeout is derived — the larger of --timeout and a multiple of a
 # measured baseline — so the flag value is only a floor. `mutantTimeoutSeconds`
 # is the cap derived from the full command's baseline; under
 # --select-by-coverage each test selection gets its own, never above that cap,
@@ -1223,25 +1224,25 @@ equiv=$(jq -r '.files | to_entries[] | .value.equivalentMutants[]?
 eff_timeout=$(jq -r '.mutantTimeoutSeconds // empty' "$out/report.json")
 baseline_s=$(jq -r '.baselineSeconds // empty' "$out/report.json")
 selected=$(jq -r 'if .selectedByCoverage == true then "yes" else empty end' "$out/report.json")
-budget_line=""
+timeout_line=""
 if [ -n "$dart_files" ]; then
-  budget_line="${eff_timeout}s per mutant (floor ${MUTANT_TIMEOUT}s${baseline_s:+, baseline ${baseline_s}s})"
-  [ -n "$selected" ] && budget_line="up to ${budget_line}, tests and budget selected by coverage"
+  timeout_line="${eff_timeout}s per mutant (floor ${MUTANT_TIMEOUT}s${baseline_s:+, baseline ${baseline_s}s})"
+  [ -n "$selected" ] && timeout_line="up to ${timeout_line}, tests and timeout selected by coverage"
 fi
 if [ -n "$js_pkgs" ]; then
-  js_budget="Stryker's timeout ($( [ -n "$TIMEOUT_GIVEN" ] && echo "timeoutMS $(( MUTANT_TIMEOUT * 1000 ))" || echo "its config's timeoutMS" ) over each mutant's expected time)"
-  budget_line="${budget_line:+Dart $budget_line; JS/TS }$js_budget"
+  js_timeout="Stryker's timeout ($( [ -n "$TIMEOUT_GIVEN" ] && echo "timeoutMS $(( MUTANT_TIMEOUT * 1000 ))" || echo "its config's timeoutMS" ) over each mutant's expected time)"
+  timeout_line="${timeout_line:+Dart $timeout_line; JS/TS }$js_timeout"
 fi
 
 rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MIN_MUTANTS" '
   .files | to_entries[] | .value as $v
   | ($v.filePath | sub("^" + $root; "")) as $rel
   | (if $v.total > 0 then (($v.detected * 100) / $v.total | floor) else -1 end) as $score
-  # A timeout is not a slow kill and not a survivor — it is a candidate that was
-  # never answered, exactly like an `invalid` one. `total` already excludes it,
+  # A timeout is not a slow kill and not a survivor — it is a candidate that
+  # never finished, exactly like an `invalid` one. `total` already excludes it,
   # so the SCORE is honest; what was not honest is the row, which read as a
   # finished measurement. Measured on a real suite: 6 scored against 16 timed out
-  # printed as a plain `FAIL 0%`, with 16 of 22 candidates silently unasked.
+  # printed as a plain `FAIL 0%`, with 16 of 22 candidates silently untested.
   # The flag is not a ratio but the only question that matters: COULD the
   # unmeasured candidates change this verdict? Score them both ways — every
   # timeout a survivor, then every timeout a kill. If the threshold sits between
@@ -1260,13 +1261,13 @@ rows=$(jq -r --arg root "$root/" --argjson min "$MIN_SCORE" --argjson floor "$MI
   | (if $cand > 0 then (($v.detected * 100) / $cand | floor) else 0 end) as $worst
   | (if $cand > 0 then ((($v.detected + $v.timedOut) * 100) / $cand | floor) else 0 end) as $best
   | ($v.timedOut > 0 and $worst < $min and $best >= $min) as $undetermined
-  | ($v.total < $floor or $undetermined) as $thin
+  | ($v.total < $floor or $undetermined) as $inconclusive
   | [ $rel,
       (if $score < 0 then "-" else ($score|tostring) end),
       ($v.total|tostring), ($v.invalid|tostring), ($v.timedOut|tostring),
       (if $score < 0 then "NO-MUTANTS"
-       elif $score < $min then (if $thin then "FAIL LOW-SIGNAL" else "FAIL" end)
-       elif $thin then "PASS LOW-SIGNAL"
+       elif $score < $min then (if $inconclusive then "FAIL INCONCLUSIVE" else "FAIL" end)
+       elif $inconclusive then "PASS INCONCLUSIVE"
        else "PASS" end) ]
   | @tsv' "$out/report.json")
 
@@ -1285,7 +1286,7 @@ surv=$(jq -r '.files | to_entries[] | .value.undetectedMutants[]?
 # Survivors grouped by operator, because the pool asks TWO different questions
 # and each takes a different fix. A `statement_deletion` survivor means nothing
 # asserts the line ran at all — the test never looks at its effect. Every other
-# operator survives because a choice is unpinned: the branch, the boundary, the
+# operator survives because no test checks a choice: the branch, the boundary, the
 # fallback. Adding an assertion fixes the first; adding a case fixes the second,
 # and doing the wrong one leaves the mutant alive.
 #
@@ -1301,18 +1302,18 @@ byop=$(jq -r '[.files[].undetectedMutants[]?.operatorName] | group_by(.)
   printf '%s\n' "$byop" | awk -F'\t' '
     BEGIN {
       q["statement_deletion"]              = "nothing asserts these lines ran"
-      q["condition_negation"]              = "the guard true/false choice is unpinned"
-      q["relational_operator_replacement"] = "the boundary is unpinned"
-      q["logical_operator_replacement"]    = "which operand decides is unpinned"
+      q["condition_negation"]              = "no test checks which way the condition goes"
+      q["relational_operator_replacement"] = "no test checks the boundary"
+      q["logical_operator_replacement"]    = "no test checks which operand decides"
       q["arithmetic_operator_replacement"] = "the arithmetic result is unasserted"
-      q["ternary_swap"]                    = "the branch is unpinned"
-      q["switch_expression_arm_swap"]      = "the arm mapping is unpinned"
-      q["null_coalescing_deletion"]        = "the fallback is unpinned"
+      q["ternary_swap"]                    = "no test checks which branch is taken"
+      q["switch_expression_arm_swap"]      = "no test checks which case maps to which result"
+      q["null_coalescing_deletion"]        = "no test checks the fallback"
       # StrykerJS mutator names
       q["BlockStatement"]                  = "nothing asserts these lines ran"
-      q["ConditionalExpression"]           = "the guard true/false choice is unpinned"
-      q["EqualityOperator"]                = "the boundary is unpinned"
-      q["LogicalOperator"]                 = "which operand decides is unpinned"
+      q["ConditionalExpression"]           = "no test checks which way the condition goes"
+      q["EqualityOperator"]                = "no test checks the boundary"
+      q["LogicalOperator"]                 = "no test checks which operand decides"
       q["ArithmeticOperator"]              = "the arithmetic result is unasserted"
       q["AssignmentOperator"]              = "the assigned result is unasserted"
       q["UnaryOperator"]                   = "the sign or negation is unasserted"
@@ -1321,23 +1322,23 @@ byop=$(jq -r '[.files[].undetectedMutants[]?.operatorName] | group_by(.)
       q["StringLiteral"]                   = "the string value is unasserted"
       q["ArrayDeclaration"]                = "the array contents are unasserted"
       q["ObjectLiteral"]                   = "the object contents are unasserted"
-      q["OptionalChaining"]                = "the null path is unpinned"
-      q["MethodExpression"]                = "which method is called is unpinned"
+      q["OptionalChaining"]                = "no test checks the null path"
+      q["MethodExpression"]                = "no test checks which method is called"
       q["CallExpression"]                  = "nothing asserts the call happened"
       q["ArrowFunction"]                   = "the function result is unasserted"
-      q["Regex"]                           = "the pattern is unpinned"
+      q["Regex"]                           = "no test checks the pattern"
     }
     { printf "  %3s  %-34s %s\n", $1, $2, ($2 in q) ? q[$2] : "(unrecognised operator)" }'
 }
 
-# Timeouts get their own note, because the remedy is different from a thin
-# mutant pool and the two causes behind them are indistinguishable from here.
+# Timeouts get their own note, because the remedy is different from too few
+# mutants and the two causes behind them are indistinguishable from here.
 #
-# The IDENTITIES, not just the count. A LOW-SIGNAL row now blocks the turn, so a
+# The IDENTITIES, not just the count. An INCONCLUSIVE row now blocks the turn, so a
 # timeout stops the caller and then has to tell them what to go and look at —
 # "re-run with a larger --timeout" without naming which mutants leaves them
 # re-running the whole file to find out. The engine has carried these since
-# 0.2.1 and this script read only the count, which is the same shape of miss as
+# 0.2.1 and this script read only the count, which is the same kind of miss as
 # the deleted report above: the display is re-derived here, so a field nobody
 # adds a jq for does not exist for anyone downstream.
 if printf '%s\n' "$rows" | awk -F'\t' '$5 > 0' | grep -q .; then
@@ -1346,18 +1347,18 @@ if printf '%s\n' "$rows" | awk -F'\t' '$5 > 0' | grep -q .; then
     | "  • \(.filePath | split("/") | last):\(.line):\(.column)  \(.operatorName) — \(.description)"' "$out/report.json" 2>/dev/null)
   cat >&2 <<EOF
 
-plan-mutation: ${to_total} mutant(s) TIMED OUT — those candidates were never
-answered. They are not kills and not survivors, so they are excluded from the
-score, and the rows above under-report how much of each file was actually asked.
+plan-mutation: ${to_total} mutant(s) TIMED OUT — no test run finished for
+them. They are not kills and not survivors, so they are excluded from the
+score, and the rows above under-report how much of each file was actually tested.
 $( [ -n "$timed" ] && printf '\nTimed-out mutants:\n%s' "$timed" )
 
 A timeout has two causes and this tool cannot tell them apart:
-  · the budget is too tight — ${budget_line} must cover a FULL run of your test
+  · the timeout is too tight — ${timeout_line} must cover a FULL run of your test
     command, so a command that already takes most of that leaves no headroom;
   · the mutant genuinely hangs the code, which is a real finding.
 
 Re-run those files with a larger --timeout. If the timeouts disappear it was the
-budget; if one persists, that mutant is hanging and worth reading.
+timeout; if one persists, that mutant is hanging and worth reading.
 
 Raising --timeout raises PEAK MEMORY too — a mutant that allocates inside its
 loop allocates for the whole window — so widen it on the files that timed out,
@@ -1365,32 +1366,33 @@ not on the whole diff.
 EOF
 fi
 
-if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /NO-MUTANTS|LOW-SIGNAL/' | grep -q .; then
+if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /NO-MUTANTS|INCONCLUSIVE/' | grep -q .; then
   cat >&2 <<EOF
 
 plan-mutation: NOTE — a score needs mutants to be a measurement, and some files
 above have almost none. Read those rows as "not measured", never as "verified".
-A high INVALID count means most candidates were rejected by the compile gate, so
+A high INVALID count means most candidates were rejected by the compile check, so
 what remains is a small and possibly unrepresentative sample of that file.
 EOF
 fi
 
 # --- the markdown half, for the PR comment ----------------------------------
 # Written every run, pass or fail, because a report that only appears on success
-# is one nobody can use to see what is still open. `plan-qa-report` reads this
-# and its coverage sibling; the sha in the marker is what stops a section from
-# an earlier tree being posted against this one.
+# is one nobody can use to see what is still open. `plan-qa-report`, an
+# external tool outside this plugin, reads this and the coverage one; the sha in
+# the `<!-- plan-qa:… -->` comment stops a section from an earlier tree being
+# posted against this one.
 REPORT="${PLAN_QA_REPORT_DIR:-${TMPDIR:-/tmp}}/plan-qa-mutation.md"
 head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 {
   printf '<!-- plan-qa:mutation sha=%s -->\n' "$head_short"
   printf '### Mutation — is the effect asserted?\n\n'
-  printf 'Threshold %s%% per file, %s, %s changed file(s) vs `%s`. A LOW-SIGNAL row was **not measured**, whatever percentage it shows.\n\n' \
-    "$MIN_SCORE" "$budget_line" "$count_files" "${base:---files}"
+  printf 'Threshold %s%% per file, %s, %s changed file(s) vs `%s`. An INCONCLUSIVE row was **not measured**, whatever percentage it shows.\n\n' \
+    "$MIN_SCORE" "$timeout_line" "$count_files" "${base:---files}"
   printf '| Verdict | Score | Mutants | Invalid | Timed out | File |\n|---|---:|---:|---:|---:|---|\n'
   printf '%s\n' "$rows" | awk -F'\t' 'NF>=6 {
     s = ($2 == "-") ? "–" : $2 "%"
-    v = ($6 ~ /^FAIL|LOW-SIGNAL/) ? "**" $6 "**" : $6
+    v = ($6 ~ /^FAIL|INCONCLUSIVE/) ? "**" $6 "**" : $6
     printf "| %s | %s | %s | %s | %s | `%s` |\n", v, s, $3, $4, $5, $1 }'
   if [ -n "$surv" ]; then
     printf '\n<details><summary>Surviving mutants</summary>\n\n'
@@ -1403,7 +1405,7 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
     printf '\n</details>\n'
   fi
   if [ -n "${timed:-}" ]; then
-    printf '\n<details><summary>Timed-out mutants — never answered, excluded from the score</summary>\n\n'
+    printf '\n<details><summary>Timed-out mutants — no result, excluded from the score</summary>\n\n'
     printf '%s\n' "$timed" | sed 's|^  • |- `|; s|  \([A-Za-z_]*\) — |` — `\1` — |'
     printf '\n</details>\n'
   fi
@@ -1416,16 +1418,16 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 echo "plan-mutation: report section — $REPORT"
 echo "plan-mutation: raw engine report(s) — $KEPT"
 
-# Review mode: each survivor a test reached but did not catch becomes one
-# comment at its line. A survivor no test reaches is line coverage's finding,
+# Review mode: each survivor on a covered line becomes one comment at its
+# line. A survivor on a line no test executes is line coverage's finding,
 # so it is left out of the comments. With --fail-on-survivors every survivor,
-# reached or not, fails the run — after the file is written, so the comments
+# covered or not, fails the run — after the file is written, so the comments
 # still go up. `$surv` already excludes equivalent and timed-out mutants.
 if [ -n "$REVIEW_OUT" ]; then
   jq --arg root "$root/" '[.files | to_entries[] | .value.undetectedMutants[]?
       | select(.uncovered != true)
       | { path: (.filePath | sub("^" + $root; "")), line: .line,
-          body: "Mutant survived: `\(.operatorName)` — \(.description). No test failed with this change; a case that pins this behaviour would catch it." }]' \
+          body: "Mutant survived: `\(.operatorName)` — \(.description). No test failed with this change; a test that asserts this behaviour would catch it." }]' \
     "$out/report.json" > "$REVIEW_OUT" || { echo "plan-mutation: could not write $REVIEW_OUT" >&2; exit 2; }
   echo "plan-mutation: review — $(jq length "$REVIEW_OUT") survivor(s) to comment on, written to $REVIEW_OUT."
   if [ -n "$FAIL_ON_SURVIVORS" ] && [ -n "$surv" ]; then
@@ -1435,17 +1437,17 @@ if [ -n "$REVIEW_OUT" ]; then
   exit 0
 fi
 
-# LOW-SIGNAL BLOCKS. It means "not measured", and a row that was not measured is
-# not a pass; an exit 0 on it leaves that to prose. Measured twice on one real suite: a sign-in widget
-# printed PASS LOW-SIGNAL 100% off ONE mutant with two timed out, and was 33%
+# INCONCLUSIVE BLOCKS. It means "not measured", and a row that was not measured
+# is not a pass; an exit 0 on it leaves that to prose. Measured twice on one
+# real suite: a sign-in widget printed PASS INCONCLUSIVE 100% off ONE mutant with two timed out, and was 33%
 # once all three ran; an auth-session file printed PASS 80% and was 66%. Both
 # rows were labelled correctly and shipped anyway. No improvement to the label
-# reaches that — only the exit code does.
+# fixes that — only the exit code does.
 #
 # NO-MUTANTS is deliberately NOT here: nothing to mutate is the expected result
 # for a declarative file, and blocking it would push logic INTO widgets to make
 # something measurable.
-if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /^FAIL|LOW-SIGNAL/' | grep -q .; then
+if printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /^FAIL|INCONCLUSIVE/' | grep -q .; then
   cat >&2 <<EOF
 
 plan-mutation: BLOCKED.
@@ -1455,16 +1457,16 @@ $( printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /^FAIL/' | grep -q . && cat <<'UNDER
   assertion that does not actually assert; line coverage cannot see either. Add
   the case that kills it.
 UNDER
-)$( printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /LOW-SIGNAL/' | grep -q . && cat <<'THIN'
+)$( printf '%s\n' "$rows" | awk -F'\t' '$6 ~ /INCONCLUSIVE/' | grep -q . && cat <<'NOTMEASURED'
 
-  A LOW-SIGNAL row was NOT measured, whatever percentage it shows — a 100% over
+  An INCONCLUSIVE row was NOT measured, whatever percentage it shows — a 100% over
   two mutants is arithmetic, not evidence, and it blocks for that reason rather
   than for its score. Two ways in, with different remedies:
     · timeouts left the verdict undetermined → re-run those files with a larger
       --timeout; if it resolves, the score was never the problem
-    · the mutant pool is genuinely thin → the file cannot be graded this way.
-      Say so in the hand-back, with what you checked instead.
-THIN
+    · the file has too few mutants → mutation testing cannot measure it.
+      Say so in the final report, with what you checked instead.
+NOTMEASURED
 )
 $( [ "$(jq -r '[.files[]?.detected] | add // 0' "$out/report.json" 2>/dev/null)" = "0" ] && cat <<'ZERO'
 

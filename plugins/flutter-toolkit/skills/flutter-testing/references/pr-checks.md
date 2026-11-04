@@ -7,9 +7,9 @@ checks where the plan allows it.
   line the PR changed isn't executed by any test.
 - **Mutation, scoped after Google's practice.** `plan-mutation --diff <PR
   base> --review <file> --fail-on-survivors` mutates only the lines the PR
-  changed, one mutant a line. `plan-mutation-review` posts each survivor a
-  test reaches as a review comment at its line, and the job fails on any
-  survivor, including one no test reaches. Equivalent mutants (replaced with
+  changed, one mutant a line. `plan-mutation-review` posts each survivor on a
+  covered line as a review comment at its line, and the job fails on any
+  survivor, including one on a line no test executes. Equivalent mutants (replaced with
   the same text) and timed-out ones don't count. Drop `--fail-on-survivors`
   to make mutation comment only.
 
@@ -24,7 +24,7 @@ Keep each repo's runner up in its own terminal tab with
 `~/actions-runners/<dir>/run.sh`. While it's down, a PR's jobs wait queued on
 GitHub. An idle runner takes about 60 MB of memory and no CPU. `plan-coverage`
 and `plan-mutation` take this machine's test slots like any other run, so CI and
-local sessions share the memory budget. A local session gives up after 120
+local sessions share the same concurrency limit. A local session gives up after 120
 seconds without a slot, because the Bash tool stops a call at 10 minutes; CI has
 no such limit, so the workflow sets `PLAN_TEST_WAIT` to wait an hour instead of
 failing a check that measured nothing. Only use it on a private repo: a
