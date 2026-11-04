@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-With no swap volume (Linux, cloud VMs) the floor does not apply, so it passes.
+With no swap volume (Linux, cloud VMs) the minimum does not apply, so it passes.

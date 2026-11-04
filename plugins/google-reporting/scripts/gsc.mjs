@@ -37,7 +37,7 @@ const SCOPE_WRITE = "https://www.googleapis.com/auth/webmasters";
 const WEBMASTERS_BASE = "https://www.googleapis.com/webmasters/v3";
 const SEARCHCONSOLE_BASE = "https://searchconsole.googleapis.com/v1";
 
-const { fail, adcToken, saToken, describeApiFailure, runSetupLadder, httpsJson, safeParse } = makeGoogleAuth(NAMESPACE);
+const { fail, adcToken, saToken, describeApiFailure, runSetupSteps, httpsJson, safeParse } = makeGoogleAuth(NAMESPACE);
 
 function requireFlag(args, name, example) {
   const val = args[name];
@@ -91,7 +91,7 @@ async function main() {
       const grantTo = args["grant-to"] || currentGcloudAccount();
       if (!grantTo) fail("--grant-to is required (could not infer your gcloud account — run `gcloud config get-value account`).");
       const saEmail = `${saName}@${project}.iam.gserviceaccount.com`;
-      runSetupLadder(
+      runSetupSteps(
         [
           { label: `create service account ${saName}`, argv: ["gcloud", "iam", "service-accounts", "create", saName, "--project", project, "--display-name", "Search Console reader (impersonated, keyless)"] },
           { label: "enable Search Console API", argv: ["gcloud", "services", "enable", "searchconsole.googleapis.com", "--project", project] },

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Developer-disk space reclamation on macOS.
+# Free disk space on a macOS development machine.
 #
-# Two tiers, because they have different owners and different blast radii:
+# Two categories, because they have different owners and different blast radii:
 #
-#   PROJECT tier — each project's regenerable build output, by the toolchain
-#                  that owns it; re-created by the next build. Flutter today
-#                  (`flutter clean`: build/ + .dart_tool/).
-#   GLOBAL  tier — machine-wide developer caches shared by every project:
-#                  Xcode derived data, the Dart analysis server cache,
-#                  simulator scratch, superseded Gradle version caches, and
-#                  orphaned flutter_tools.* build scratch left in TMPDIR by a
-#                  killed or crashed flutter build/run/test/pub.
+#   PROJECT category — each project's regenerable build output, by the
+#                      toolchain that owns it; re-created by the next build.
+#                      Flutter today (`flutter clean`: build/ + .dart_tool/).
+#   GLOBAL  category — machine-wide developer caches shared by every project:
+#                      Xcode derived data, the Dart analysis server cache,
+#                      simulator scratch, superseded Gradle version caches, and
+#                      orphaned flutter_tools.* build scratch left in TMPDIR by
+#                      a killed or crashed flutter build/run/test/pub.
 #
 # Everything here regenerates. It never touches source, git, Xcode Archives,
 # signing assets, or a project's generated code (`*.freezed.dart`, `*.g.dart`,
@@ -20,7 +20,7 @@
 # APFS volume frees NOTHING until the bin is emptied, and emptying it is
 # TCC-protected (a human has to press it). Guards that make the rm safe:
 # dry-run by default, a "$HOME/"-prefix assertion before every delete, literal
-# path lists, and a fail-closed scan for the Gradle tier.
+# path lists, and a fail-closed scan for the Gradle category.
 #
 # WHY IT REPORTS A df DELTA AND NOT THE du TOTALS: `du` counts APFS
 # copy-on-write clones once per clone. Measured 2026-08-07: XCTestDevices read
@@ -30,9 +30,9 @@
 #
 # Usage:
 #   reclaim-space                  # DRY RUN — list targets + sizes, delete nothing
-#   reclaim-space --yes            # reclaim (project tier = cwd, + global tier)
+#   reclaim-space --yes            # reclaim (project category = cwd, + global category)
 #   reclaim-space --yes --all-projects   # every project under the scan root
-#   reclaim-space --yes --global-only    # skip the project tier
+#   reclaim-space --yes --global-only    # skip the project category
 #   reclaim-space --yes --project-only   # skip machine-wide caches
 #   reclaim-space --help
 #
@@ -56,14 +56,14 @@ for a in "$@"; do
   esac
 done
 
-# Refuse to run with an unsafe HOME — every delete below is gated on a
+# Refuse to run with an unsafe HOME — every delete below requires a
 # "$HOME/"-prefix match, so a bogus HOME would defeat the whole guard.
 [ -n "${HOME:-}" ] && [ "$HOME" != "/" ] || { echo "HOME is unsafe: '${HOME:-}'" >&2; exit 1; }
 
 SCAN_ROOT="${RECLAIM_SCAN_ROOT:-$HOME/GitHub}"
 
-# Same guard, for the flutter_tools.* tier: every delete there is gated on a
-# "$FLUTTER_TMP/"-prefix match, so an unresolved TMPDIR must skip that tier
+# Same guard, for the flutter_tools.* category: every delete there requires a
+# "$FLUTTER_TMP/"-prefix match, so an unresolved TMPDIR must skip that category
 # rather than run unguarded. getconf is the fallback for a shell that never
 # exported TMPDIR (e.g. some non-interactive/cron contexts).
 FLUTTER_TMP="${TMPDIR:-$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || true)}"
@@ -128,7 +128,7 @@ echo
 
 BEFORE_MB=$(avail_mb)
 
-# ------------------------------------------------------------- project tier
+# --------------------------------------------------------- project category
 
 flutter_projects() {
   if [ $ALL_PROJECTS -eq 1 ]; then
@@ -153,7 +153,7 @@ flutter_projects() {
 }
 
 if [ $DO_PROJECT -eq 1 ]; then
-  echo "PROJECT tier — regenerable build output (Flutter: flutter clean)"
+  echo "PROJECT category — regenerable build output (Flutter: flutter clean)"
   found=0
   while read -r proj; do
     [ -n "$proj" ] || continue
@@ -168,18 +168,19 @@ if [ $DO_PROJECT -eq 1 ]; then
   done < <(flutter_projects)
   [ $found -eq 0 ] && echo "  (no project here — run from a project dir or pass --all-projects)"
   echo
-  # Deliberately no `flutter pub get`: a closed-out feature line does not need a
-  # resolved project, and the next session that opens it will run that itself.
+  # Deliberately no `flutter pub get`: a finished (merged) feature branch does not
+  # need a resolved project, and the next session that opens it will run that
+  # itself.
   # The reason is WORKFLOW, not space — pub-get does re-populate
   # build/ios/SourcePackages, but that is largely an APFS clone of
   # ~/Library/Caches/org.swift.swiftpm and costs ~0.1G of real disk despite a
   # 1.3-1.7G du reading. Same clone illusion the header warns about.
 fi
 
-# -------------------------------------------------------------- global tier
+# ---------------------------------------------------------- global category
 
 if [ $DO_GLOBAL -eq 1 ]; then
-  echo "GLOBAL tier — machine-wide developer caches"
+  echo "GLOBAL category — machine-wide developer caches"
 
   # Contents are wiped; the directory itself is kept because the owning tool
   # expects it to exist and repopulates on demand.
@@ -272,7 +273,7 @@ if [ $DO_GLOBAL -eq 1 ]; then
   # runtime is gone. Both are correct to clear, but do not expect space back:
   # the clones are APFS copy-on-write of the real device set, so `du` shows
   # gigabytes while the true reclaim is ~0 (measured 2026-08-07). Kept because
-  # it prunes stale device entries, not because it is a space lever.
+  # it prunes stale device entries, not because it is a way to free space.
   if command -v xcrun >/dev/null 2>&1; then
     if [ $DRY -eq 0 ]; then
       xcrun simctl --set "$HOME/Library/Developer/XCTestDevices" delete all >/dev/null 2>&1 || true

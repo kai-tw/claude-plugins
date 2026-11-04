@@ -32,8 +32,8 @@ allowed-tools:
 
 Read production indexing + performance data for a **verified Search Console
 property** and report it — as a real check, not a browser round-trip. This is
-read-only by default; the one write command (`submit-sitemap --commit`) is
-explicitly gated.
+read-only by default; the one write command (`submit-sitemap`) runs only
+with `--commit`.
 
 ## How it reads (mechanism)
 

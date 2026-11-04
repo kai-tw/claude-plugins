@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: setup-steps
+description: ga4 setup and gsc setup print their steps as a dry run without --commit, and the plugin calls them "setup steps", never a "ladder".
+tags: [scripts]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: ga4 setup --project my-proj --grant-to me@example.com 2>/dev/null; gsc setup --project my-proj --grant-to me@example.com 2>/dev/null; cat "$root/README.md" "$root/lib/google-auth.mjs" "$root/scripts/ga4.mjs" "$root/scripts/gsc.mjs"
+  prompt: |
+    Run ga4 setup and gsc setup without --commit, then print the plugin's README and scripts.
+context:
+  scaffold_script: fixture.sh

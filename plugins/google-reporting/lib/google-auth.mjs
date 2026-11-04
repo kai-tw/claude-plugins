@@ -88,7 +88,7 @@ export function makeGoogleAuth(namespace) {
   // default (prints what it would do); --commit runs each step via spawnSync
   // and stops at the first failure with that step's real stderr — never
   // swallows a bad exit code and keeps going.
-  function runSetupLadder(steps, { commit }) {
+  function runSetupSteps(steps, { commit }) {
     if (!commit) {
       console.log(`${namespace} setup — dry run (pass --commit to actually run these):\n`);
       for (const step of steps) console.log(`  [${step.label}]\n    ${step.argv.map(shellQuote).join(" ")}\n`);
@@ -109,7 +109,7 @@ export function makeGoogleAuth(namespace) {
     console.log(`\n✓ all steps done. See this command's help for the one remaining manual step.`);
   }
 
-  return { fail, adcToken, saToken, describeApiFailure, runSetupLadder, httpsJson, safeParse };
+  return { fail, adcToken, saToken, describeApiFailure, runSetupSteps, httpsJson, safeParse };
 }
 
 // Quotes an argv element for display only (the real spawnSync call below
