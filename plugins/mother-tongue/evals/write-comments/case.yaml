@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: write-comments
+description: A Write or Edit that adds a banned term to a code comment or to Markdown prose is blocked; code, strings, backticked names, other file types and terms already in the replaced text are left alone.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the plugin's Write/Edit hook a set of edits (a Dart comment with a coined term, a Dart line with only code named gate, a Chinese comment with a bare gate, a doc block, a string literal, an edit that keeps an existing term, a shell comment, Markdown prose, Markdown with a backticked name, and a JSON file) and print what it says to each.
+context:
+  scaffold_script: fixture.sh

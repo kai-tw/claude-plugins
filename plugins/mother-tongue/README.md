@@ -9,6 +9,7 @@ the latest prompt and blocks what a word list can catch.
 | `UserPromptSubmit` | Detects the prompt's locale and attaches that locale's `rules.md` to it, plus the `rules.md` for the language code is written in (`$MOTHER_TONGUE_CODE`) |
 | `Stop` | Blocks a reply written in English when the conversation is not, and asks for it in the conversation's locale; otherwise detects the reply's locale and, if it uses a term from that locale's `banned.tsv`, blocks and asks for the sentences to be rewritten |
 | `PreToolUse` (Bash) | Same check on the text of `git commit` and `gh pr\|issue create\|edit\|comment` |
+| `PreToolUse` (Write, Edit) | Same check on what a file write adds: the whole text of Markdown and plain-text files, and only the comments of code files. Han lines are held to `$MOTHER_TONGUE_ZH`'s list, Latin lines to `en`'s; a term already in the replaced text doesn't count |
 
 Comments, commit messages and PRs are usually written in English whatever
 language the conversation is in, so the English rules (`locales/en/rules.md`)
