@@ -1,44 +1,44 @@
-# Style code — charter
+# Style guide — core rules
 
-This charter covers style judgments that mechanical checks cannot decide and that must be
+These core rules cover style judgments that mechanical checks cannot decide and that must be
 made by judgment.
 
-**Severity.** This charter **defines no severity levels of its own** — the severity of a
-violation is set by the review procedure. A rule that needs a severity floor states it in its
-`Check:` (e.g. `violations of this rule are always proposed CRITICAL`).
+**Severity.** These rules **define no severity levels of their own** — the severity of a
+violation is set by the review procedure. A rule that needs a minimum severity states it in
+its `Check:` (e.g. `violations of this rule are always proposed CRITICAL`).
 
 ## Precedence
 
-Three ranks; the higher prevails. **This section is the only version of the precedence
-rules**; lower layers and the procedure file cite it.
+Three levels; the higher prevails. **This section is the only version of the precedence
+rules**; the lower levels and the rule-format file cite it.
 
-| Rank | Contains | Authority |
+| Level | Contains | May |
 |---|---|---|
-| Constitution | this charter's `S<N>`: principles that hold in every language and every project | the only place a base rule may be enacted |
-| Statute | language layer: that language's concrete tests, each under one `S<N>` | may only **concretize** a base rule |
-| Regulation | project layer: that project's facts (its own helper names, canonical entry point, paths) | may only **tighten** or **supply facts** |
+| Core rules | the `S<N>` in this file: principles that hold in every language and every project | the only place a core rule may be added |
+| Language rules | that language's concrete tests, each under one `S<N>` | only **make a core rule concrete** |
+| Project rules | that project's facts (its own helper names, canonical entry point, paths) | only **tighten** or **supply facts** |
 
-**Conflict test.** Can the two rules **be satisfied at the same time**? If so, they stack
-lawfully; if not, they conflict.
+**Conflict test.** Can the two rules **be satisfied at the same time**? If so, both apply;
+if not, they conflict.
 
-**No exemption clauses.** A conflict has exactly three outcomes, all amendments: narrow the
-base rule (add a condition, or move it down to the statute layer) · repeal the base rule ·
-change the project's code. A self-granted exception is the standard way a valid claim dies
-before it is ever raised.
+**No exemption clauses.** A conflict has exactly three outcomes: narrow the core rule (add a
+condition, or move it down to the language rules) · delete the core rule · change the
+project's code. A self-granted exception is the standard way a valid claim dies before it
+is ever raised.
 
-**Conflict during review.** Grade that rule **`undeterminable`**, name who must
-amend it at which rank, and raise the amendment separately. It is not `passed`, nor a
+**Conflict during review.** Report that rule as **`inconclusive`**, name who must change
+which level's rule, and propose the rule change separately. It is not `passed`, nor a
 `critical` that punishes the author.
 
 **Burden of proof.** Whoever claims a conflict must **quote both rules and explain why they
-cannot both be satisfied**. "This rule is awkward here" is inconvenience, not conflict — grade
-by the higher rule this time and raise the amendment separately.
+cannot both be satisfied**. "This rule is awkward here" is inconvenience, not conflict — apply
+the higher rule this time and propose the rule change separately.
 
-## Base rules
+## Core rules
 
-**An empty lower layer does not mean that language or project has no rules** — the base
+**An empty lower level does not mean that language or project has no rules** — the core
 rules still apply. Conversely, a reviewer **must not invent a finding** from a style
-preference this charter does not legislate: no rule text does not mean free discretion.
+preference these rules do not state: no rule text does not mean free discretion.
 
 ## S1 — Layer ownership
 
@@ -50,9 +50,9 @@ on, not by the directory it sits in — a linter can audit import direction, not
   codes, DB column names or UI vocabulary inside `domain/`)? If not, move it or rewrite it; a
   comment must not substitute (S6.4). Example: a use case in `domain/` translating HTTP status
   codes.
-- **S1.3 Orchestration only at the composition point** — Check: do cross-repository ordering,
-  retries and fallbacks appear only at the composition point the project declares (**where
-  that point is, is a project fact in the regulation layer**)? A use case may contain only one
+- **S1.3 Orchestration only at the composition root** — Check: do cross-repository ordering,
+  retries and fallbacks appear only at the composition root the project declares (**where
+  it is, is a fact the project rules state**)? A use case may contain only one
   domain decision. Example: a use case calls two repositories in order and switches to the
   other path on failure.
 - **S1.4 Declarations must not execute** — Check: does any line in this wiring file
@@ -68,10 +68,11 @@ on, not by the directory it sits in — a linter can audit import direction, not
 ## S2 — A name must still reveal its owner, kind and category once it leaves its declaration
 
 **Principle:** A name is only ever read after it leaves its declaration — call sites, grep
-results and stack traces have no context and no type to go by. A linter can audit casing and
+results and stack traces have no context and no type to go by. A linter can check casing and
 suffix lists, not whether the name identifies anything specific. A type name consists of
-owner, concept and kind: the owner answers "whose", the concept "which one", the kind "what
-sort of thing"; a type that belongs under a category must carry that category in its name.
+owner, concept and type suffix: the owner answers "whose", the concept "which one", the
+suffix "what sort of thing"; a type that belongs under a category must carry that category
+in its name.
 **Violations of this rule are always proposed CRITICAL**: one rename costs far less than one
 cross-feature collision or one type error that surfaces only at runtime.
 
@@ -105,27 +106,27 @@ cross-feature collision or one type error that surfaces only at runtime.
   violates this rule: the contract a name makes is redeemed by readers at the call site, this
   one cannot be redeemed, and the failure comes at runtime. Rename it to something it can
   live up to.
-- **S2.7 A type name must end in a kind word** — Check: from the type name alone (`enum`s
+- **S2.7 A type name must end in a type suffix** — Check: from the type name alone (`enum`s
   included), can you tell what kind of thing it is (domain entity, failure, state, state
-  holder, data access, UI component)? If not, it violates this rule. The kind-word vocabulary
-  is set by lower layers. Example: `Connection` cannot be told apart as a connection entity,
+  holder, data access, UI component)? If not, it violates this rule. The lower levels set
+  the list of suffixes. Example: `Connection` cannot be told apart as a connection entity,
   connection state or connection failure.
 - **S2.8 A subtype's name must inherit its parent's category** — Check: do members of a
-  closed family, or implementations of one abstraction, keep the parent type's category word
-  and kind word in full, adding only their own distinguishing word? If not, it violates this
+  closed family, or implementations of one abstraction, keep the parent type's category name
+  and type suffix in full, adding only their own distinguishing word? If not, it violates this
   rule — a call site seeing the subtype name must know its family without looking up the
-  declaration, and a search for the parent's category word must find the whole family.
+  declaration, and a search for the parent's category name must find the whole family.
   Example: `ConnectionFailure`'s subtype is `ConnectionTimeoutFailure`, not `TimeoutFailure`.
-- **S2.9 One kind has exactly one kind word** — Check: is one kind of thing called by two or
-  more words? If so, it violates this rule — readers will assume the two are different kinds,
-  and a search for one will not find them all. This rule is the converse of S2.4. Example:
-  failure types using both `Failure` and `Exception`.
+- **S2.9 One kind of type has exactly one type suffix** — Check: is one kind of type named
+  with two or more suffixes? If so, it violates this rule — readers will assume the two are
+  different kinds, and a search for one will not find them all. This rule is the converse of
+  S2.4. Example: failure types using both `Failure` and `Exception`.
 - **S2.10 A named constant must have more than one use site** — Check: how many sites read
   this named constant? One: it violates this rule — inline the literal at the use site with
   its explanation. Outside this rule: a constant declared in one file and used in another,
   multi-line data tables, and enumerations another unit reads.
 
-## S3 — Every collapse must be justified at each consumption point
+## S3 — Every collapse must be justified at each use site
 
 **Principle:** In this rule, **collapsing** means reducing a value with more than two states
 to a binary one. A collapse is a **claim**: the states folded away are the same thing as the
@@ -135,19 +136,19 @@ not cure it (a test only freezes the current decision); a comment describing the
 a statement, not a justification (S6.4). Where the states genuinely differ in meaning, they
 must not be collapsed: a third state is not noise but a real state.
 
-- **S3.1 Equivalence must hold separately at each consumption point** — Check: at **every**
+- **S3.1 Equivalence must hold separately at each use site** — Check: at **every**
   place that reads the value, is the collapsed state equivalent to the one it merged into? If
-  you cannot say, or did not check each point, it violates this rule. Example: collapsing "not
+  you cannot say, or did not check each site, it violates this rule. Example: collapsing "not
   yet fetched" into "not offline" holds at a passive display (which claims nothing), but not
   where the value drives a write.
 - **S3.2 A collapse's validity does not extend to its complement** — Check: is the value's
   negation also read? If so, the negation must be re-verified on its own and must not borrow
-  an existing consumption point's conclusion. Example: reading "not offline" as "connected"
+  another use site's conclusion. Example: reading "not offline" as "connected"
   asserts to the user a fact nobody could have found out.
 - **S3.3 What is stored or passed across layers must be the uncollapsed original** — Check: is
-  what is stored or passed across layers the original value, or a binary one some consumption
-  point collapsed? If the latter, it violates this rule — the next consumption point can no
-  longer ask a different question.
+  what is stored or passed across layers the original value, or a binary one some use site
+  collapsed? If the latter, it violates this rule — the next use site can no longer ask a
+  different question.
 - **S3.4 Distinct user-facing causes must not be collapsed into one sentence** — Check: do
   several distinct failure causes share one sentence of copy? If so, it violates this rule —
   users are entitled to know what happened, and one generic sentence makes "offline" and "no
@@ -255,7 +256,7 @@ excluded — something no longer true today gives readers nothing to judge today
 - **S6.4 A comment does not cure a code defect** — Check: does the comment **justify** a
   decision, or merely **describe** an existing violation (S1 wrong ownership, S2 bad name, S3
   unjustified collapse)? If the latter, it violates this rule, and each other rule it breaks
-  is graded separately: what must change is the code, not an added line of explanation.
+  is reported separately: what must change is the code, not an added line of explanation.
 - **S6.5 Omitting an out-of-repo fact is a violation** — Check: can the fact this code depends
   on be read from this repo's code and types? If not (its source is an external API's actual
   behavior, a protocol or spec clause, a platform limit, a business rule) and no comment
@@ -268,7 +269,7 @@ excluded — something no longer true today gives readers nothing to judge today
   does not do)? If readers can get it, delete it per S6.1.
 - **S6.7 Tags must be whitelisted, each with a scanner** — Check: is the comment tag
   (`// <tag>:` and the like) on a lower layer's whitelist, and does that whitelist name a scanner
-  that pulls every instance of the tag across the repo in one pass? If not listed, grade it
+  that pulls every instance of the tag across the repo in one pass? If not listed, report it
   under S6.2; listed without a scanner violates this rule — a tag nobody can count accumulates
   unseen, which is the same as no tag.
 
@@ -281,7 +282,7 @@ recovered; **programming errors** (corrupted internal data, type errors, logic d
 propagate to the top-level handler. Using catch in place of a predicate makes the normal path
 pay for a throw and a catch to get an answer the predicate gives cheaply; swallowing a
 programming error in a catch keeps the defect from ever surfacing. This rule governs **which
-handling is correct**; handling that is silent is graded separately under S5.
+handling is correct**; handling that is silent is checked separately under S5.
 
 - **S7.1 Predictable states must be checked with a predicate** — Check: for the state this
   exception corresponds to, does the runtime offer a predicate (exists, is empty, has key, is
@@ -445,7 +446,7 @@ source, not measured while debugging.
   written before the write completes, does the failure path restore the original value (or
   reread)? If not, it violates this rule — the screen keeps showing a change that never
   happened, and nothing will ever correct it. The rollback must be in the same method as the
-  bet.
+  optimistic update.
 
 ## S12 — A unit does one thing, and its control must not be passed in by the caller
 
@@ -459,8 +460,7 @@ Both make "what this unit does" impossible to know from reading the unit alone.
 - **S12.2 Control must not be passed as a parameter** — Check: is any parameter a flag or
   predicate that decides **when the operation stops** or **which path it takes**? If so, it
   violates this rule: that condition belongs to the caller. Two ways out — the unit owns the
-  decision itself, or it exposes a lever (cancellable, abortable) that the caller pulls when it
-  decides.
+  decision itself, or it exposes a cancellation handle that the caller uses when it decides.
 - **S12.3 An operation's results travel one channel** — Check: do progress, completion and
   failure all flow through the same channel? Separate parallel `onSuccess` / `onError` /
   `onProgress` callbacks violate this rule — nothing guarantees ordering or completeness
@@ -472,7 +472,7 @@ Both make "what this unit does" impossible to know from reading the unit alone.
   before and after the operation (success or not, hit or not, already empty or not)? If so, it
   violates this rule, and the unit must return nothing — failure is thrown as a type per S7,
   state is read back through queries, and neither may be silenced as a result (S5.3).
-  Expressing that return value as a named enum does not make it lawful: the test is what it
+  Expressing that return value as a named enum does not make it acceptable: the test is what it
   reports, not its type. **Outside this rule** are values the caller cannot get otherwise,
   produced by that operation: a newly created entity's identifier, the element an atomic
   operation took. Example: `clear…()` returning "whether anything was cleared".
@@ -483,14 +483,14 @@ Both make "what this unit does" impossible to know from reading the unit alone.
 
 ## S13 — Assertions must not exceed the evidence the test actually has
 
-**Principle:** Tests run on stand-ins — stand-in fonts, stand-in clocks, stand-in networks.
-Any number measured off a stand-in measures the stand-in, not the product. What makes such an
-assertion most dangerous is that it **passes**: it freezes a fictional value, so every later
-real shift is blocked as "the test broke".
+**Principle:** Tests run on fakes — fake fonts, fake clocks, fake networks. Any number
+measured off a fake measures the fake, not the product. What makes such an assertion most
+dangerous is that it **passes**: it freezes a fictional value, so every later real shift is
+blocked as "the test broke".
 
-- **S13.1 Values measured off a stand-in base are not facts** — Check: does the assertion
+- **S13.1 Values measured in a test environment are not facts** — Check: does the assertion
   rest on a fact the test itself owns (something happened, which branch ran, a relative order
-  holds), or on a value measured from the stand-in environment (line breaks, sizes,
+  holds), or on a value measured from the test environment's fakes (line breaks, sizes,
   appearance, timing)? The latter violates this rule. A claim about what users see needs a
   real render; otherwise it is inference, and inference must be labeled as inference.
 - **S13.2 Where tests cannot reach, a green run is not counter-evidence** — Check: is the fact
@@ -535,27 +535,26 @@ say which state it guards against, and why that state is reachable.**
   delete the guard and let it break.
 - **S15.2 Guarding the same state repeatedly in one flow is a sign of too many entry points** —
   Check: how many times is the same state guarded in this flow? If more than once, first count
-  the flow's entry points and continuation points, and eliminate guards by **reducing entry
+  the flow's entry points and await points, and eliminate guards by **reducing entry
   points**; do not eliminate the symptom by adding guards. The guard count measures how many
   ways into the flow there are, not how thorough the protection is.
 - **S15.3 Lifecycle guards are not subject to minimization** — Check: does the guard protect
   against a callback the runtime really does deliver after teardown? If so, S15.2's
   minimization does not apply — the guard is necessary, and its count is set by the number of
-  async continuation points; reduce continuation points per S15.2, and do not delete the
-  guards.
+  await points; reduce await points per S15.2, and do not delete the guards.
 
 ## S16 — An object owns one capability, and its interface is the only boundary
 
 **Principle:** An object is a boundary. A capability belongs to one owner, which exposes only
 the operations it promises and keeps its internal representation inside; whoever uses the
 capability goes through its interface, never building a second one or reaching around it.
-Drawing, keeping and removing a boundary are all bound by this rule.
+This rule covers drawing, keeping and removing a boundary.
 
 - **S16.1 A boundary must be justified by existing complexity it removes** — Check: what
   complexity that exists today (existing duplication, impossible states that are already
   expressible, existing divergence) does the new layer or wrapper remove? If you cannot say, or
   what it removes is a situation that does not exist yet, it violates this rule. If, once the
-  unit is inlined, readers need to know the same things, it is a redirection rather than an
+  unit is inlined, readers need to know the same things, it is an indirection rather than an
   abstraction and falls under this rule; so does an extracted unit re-checking a condition the
   caller already checked.
 - **S16.2 A capability must be used through the entry point its owner declares** — Check:

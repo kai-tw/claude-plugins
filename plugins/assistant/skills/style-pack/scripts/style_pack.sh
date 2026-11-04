@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# style-pack — print the style-code charter (rules/index.md), the language files a diff
-# needs, and ./.claude/.assistant/style-rules/*.md, to stdout, so a reviewer in any plugin
-# loads one version of the rules.
+# style-pack — print the style guide's core rules (rules/index.md), the language rules a
+# diff needs, and ./.claude/.assistant/style-rules/*.md, to stdout, so a reviewer in any
+# plugin loads one version of the rules.
 #
-# Usage: style-pack [dart|js …]            charter + the named language files
-#        style-pack --paths <file…>        charter + the languages those extensions map to
+# Usage: style-pack [dart|js …]            core rules + the named language files
+#        style-pack --paths <file…>        core rules + the languages those extensions map to
 #        style-pack --help
 # Extension map (the only copy): .dart → dart · .cs → csharp · .js .mjs .cjs .jsx .ts .tsx → js.
 # Exit 2 = unknown language or extension, nothing printed.

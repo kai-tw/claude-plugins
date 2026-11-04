@@ -1,7 +1,7 @@
-# User-visible text — Japanese locale layer
+# User-visible text — Japanese locale rules
 
-Loads when: `locales` includes ja. Every item must attach to an existing `U<N>` of the base
-law; one that cannot must first amend the charter (`CONVENTIONS.md`).
+Loads when: `locales` includes ja. Every item is filed under an existing core rule `U<N>`;
+if none fits, add the core rule first (`CONVENTIONS.md`).
 
 ## U1 — How a string is written is decided by where it renders
 
@@ -25,4 +25,4 @@ law; one that cannot must first amend the charter (`CONVENTIONS.md`).
 - **U3.2-ja Particles and word order are chosen for Japanese, not mapped sentence by
   sentence from the source language** — Check: Back-translated into the source language,
   does the value's word order align segment by segment with the source sentence? Alignment
-  usually means transcription, violating charter U3.1.
+  usually means a literal translation, violating core rule U3.1.

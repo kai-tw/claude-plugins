@@ -1,4 +1,4 @@
-# The founder's rewrites that hold in every project — read with `asst-strings examples`.
+# The user's rewrites that hold in every project — read with `asst-strings examples`.
 # Columns (tab-separated): locale · role · where it renders · draft · final (`-` = dropped)
 zh-Hant	caption	under the title 「目前離線」, beside a greyed-out buy button	連上網路後就可以購買這個項目	-
 zh-Hant	empty	export list with no files	沒有找到可匯出的檔案	無可匯出的檔案

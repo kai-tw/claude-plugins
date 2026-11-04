@@ -1,7 +1,7 @@
-# User-visible text — English locale layer
+# User-visible text — English locale rules
 
-Loads when: `locales` includes en. Every item must attach to an existing `U<N>` of the base
-law; one that cannot must first amend the charter (`CONVENTIONS.md`).
+Loads when: `locales` includes en. Every item is filed under an existing core rule `U<N>`;
+if none fits, add the core rule first (`CONVENTIONS.md`).
 
 ## U1 — How a string is written is decided by where it renders
 
