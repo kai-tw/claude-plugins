@@ -850,7 +850,7 @@ restore_sources() {
 # the same failure that looks like a pass, which this script exists to remove. Prove it
 # against the SNAPSHOT: that is the only correct baseline, because the pre-run
 # tree legitimately differs from HEAD (you are mutating files you just changed),
-# so comparing against a commit would flag your own work as a residue.
+# so comparing against a commit would flag your own work as leftover.
 verify_restored() {
   [ -d "$snap" ] || return 0
   bad=$( ( cd "$snap" 2>/dev/null && find . -type f -print ) 2>/dev/null | sed 's|^\./||' \
@@ -1413,8 +1413,7 @@ head_short=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
 # The raw-report path goes to STDOUT, never into $REPORT. `plan-qa-report` posts
 # $REPORT verbatim as a PR comment, and a local TMPDIR path is a pointer to
 # nothing for everyone who reads it there — wrong machine, and cleared on reboot
-# even on this one. Same reason `archivist/references/notion-kb.md §No repo
-# pointers` keeps navigation out of the KB: the artefact has to stand alone.
+# even on this one. The report has to stand alone.
 echo "plan-mutation: report section — $REPORT"
 echo "plan-mutation: raw engine report(s) — $KEPT"
 

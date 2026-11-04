@@ -58,7 +58,7 @@ install_flutter() {
   else
     report "The Flutter $FLUTTER_VERSION SDK would not install, so there is no \`flutter\`
 and no \`dart\` in this container: nothing builds, no test runs, the analyzer
-cannot run and the commit gate cannot be satisfied. Say so before changing Dart
+cannot run and the pre-commit check cannot pass. Say so before changing Dart
 code; do not report a change as verified when nothing could run."
     return 1
   fi
@@ -181,7 +181,7 @@ report() {
 # VERIFIED from a cloud session that had only a consuming repo attached, once the
 # snapshot was rebuilt. The predecessor's "GitHub answers only for attached
 # repositories" was measured against this repo while it was PRIVATE; the proxy's
-# repository scope gates private repos, not every unattached one. A stale
+# repository scope restricts private repos, not every unattached one. A stale
 # snapshot looks identical to that old failure, so rebuild before concluding
 # anything about reachability.
 # A checkout the session already cloned is still tried FIRST, and only for one
@@ -202,9 +202,9 @@ register_marketplace() {
   # having nothing to do look identical from here.
   if ! git ls-remote "https://github.com/$MARKETPLACE_REPO" HEAD >/dev/null 2>&1; then
     report "\`https://github.com/$MARKETPLACE_REPO\` is UNREACHABLE from this container, so
-every \`@$MARKETPLACE_NAME\` plugin is absent — the assistant, the test gates and
+every \`@$MARKETPLACE_NAME\` plugin is absent — the assistant, the Flutter test tools and
 every \`asst-*\` / \`plan-*\` command included. Work without them and say so; do not
-improvise a substitute for a gate.
+improvise a substitute for a check.
 
 The repo is PUBLIC, so this is not the expected privacy failure it used to be —
 an anonymous clone needs no credential and no attachment. Something else is
@@ -216,7 +216,7 @@ repo moved. Report what \`git ls-remote\` prints rather than guessing."
   claude plugin marketplace add "$MARKETPLACE_REPO" >/dev/null 2>&1 && return 0
   report "\`$MARKETPLACE_REPO\` is reachable but would not register as a marketplace, so
 every \`@$MARKETPLACE_NAME\` plugin is absent. Work without
-them and say so; do not improvise a substitute for a gate."
+them and say so; do not improvise a substitute for a check."
   return 1
 }
 
@@ -269,7 +269,7 @@ install_plugins() {
   if ! command -v claude >/dev/null 2>&1; then
     report "The \`claude\` CLI was not on PATH while this environment was provisioned, so
 nothing could be installed and every \`@$MARKETPLACE_NAME\` plugin is absent.
-Work without them and say so; do not improvise a substitute for a gate."
+Work without them and say so; do not improvise a substitute for a check."
     return 0
   fi
 
@@ -284,7 +284,7 @@ Work without them and say so; do not improvise a substitute for a gate."
   if [ -z "$wanted" ]; then
     report "\`$MARKETPLACE_REPO\` registered but its marketplace.json lists no plugins, so
 every \`@$MARKETPLACE_NAME\` plugin is absent. Work without them and say so; do
-not improvise a substitute for a gate."
+not improvise a substitute for a check."
     return 0
   fi
 
@@ -339,7 +339,7 @@ plugin. Check with \`type -a plan-lint\`; if absent, work without them and say s
 Their skills, hooks and commands are absent — and so is every \`@$MARKETPLACE_NAME\`
 plugin that declares one of them as a dependency, which the CLI skips whole even
 though it reads as installed and enabled. Work without them and say so; do not
-improvise a substitute for a gate."
+improvise a substitute for a check."
 }
 
 known_marketplace() {

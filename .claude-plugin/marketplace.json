@@ -23,7 +23,7 @@
     },
     {
       "name": "flutter-toolkit",
-      "description": "Flutter test gates for a shared machine — plan-test slot budget, per-line coverage and mutation score over the diff (Dart and JS/TS)",
+      "description": "Flutter testing on a shared machine — plan-test concurrency limit, line coverage and mutation score over the diff (Dart and JS/TS)",
       "source": "./plugins/flutter-toolkit",
       "category": "development",
       "author": {
@@ -68,7 +68,7 @@
     {
       "name": "assistant",
       "source": "./plugins/assistant",
-      "description": "The founder's assistant — request → decision brief → screens → PR, across projects, with the style-pack and ui-text-pack rulebooks its reviewers grade against."
+      "description": "An assistant for your projects — request → decision brief → screen review → PR, with the style-pack and ui-text-pack rulebooks its reviewers check against."
     },
     {
       "name": "mother-tongue",
