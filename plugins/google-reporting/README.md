@@ -82,7 +82,7 @@ Claude to check Search Console or GA4 for a property.
 
 `gsc.mjs` and `ga4.mjs` are two different Google APIs behind the *identical*
 keyless-impersonation auth chain — the boilerplate (`lib/google-auth.mjs`) is
-shared so a fix or improvement (like the setup ladder or the API-failure
+shared so a fix or improvement (like the setup steps or the API-failure
 message parsing) lands once, not twice.
 
 They stay **thin fetch layers only** — no product-specific judgment (which
@@ -108,7 +108,7 @@ then names the one manual click by hand.
 ## Privacy & data
 
 Nothing is stored, and no environment variables are ever read or written.
-Every command is a live read (or an explicitly `--commit`-gated write)
+Every command is a live read (or a write that runs only with `--commit`)
 straight to Google's API; there is no local cache, no telemetry, no second
 destination for the data, and no business-identifying default baked into the
 plugin — every property/site/SA identifier comes from the caller's own flags.
