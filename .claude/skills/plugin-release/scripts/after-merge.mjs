@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Wait for a PR to merge, then do everything a merge owes: update every install
-// of each plugin the PR changed (consumers.mjs) and verify it, uninstall every
-// install of a plugin the PR deleted, sync the main checkout, and remove the PR's
-// local worktree and branch.
+// Wait for a PR to merge, then do everything that has to happen after a merge:
+// update every install of each plugin the PR changed (consumers.mjs) and verify
+// it, uninstall every install of a plugin the PR deleted, sync the main checkout,
+// and remove the PR's local worktree and branch.
 //
 // Start it with the Bash tool's `run_in_background: true` once the PR is ready:
 // it exits when the PR merges or closes, and the exit wakes the session — nobody
