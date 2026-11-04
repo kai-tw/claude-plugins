@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "reclaim-space",
   "version": "0.3.1",
-  "description": "Developer-disk reclamation on macOS: regenerable project build output and machine-wide toolchain caches, measured by the real free-space delta, plus a free-space floor on new git worktrees.",
+  "description": "Free disk space on a macOS development machine: regenerable project build output and machine-wide toolchain caches, measured by the real free-space delta, plus a minimum free disk space for new git worktrees.",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"

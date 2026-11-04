@@ -1,8 +1,8 @@
 ---
 type: regex
-pattern: 'floor is 999999G'
+pattern: 'minimum free disk space is 999999G'
 flags: m
 match: contains
 arm: with-only
 ---
-Blocks when the floor is too high and reports the floor.
+Blocks when the minimum is too high and reports the minimum.
