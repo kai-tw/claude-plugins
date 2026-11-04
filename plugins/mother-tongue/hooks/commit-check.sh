@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# commit-gate.sh — PreToolUse(Bash): deny `git commit` and `gh pr|issue
+# commit-check.sh — PreToolUse(Bash): block `git commit` and `gh pr|issue
 # create|edit|comment` whose text uses its locale's banned terms.
 #
 # The locale comes from the message, not the conversation: the agent picks a
 # commit's language per repo, and what gets checked is what gets written.
 #
-# Only the message is judged — heredoc bodies, quoted strings, and files named by
+# Only the message is checked — heredoc bodies, quoted strings, and files named by
 # -F/--file/--body-file — minus `…-by:` trailers and the Claude Code footer. The
 # command words and a Co-Authored-By line outnumber a short Chinese subject and
 # would otherwise make it `en`, which is never scanned.

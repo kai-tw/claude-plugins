@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^mixed=\[.*board→任務板.*live→進行中的'
+pattern: '^mixed=\[.*board→看板.*live→進行中的'
 flags: m
 arm: with-only
 ---
