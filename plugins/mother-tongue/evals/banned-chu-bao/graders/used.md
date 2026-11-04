@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^used=\[.*出包流程→發版流程／打包流程'
+pattern: '^used=\[.*出包流程→發布流程／打包流程'
 flags: m
 arm: with-only
 ---

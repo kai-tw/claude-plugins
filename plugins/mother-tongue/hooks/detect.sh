@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # detect.sh — print the locale tag of the prose on stdin, or nothing when it
-# cannot tell. Every hook routes through this one judgment so that the reminder,
+# cannot tell. Every hook uses this one detection so that the reminder,
 # the reply check and the commit check never disagree about the language.
 #
 # Code, URLs and paths are stripped first (strip.sh): they are Latin in every

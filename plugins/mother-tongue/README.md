@@ -25,7 +25,7 @@ short to tell keeps the session's previous locale, and so does one the harness
 wrote (it opens with a tag such as `<task-notification>`), so a sub-agent's
 English report does not switch the conversation to English. Code blocks, `backtick
 spans`, URLs and paths are ignored (`hooks/strip.sh`); backticks are also how a
-banned term is quoted on purpose. The commit check judges only the message:
+banned term is quoted on purpose. The commit check reads only the message:
 quoted strings, heredoc bodies and `-F`/`--body-file` files, minus `…-by:`
 trailers.
 
@@ -42,7 +42,7 @@ Create `locales/<tag>/` with either file:
   reported as the text it matched: zh-TW's last row catches `eslint 綠` but
   not `CI 綠燈`.
   Only terms with no legitimate use in that locale belong here (`數據`, `代碼`
-  and `當前` are correct Taiwanese in other senses; judging those is left to
+  and `當前` are correct Taiwanese in other senses; whether they fit is left to
   `rules.md`), and a term earns an entry only after a scan of real zh-TW text
   finds no false hits.
 

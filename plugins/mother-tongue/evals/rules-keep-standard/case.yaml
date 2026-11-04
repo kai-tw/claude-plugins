@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: rules-keep-standard
+description: The zh-TW rules' list of terms to keep in English names only standard industry terms; `gate` is coined jargon and must not be on it.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the UserPromptSubmit hook a Chinese prompt and print the lines of the attached rules that list the terms to keep in English.
+context:
+  scaffold_script: fixture.sh
