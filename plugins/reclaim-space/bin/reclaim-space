@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Developer-disk space reclamation.
+# Free disk space on a macOS development machine.
 #
 # A launcher, not an implementation — the script lives with the skill that owns
 # it (see the exec line). It exists so skill files, agent files and this

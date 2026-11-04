@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # origin.git is a local bare remote with main and staging, staging one commit
-# ahead; wt is a clone whose adapter sends task PRs into staging and which has a
+# ahead; wt is a clone whose project config sends task PRs into staging and which has a
 # release.yml. stub/gh logs every call to gh.log, finds run 4242 for any release,
 # and reads that run's "<status> <conclusion> <url>" from run.state. Its `webhook
 # forward` prints each line appended to gh.events; while drop.once exists, a

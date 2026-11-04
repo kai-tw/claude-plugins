@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^has: the second time it bites, it becomes a mechanism fix = 1$'
+pattern: '^has: the second time it bites, it becomes a process fix = 1$'
 flags: m
 arm: with-only
 ---

@@ -4,4 +4,4 @@ pattern: '"line":3'
 flags: m
 match: not_contains
 ---
-A survivor no test reaches is left to line coverage.
+A survivor on an uncovered line is left to line coverage.

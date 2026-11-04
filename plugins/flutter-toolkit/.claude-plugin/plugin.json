@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "flutter-toolkit",
-  "version": "6.4.0",
-  "description": "Flutter test gates for a shared machine: plan-test (a machine-wide slot budget for test runs), plan-coverage (per-line reach over the diff) and plan-mutation (mutation score over the diff, Dart and JS/TS).",
+  "version": "6.5.0",
+  "description": "Flutter test checks for a shared machine: plan-test (a machine-wide concurrency limit for test runs), plan-coverage (line coverage of the changed lines) and plan-mutation (mutation score over the diff, Dart and JS/TS).",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"
@@ -18,6 +18,6 @@
     "stryker"
   ],
   "skills": [
-    "./skills/test-gates"
+    "./skills/flutter-testing"
   ]
 }

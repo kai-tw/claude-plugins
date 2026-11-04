@@ -13,4 +13,13 @@ echo "bare=$(run 'git push --force')"
 echo "named=$(run 'git push --force origin main')"
 echo "chained=$(run 'git status && git push -f origin main')"
 echo "branch=$(run 'git push --force origin feature')"
+# Every block message must say what a palimpsest is, since any one can be the first seen.
+explains() { jq -n --arg c "$2" --arg d "$PWD/repo" '{tool_input:{command:$c},cwd:$d}' \
+  | /bin/bash "$root/hooks/palimpsest.sh" 2>&1 >/dev/null | grep -qi 'palimpsest is' \
+  && echo "explains-$1=yes" || echo "explains-$1=no"; }
+explains bare 'git push --force'
+explains named 'git push --force origin main'
+explains delete 'git push origin --delete main'
+explains all 'git push --force --all'
+explains variable 'git push --force origin $b'
 SH

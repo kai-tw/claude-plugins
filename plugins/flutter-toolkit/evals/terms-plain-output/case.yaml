@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: terms-plain-output
+description: The text the model reads from this plugin — the skill, its references, the plugin description and the PreToolUse hook's block message — uses plain testing terms, none of the coined ones (gate, reach, grade, unpinned, LOW-SIGNAL, probe, budget, …).
+tags: [skills, hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Print every skill file, reference file and the plugin description, then feed the PreToolUse hook a bare flutter test and print its block message.
+context:
+  scaffold_script: fixture.sh

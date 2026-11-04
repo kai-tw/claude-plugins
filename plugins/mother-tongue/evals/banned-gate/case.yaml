@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: banned-gate
+description: The Stop hook blocks coined `-gate` compounds and "graded green" in English replies and a bare "gate" in zh-TW replies; Watergate and names in backticks don't count.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed stop.sh an English reply that uses push-gate and "graded green", an English reply that only mentions Watergate and a backticked `commit-gate` name, and a zh-TW reply that uses a bare "gate", and print what it says to each.
+context:
+  scaffold_script: fixture.sh

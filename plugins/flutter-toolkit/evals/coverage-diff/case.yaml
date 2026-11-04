@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: coverage-diff
-description: plan-coverage --diff <ref> takes scope against that ref instead of the default branch, so a branch off a release branch is graded on its own change only.
+description: plan-coverage --diff <ref> measures the lines changed since that ref instead of the default branch, so a branch off a release branch is measured on its own change only.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// asst-device — the on-device leg: does every scenario the brief numbers have a
-// test, is every test wired, and does the suite pass on a real phone of each
+// asst-device — the on-device test: does every scenario the brief numbers have a
+// test, is every test implemented, and does the suite pass on a real phone of each
 // platform the project ships. Files the result as the task's verify-device
 // report, so `asst-pr ready` can require it.
 //
@@ -8,9 +8,9 @@
 //   The brief's scenario ids are the lines `- S<n> …`, `- F<n> …`, `- B<n> …`
 //   (references/brief.md); without --brief it is read from the task's board row
 //   (`asst-board show <slug> --body`). A test covers an id when its name starts
-//   with `[<id>]`; one still marked `until wired` covers nothing.
+//   with `[<id>]`; one still skipped as `not implemented yet` covers nothing.
 //
-// Adapter (references/project.md):
+// Project config (references/project.md):
 //   device_test: <command>    run in the worktree once per platform, `{device}`
 //                             replaced by the phone's id from `flutter devices`
 //   devices:     android ios  the platforms that must pass (default: both)
@@ -34,12 +34,12 @@ const wt = resolve(wtArg);
 if (!existsSync(wt)) { console.error(`asst-device: no worktree at ${wt}`); process.exit(2); }
 
 const root = execFileSync('bash', [join(here, 'root.sh')], { cwd: wt, encoding: 'utf8' }).trim();
-const adapterPath = join(root, '.claude/assistant.md');
-const adapter = existsSync(adapterPath) ? readFileSync(adapterPath, 'utf8') : '';
-const field = (name) => adapter.match(new RegExp(`^${name}:[ \\t]*([^#\\n]*[^#\\s])`, 'm'))?.[1] ?? '';
+const configPath = join(root, '.claude/assistant.md');
+const config = existsSync(configPath) ? readFileSync(configPath, 'utf8') : '';
+const field = (name) => config.match(new RegExp(`^${name}:[ \\t]*([^#\\n]*[^#\\s])`, 'm'))?.[1] ?? '';
 const command = field('device_test');
 if (!command || command === 'none') {
-  console.error(`asst-device: the adapter has no device_test: command (${adapterPath})`);
+  console.error(`asst-device: the project config has no device_test: command (${configPath})`);
   process.exit(2);
 }
 const platforms = (field('devices') || 'android ios').split(/\s+/);
@@ -63,13 +63,14 @@ const grep = (pattern) => {
   const r = spawnSync('git', ['-C', wt, 'grep', '--untracked', '-nE', pattern, '--', '.'], { encoding: 'utf8' });
   return r.stdout.split('\n').filter(Boolean);
 };
-const unwired = grep('until wired');
-const unwiredFiles = new Set(unwired.map((l) => l.split(':')[0]));
+// `until wired` is the skip reason older versions wrote; it still counts.
+const pending = grep('not implemented yet|until wired');
+const pendingFiles = new Set(pending.map((l) => l.split(':')[0]));
 // A test runs from its name to the next test's name in the same file; one with
-// an `until wired` marker in that range covers nothing.
+// a `not implemented yet` skip in that range covers nothing.
 const at = (l) => { const [file, n] = l.split(':'); return { file, n: Number(n), text: l }; };
 const tags = grep('\\[[SFB][0-9]+\\]').map(at);
-const marks = unwired.map(at);
+const marks = pending.map(at);
 const covered = new Set();
 for (const t of tags) {
   const end = Math.min(...tags.filter((o) => o.file === t.file && o.n > t.n).map((o) => o.n), Infinity);
@@ -79,7 +80,7 @@ for (const t of tags) {
 const missing = ids.filter((id) => !covered.has(id));
 
 // ── features ──
-let featureLine = 'features: no list (adapter features: unset)';
+let featureLine = 'features: no list (project config features: unset)';
 const fpath = field('features');
 if (fpath && fpath !== 'none') {
   const fp = join(wt, fpath);
@@ -124,14 +125,14 @@ for (const p of platforms) {
 const reasons = [
   ...platforms.filter((p) => !results[p].startsWith('passed')).map((p) => `${p} ${results[p].split(' ')[0] === 'not' ? 'not run' : 'failed'}`),
   ...(missing.length ? [`${missing.length} scenario(s) without a test`] : []),
-  ...(unwired.length ? [`${unwired.length} test(s) still until wired`] : []),
+  ...(pending.length ? [`${pending.length} test(s) still skipped as not implemented yet`] : []),
 ];
 const passed = reasons.length === 0;
 const report = [
   passed ? 'device: passed' : `device: not passed — ${reasons.join(', ')}`,
   ...platforms.map((p) => `${p}: ${results[p]}`),
   `scenarios: ${ids.length - missing.length}/${ids.length} have a test${missing.length ? ` · missing: ${missing.join(' ')}` : ''}`,
-  `unwired: ${unwired.length ? [...unwiredFiles].join(' ') : 'none'}`,
+  `not implemented: ${pending.length ? [...pendingFiles].join(' ') : 'none'}`,
   featureLine,
 ].join('\n') + '\n';
 

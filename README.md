@@ -4,7 +4,7 @@ Kai's [Claude Code](https://claude.com/claude-code) plugins.
 
 **Written for one person's workflow, published as-is.** Several plugins here
 carry process specific to how Kai works — the house rules and the incidents
-behind them, Notion KB conventions, review judgment, and a ledger of founder
+behind them, Notion KB conventions, review judgment, and a ledger of Kai's
 corrections. Nothing is sanitised for an audience: a rule that exists because
 something broke says so, with what broke. Read them as worked examples of
 mechanisms, not as a framework to adopt — most are worth forking and cutting
@@ -29,12 +29,12 @@ claude plugin install dart-lsp@kai-tw
 | Plugin | Description |
 | --- | --- |
 | [dart-lsp](plugins/dart-lsp) | Dart/Flutter language server (Dart Analysis Server in LSP mode) for code intelligence |
-| [flutter-toolkit](plugins/flutter-toolkit) | Flutter test gates for a shared machine: `plan-test` slot budget, per-line coverage and mutation score over the diff (Dart and JS/TS) |
+| [flutter-toolkit](plugins/flutter-toolkit) | Flutter testing on a shared machine: `plan-test` concurrency limit, line coverage and mutation score over the diff (Dart and JS/TS) |
 | [google-reporting](plugins/google-reporting) | GA4 and Search Console readers via keyless service-account impersonation |
-| [assistant](plugins/assistant) | The founder's assistant: request → decision brief → screens → PR, across projects. Ships the cross-project rulebooks its reviewers grade against: `style-pack` (code style, charter S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, charter U1–U5 plus zh-Hant, ja and en) |
+| [assistant](plugins/assistant) | An assistant for your projects: request → decision brief → screen review → PR. Ships the cross-project rulebooks its reviewers check against: `style-pack` (code style, core rules S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, core rules U1–U5 plus zh-Hant, ja and en) |
 | [reclaim-space](plugins/reclaim-space) | Developer-disk reclamation on macOS: regenerable build output and toolchain caches, with a free-space floor on new git worktrees |
-| [mother-tongue](plugins/mother-tongue) | Per-locale writing rules for the agent's own prose: detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies and commit messages that use its banned terms |
-| [guardrails](plugins/guardrails) | Turns corrections into rules that fire on their own: hooks that warn about or block a known mistake as it happens, and a short discipline loaded at session start |
+| [mother-tongue](plugins/mother-tongue) | Per-locale writing rules for the agent's own prose: detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies, commit messages, and comments or docs written to files that use its banned terms |
+| [guardrails](plugins/guardrails) | Turns corrections into rules that fire on their own: hooks that warn about or block a known mistake as it happens, and short working rules loaded at session start |
 
 ## Scripts
 

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: builder-slices
-description: wire and fix are cut into slices, one builder and one checkpoint each; ui stays one dispatch; the next brief carries only what the code can't show; a builder that continues earlier work starts from git.
+description: integration and fix are cut into slices, one builder and one commit each; ui stays one dispatch; the next brief carries only what the code can't show; a builder that continues earlier work starts from git.
 tags: [agents]
 plugins: ["../.."]
 runs: 1

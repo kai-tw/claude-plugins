@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: decided-not-silence
-description: A `Decided` line is the assistant's own call — the founder's silence never makes it their decision and the assistant never cites it as approval; a `Decided` line that adds or changes a product mechanism is filed by brief-review with Fix: move it to `Needs you`.
+description: A `Decided` line is the assistant's own call — the user's silence never makes it their decision and the assistant never cites it as approval; a `Decided` line that adds or changes a product mechanism is filed by brief-review with Fix: move it to `Needs you`.
 tags: [assistant]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; echo "skill-own-call=$(f skills/assistant/SKILL.md | grep -cF "never makes one their decision")"; echo "skill-silence-accepts=$(f skills/assistant/SKILL.md | grep -cF "Silence on \`Decided\` = accepted")"; echo "brief-own-call=$(f skills/assistant/references/brief.md | grep -cF "silence never makes it theirs")"; echo "brief-silence-accepts=$(f skills/assistant/references/brief.md | grep -cF "silence accepts")"; echo "review-moves=$(f agents/verifier.md | grep -cF "is filed with Fix: move it to \`Needs you\`")"
   prompt: |
-    Say what the founder's silence on a `Decided` line means, and where a ruling that changes a product mechanism belongs.
+    Say what the user's silence on a `Decided` line means, and where a ruling that changes a product behaviour belongs.
 context:
   scaffold_script: fixture.sh

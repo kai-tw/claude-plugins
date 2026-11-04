@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "assistant",
-  "version": "0.65.1",
-  "description": "The founder's assistant: takes a request, decides, dispatches worker agents per project, and comes back with three touchpoints — intent + system design, the rendered screens, the delivery summary. Ships the rulebooks its reviewers grade against: `style-pack` (code style, charter S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, charter U1–U5 plus zh-Hant, ja and en).",
+  "version": "0.66.0",
+  "description": "The user's assistant: takes a request, decides, dispatches worker agents per project, and comes back to the user three times — the decision brief (intent + system design), the screen review, the delivery summary. Ships the rulebooks its reviewers check against: `style-pack` (code style, core rules S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, core rules U1–U5 plus zh-Hant, ja and en).",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"

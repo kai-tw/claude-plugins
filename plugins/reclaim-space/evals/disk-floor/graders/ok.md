@@ -5,4 +5,4 @@ flags: m
 match: contains
 arm: with-only
 ---
-No output when the floor is 0.
+No output when the minimum is 0.

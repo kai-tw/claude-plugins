@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: terms-core-old-report-kinds
+description: Reports filed under the kinds older versions used, scout and build-wire, are still found by `asst-report latest` under the new kinds, investigation and build-integration, until a report of the new kind is filed; a report put under an old kind is filed under the new one.
+tags: [terms, asst-report]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: echo "inv=$(basename "$(asst-report latest t investigation)")"; echo "int=$(basename "$(asst-report latest t build-integration)")"; echo new | asst-report put t scout >/dev/null; echo "inv2=$(basename "$(asst-report latest t investigation)")"; echo "files=$(asst-report list t | paste -sd, -)"
+  prompt: |
+    Look up task t's latest investigation and build-integration reports, file a report under the old kind scout, and list what is filed.
+context:
+  scaffold_script: fixture.sh

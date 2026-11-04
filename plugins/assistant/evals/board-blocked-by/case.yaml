@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-board create t1 "Name=First task"; asst-board create t2 "Name=Second task" Status=Next; echo "next_alone=$?"; asst-board create t2 "Name=Second task" Status=Next "Blocked by=t1"; echo "next_blocked=$?"; asst-board create t3 "Name=Third task" "Trigger=Add a retry to the upload path"; echo "other_prop=$?"; asst-board create t4 "Name=Upload retry" Status=Backlog --body found.md; echo "body=$?"; asst-board show t4 --body; asst-board list --all; (cd legacy && asst-board list 2>&1; echo "legacy=$?")
   prompt: |
-    The adapter says the board is a local file. Create t1; try a Next row t2 with no blocker, then with t1 as its blocker; try t3 with a Trigger property; create a Backlog row t4 whose description is found.md; show t4 with its body; list every row; then list the board in legacy/. Print each exit code.
+    The project config says the board is a local file. Create t1; try a Next row t2 with no blocker, then with t1 as its blocker; try t3 with a Trigger property; create a Backlog row t4 whose description is found.md; show t4 with its body; list every row; then list the board in legacy/. Print each exit code.
 context:
   scaffold_script: fixture.sh

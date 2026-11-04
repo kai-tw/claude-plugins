@@ -4,4 +4,4 @@ pattern: '^adapter=1$'
 flags: m
 arm: with-only
 ---
-The project adapter lists its KB modules in kb_pages.
+The project config lists its KB modules in kb_pages.

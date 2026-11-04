@@ -4,4 +4,4 @@ pattern: '^flow=1$'
 flags: m
 arm: with-only
 ---
-Tests come after ② and before the wiring.
+Tests come after the screen review and before the integration.

@@ -23,7 +23,7 @@
     },
     {
       "name": "flutter-toolkit",
-      "description": "Flutter test gates for a shared machine — plan-test slot budget, per-line coverage and mutation score over the diff (Dart and JS/TS)",
+      "description": "Flutter testing on a shared machine — plan-test concurrency limit, line coverage and mutation score over the diff (Dart and JS/TS)",
       "source": "./plugins/flutter-toolkit",
       "category": "development",
       "author": {
@@ -45,7 +45,7 @@
     },
     {
       "name": "guardrails",
-      "description": "Rules that fire on their own: hooks that warn about or block known mistakes as a command runs, and a short discipline loaded at session start",
+      "description": "Rules that fire on their own: hooks that warn about or block known mistakes as a command runs, and short working rules loaded at session start",
       "source": "./plugins/guardrails",
       "category": "productivity",
       "author": {
@@ -68,11 +68,11 @@
     {
       "name": "assistant",
       "source": "./plugins/assistant",
-      "description": "The founder's assistant — request → decision brief → screens → PR, across projects, with the style-pack and ui-text-pack rulebooks its reviewers grade against."
+      "description": "An assistant for your projects — request → decision brief → screen review → PR, with the style-pack and ui-text-pack rulebooks its reviewers check against."
     },
     {
       "name": "mother-tongue",
-      "description": "Per-locale writing rules for the agent's own prose — detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies and commit messages that use its banned terms",
+      "description": "Per-locale writing rules for the agent's own prose — detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies, commit messages, and comments or docs written to files that use its banned terms",
       "source": "./plugins/mother-tongue",
       "category": "productivity",
       "author": {

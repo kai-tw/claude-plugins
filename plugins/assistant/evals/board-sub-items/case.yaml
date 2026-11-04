@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-board create big "Name=Sync rework" && asst-board create s1 "Name=Sync schema" "Parent item=big" && asst-board create s2 "Name=Sync UI" Status=Next "Blocked by=s1" "Parent item=big" && asst-board list; asst-board trash big; echo "early=$?"; asst-board trash s1; asst-board list; asst-board trash s2; asst-board list --all
   prompt: |
-    The adapter says the board is a local file. Create a parent row big (Sync rework) with sub-items s1 (Sync schema) and s2 (Sync UI, Next, blocked by s1); list the board; try trashing big; trash s1, list, trash s2, and list every row.
+    The project config says the board is a local file. Create a parent row big (Sync rework) with sub-items s1 (Sync schema) and s2 (Sync UI, Next, blocked by s1); list the board; try trashing big; trash s1, list, trash s2, and list every row.
 context:
   scaffold_script: fixture.sh

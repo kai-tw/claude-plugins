@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'the founder saying the PR merged → step 8'
+pattern: 'the user saying the PR merged → step 8'
 arm: with-only
 ---
-Close starts when the founder says the PR merged.
+Close starts when the user says the PR merged.

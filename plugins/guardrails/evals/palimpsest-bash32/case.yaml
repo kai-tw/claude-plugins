@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: palimpsest-bash32
-description: Under /bin/bash (3.2 on macOS) palimpsest blocks a force-push onto main — bare on the current branch, named, and chained after && — and lets a force onto a feature branch through.
+description: Under /bin/bash (3.2 on macOS) palimpsest blocks a force-push onto main — bare on the current branch, named, and chained after && — and lets a force onto a feature branch through; every block message says what a palimpsest is.
 tags: [hooks]
 plugins: ["../.."]
 runs: 1

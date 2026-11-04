@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
-# check.sh feeds intercept.sh trap and healthy commands and prints whether the expected rule fired.
+# check.sh feeds intercept.sh trap and correct commands and prints whether the expected rule fired.
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; mkdir -p flags; n=0

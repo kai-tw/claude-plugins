@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // asst-board — the task board behind one op vocabulary, so the flow never names a
-// backend. The adapter (`.claude/assistant.md`, `board:`) picks where rows live:
+// backend. The project config (`.claude/assistant.md`, `board:`) picks where rows live:
 //   notion  the project's TaskList under `notion_root` (writes via asst-notion)
 //   file    the personal, unversioned .claude/.assistant/board.md (+ tasks/<slug>/)
 //
 // Usage: asst-board create  <slug> Name=<…> [Status=<…>] [Stage=<…>] ["Blocked by=<slug>[,…]"] ["Parent item=<slug>"] [--body <file.md>]
 //        asst-board set     <slug|page-id> Key=Val …
 //        asst-board brief   <slug|page-id> <brief.md>          the approved brief, into the row body
-//        asst-board decide  <slug|page-id> <decisions.md>      each fork the founder rules on, the moment they rule
+//        asst-board decide  <slug|page-id> <decisions.md>      each open question the user rules on, the moment they rule
 //        asst-board trash   <slug|page-id>                     at close: the row leaves the board, no record kept,
 //                                                              a Next row it was the last blocker of turns In Progress,
 //                                                              and a parent it was the last sub-item of leaves too
@@ -22,14 +22,14 @@
 // its body (`--body` at create, `brief` later); the file board keeps no property but
 // Name · Status · Stage · Blocked by · Parent item.
 //
-// decisions.md: `# <task name>`, then one `### <fork>` per ruling with a
+// decisions.md: `# <task name>`, then one `### <question>` per ruling with a
 // `**Pages**: <title>[, <title>]` line naming the KB pages it governs, any module
-// (`none` when it governs none; required unless the adapter's kb_pages is none)
+// (`none` when it governs none; required unless the project config's kb_pages is none)
 // and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
-// row per fork, Pages = a relation to those KB Pages rows, Task = a relation to the task's
+// row per question, Pages = a relation to those KB Pages rows, Task = a relation to the task's
 // TaskList row, empty once that row is trashed; file: appended to
 // <kb>/decisions/<slug>.md, under the # heading.
-// Exit 2 = no adapter / bad op / unknown slug / bad property; asst-notion failures pass through.
+// Exit 2 = no project config / bad op / unknown slug / bad property; asst-notion failures pass through.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
@@ -47,12 +47,12 @@ if (!op || op === '--help' || op === '-h') {
 }
 
 const root = spawnSync('bash', [join(here, '../../assistant/scripts/root.sh')], { encoding: 'utf8' }).stdout.trim();
-const adapterPath = join(root, '.claude/assistant.md');
-if (!existsSync(adapterPath)) fail(`no adapter at ${adapterPath} — the assistant writes one (references/project.md) before any board op.`);
-const adapter = Object.fromEntries(readFileSync(adapterPath, 'utf8').split('\n')
+const configPath = join(root, '.claude/assistant.md');
+if (!existsSync(configPath)) fail(`no project config at ${configPath} — the assistant writes one (references/project.md) before any board op.`);
+const config = Object.fromEntries(readFileSync(configPath, 'utf8').split('\n')
   .map(l => l.match(/^\s*([a-z_]+):\s*([^#]*?)\s*(#.*)?$/)).filter(Boolean).map(m => [m[1], m[2]]));
-const backend = adapter.board;
-if (!['notion', 'file'].includes(backend)) fail(`adapter board: must be notion | file (got "${backend ?? ''}")`);
+const backend = config.board;
+if (!['notion', 'file'].includes(backend)) fail(`the project config's board: must be notion | file (got "${backend ?? ''}")`);
 const stateDir = join(root, '.claude/.assistant');
 const today = new Date().toISOString().slice(0, 10);
 const kv = (xs) => Object.fromEntries(xs.map(x => { const i = x.indexOf('='); if (i < 1) fail(`expected Key=Val, got "${x}"`); return [x.slice(0, i), x.slice(i + 1)]; }));
@@ -70,8 +70,8 @@ function checkProps(p, { creating }) {
 
 // ── notion backend: every write is an asst-notion command; --dry-run prints it.
 function notion(cmdArgs, stdin, { write = true } = {}) {
-  const line = ['asst-notion', ...cmdArgs, '--root', adapter.notion_root, ...(write ? ['--commit'] : [])];
-  if (!adapter.notion_root) fail('adapter board: notion needs notion_root:');
+  const line = ['asst-notion', ...cmdArgs, '--root', config.notion_root, ...(write ? ['--commit'] : [])];
+  if (!config.notion_root) fail('the project config has board: notion but no notion_root:');
   if (dry) { console.log(line.join(' ') + (stdin ? `\n${stdin}` : '')); return ''; }
   const r = spawnSync(line[0], line.slice(1), { encoding: 'utf8', input: stdin });
   if (r.error) fail(`asst-notion: ${r.error.message}`);
@@ -80,8 +80,8 @@ function notion(cmdArgs, stdin, { write = true } = {}) {
   return r.stdout;
 }
 function notionRows(pairs) {
-  if (!adapter.notion_root) fail('adapter board: notion needs notion_root:');
-  const line = ['asst-notion', 'query', 'tasklist', ...pairs, '--root', adapter.notion_root];
+  if (!config.notion_root) fail('the project config has board: notion but no notion_root:');
+  const line = ['asst-notion', 'query', 'tasklist', ...pairs, '--root', config.notion_root];
   if (dry) { console.log(line.join(' ')); return []; }
   const r = spawnSync(line[0], line.slice(1), { encoding: 'utf8' });
   if (r.error) fail(`asst-notion: ${r.error.message}`);
@@ -98,7 +98,7 @@ function pageIdOf(ref) {
   if (existsSync(f)) return readFileSync(f, 'utf8').trim();
   fail(`no page id recorded for "${ref}" (${f}) — pass the page id instead.`);
 }
-function decisions(md) { // "### fork" blocks → {Name, Pages?: [title…], Context, Decision, Consequence}; Pages [] = none
+function decisions(md) { // "### <question>" blocks → {Name, Pages?: [title…], Context, Decision, Consequence}; Pages [] = none
   const rows = []; let cur = null;
   for (const l of md.split('\n')) {
     const h = l.match(/^### (.+)$/); if (h) { cur = { Name: h[1].trim() }; rows.push(cur); continue; }
@@ -180,18 +180,18 @@ switch (op) {
   case 'decide': {
     const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('decide <slug|page-id> <decisions.md>');
     const md = readFileSync(file, 'utf8'); const decs = decisions(md);
-    if (!decs.length) fail(`${file} has no "### <fork>" block`);
+    if (!decs.length) fail(`${file} has no "### <question>" block`);
     // A KB page lists its decisions by Pages, so a decision without one never shows on any page.
-    const keepsPages = !['', 'none'].includes((adapter.kb_pages ?? '').trim());
+    const keepsPages = !['', 'none'].includes((config.kb_pages ?? '').trim());
     const unplaced = keepsPages ? decs.filter(d => d.Pages === undefined).map(d => `"${d.Name}"`) : [];
     if (unplaced.length) fail(`decision ${unplaced.join(', ')} has no **Pages** line: under its ### heading, name the KB pages it governs by their exact titles, "**Pages**: <title>[, <title>]", or "**Pages**: none".`);
     const name = (md.match(/^# (.+)$/m) ?? [, slug])[1].trim();
     if (backend === 'file') {
-      if (!adapter.kb) fail('adapter board: file needs kb: <dir>');
-      const dest = join(root, adapter.kb, 'decisions', `${slug}.md`); const forks = md.slice(md.search(/^### /m)).trimEnd() + '\n';
+      if (!config.kb) fail('the project config has board: file but no kb: <dir>');
+      const dest = join(root, config.kb, 'decisions', `${slug}.md`); const blocks = md.slice(md.search(/^### /m)).trimEnd() + '\n';
       if (dry) { console.log(`would append ${decs.length} decisions to ${dest}`); break; }
       mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, existsSync(dest) ? readFileSync(dest, 'utf8').trimEnd() + '\n\n' + forks : `# ${name}\n\n${forks}`); console.log(dest);
+      writeFileSync(dest, existsSync(dest) ? readFileSync(dest, 'utf8').trimEnd() + '\n\n' + blocks : `# ${name}\n\n${blocks}`); console.log(dest);
       break;
     }
     const task = pageIdOf(slug);

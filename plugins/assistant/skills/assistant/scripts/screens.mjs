@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// asst-screens — build the ② screens page: one web page showing every rendered
+// asst-screens — build the screen-review page: one web page showing every rendered
 // screenshot as its own image, at its original resolution. The images are
 // copied byte for byte (no re-encoding, no stitching) into `screens/` beside the
-// page, so nothing is scaled down before the founder sees it; the assistant
+// page, so nothing is scaled down before the user sees it; the assistant
 // publishes the page as an Artifact with those files. They aren't embedded:
 // a page holding every locale's images outgrows an Artifact's 16MB.
 //
@@ -22,7 +22,7 @@
 //   the segment before it (or before the theme), and with no such tail the last
 //   segment is the state. A name with a single segment is a screen with no state.
 //
-// labels.json in <image-dir> (optional) gives the page in the founder's
+// labels.json in <image-dir> (optional) gives the page in the user's
 // language: {"lang": "zh-Hant", "title": "…", "summary": "…",
 // "screens": {"<screen>": "…"}, "states": {"<state>": "…"},
 // "locales": {"<locale>": "…"}}. Screens, states and locales appear in the
@@ -32,11 +32,11 @@
 // The page has one section per screen, headed by its label and its number of
 // states; listed states first, then empty · loading · error · populated, then
 // the rest by name. Every screen × state × theme gets a number, the same in
-// every locale, so the founder can answer "which cell" with one; a caption gives
+// every locale, so the user can answer "which cell" with one; a caption gives
 // the state's label (with the theme when there are both) above the state's key. Cells are
 // phone-width (at least 220px), so a portrait screenshot is never stretched to
 // the page's width. A sticky bar shows one locale at a time (the first, until
-// the founder picks another), one theme (light first) or both, and one screen
+// the user picks another), one theme (light first) or both, and one screen
 // or all of them; numbers don't change when a filter hides a cell.
 //
 // The page lands at <root>/.claude/.assistant/tasks/<slug>/screens.html, its

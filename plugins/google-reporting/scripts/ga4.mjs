@@ -30,7 +30,7 @@ const NAMESPACE = "ga4";
 const SCOPE = "https://www.googleapis.com/auth/analytics.readonly";
 const OVERVIEW_METRICS = ["activeUsers", "newUsers", "sessions", "engagedSessions", "engagementRate", "screenPageViews", "eventCount"];
 
-const { fail, adcToken, saToken, describeApiFailure, runSetupLadder, httpsJson, safeParse } = makeGoogleAuth(NAMESPACE);
+const { fail, adcToken, saToken, describeApiFailure, runSetupSteps, httpsJson, safeParse } = makeGoogleAuth(NAMESPACE);
 
 function requireFlag(args, name, example) {
   const val = args[name];
@@ -69,7 +69,7 @@ async function main() {
     const grantTo = args["grant-to"] || currentGcloudAccount();
     if (!grantTo) fail("--grant-to is required (could not infer your gcloud account — run `gcloud config get-value account`).");
     const saEmail = `${saName}@${project}.iam.gserviceaccount.com`;
-    runSetupLadder(
+    runSetupSteps(
       [
         { label: `create service account ${saName}`, argv: ["gcloud", "iam", "service-accounts", "create", saName, "--project", project, "--display-name", "GA4 Data API reader (impersonated, keyless)"] },
         { label: "enable Analytics Data API", argv: ["gcloud", "services", "enable", "analyticsdata.googleapis.com", "--project", project] },

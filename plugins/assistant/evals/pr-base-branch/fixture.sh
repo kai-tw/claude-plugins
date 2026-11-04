@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
-# origin.git is a local bare remote with main and staging; the adapter sends task
+# origin.git is a local bare remote with main and staging; the project config sends task
 # PRs into staging. staging carries one commit main lacks, and the task branch
 # starts from staging. stub/gh logs every call to gh.log; `pr view` finds a draft
 # PR whose base is $GH_BASE unless GH_HAS_PR=0, and `pr list` finds none.

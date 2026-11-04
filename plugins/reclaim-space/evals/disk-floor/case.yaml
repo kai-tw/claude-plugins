@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: disk-floor
-description: Blocks git worktree add when free space is below the floor; a floor of 0, other commands, or a machine without a swap volume pass.
+description: Blocks git worktree add when free space is below the minimum; a minimum of 0, other commands, or a machine without a swap volume pass.
 tags: [hooks]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: export RECLAIM_SWAP_VOLUME=.; RECLAIM_DISK_FLOOR_GB=999999 "$root/hooks/disk-floor.sh" < add.json; echo "ok_bytes=$(RECLAIM_DISK_FLOOR_GB=0 "$root/hooks/disk-floor.sh" < add.json | wc -c | tr -d " ")"; echo "list_bytes=$(RECLAIM_DISK_FLOOR_GB=999999 "$root/hooks/disk-floor.sh" < list.json | wc -c | tr -d " ")"; echo "noswap_bytes=$(RECLAIM_SWAP_VOLUME=./no-such-volume RECLAIM_DISK_FLOOR_GB=999999 "$root/hooks/disk-floor.sh" < add.json | wc -c | tr -d " ")"
   prompt: |
-    Feed git worktree add once with a very high floor and once with zero, then git worktree list with a very high floor, and git worktree add with no swap volume; print the hook's output.
+    Feed git worktree add once with a very high minimum and once with zero, then git worktree list with a very high minimum, and git worktree add with no swap volume; print the hook's output.
 context:
   scaffold_script: fixture.sh

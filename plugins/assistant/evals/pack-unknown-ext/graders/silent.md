@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-A refusal prints no partial charter.
+A refusal prints no partial core rules.

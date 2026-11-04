@@ -1,13 +1,13 @@
-# Style rules — C# statute layer
+# Style rules — C# language rules
 
-Loaded when: the diff contains `.cs`. Each rule must hang under an existing charter `S<N>`;
-if it cannot, amend the charter first (`CONVENTIONS.md`).
+Loaded when: the diff contains `.cs`. Each rule is filed under an existing core rule `S<N>`;
+if none fits, add the core rule first (`CONVENTIONS.md`).
 
-## S3 — Every collapse must be justified at each consumption point
+## S3 — Every collapse must be justified at each use site
 
 - **S3.1-csharp A `struct`'s `default` bypasses the constructor** — Check: for a value
   expressed as a `struct` (`record struct` included), is its all-zero `default` a valid
-  state? If not, it violates charter S3.5: `default(T)`, `new T[n]`, unassigned fields and
+  state? If not, it violates core rule S3.5: `default(T)`, `new T[n]`, unassigned fields and
   deserialization all bypass the checks the constructor enforces, the type will not stop
   them, and the zero value reads just like a real one. Express it as a reference type
   instead, or make `default` a named valid state.
@@ -16,16 +16,16 @@ if it cannot, amend the charter first (`CONVENTIONS.md`).
 
 - **S4.1-csharp Persist an `enum` with a hand-written code** — Check: what form does the
   enum write out? `System.Text.Json`'s default form is the underlying number (`Phase.Payout`
-  is written as `2`), which violates charter S4.1 (sequence position): inserting a new member
+  is written as `2`), which violates core rule S4.1 (sequence position): inserting a new member
   between existing ones shifts every existing save by one, and reading back is silent.
   Casting to `(int)` or `ToString("D")` violates it too. `JsonStringEnumConverter`,
-  `ToString()` and `nameof` write the member name and violate charter S4.2. The charter
+  `ToString()` and `nameof` write the member name and violate core rule S4.2. The
   S4.2 mapping is one `switch` expression with an arm per member and no discard arm, so a
   missing member raises CS8509; for `System.Text.Json` it lives in a `JsonConverter<T>`; decode walks
   `Enum.GetValues<T>()` through that `switch` and falls back on an unknown code. Adopting
   codes: a store that already holds member names takes codes equal to them, so nothing
-  migrates; a store that held numbers needs a frozen number→member table (charter S4.5) and a
-  migration (charter S4.4).
+  migrates; a store that held numbers needs a frozen number→member table (core rule S4.5) and a
+  migration (core rule S4.4).
 - **S4.2-csharp Persist instants as `DateTimeOffset`** — Check: is the instant written out a
   `DateTime` or a `DateTimeOffset`? If the former, it violates this rule: `Kind` is not written
   with the value and always reads back as `Unspecified`, so any later time-zone conversion uses
@@ -36,7 +36,7 @@ if it cannot, amend the charter first (`CONVENTIONS.md`).
 
 - **S6.1-csharp `!` must state who upholds its guarantee** — Check: where `= null!`,
   `default!` or a `!` suppression is used, is it stated who fills the value and when (a
-  framework hook, the serializer, call order)? If not, it violates charter S6.5: `!` turns off
+  framework hook, the serializer, call order)? If not, it violates core rule S6.5: `!` turns off
   the compiler's check, the guarantee it buys is now upheld by the reader, and where that
   guarantee comes from cannot be read from this repo's types. If the constructor can fill it,
   switch to constructor injection.
@@ -46,17 +46,17 @@ if it cannot, amend the charter first (`CONVENTIONS.md`).
 - **S7.1-csharp Changing type at the boundary must reattach the original stack trace** —
   Check: when translating an exception inside `catch`, is the original stack trace attached
   to the new exception with `ExceptionDispatchInfo.SetRemoteStackTrace` before it is thrown?
-  Carrying an `InnerException` via `throw new XFailure(msg, ex)` instead violates charter
-  S7.5: the new exception's stack starts at the translation line, and `InnerException` is
-  exactly the carrying the charter excludes.
+  Carrying an `InnerException` via `throw new XFailure(msg, ex)` instead violates core rule
+  S7.5: the new exception's stack starts at the translation line, and S7.5 forbids carrying
+  the inner exception.
 
 ## S8 — Coordination must not rest on "usually right"
 
 - **S8.1-csharp Async critical sections must be serialized with `SemaphoreSlim(1, 1)`** —
   Check: is this critical section spanning an `await` guarded by a `SemaphoreSlim`, or by
-  `lock` plus a `bool`? If the latter, it violates charter S8.1: `lock` cannot span an
+  `lock` plus a `bool`? If the latter, it violates core rule S8.1: `lock` cannot span an
   `await` (the compiler rejects that line), so the rewrite usually protects only the half
-  before the continuation point, which had no contention to begin with.
+  before the `await`, which had no contention to begin with.
 
 ## S9 — Resources must be bounded, and the bound stated when written
 
@@ -71,7 +71,7 @@ if it cannot, amend the charter first (`CONVENTIONS.md`).
 
 - **S10.1-csharp An `enum`'s range is its underlying integer's entire range** — Check: is an
   enum read back from storage, the network or `Enum.Parse` checked at the boundary with
-  `Enum.IsDefined` or an exhaustive `switch` expression? If not, it violates charter S10.1:
+  `Enum.IsDefined` or an exhaustive `switch` expression? If not, it violates core rule S10.1:
   `(Phase)99` is legal, `JsonSerializer.Deserialize<Phase>("99")` accepts it as is, and a
   `switch` statement that misses it just runs through silently — a `switch` expression is
   caught by the compiler's CS8524; a statement has no such protection.
@@ -79,7 +79,7 @@ if it cannot, amend the charter first (`CONVENTIONS.md`).
 ## S15 — A guard must name the state it guards against; the number of guards is a design symptom
 
 - **S15.1-csharp `?.` is an unnamed guard** — Check: which path does the `null` that this
-  `?.` or `??` guards against come from? If you cannot say, it violates charter S15.1: the
+  `?.` or `??` guards against come from? If you cannot say, it violates core rule S15.1: the
   whole expression silently evaluates to `null` or does not run at all, with no feedback to
   caller or user, and that unexplained `null` is the defect.
 
@@ -87,6 +87,6 @@ if it cannot, amend the charter first (`CONVENTIONS.md`).
 
 - **S16.1-csharp An exposed read-only collection must really be read-only** — Check: is the
   object behind a return value declared `IReadOnlyList<T>` the owner's own `List<T>`? If so,
-  it violates charter S16.4: the interface is only a view, and a single `as List<T>` gives the
+  it violates core rule S16.4: the interface is only a view, and a single `as List<T>` gives the
   caller the owner's internal collection. `AsReadOnly()` blocks that cast; if the caller needs
   a snapshot of the current state, return a copy.

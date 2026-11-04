@@ -1,0 +1,2 @@
+/(?i)\b[a-z]+-gate[sd]?\b/	a check (it passes or fails) / a hook that blocks
+/(?i)\bgraded (green|red)\b/	passed / failed

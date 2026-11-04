@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: terms-plain-text
+description: What the SessionStart hook injects into every session, and the skill description that is always in context, use plain wording — none of the plugin's old coined terms, which Claude copies into its own replies.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: CLAUDE_PLUGIN_ROOT="$root" bash -c "$(jq -r ".hooks.SessionStart[].hooks[].command" "$root/hooks/hooks.json")" </dev/null; sed -n "/^---$/,/^---$/p" "$root/skills/guardrails/SKILL.md"
+  prompt: |
+    Run the command hooks/hooks.json registers for SessionStart and print what it injects, then print the frontmatter of skills/guardrails/SKILL.md.
+context:
+  scaffold_script: fixture.sh

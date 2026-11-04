@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: board-no-config
+description: No project config → exit 2, naming the config to write, without guessing a backend.
+tags: [asst-board]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: asst-board list; echo "exit=$?"
+  prompt: |
+    List this project's board. The project has no .claude/assistant.md yet. Print the tool output and exit code.
+context:
+  scaffold_script: fixture.sh

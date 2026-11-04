@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# asst-pr — a task's PR is opened as a DRAFT and turned ready only at ③.
+# asst-pr — a task's PR is opened as a DRAFT and turned ready only at the delivery summary.
 #
 # A PR that looks mergeable gets merged: opened ready while agents were still
 # working, one was merged before its work was done. A draft cannot be merged, so
@@ -22,18 +22,18 @@
 #          that the default branch lacks, then start the repo's release.yml on
 #          that commit (it fast-forwards the default branch and deploys) and
 #          wait for that run (default 120 minutes; run_in_background: true):
-#          RELEASED, or RELEASE NOT PUSHED with the founder's push command when
+#          RELEASED, or RELEASE NOT PUSHED with the user's push command when
 #          the default branch never moved, or RELEASE FAILED with the run's
 #          link when it moved; --dry-run lists and starts nothing
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists, targets
-#          the adapter's base_branch (else the default branch) and has a
-#          description; every verify leg the
-#          adapter requires has a report filed after HEAD's commit, and an
+#          the project config's base_branch (else the default branch) and has a
+#          description; every verify-* report the project config
+#          requires was filed after HEAD's commit, and an
 #          `exempt:` verify-code covers at most 20 changed lines; CI on HEAD
 #          passed. A PR that is already ready is checked the same way. A draft
 #          whose every check skipped is turned ready so CI runs, and exits 3
-# Legs: verify-code always · verify-coverage when the adapter's coverage: is a
+# Reports: verify-code always · verify-coverage when the project config's coverage: is a
 # command (not none or ci) · verify-text when ui_strings: is set and the PR's
 # diff touches it · verify-device when device_test: is a command, and its first
 # line must be `device: passed` (asst-device).
@@ -55,17 +55,17 @@ usage() { sed -n '10,44p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
 root=$(cd "$wt" && asst_root)
-adapter="$root/.claude/assistant.md"
-field() { sed -nE "s/^$1:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" "$adapter" 2>/dev/null | head -1; }
+config="$root/.claude/assistant.md"
+field() { sed -nE "s/^$1:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" "$config" 2>/dev/null | head -1; }
 if [ "$(field vcs)" = svn ]; then
-  [ "$op" = release ] && { echo "asst-pr: vcs is svn — base_branch and releases are git only; an svn task ends in svn commit at ③" >&2; exit 2; }
-  echo "asst-pr: vcs is svn — there is no PR; ③ ends in svn commit" >&2; exit 2
+  [ "$op" = release ] && { echo "asst-pr: vcs is svn — base_branch and releases are git only; an svn task ends in svn commit after the delivery summary" >&2; exit 2; }
+  echo "asst-pr: vcs is svn — there is no PR; the task ends in svn commit after the delivery summary" >&2; exit 2
 fi
 
 g() { git -C "$wt" "$@"; }
 branch=$(g symbolic-ref --quiet --short HEAD) || { echo "asst-pr: $wt is on a detached HEAD" >&2; exit 2; }
 default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); default=${default#origin/}; default=${default:-main}
-# Task PRs go into the adapter's base_branch when it names one (e.g. staging,
+# Task PRs go into the project config's base_branch when it names one (e.g. staging,
 # which deploys to a test environment); a release then carries it into the
 # default branch.
 target=$(field base_branch); case "$target" in ""|none) target=$default ;; esac
@@ -115,12 +115,12 @@ case "$op" in
     leaks=$(disclosure_leaks "$wt" "origin/$target" "$body")
     [ -z "$leaks" ] || { printf 'asst-pr: NOT PUSHED — this repo is not known to be private, and this would publish (SKILL.md §Disclosure):\n%s\n' "$leaks" >&2; exit 1; }
     g push --quiet -u origin HEAD || { echo "asst-pr: push failed" >&2; exit 1; }
-    github "$branch is pushed; the PR is the founder's to open — report it as a \`Needs you\` line."
+    github "$branch is pushed; the PR is the user's to open — report it as a \`Needs you\` line."
     url=$(cd "$wt" && gh pr view "$branch" --json url --jq .url 2>/dev/null) && { echo "$url"; exit 0; }
     case " $* " in *" --title "*|*" -t "*|*" --fill "*) ;; *) set -- "$@" --fill ;; esac
     (cd "$wt" && gh pr create --draft --base "$target" --head "$branch" "$@") ;;
   release)
-    [ "$target" != "$default" ] || { echo "asst-pr: the adapter names no base_branch — task PRs go straight into $default, so there is nothing to release" >&2; exit 2; }
+    [ "$target" != "$default" ] || { echo "asst-pr: the project config names no base_branch — task PRs go straight into $default, so there is nothing to release" >&2; exit 2; }
     dry="" mins=120
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -141,8 +141,8 @@ case "$op" in
     echo "$carried"
     [ -z "$dry" ] || exit 0
     [ -f "$wt/.github/workflows/release.yml" ] \
-      || { echo "asst-pr: no .github/workflows/release.yml here — the founder fast-forwards $default: git push origin $sha:refs/heads/$default" >&2; exit 2; }
-    github "The release is the founder's to start — report it as a \`Needs you\` line."
+      || { echo "asst-pr: no .github/workflows/release.yml here — the user fast-forwards $default: git push origin $sha:refs/heads/$default" >&2; exit 2; }
+    github "The release is the user's to start — report it as a \`Needs you\` line."
     # The commit listed above is the one released, whatever reaches the
     # branch meanwhile.
     (cd "$wt" && gh workflow run release.yml --ref "$default" -f "sha=$sha") || exit 2
@@ -168,10 +168,10 @@ case "$op" in
         # Whether the default branch moved tells a refused push from a failed
         # deploy, whatever each repo names its steps. GITHUB_TOKEN can't push a
         # commit that changes .github/workflows/, so such a release always ends
-        # here, and the founder's own push does what release.yml couldn't.
+        # here, and the user's own push does what release.yml couldn't.
         at=$(g ls-remote origin "refs/heads/$default" | cut -f1)
         if [ "$at" != "$sha" ]; then
-          echo "asst-pr: RELEASE NOT PUSHED — $default never moved to ${sha:0:7}. The founder pushes it, and that push deploys: git fetch origin && git push origin $sha:refs/heads/$default"
+          echo "asst-pr: RELEASE NOT PUSHED — $default never moved to ${sha:0:7}. The user pushes it, and that push deploys: git fetch origin && git push origin $sha:refs/heads/$default"
         else
           echo "asst-pr: RELEASE FAILED — $default is at ${sha:0:7}, but the run failed after that; see its link above"
         fi ;;
@@ -206,9 +206,9 @@ case "$op" in
     fi
     exec_node "$here/pr-watch.mjs" ci "$repo" "$num" "${mins:-60}" "$(g rev-parse HEAD)" bash "$here/pr.sh" checks "$slug" "$wt" ;;
   ready)
-    [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — checkpoint first"
+    [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — commit first"
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed — run asst-pr open first"
-    github "Nothing was checked — ③ goes to the founder with this line as a \`Needs you\` line."
+    github "Nothing was checked — the delivery summary goes to the user with this line as a \`Needs you\` line."
     pr=$(cd "$wt" && gh pr view "$branch" --json number,isDraft,baseRefName --jq '"\(.number) \(.isDraft) \(.baseRefName)"' 2>/dev/null) \
       || refuse "no PR for $branch — asst-pr open never ran"
     read -r num draft base <<< "$pr"
@@ -219,45 +219,45 @@ case "$op" in
       refuse "#$num is stacked on $base — it stays a draft until that PR merges and this branch is merged with $target"
     fi
     body=$(cd "$wt" && gh pr view "$branch" --json body --jq .body 2>/dev/null)
-    [ -n "${body//[[:space:]]/}" ] || refuse "#$num has no description — write its title and body from ③ first (gh pr edit)"
+    [ -n "${body//[[:space:]]/}" ] || refuse "#$num has no description — write its title and body from the delivery summary first (gh pr edit)"
     g fetch --quiet origin "$base" 2>/dev/null
     leaks=$(disclosure_leaks "$wt" "origin/$base" "$body")
     [ -z "$leaks" ] || refuse "this repo is not known to be private, and #$num publishes (SKILL.md §Disclosure):
 $leaks"
 
-    legs="code"
-    case "$(field coverage)" in none|ci|"") ;; *) legs="$legs coverage" ;; esac
-    case "$(field device_test)" in none|"") ;; *) legs="$legs device" ;; esac
+    reviews="code"
+    case "$(field coverage)" in none|ci|"") ;; *) reviews="$reviews coverage" ;; esac
+    case "$(field device_test)" in none|"") ;; *) reviews="$reviews device" ;; esac
     glob=$(field ui_strings)
     if [ -n "$glob" ] && [ "$glob" != none ]; then
       while IFS= read -r f; do
         # shellcheck disable=SC2053 # $glob is a pattern on purpose
-        [[ $f == $glob ]] && { legs="$legs text"; break; }
+        [[ $f == $glob ]] && { reviews="$reviews text"; break; }
       done < <(g diff --name-only "origin/$base...HEAD" 2>/dev/null)
     fi
 
-    # A report older than HEAD graded code that is not what ships.
+    # A report older than HEAD reviewed code that is not what ships.
     head_t=$(g log -1 --format=%ct)
     missing=""
-    for leg in $legs; do
-      f=$(cd "$wt" && bash "$here/report.sh" latest "$slug" "verify-$leg" 2>/dev/null) \
-        || { missing="$missing verify-$leg(none)"; continue; }
+    for review in $reviews; do
+      f=$(cd "$wt" && bash "$here/report.sh" latest "$slug" "verify-$review" 2>/dev/null) \
+        || { missing="$missing verify-$review(none)"; continue; }
       t=$(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f")
-      [ "$t" -ge "$head_t" ] || missing="$missing verify-$leg(older than HEAD)"
+      [ "$t" -ge "$head_t" ] || missing="$missing verify-$review(older than HEAD)"
     done
     [ -z "$missing" ] || refuse "verify reports missing or stale:$missing"
     # A device report is filed whatever the outcome; only a pass counts.
-    if [[ " $legs " == *" device "* ]]; then
+    if [[ " $reviews " == *" device "* ]]; then
       f=$(cd "$wt" && bash "$here/report.sh" latest "$slug" verify-device 2>/dev/null)
       first=$(head -1 "$f")
       [ "$first" = "device: passed" ] || refuse "verify-device says: $first — run asst-device again once every platform can pass"
     fi
-    # The assistant may grade a diff itself only as `exempt` (SKILL.md step 6),
+    # The assistant may review a diff itself only as `exempt` (SKILL.md step 6),
     # and that verdict starts with `exempt:`. Past 20 lines it isn't exempt.
     f=$(cd "$wt" && bash "$here/report.sh" latest "$slug" verify-code 2>/dev/null)
     if head -1 "$f" | grep -q '^exempt:'; then
       n=$(g diff --numstat "origin/$base...HEAD" | awk '{ s += $1 + $2 } END { print s + 0 }')
-      [ "$n" -le 20 ] || refuse "verify-code is an \`exempt:\` verdict, but the diff changes $n lines — dispatch the verifier's code leg"
+      [ "$n" -le 20 ] || refuse "verify-code is an \`exempt:\` verdict, but the diff changes $n lines — dispatch the verifier's code review"
     fi
     ci; case $? in
       0) ;;
@@ -273,7 +273,7 @@ $leaks"
       *) exit 2 ;;
     esac
     if [ "$draft" = true ]; then (cd "$wt" && gh pr ready "$num") || exit 2; fi
-    echo "asst-pr: #$num ready (legs: $legs)"
+    echo "asst-pr: #$num ready (reviews: $reviews)"
     echo "asst-pr: to be woken when it merges, run asst-pr watch $slug $wt --merge with run_in_background: true" ;;
   *) usage ;;
 esac

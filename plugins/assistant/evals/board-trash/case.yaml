@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-board create t1 "Name=First task" && asst-board create t2 "Name=Second task" Status=Next "Blocked by=t1" && asst-board trash t1 && asst-board list --all; asst-board trash nope; echo "missing=$?"
   prompt: |
-    The adapter says the board is a local file. Create t1 and a Next row t2 blocked by it, trash t1, list every row, then trash a slug that does not exist and print its exit code.
+    The project config says the board is a local file. Create t1 and a Next row t2 blocked by it, trash t1, list every row, then trash a slug that does not exist and print its exit code.
 context:
   scaffold_script: fixture.sh

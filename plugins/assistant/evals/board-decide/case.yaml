@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: asst-board decide t2 nofeature.md --dry-run; echo "decide-exit=$?"; asst-board archive t1 archive.md --dry-run; echo "archive-exit=$?"; asst-board decide t1 decisions.md --dry-run; asst-board create t3 Name=Fix "Pages=Read aloud,Human voice" --dry-run
   prompt: |
-    The adapter says the board is in Notion and the project keeps product pages. Dry-run filing nofeature.md as t2's decisions, try archiving t1, dry-run filing decisions.md as t1's decisions, then dry-run creating task t3 (Fix) on the Read aloud and Human voice pages, and show what would be written.
+    The project config says the board is in Notion and the project keeps product pages. Dry-run filing nofeature.md as t2's decisions, try archiving t1, dry-run filing decisions.md as t1's decisions, then dry-run creating task t3 (Fix) on the Read aloud and Human voice pages, and show what would be written.
 context:
   scaffold_script: fixture.sh

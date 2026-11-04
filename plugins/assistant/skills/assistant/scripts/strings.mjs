@@ -1,19 +1,19 @@
 #!/usr/bin/env node
-// asst-strings — what the founder did with each string at ②, kept as examples to
+// asst-strings — what the user did with each string at the screen review, kept as examples to
 // draft from and as a rate that says whether drafts are getting closer.
 //
 // Rules can't hold everything a native speaker hears, so drafting starts from the
-// founder's own before → after pairs instead, and the acceptance rate is the
+// user's own before → after pairs instead, and the acceptance rate is the
 // check that it works.
 //
 // Usage:
-//   asst-strings record <task-slug>     stdin: one line per string decided at ②
+//   asst-strings record <task-slug>     stdin: one line per string decided at the screen review
 //       <key> · <locale> · <role> · <outcome> · <draft> → <final>
 //       outcome: accepted (final = draft; `→ <final>` may be left out) · picked
-//       (another of the options) · rewritten (the founder's own wording) ·
+//       (another of the options) · rewritten (the user's own wording) ·
 //       dropped (final is `-`)
 //   asst-strings examples <role|all> <locale> [--limit <n>]
-//       the founder's changes for that role and locale, newest first: this
+//       the user's changes for that role and locale, newest first: this
 //       project's log, then the cross-project examples ui-text-pack ships
 //   asst-strings rate
 //       per task, oldest first, how many strings were accepted as drafted

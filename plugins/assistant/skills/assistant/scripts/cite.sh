@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# asst-cite — check every `file:line` citation in a report's fact table against
+# asst-cite — check every `file:line` citation in a report's findings table against
 # the tree it cites. Reviewers read reasoning, not sources: a citation to a
 # method that never existed reads as verified and survives any number of review
 # rounds, so this check is mechanical.
@@ -7,7 +7,7 @@
 # Usage: asst-cite <tree> <report.md>
 # Per table row: each cited file exists under <tree> and each line range fits in
 # it, and the file holds at least one `backticked` identifier from the claim
-# (`A.b` → `b`) — else FAIL. None of them within 10 lines prints `far`; a claim
+# (`A.b` → `b`) — else FAIL. None of them within 10 lines prints `WARN`; a claim
 # naming no identifier, or a path elided with `...`, prints `unchecked`.
 # Exit: 0 = no FAIL · 1 = at least one FAIL · 2 = usage.
 set -uo pipefail
@@ -53,7 +53,7 @@ perl -CSD -Mutf8 -e '
       }
       my $near = join "", @lines[$lo - 1 .. $hi - 1];
       print +(grep { $near =~ /\b\Q$_\E\b/ } @names) ? "ok $id $cite\n"
-        : "far $id $cite — none of the claim identifiers within $window lines\n";
+        : "WARN $id $cite — none of the claim identifiers within $window lines\n";
     }
   }
   exit $fail;

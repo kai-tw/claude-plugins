@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: release-watch
-description: asst-pr release waits for the release.yml run it started. A run that succeeds is RELEASED, even when the webhook forwarder drops mid-wait and has to reconnect. A run that fails while the default branch never moved is RELEASE NOT PUSHED, with the founder's push command. A run that fails after the default branch moved is RELEASE FAILED, with the run's link and no push command.
+description: asst-pr release waits for the release.yml run it started. A run that succeeds is RELEASED, even when the webhook forwarder drops mid-wait and has to reconnect. A run that fails while the default branch never moved is RELEASE NOT PUSHED, with the user's push command. A run that fails after the default branch moved is RELEASE FAILED, with the run's link and no push command.
 tags: [asst-pr]
 plugins: ["../.."]
 runs: 1

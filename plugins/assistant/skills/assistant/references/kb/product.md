@@ -1,8 +1,8 @@
-# KB module `product` — how each feature behaves, decided with the founder
+# KB module `product` — how each feature behaves, decided with the user
 
-Load at: ① brief (step 3) · a founder's request for a page.
+Load at: decision brief (step 3) · the user's request for a page.
 
-The pages are titled in the founder's language:
+The pages are titled in the user's language:
 - **Notion** (`board: notion`): rows of KB Pages whose `Module` is the product
   module, and whose `Kind` is feature (a page per feature) or shared design (a page
   per screen or interaction rule several features use). Find them with
@@ -26,9 +26,9 @@ share is then written on the first one's page, and the other links to it.
 - Links are complete and go both ways: a shared-design page lists every feature
   that uses it, and each of those feature pages links back. A page not written
   yet is named in plain text and linked once it exists.
-- Headings are the ones the sibling pages already use, word for word; the first
-  page of a kind translates the lists below into the founder's language.
-- A founder ruling is a line of its own: `Founder ruling (<date>): …`.
+- Headings are the ones the other pages of that kind already use, word for word; the first
+  page of a kind translates the lists below into the user's language.
+- A ruling the user made is a line of its own: `User ruling (<date>): …`.
 - `Checked against: <repo> <branch> @ <sha> (<date>)` names the commit the whole
   page was last read against.
 - On Notion, these sections are linked views filtered on Pages contains this page:
@@ -40,7 +40,7 @@ share is then written on the first one's page, and the other links to it.
 - A Release Log row names the pages its highlights change (`Pages`), so a feature
   page's Releases lists the versions that changed it.
 
-Feature page: intro · Checked against · Entry points · Mechanism · States and
+Feature page: intro · Checked against · Entry points · Behaviour · States and
 screens · Edge cases · Settings and defaults · Data · Permissions and billing ·
 Relations to other features · Releases · Related decisions · Known issues and to-dos.
 
@@ -48,20 +48,20 @@ Shared-design page: intro · Status (`current`, or `kept, not used for new work`
 Checked against · Screen rules · Details · Features using this design · Where the
 app doesn't follow the rule.
 
-## At ①
+## At the decision brief
 
 - Read the pages of every feature and shared design the task touches before
-  writing the brief; its mechanism lines quote or link them (`brief.md`).
-- Once the founder answers, write each decided mechanism onto its page before
+  writing the brief; its product-behaviour lines quote or link them (`brief.md`).
+- Once the user answers, write each decided behaviour onto its page before
   Build starts. A feature with no page gets one holding only what this task
-  decided, its intro saying so. Each fork filed with `asst-board decide` names those
+  decided, its intro saying so. Each open question filed with `asst-board decide` names those
   pages on its `**Pages**:` line, by their exact titles, so the page's Related
   decisions show it; a new page is created first, or `decide` stops on its title.
   On Notion, the task row names the same pages (`asst-board set <slug>
   "Pages=<title>,…"`), so it shows in each page's last section as code that
   doesn't match yet, until it is trashed at Close.
 
-## On the founder's request
+## On the user's request
 
 One page at a time, written from the code.
 - Read the default branch; the page says it was read from the code and not

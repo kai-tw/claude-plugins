@@ -8,7 +8,7 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: ref="$(dirname "$(command -v plan-coverage)")/../skills/test-gates/references/pr-checks.md"; grep -A40 -- "^  mutation:" "$ref" | sed "/^\`\`\`/q"
+    EVAL_CMD: ref="$(dirname "$(command -v plan-coverage)")/../skills/flutter-testing/references/pr-checks.md"; grep -A40 -- "^  mutation:" "$ref" | sed "/^\`\`\`/q"
   prompt: |
     Print the mutation job of the workflow in flutter-toolkit's references/pr-checks.md.
 context:

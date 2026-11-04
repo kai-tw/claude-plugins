@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^has: sends work back at ② or ③ = 1$'
+pattern: '^has: requests changes at the screen review or the delivery summary = 1$'
 flags: m
 arm: with-only
 ---
-A send-back at ② or ③ is a trigger.
+A request for changes at the screen review or the delivery summary is a trigger.
