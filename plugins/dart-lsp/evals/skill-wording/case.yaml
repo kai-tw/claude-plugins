@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: skill-wording
+description: The dart-lsp-setup skill names its repair procedure in plain words — "the troubleshooting steps below", never a "ladder".
+tags: [skills]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: cat "$root/skills/dart-lsp-setup/SKILL.md"
+  prompt: |
+    Print the dart-lsp-setup skill's SKILL.md.
+context:
+  scaffold_script: fixture.sh

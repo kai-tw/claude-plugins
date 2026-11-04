@@ -7,8 +7,8 @@ description: Fix a Dart language server that is not running or not yet ready —
 
 **Read this first if a query returned nothing.** An empty result early in a
 session usually means the index is still building, not that the symbol is
-unused — see "Warm-up" below. Only work the repair ladder if the server is
-genuinely absent.
+unused — see "Warm-up" below. Only follow the troubleshooting steps below if
+the server is genuinely absent.
 
 ## Warm-up: the first query is slow, and one operation lies
 
@@ -36,8 +36,8 @@ So, before acting on any low or empty count early in a session:
 - Re-run once the server is warm — a warm query returns in ~0.0s, so a slow
   query is itself a sign you are still cold.
 - Cross-check the file list against a plain text search. Text search
-  over-matches, so it is a poor rename tool but a good floor: the LSP result
-  should not contain *fewer* files than grep finds.
+  over-matches, so it is a poor rename tool but a good lower bound: the LSP
+  result should not contain *fewer* files than grep finds.
 
 # Repairing a server that is not running
 
@@ -46,9 +46,9 @@ which ships inside the Dart SDK (and inside the Flutter SDK at
 `<flutter>/bin/dart`). The plugin runs it as `dart`, so **the SDK must be on
 the PATH of the process that launched Claude Code**.
 
-Work the ladder below in order and stop at the first step that fails — each
-step's failure tells you which fix applies. Run the commands yourself rather
-than asking the user to; you know which platform you are on.
+Follow the troubleshooting steps below in order and stop at the first one that
+fails — each step's failure tells you which fix applies. Run the commands
+yourself rather than asking the user to; you know which platform you are on.
 
 ## 1. Is the SDK reachable at all?
 
