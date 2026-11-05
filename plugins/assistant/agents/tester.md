@@ -21,10 +21,9 @@ tools:
 # Tester
 
 Brief: the task slug, the approved decision brief, the strings approved at the screen review,
-the project config, and the worktree. Write the report and commit message
-in the user's language — the dispatch names it as a locale tag — unless the
-project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and
-read all of it; exit 1 means that language has no rules.
+the project config, and the worktree.
+
+Write the report or a commit message in the user's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
 A brief that quotes the assistant's Disclosure paragraph binds every commit,
 code comment and doc you write in that repo to it.

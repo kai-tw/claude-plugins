@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: lean-skill
+description: The assistant skill loads only what every task needs. Step-specific detail (the screen review, the PR from ready to merged, the release, the house style for strings) lives in references read at that step, every reference SKILL.md points to exists, nothing a script or another file already states is restated in SKILL.md, and the three agents load the user's language rules with the same sentence.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: s="$root/skills/assistant/SKILL.md"; echo "bytes-under-21k=$(( $(wc -c < "$s") < 21000 ))"; for r in $(grep -oE "references/[a-z-]+\.md" "$s" | grep -v pr-checks | sort -u); do test -f "$root/skills/assistant/$r" || echo "missing=$r"; done; t=$(tr -s " \n" " " < "$s"); for p in "2–3 side-by-side options" "mother-tongue-rules" "RELEASE NOT PUSHED" "refuses an \`exempt:\` verdict" "every write re-reads and verifies"; do echo "restated: $p = $(grep -cF "$p" <<< "$t")"; done; echo "same-language-line=$(grep -lF "exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself." "$root"/agents/*.md | wc -l | tr -d " ")"
+  prompt: |
+    Say how big the assistant skill is, whether every reference it names exists, and whether it restates what scripts or other files already say.
+context:
+  scaffold_script: fixture.sh
