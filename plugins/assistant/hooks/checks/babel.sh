@@ -55,7 +55,7 @@ wide() {
 deny() {
   # exit 2, not a JSON deny: only exit 2 is documented to override a
   # `permissions.allow` rule. The reason goes to stderr, which is what Claude sees.
-  local where='`~/.claude`, `/opt/homebrew`, …' spot=''
+  local where='`~/.claude`, …' spot=''
   if [ "$(uname -s 2>/dev/null)" = Darwin ]; then
     where='`~/.claude`, `~/Library/Application Support/<app>`, `/opt/homebrew`, …'
     spot=' For a file by name, `mdfind -name <name>` queries the Spotlight index and answers instantly.'
