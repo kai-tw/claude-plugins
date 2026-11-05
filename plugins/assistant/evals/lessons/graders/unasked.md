@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^has: Add a line to it, unasked = 1$'
+pattern: '^has: Save a lesson, unasked = 1$'
 flags: m
 arm: with-only
 ---

@@ -17,25 +17,12 @@ it) isn't offered.
 Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft. A draft means
 work is still in progress, so a delivery summary sent while the PR is a draft tells
 the user it's done when it can't be merged yet. Whatever `ready` refuses on is
-unfinished work: finish it, don't deliver around it.
-
-- Exit 3: CI is still running, or it never ran (a draft whose checks all skipped is
-  taken out of draft so CI runs, and is still not done). Start `asst-pr watch <slug>
-  <worktree>` with `run_in_background: true` and end the turn; its exit wakes the
-  session, and nothing else reports a passing run. One watch per PR; tasks' PRs are
-  watched side by side. On 0 run `ready` again; on 3 (its 60-minute timeout) watch
-  again; on 2 it couldn't watch (it needs the `cli/gh-webhook` gh extension), so
-  schedule one `asst-pr checks` a few minutes out (`CronCreate`, `recurring: false`)
-  instead. Never wait in a loop.
-- Exit 2: no PR is possible here (no usable `gh`, no GitHub remote). The delivery
-  summary carries that line as a `Needs you`, and the PR is the user's to open.
+unfinished work: finish it, don't deliver around it. Every `asst-pr ready` and
+`asst-pr watch` outcome ends with a `next:` line; do what it says. A watch runs with
+`run_in_background: true` and its exit wakes the session, so end the turn while it
+runs — nothing else reports a passing run, and you never wait in a loop.
 
 ## Merge
-
-Once `ready` exits 0, start `asst-pr watch <slug> <worktree> --merge` with
-`run_in_background: true`. It exits when the PR merges or closes: 0 merged → step 8;
-1 closed unmerged → tell the user; 3 (its 24-hour timeout) watch again; 2 it couldn't
-watch, so step 8 waits for the user's word.
 
 Merging or asking for changes is the user's. A request for changes re-enters step 5,
 and every question the user raises on the PR is fixed in that PR, along with every

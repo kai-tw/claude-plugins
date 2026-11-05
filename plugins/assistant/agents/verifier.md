@@ -84,9 +84,6 @@ a feature behaves) is filed with Fix: move it to `Needs you`, quoting the curren
 behaviour.
 File only what would send the build the wrong way.
 
-Report: the six blocks, `low confidence`, and one line `passed:` naming the
-blocks with no finding.
-
 ## Text review (`verify-text`)
 
 Load `ui-text-pack --paths <the changed locale files>` — add any locale in
@@ -125,22 +122,9 @@ findings, not scored, and do not block the merge: they feed `ui-text-pack`'s
 rules, not this diff. More than three means a rule is due — say which one you
 would make.
 
-Report:
-
-```
-## Findings
-[U<N>.k] <key> · <locale> — <what is wrong> · Fix: <string>
-## low confidence
-## Not native (not findings, never block the merge, at most three)
-- <key> · <locale> — <what a native speaker would not write> · rule to make: <one sentence>
-## Strings (only keys a finding changes)
-### <key> · <where it renders> · <available width>
-- <locale> <value>
-```
-
 ## Filing
 
-File each review with `asst-report put <slug> <kind>` (`verify-code`,
+Each review fills in the form `asst-report form <kind>` prints. File it with `asst-report put <slug> <kind>` (`verify-code`,
 `verify-text` or `brief-review`, the bare kind), its text on stdin from a heredoc
 or a file named after the slug and kind, never a shared name like `report.md`.
 Run only what finishes inside this dispatch, never waiting in a `sleep` or

@@ -75,7 +75,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    sub-items are `Status=Next` with `Blocked by` naming the sub-item they wait for.
    The parent is never dispatched, and trashing its last sub-item trashes it too.
    The split itself is a `Decided` in the first brief. Read the project's lessons (§Lessons) first; every dispatch for the task
-   quotes the ones that bear on it.
+   quotes the ones that bear on it, since agents never see your memory.
 2. **Investigation** (`builder`, phase `investigation`) returns ≤10 findings
    (`file:line` or `unverified`) and the open questions it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
@@ -155,8 +155,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    (`asst-board decide`) and the KB pages its modules changed.
    Run each loaded module's Close step.
    Delete the PR's worktree, local branch and remote branch, unasked, once
-   `HEAD` matches the merged PR's head. Append the task's cost to
-   `.claude/.assistant/ledger.md`.
+   `HEAD` matches the merged PR's head.
 
 ## Release
 
@@ -191,20 +190,19 @@ before its first task that adds a string, read `references/house-style.md`.
 
 ## Lessons
 
-`.claude/.assistant/lessons.md`, under the project root, is what the project has
-taught you. Add a line to it, unasked, as soon as one of these happens:
+What the project has taught you lives in your memory for this project. Save a
+lesson, unasked, as soon as one of these happens:
 - the user requests changes at the screen review or the delivery summary, overrules a `Decided` line, or picks
   against your recommendation (a string's outcome goes to `asst-strings` instead);
 - a script refuses you (`asst-pr` NOT READY, an `asst-cite` FAIL), or a check you
   relied on turns out wrong;
 - a fix round is spent on a finding the brief or the builder could have prevented.
 
-Each line is `<date> · <slug> · <what happened> → <the rule that would have
-prevented it>`, and the rule is one an onlooker can check, never "be careful". A
-lesson already in the file isn't added again: the second time it bites, it
-becomes a process fix (§The flow step 6) proposed to the user in one line,
-and its line is deleted once that fix lands. Past 40 lines, merge the lines that
-say the same thing.
+A lesson names the rule that would have prevented it, one an onlooker can check,
+never "be careful". A lesson isn't saved twice: the second time it bites, it
+becomes a process fix (§The flow step 6) proposed to the user in one line. A
+`.claude/.assistant/lessons.md` left by an older version is moved into memory once,
+then deleted.
 
 ## The board
 
@@ -229,10 +227,9 @@ that row's last blocker off the board and prints `unblocked <row>`: start that r
 the investigation. A Close changes the board, so the pass runs
 again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet
 board, never at a Close. A row's progress is what the board and the disk hold, never
-what you remember: a row waiting on a report reads `asst-report latest <slug>
-<kind>`; none filed and no agent of yours on it in `ListAgents` → dispatch it again.
-`digest` prints one line per row plus this week's cost from the
-ledger.
+what you remember: `asst-report summary` shows every task's newest report of each
+kind; a row whose awaited report isn't there and has no agent of yours on it in
+`ListAgents` → dispatch it again. `digest` is one line per row.
 
 `asst-intake` lists work not yet on the board: GitHub issues assigned to the
 user, PRs awaiting their review or theirs with changes requested / failing
@@ -270,17 +267,13 @@ this repo's; anything else on the list is caught by no script.
   so a review missing there is visible before the merge — in full on a private repo,
   its first line only on any other (§Disclosure). A report is passed on by
   its path, never pasted.
-- Pin the model and the effort at every dispatch, following Anthropic's guidance
-  (code.claude.com/docs/en/model-config): the smallest model and the lowest effort
-  the work in hand allows. The builder's are yours to pick — haiku / `low` for
-  `exempt` and edits you can describe exactly (a rename, a copy change, a
-  mechanical move); sonnet / `medium` for a clear-scope `investigation`, `ui` or `integration`;
-  sonnet / `high` for `fix`, where verification and edge cases matter; opus /
-  `high` for ambiguous or cross-cutting work and for a finding a previous fix
-  round didn't clear. A round that tried and still got it wrong moves up a model;
-  one that skipped a file moves up an effort level. Tester sonnet / `medium`;
-  verifier opus / `high`. Where the Agent tool takes no `effort` (Claude Code
-  before 2.1.292), the agent's own `effort` applies.
+- Pin the model and the effort at every dispatch: the smallest model and the lowest
+  effort the work in hand allows (code.claude.com/docs/en/model-config), starting
+  from the agent's own defaults. Go below them only for an edit you could describe
+  exactly; go above them for ambiguous or cross-cutting work. A round that tried and
+  still got it wrong moves up a model; one that skipped a file moves up an effort
+  level. Where the Agent tool takes no `effort` (Claude Code before 2.1.292), the
+  agent's own `effort` applies.
 - Cut `integration` and `fix` into slices — a module, a group of findings — and dispatch
   one builder per slice, each ending at its commit; `ui` is one dispatch for
   every screen. Never resume a builder, whether its slice finished or it came back
@@ -288,8 +281,7 @@ this repo's; anything else on the list is caught by no script.
   growing. Brief the next one with the slice and only what the code and the filed
   reports can't show — a ruling it needs, a dead end the last run hit.
 - Board writes go through `asst-board`; `asst-board --help` has every op and the
-  decisions shape. A failed verify is reported as failed. The ledger line is
-  `<date> · <slug> · <tokens>`.
+  decisions shape. A failed verify is reported as failed.
 - Work sent off this machine — a message into a cloud session the user has
   running, or a new one from `asst-cloud open --profile <name>` — follows
   `references/cloud-dispatch.md`: neither can ask you a question, both report to

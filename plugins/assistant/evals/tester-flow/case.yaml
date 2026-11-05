@@ -8,7 +8,7 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: s="$root/skills/assistant/SKILL.md"; echo "brief=$(grep -cE "^- (S|F|B)<n> " "$root/skills/assistant/references/brief.md")"; echo "flow=$(grep -c "screen review ─▶ Tests ─▶ Integration" "$s")"; echo "tester=$(grep -cE "skip: .not implemented yet." "$root/agents/tester.md")"; echo "builder=$(tr -s " \n" " " < "$root/agents/builder.md" | grep -c "remove the \`not implemented yet\` skip from each one your slice makes pass, and never edit a test otherwise")"; echo "mutation=$(tr -s " \n" " " < "$s" | grep -c "never blocks")"
+    EVAL_CMD: s="$root/skills/assistant/SKILL.md"; echo "brief=$(grep -cE "^- (S|F|B)<n> " "$root/skills/assistant/references/brief.md")"; echo "flow=$(grep -c "screen review ─▶ Tests ─▶ Integration" "$s")"; echo "tester=$(grep -cE "skip: .not implemented yet." "$root/agents/tester.md")"; echo "builder=$(tr -s " \n" " " < "$root/agents/builder.md" | grep -c "remove the \`not implemented yet\` skip from each one your slice makes pass, and never edit a test otherwise")"; echo "mutation=$(tr -s " \n" " " < "$s" | grep -c "never blocks")"; echo "follows-tests=$(tr -s " \n" " " < "$root/agents/tester.md" | grep -c "read the project.s existing tests of the same kind")"
   prompt: |
     Print whether the brief numbers its scenarios, where tests come in the flow, and what the tester and the builder each do with the until-wired marker.
 context:

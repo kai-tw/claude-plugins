@@ -108,32 +108,8 @@ mutation run, a test slot that stays busy — goes back on the report as not run
 `check: passed` means the whole `check` command ran to its end and passed; one that couldn't
 run is `check: not run — <why>`, and that slice is unfinished, never passed.
 
-File the report with `asst-report put <slug> <kind>` (`investigation`, or
-`build-<phase>`, the bare kind — it numbers rounds itself), its text on stdin from
-a heredoc or a file named after the slug and kind, never a shared name like
-`report.md` that another agent may have written.
-Then return only the path it prints; the assistant reads the file. Investigation:
-
-```
-## Findings
-| # | Claim | Evidence (file:line · experiment: <cmd> → <obs> · unverified) |
-## Open questions (intent — the assistant asks the user)
-- <question>: A <option> / B <option> · what each costs
-## Risks seen
-- <one line each, or none>
-```
-
-Every other phase:
-
-```
-phase: <name> · commits: <sha … | diff path> · check: <passed|n failing|not run — why>
-rules: style-pack --paths <the files>   (and ui-text-pack --paths <files>, when strings changed)
-screens: <ui: the path asst-screens printed; other phases: none>
-open questions: <none, or one line each>
-debt: <none, or one line each>
-declined: <none, or one line each: [<block>.<n>] file:line — reason>
-strings: <none, or one block each>
-  <key> · <role> · <where it renders> · <available width>
-  - <locale> <value written>
-  - options <locale>: <A> ｜ <B> ｜ <C> — <one-line trade-off>   (tone-sensitive only)
-```
+The report fills in the form `asst-report form <kind>` prints (`investigation`, or
+`build-<phase>`). File it with `asst-report put <slug> <kind>`, the bare kind — it
+numbers rounds itself — its text on stdin from a heredoc or a file named after the
+slug and kind, never a shared name like `report.md` that another agent may have
+written. Then return only the path it prints; the assistant reads the file.
