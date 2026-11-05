@@ -56,4 +56,13 @@ tool ok-globshallow Glob '{"pattern":"*.md","path":"'$u'"}'
 tool ok-globproj  Glob '{"pattern":"src/**/*.ts"}'
 tool ok-globabsproj Glob '{"pattern":"'$u'/proj/**/*.ts"}'
 run ok-heredoc    $'git commit -F - <<\'EOF\'\nfind / -name x is refused now\nEOF'
+mkdir -p fakebin/Darwin fakebin/Linux
+for os in Darwin Linux; do printf '#!/bin/sh\necho %s\n' "$os" > "fakebin/$os/uname"; chmod +x "fakebin/$os/uname"; done
+# spot OS: does the block message under a faked uname suggest mdfind?
+spot() {
+  jq -n --arg d "$u/proj" '{tool_name:"Bash",cwd:$d,tool_input:{command:"find / -name x"}}' \
+    | PATH="$PWD/fakebin/$1:$PATH" bash "$root/hooks/checks/babel.sh" 2>&1 >/dev/null | grep -q mdfind && echo yes || echo no
+}
+echo "mac-mdfind=$(spot Darwin)"
+echo "linux-mdfind=$(spot Linux)"
 SH

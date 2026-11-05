@@ -6,7 +6,7 @@ set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; mkdir -p fake
 printf '#!/bin/sh\nexit 0\n' > fake/trash; chmod +x fake/trash
-hook() { jq -n --arg c "$1" '{tool_input:{command:$c}}' | PATH="$2" bash "$root/hooks/checks/charon.sh" 2>"${3:-/dev/null}"; echo $?; }
+hook() { jq -n --arg c "$1" '{tool_input:{command:$c}}' | PATH="$2" "$BASH" "$root/hooks/checks/charon.sh" 2>"${3:-/dev/null}"; echo $?; }
 T="$PWD/fake:$PATH"
 echo "with-rm=$(hook 'rm -rf build' "$T")"
 echo "with-sudo=$(hook 'sudo rm x' "$T")"
@@ -17,7 +17,7 @@ echo "with-git-rm=$(hook 'git rm x' "$T")"
 echo "with-rmdir=$(hook 'rmdir x' "$T")"
 echo "with-quoted=$(hook 'echo "rm x"' "$T")"
 hook 'rm x' "$T" msg.txt >/dev/null
-grep -qE "guardrails [·—]" msg.txt && echo "msg-prefix=old" || echo "msg-prefix=clean"
+grep -q '^🛡️ charon —' msg.txt && echo msg-head=charon || echo msg-head=other
 grep -q trash msg.txt && echo "msg-says-trash=yes" || echo "msg-says-trash=no"
 if [ -x /usr/bin/trash ]; then echo "notrash=skipped"; else
   bin="$PWD/nobin"; mkdir -p "$bin"

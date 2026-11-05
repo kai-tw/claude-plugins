@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^msg-prefix=clean$'
+pattern: '^msg-head=charon$'
 flags: m
 arm: with-only
 ---
-The block message no longer carries the old plugin name.
+The block message opens with `🛡️ charon —`.

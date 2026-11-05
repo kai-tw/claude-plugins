@@ -17,6 +17,8 @@ fire() {
 sed_cmd="sed 's/\\bx\\b/y/' lib/a.dart"
 echo "mac-sed=$(fire Darwin m1 "$sed_cmd")"
 echo "mac-sed-again=$(fire Darwin m1 "$sed_cmd")"
+jq -n '{session_id:"m1"}' | env -u CLAUDE_PLUGIN_ROOT TMPDIR=$PWD/flags bash "$root/hooks/checks/intercept.sh" --reset
+echo "mac-sed-reset=$(fire Darwin m1 "$sed_cmd")"
 echo "linux-sed=$(fire Linux l1 "$sed_cmd")"
 echo "mac-dash=$(fire Darwin m2 'ls -Users-kai-proj')"
 echo "linux-dash=$(fire Linux l2 'ls -Users-kai-proj')"
