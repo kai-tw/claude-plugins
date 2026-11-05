@@ -5,18 +5,18 @@
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1
-export HOME=/Users/kai
-run() { jq -n --arg c "$2" --arg d "${3:-/Users/kai/proj}" '{tool_name:"Bash",cwd:$d,tool_input:{command:$c}}' | bash "$root/hooks/checks/babel.sh" 2>/dev/null; echo "$1=$?"; }
-tool() { jq -n --arg t "$2" --argjson i "$3" '{tool_name:$t,cwd:"/Users/kai/proj",tool_input:$i}' | bash "$root/hooks/checks/babel.sh" 2>/dev/null; echo "$1=$?"; }
+export HOME=/Users/me; u=$HOME
+run() { jq -n --arg c "$2" --arg d "${3:-$u/proj}" '{tool_name:"Bash",cwd:$d,tool_input:{command:$c}}' | bash "$root/hooks/checks/babel.sh" 2>/dev/null; echo "$1=$?"; }
+tool() { jq -n --arg t "$2" --arg d "$u/proj" --argjson i "$3" '{tool_name:$t,cwd:$d,tool_input:$i}' | bash "$root/hooks/checks/babel.sh" 2>/dev/null; echo "$1=$?"; }
 run bad-root      'find / -name "*.plist" 2>/dev/null | head'
 run bad-tilde     'cd /tmp && find ~ -type f -name settings.json'
 run bad-qhome     'find "$HOME" -name x'
 run bad-qroot     "find '/' -name x"
-run bad-expanded  'find /Users/kai -iname "*claude*"'
+run bad-expanded  "find $u -iname '*claude*'"
 run bad-users     'sudo find /Users -name id_rsa'
 run bad-cdhome    'cd ~ && find . -name x'
 run bad-cdroot    'cd / && rg foo'
-run bad-cwdhome   'rg -n TODO' /Users/kai
+run bad-cwdhome   'rg -n TODO' $u
 run bad-dotdot    'find .. -name x'
 run bad-rg        'rg -l TODO ~/'
 run bad-grep      'grep -rn "apiKey" / 2>/dev/null'
@@ -31,11 +31,11 @@ run bad-agdeep    'ag --depth 5 foo ~'
 run bad-xargs     'echo x | xargs grep -r foo /'
 tool bad-greptool Grep '{"pattern":"foo","path":"/"}'
 tool bad-globabs  Glob '{"pattern":"/**/*.plist"}'
-tool bad-globhome Glob '{"pattern":"**/*.json","path":"/Users/kai"}'
+tool bad-globhome Glob '{"pattern":"**/*.json","path":"'$u'"}'
 tool bad-globtilde Glob '{"pattern":"~/**/*.json"}'
 run ok-project    'find . -name "*.dart" -newer pubspec.yaml'
 run ok-subdir     'find ~/.claude/plugins -maxdepth 4 -name plugin.json'
-run ok-projpath   'find /Users/kai/proj/lib -name "*.dart"'
+run ok-projpath   "find $u/proj/lib -name '*.dart'"
 run ok-shallow    'find ~ -maxdepth 1 -name ".*rc"'
 run ok-fdshallow  'fd -d 2 . ~'
 run ok-agshallow  'ag --depth 1 foo ~'
@@ -51,9 +51,9 @@ run ok-du         'du -sh ~/*'
 run ok-cdproj     'cd ~/proj && find . -name x'
 run ok-cwdproj    'rg -n TODO'
 run ok-message    'git commit -m "checks: refuse find / and grep -r ~"'
-tool ok-greptool  Grep '{"pattern":"foo","path":"/Users/kai/proj"}'
-tool ok-globshallow Glob '{"pattern":"*.md","path":"/Users/kai"}'
+tool ok-greptool  Grep '{"pattern":"foo","path":"'$u'/proj"}'
+tool ok-globshallow Glob '{"pattern":"*.md","path":"'$u'"}'
 tool ok-globproj  Glob '{"pattern":"src/**/*.ts"}'
-tool ok-globabsproj Glob '{"pattern":"/Users/kai/proj/**/*.ts"}'
+tool ok-globabsproj Glob '{"pattern":"'$u'/proj/**/*.ts"}'
 run ok-heredoc    $'git commit -F - <<\'EOF\'\nfind / -name x is refused now\nEOF'
 SH
