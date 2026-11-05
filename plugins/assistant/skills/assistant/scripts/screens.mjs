@@ -40,7 +40,9 @@
 // or all of them; numbers don't change when a filter hides a cell.
 //
 // The page lands at <root>/.claude/.assistant/tasks/<slug>/screens.html, its
-// images in screens/ beside it; both are replaced on each run. Exit: 0 = written, 1 = no images, 2 = usage or a
+// images in screens/ beside it, and artifact.json beside it holds the Artifact
+// publish calls (file_path, root, files — at most 255 files each, the later ones
+// to the first one's url); all are replaced on each run. Exit: 0 = written, 1 = no images, 2 = usage or a
 // labels.json that isn't valid JSON.
 
 import { execFileSync } from 'node:child_process';
@@ -306,4 +308,10 @@ rmSync(images, { recursive: true, force: true });
 mkdirSync(images, { recursive: true });
 for (const s of shots) copyFileSync(join(src, s.file), join(images, s.file));
 writeFileSync(out, html);
+// The Artifact tool's arguments, ready to pass: one publish per 255 files, the
+// first creating the page and each later one adding to the same url.
+const files = shots.map((s) => `screens/${s.file}`);
+const calls = [];
+for (let i = 0; i < files.length; i += 255) calls.push({ file_path: out, root: dirname(out), files: files.slice(i, i + 255) });
+writeFileSync(join(dirname(out), 'artifact.json'), `${JSON.stringify(calls, null, 2)}\n`);
 console.log(out);

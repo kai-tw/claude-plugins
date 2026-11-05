@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: flow-reminder
+description: In a project with an assistant project config, the UserPromptSubmit hook attaches a reminder to load the assistant skill and dispatch agents instead of editing code; from a subdirectory too; in any other project it prints nothing.
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the flow-reminder hook a prompt from a project with an assistant project config and from one without, and print the output.
+context:
+  scaffold_script: fixture.sh

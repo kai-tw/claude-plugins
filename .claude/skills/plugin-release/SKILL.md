@@ -103,19 +103,19 @@ the marketplace serves `main`; the script says so and names the script below.
 
 ## After the merge
 
-Once the PR is ready, start this with the Bash tool's `run_in_background: true`:
+Once the PR is ready, run:
 
 ```bash
 node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 ```
 
-It waits on `gh webhook forward` (the `cli/gh-webhook` extension), which GitHub
-pushes each pull_request event to — no polling — then runs steps 6–8 for every
-plugin the PR changed, syncs the main checkout and removes the PR's worktree and
-branch. Its exit wakes the session, so a merge needs no one to report it — the
+It looks at the PR once. Merged: it runs steps 6–8 for every plugin the PR
+changed, syncs the main checkout and removes the PR's worktree and branch. Still
+open: it exits 3 and its `next:` line names the look to schedule once
+(`CronCreate`, `recurring: false`), so a merge needs no one to report it — the
 app's PR monitor wakes a session on CI failures, conflicts and review comments,
-never on a merge. Exit 1 (closed unmerged, the forwarder failed or stopped, or a
-failed check) prints why; report it as it stands.
+never on a merge. Exit 1 (closed unmerged, or a failed check) prints why; report
+it as it stands.
 
 A running session switches to the updated plugin on its own, at a moment no one can
 predict (`.claude/rules/releasing.md`), so don't tell the user to restart: check the

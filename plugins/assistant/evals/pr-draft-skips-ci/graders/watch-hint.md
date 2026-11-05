@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'start asst-pr watch x wt with run_in_background: true, then run ready again'
+pattern: 'next: schedule .asst-pr checks x wt. to run once in 5 minutes \(CronCreate, recurring: false\), then end the turn'
 flags: m
 arm: with-only
 ---
-ready says to watch CI and run ready again.
+ready names the one look at CI to schedule, never a wait.

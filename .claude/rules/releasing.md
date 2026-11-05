@@ -3,10 +3,12 @@
 - **Changes go on a branch + draft PR, never a direct commit to `main`.** A plugin change
   carries an eval case that fails on the old version; run `gh pr ready` only after CI's
   `Evals` (`.github/scripts/run-evals.mjs`) is green and the version is bumped — the draft
-  state is what stops a merge while the agent is still working. Right after `gh pr ready`,
-  start `node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>` with
-  `run_in_background: true`: it waits for the merge and does everything after it, and its
-  exit wakes the session, so nobody has to report the merge.
+  state is what stops a merge while the agent is still working. Nothing waits for you:
+  while CI runs, schedule one look yourself (`CronCreate`, `recurring: false`), never ask
+  the user to report it. Right after `gh pr ready`, run `node
+  .claude/skills/plugin-release/scripts/after-merge.mjs <pr>`: once the PR has merged it
+  does everything after the merge; while it's open it exits 3 and names the next look to
+  schedule, so nobody has to report the merge.
 
 - **Changing anything under `plugins/<plugin>/` means bumping `version` in `plugin.json`.**
   Consumers install into `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` — **a

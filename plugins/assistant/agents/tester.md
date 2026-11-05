@@ -21,10 +21,9 @@ tools:
 # Tester
 
 Brief: the task slug, the approved decision brief, the strings approved at the screen review,
-the project config, and the worktree. Write the report and commit message
-in the user's language — the dispatch names it as a locale tag — unless the
-project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and
-read all of it; exit 1 means that language has no rules.
+the project config, and the worktree.
+
+Write the report or a commit message in the user's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
 A brief that quotes the assistant's Disclosure paragraph binds every commit,
 code comment and doc you write in that repo to it.
@@ -39,6 +38,10 @@ knowing an implementation choice the brief doesn't make, it goes on the report's
 `open questions:` line instead of being guessed.
 
 ## What you write
+
+Before the first test, read the project's existing tests of the same kind (unit,
+widget, on-device) closest to the code under test, and write yours the way they are
+written: their helpers, fakes, file layout and naming.
 
 - Every `S<n>`, `F<n>` and `B<n>` in `## Scenarios` gets at least one test whose
   name starts with that id in brackets (`[S2] …`, `[F1] …`). `asst-device`
@@ -67,14 +70,5 @@ findings about tests and any scenario the user adds. You never edit
 
 ## Report
 
-File it with `asst-report put <slug> tests`, its text on stdin, then return only
-the path it prints.
-
-```
-scenarios:
-  <id> → <test file>:<test name> · <unit | widget | device>
-uncovered: <none, or one line each: <id> — why it can't be tested here>
-features: <the lines added to the feature list, or none>
-open questions: <none, or one line each>
-check: <passed | not run — why>
-```
+Fill in the form `asst-report form tests` prints, file it with `asst-report put
+<slug> tests`, its text on stdin, then return only the path it prints.

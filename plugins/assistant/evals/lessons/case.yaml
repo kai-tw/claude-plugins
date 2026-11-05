@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: s=$(tr -s " \n" " " < "$root/skills/assistant/SKILL.md"); echo "section=$(grep -c "^## Lessons$" "$root/skills/assistant/SKILL.md")"; for p in "Add a line to it, unasked" "requests changes at the screen review or the delivery summary" "a script refuses you" "lessons (§Lessons) first; every dispatch for the task quotes the ones that bear on it" "the second time it bites, it becomes a process fix"; do echo "has: $p = $(grep -cF "$p" <<< "$s")"; done
+    EVAL_CMD: s=$(tr -s " \n" " " < "$root/skills/assistant/SKILL.md"); echo "section=$(grep -c "^## Lessons$" "$root/skills/assistant/SKILL.md")"; for p in "Save a lesson, unasked" "requests changes at the screen review or the delivery summary" "a script refuses you" "lessons (§Lessons) first; every dispatch for the task quotes the ones that bear on it" "the second time it bites, it becomes a process fix"; do echo "has: $p = $(grep -cF "$p" <<< "$s")"; done; echo "ledger=$(grep -ci ledger "$root/skills/assistant/SKILL.md")"; echo "lessons-file=$(grep -cF "lessons.md, under the project root" <<< "$s")"; echo "memory=$(grep -cF "lives in your memory for this project" <<< "$s")"
   prompt: |
     Say when the assistant records a lesson, when it reads them, and what happens when one repeats.
 context:

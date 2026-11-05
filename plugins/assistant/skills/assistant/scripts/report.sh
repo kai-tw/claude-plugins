@@ -7,6 +7,8 @@
 #                           (report on stdin) → prints the path
 #        asst-report latest <task-slug> <kind>   → prints the newest path; exit 1 if none
 #        asst-report list   <task-slug>
+#        asst-report form   <kind>               → prints the form that kind's report fills in
+#        asst-report summary                     → per task, its newest report of each kind
 # kind: investigation · brief-review · build-<phase> · tests · verify-<review>
 #
 # A verify-<review> report is also posted to the task's PR as a comment: the user
@@ -21,7 +23,26 @@ set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"; source "$here/github.sh"
 op="${1:-}"; slug="${2:-}"; kind="${3:-}"
-usage() { sed -n '6,10p' "$0" >&2; exit 2; }
+usage() { sed -n '6,12p' "$0" >&2; exit 2; }
+# One form per report kind, the only copy of its shape; the agents print it here.
+if [ "$op" = form ]; then
+  k=${slug:-}; case "$k" in build-*) k=build ;; esac
+  f="$here/../forms/$k.md"
+  [ -n "$k" ] && [ -f "$f" ] || { echo "asst-report: no form for '${slug:-}' — kinds: $(ls "$here/../forms" | sed 's/\.md$//; s/^build$/build-<phase>/' | paste -sd ' ' -)" >&2; exit 2; }
+  cat "$f"; exit 0
+fi
+# Every task's newest report of each kind, in one look: what a scheduler pass reads.
+if [ "$op" = summary ]; then
+  rd="$(asst_root)/.claude/.assistant/reports"
+  for d in "$rd"/*/; do
+    [ -d "$d" ] || continue
+    s=$(basename "$d")
+    line=$(ls "$d" | sed -nE 's/^(.+)-([0-9]+)\.md$/\1 \2/p' | sort -k1,1 -k2,2nr \
+      | awk '!seen[$1]++ { printf "%s%s-%s", sep, $1, $2; sep=" · " }')
+    echo "$s: ${line:-no reports}"
+  done
+  exit 0
+fi
 [ -n "$op" ] && [ -n "$slug" ] || usage
 wt=$PWD; post=1
 if [ "$op" = put ]; then
