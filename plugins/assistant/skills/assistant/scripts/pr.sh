@@ -10,21 +10,17 @@
 # Usage: asst-pr open  <task-slug> <worktree> [gh pr create flags…]
 #          push the branch, then ensure a draft PR exists for it → prints the URL
 #        asst-pr checks <task-slug> <worktree>
-#          look once at CI on the pushed HEAD and print every check; never waits
-#        asst-pr watch <task-slug> <worktree> [--merge] [--timeout <minutes>]
-#          wait for CI on the pushed HEAD to finish (default 60 minutes), then print
-#          what checks would; with --merge, wait for the PR to merge or close
-#          (default 1440) and print which. Start it with run_in_background: true,
-#          and its exit wakes the session; its last line, `next:`, says what to
-#          do. One per PR and kind, any number of PRs at once (pr-watch.mjs)
-#        asst-pr release <label> <checkout> [--dry-run] [--timeout <minutes>]
+#          look once at CI on the pushed HEAD and print every check
+#        asst-pr merged <task-slug> <worktree>
+#          look once at whether the task's PR merged, closed, or is still open
+#        asst-pr release <label> <checkout> [--dry-run | --run <id>]
 #          base_branch: projects only — list what base_branch's head carries
 #          that the default branch lacks, then start the repo's release.yml on
 #          that commit (it fast-forwards the default branch and deploys) and
-#          wait for that run (default 120 minutes; run_in_background: true):
-#          RELEASED, or RELEASE NOT PUSHED with the user's push command when
-#          the default branch never moved, or RELEASE FAILED with the run's
-#          link when it moved; --dry-run lists and starts nothing
+#          print its run id; --dry-run lists and starts nothing. With --run, look
+#          once at that run: RELEASED, or RELEASE NOT PUSHED with the user's push
+#          command when the default branch never moved, or RELEASE FAILED with
+#          the run's link when it moved
 #        asst-pr ready <task-slug> <worktree>
 #          refuse unless: the tree is clean and pushed; the PR exists, targets
 #          the project config's base_branch (else the default branch) and has a
@@ -33,24 +29,26 @@
 #          `exempt:` verify-code covers at most 20 changed lines; CI on HEAD
 #          passed. A PR that is already ready is checked the same way. A draft
 #          whose every check skipped is turned ready so CI runs, and exits 3
+# Nothing waits: every outcome ends with a `next:` line, and one not settled yet
+# names the look to schedule once (CronCreate) a few minutes out.
 # Reports: verify-code always · verify-coverage when the project config's coverage: is a
 # command (not none or ci) · verify-text when ui_strings: is set and the PR's
 # diff touches it · verify-device when device_test: is a command, and its first
 # line must be `device: passed` (asst-device).
-# Exit: 0 done (--merge: merged) · 1 refused, a check failed, or (--merge) closed
-# without merging · 2 usage, not a git task, CI unreadable, or no PR possible here
-# (gh missing or unauthenticated, no GitHub remote), or the PR already watched ·
-# 3 CI still running or not yet run on HEAD, or (--merge) the PR still open at the
-# timeout, or (release) the run still going at the timeout.
+# Exit: 0 done (merged: merged) · 1 refused, a check failed, (merged) closed without
+# merging, or (release --run) the run failed · 2 usage, not a git task, CI
+# unreadable, or no PR possible here (gh missing or unauthenticated, no GitHub
+# remote) · 3 not settled yet: CI still running or not yet run on HEAD, the PR
+# still open, or the release run still going.
 #
 # On a repo not known to be private, `open` refuses to push, and `ready` to turn
 # ready, while the commits, the diff or the PR body name something from outside
 # the repo (disclosure.sh): a push to a public repo cannot be taken back.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"; source "$here/node.sh"
+source "$here/root.sh"; source "$here/github.sh"; source "$here/disclosure.sh"
 op="${1:-}"; slug="${2:-}"; wt="${3:-}"
-usage() { sed -n '10,44p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '10,42p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 [ -n "$op" ] && [ -n "$slug" ] && [ -n "$wt" ] || usage
 shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
@@ -70,6 +68,9 @@ default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); 
 # default branch.
 target=$(field base_branch); case "$target" in ""|none) target=$default ;; esac
 refuse() { printf 'asst-pr: NOT READY — %s\n' "$1" >&2; exit 1; }
+# Nothing here waits: an outcome that isn't settled yet names the one look to
+# schedule, and the session that scheduled it wakes for that look.
+later() { echo "next: schedule '$1' to run once in $2 minutes (CronCreate, recurring: false), then end the turn — never wait in a loop"; }
 github() {
   local why; why=$(gh_unusable "$wt")
   [ -z "$why" ] && return 0
@@ -121,14 +122,44 @@ case "$op" in
     (cd "$wt" && gh pr create --draft --base "$target" --head "$branch" "$@") ;;
   release)
     [ "$target" != "$default" ] || { echo "asst-pr: the project config names no base_branch — task PRs go straight into $default, so there is nothing to release" >&2; exit 2; }
-    dry="" mins=120
+    dry="" run=""
     while [ $# -gt 0 ]; do
       case "$1" in
         --dry-run) dry=1; shift ;;
-        --timeout) mins=${2:-}; [[ $mins =~ ^[0-9]+(\.[0-9]+)?$ ]] || usage; shift 2 ;;
+        --run) run=${2:-}; [[ $run =~ ^[0-9]+$ ]] || usage; shift 2 ;;
         *) usage ;;
       esac
     done
+    if [ -n "$run" ]; then
+      # One look at a release run this command started earlier.
+      github "There is no run to look at."
+      repo=$(cd "$wt" && gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
+      [ -n "$repo" ] || { echo "asst-pr: can't tell which GitHub repo $wt is — check run $run in Actions" >&2; exit 2; }
+      look=$(gh run view "$run" --repo "$repo" --json status,conclusion,url,displayTitle \
+        --jq '[.status, (.conclusion // ""), .url, .displayTitle] | join("\t")' 2>/dev/null) \
+        || { echo "asst-pr: can't read run $run on $repo" >&2; exit 2; }
+      IFS=$'\t' read -r status conclusion url title <<< "$look"
+      sha=$(grep -oE '[0-9a-f]{40}' <<< "$title" | head -1)
+      [ "$status" = completed ] || { echo "asst-pr: release run $run still running — $url"; later "asst-pr release $slug $wt --run $run" 5; exit 3; }
+      echo "asst-pr: run $run $(tr '[:lower:]' '[:upper:]' <<< "$conclusion") — $url"
+      if [ "$conclusion" = success ]; then
+        echo "asst-pr: RELEASED — $default is at ${sha:0:7} and production is deployed"
+        echo "next: tell the user it's released"; exit 0
+      fi
+      # Whether the default branch moved tells a refused push from a failed
+      # deploy, whatever each repo names its steps. GITHUB_TOKEN can't push a
+      # commit that changes .github/workflows/, so such a release always ends
+      # here, and the user's own push does what release.yml couldn't.
+      at=$(g ls-remote origin "refs/heads/$default" | cut -f1)
+      if [ "$at" != "$sha" ]; then
+        echo "asst-pr: RELEASE NOT PUSHED — $default never moved to ${sha:0:7}. The user pushes it, and that push deploys: git fetch origin && git push origin $sha:refs/heads/$default"
+        echo "next: give the user that push command as a Needs you line"
+      else
+        echo "asst-pr: RELEASE FAILED — $default is at ${sha:0:7}, but the run failed after that — $url"
+        echo "next: report the run's link to the user; there is no push to offer"
+      fi
+      exit 1
+    fi
     g fetch --quiet origin "$default" "$target" || { echo "asst-pr: can't fetch $default and $target" >&2; exit 2; }
     sha=$(g rev-parse "origin/$target")
     # Only a fast-forward is released: a release PR would make base_branch its
@@ -159,74 +190,32 @@ case "$op" in
       [ -n "$run" ] && break
     done
     [ -n "$run" ] || { echo "asst-pr: no release.yml run titled with $sha — give release.yml \`run-name: Release \${{ inputs.sha }}\`, and check the run in Actions" >&2; exit 2; }
-    n=$(asst_node) || { echo "asst-pr: node not found — run $run was started; check it in Actions" >&2; exit 2; }
-    out=$("$n" "$here/pr-watch.mjs" run "$repo" "$run" "$mins"); code=$?
-    printf '%s\n' "$out"
-    case $code in
-      0) echo "asst-pr: RELEASED — $default is at ${sha:0:7} and production is deployed"
-         echo "next: tell the user it's released" ;;
-      1)
-        # Whether the default branch moved tells a refused push from a failed
-        # deploy, whatever each repo names its steps. GITHUB_TOKEN can't push a
-        # commit that changes .github/workflows/, so such a release always ends
-        # here, and the user's own push does what release.yml couldn't.
-        at=$(g ls-remote origin "refs/heads/$default" | cut -f1)
-        if [ "$at" != "$sha" ]; then
-          echo "asst-pr: RELEASE NOT PUSHED — $default never moved to ${sha:0:7}. The user pushes it, and that push deploys: git fetch origin && git push origin $sha:refs/heads/$default"
-          echo "next: give the user that push command as a Needs you line"
-        else
-          echo "asst-pr: RELEASE FAILED — $default is at ${sha:0:7}, but the run failed after that; see its link above"
-          echo "next: report the run's link to the user; there is no push to offer"
-        fi ;;
-      3) echo "next: report the run's link to the user; never run release again for ${sha:0:7}, which would start a second run" ;;
-    esac
-    exit "$code" ;;
+    echo "asst-pr: release run $run started — never run release again for ${sha:0:7}, which would start a second run"
+    later "asst-pr release $slug $wt --run $run" 5
+    exit 3 ;;
   checks)
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
     github "There is no CI to read."
     pr=$(cd "$wt" && gh pr view "$branch" --json number,isDraft,baseRefName --jq '"\(.number) \(.isDraft) \(.baseRefName)"' 2>/dev/null) \
       || refuse "no PR for $branch — asst-pr open never ran"
     read -r _ draft _ <<< "$pr"
-    ci ;;
-  watch)
-    mins="" merge=""
-    while [ $# -gt 0 ]; do
-      case "$1" in
-        --merge) merge=1; shift ;;
-        --timeout) mins=${2:-}; [[ $mins =~ ^[0-9]+(\.[0-9]+)?$ ]] || usage; shift 2 ;;
-        *) usage ;;
-      esac
-    done
-    [ -n "$merge" ] || [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] \
-      || refuse "HEAD is not pushed, so CI has not seen it — run asst-pr open first"
-    github "There is nothing to watch."
-    num=$(cd "$wt" && gh pr view "$branch" --json number --jq .number 2>/dev/null) && [ -n "$num" ] \
-      || refuse "no PR for $branch — asst-pr open never ran"
-    repo=$(cd "$wt" && gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
-    [ -n "$repo" ] || { echo "asst-pr: can't tell which GitHub repo $wt is" >&2; exit 2; }
-    wt=$(cd "$wt" && pwd)
-    n=$(asst_node) || exec_node
-    # Every outcome ends with a `next:` line, so the caller never has to map
-    # exit codes to actions itself.
-    again="asst-pr watch $slug $wt${merge:+ --merge} with run_in_background: true"
-    if [ -n "$merge" ]; then
-      "$n" "$here/pr-watch.mjs" merge "$repo" "$num" "${mins:-1440}"; rc=$?
-      case $rc in
-        0) echo "next: close the task (step 8)" ;;
-        1) echo "next: tell the user #$num closed without merging" ;;
-        3) echo "next: watch again — $again" ;;
-        *) echo "next: no merge watch here; close the task once the user says #$num merged" ;;
-      esac
-      exit $rc
-    fi
-    "$n" "$here/pr-watch.mjs" ci "$repo" "$num" "${mins:-60}" "$(g rev-parse HEAD)" bash "$here/pr.sh" checks "$slug" "$wt"; rc=$?
+    ci; rc=$?
     case $rc in
-      0) echo "next: run asst-pr ready $slug $wt again" ;;
-      1) echo "next: fix the failing check, push, then run asst-pr ready $slug $wt again" ;;
-      3) echo "next: watch again — $again" ;;
-      *) echo "next: if #$num is already watched, wait for that watch; otherwise schedule one asst-pr checks $slug $wt a few minutes out (CronCreate, recurring: false) — never wait in a loop" ;;
+      0) echo "next: run asst-pr ready $slug $wt" ;;
+      1) echo "next: fix the failing check and push, then look again" ;;
+      3) later "asst-pr checks $slug $wt" 5 ;;
     esac
     exit $rc ;;
+  merged)
+    github "There is no PR to look at."
+    st=$(cd "$wt" && gh pr view "$branch" --json number,state,mergeCommit --jq '"\(.number) \(.state) \(.mergeCommit.oid // "")"' 2>/dev/null) \
+      || refuse "no PR for $branch — asst-pr open never ran"
+    read -r num state oid <<< "$st"
+    case "$state" in
+      MERGED) echo "asst-pr: #$num MERGED as ${oid:0:7}"; echo "next: close the task (step 8)"; exit 0 ;;
+      CLOSED) echo "asst-pr: #$num CLOSED without merging"; echo "next: tell the user #$num closed without merging"; exit 1 ;;
+      *) echo "asst-pr: #$num still open"; later "asst-pr merged $slug $wt" 30; exit 3 ;;
+    esac ;;
   ready)
     [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — commit first"
     [ "$(g rev-parse HEAD)" = "$(g rev-parse '@{u}' 2>/dev/null)" ] || refuse "HEAD is not pushed — run asst-pr open first"
@@ -287,16 +276,17 @@ $leaks"
       3)
         if [ "$ci_unrun" = 1 ]; then
           (cd "$wt" && gh pr ready "$num") >/dev/null || exit 2
-          echo "asst-pr: NOT READY — #$num is out of draft so CI can run, but nothing has passed yet: start asst-pr watch $slug $wt with run_in_background: true, then run ready again" >&2
+          echo "asst-pr: NOT READY — #$num is out of draft so CI can run, but nothing has passed yet" >&2
         else
           echo "asst-pr: NOT READY — CI is still running on HEAD" >&2
-          echo "next: start asst-pr watch $slug $wt with run_in_background: true, then run ready again" >&2
         fi
+        later "asst-pr checks $slug $wt" 5
         exit 3 ;;
       *) exit 2 ;;
     esac
     if [ "$draft" = true ]; then (cd "$wt" && gh pr ready "$num") || exit 2; fi
     echo "asst-pr: #$num ready (reviews: $reviews)"
-    echo "next: write the delivery summary, and start asst-pr watch $slug $wt --merge with run_in_background: true to be woken when it merges" ;;
+    echo "next: write the delivery summary"
+    later "asst-pr merged $slug $wt" 30 ;;
   *) usage ;;
 esac

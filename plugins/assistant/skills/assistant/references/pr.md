@@ -17,10 +17,12 @@ it) isn't offered.
 Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft. A draft means
 work is still in progress, so a delivery summary sent while the PR is a draft tells
 the user it's done when it can't be merged yet. Whatever `ready` refuses on is
-unfinished work: finish it, don't deliver around it. Every `asst-pr ready` and
-`asst-pr watch` outcome ends with a `next:` line; do what it says. A watch runs with
-`run_in_background: true` and its exit wakes the session, so end the turn while it
-runs — nothing else reports a passing run, and you never wait in a loop.
+unfinished work: finish it, don't deliver around it. Every `asst-pr` outcome ends with
+a `next:` line; do what it says. Nothing waits for you: one not settled yet (CI still
+running, the PR still open) names the look to schedule once with `CronCreate`
+(`recurring: false`), and you end the turn — nothing else reports a passing run or a
+merge, and you never wait in a loop. Tasks' PRs are looked at side by side, each
+on its own schedule.
 
 ## Merge
 

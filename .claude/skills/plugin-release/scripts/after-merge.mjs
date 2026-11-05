@@ -1,32 +1,24 @@
 #!/usr/bin/env node
-// Wait for a PR to merge, then do everything that has to happen after a merge:
-// update every install of each plugin the PR changed (consumers.mjs) and verify
-// it, uninstall every install of a plugin the PR deleted, sync the main checkout,
-// and remove the PR's local worktree and branch.
+// Look once at a PR; once it has merged, do everything that has to happen after a
+// merge: update every install of each plugin the PR changed (consumers.mjs) and
+// verify it, uninstall every install of a plugin the PR deleted, sync the main
+// checkout, and remove the PR's local worktree and branch.
 //
-// Start it with the Bash tool's `run_in_background: true` once the PR is ready:
-// it exits when the PR merges or closes, and the exit wakes the session — nobody
-// has to say "merged". The app's PR monitor wakes a session on CI failures,
-// conflicts and review comments, never on a merge. The wait is a push, not
-// polling: `gh webhook forward` (the cli/gh-webhook extension) streams GitHub's
-// pull_request events over a websocket.
-//
-// One run per PR, any number of PRs at once: the wait is the assistant plugin's
-// pr-watch.mjs (`asst-pr watch --merge`), so the runs share one forwarder, and the
-// work after a merge runs one PR at a time.
+// Nothing here waits. While the PR is still open it says so and exits 3, and the
+// session schedules the next look itself (CronCreate, recurring: false); the app's
+// PR monitor wakes a session on CI failures, conflicts and review comments, never
+// on a merge.
 //
 // Usage: node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 // Exit: 0 merged and every install verified (or no plugin to install) · 1 closed
-// unmerged, already running for this PR, the forwarder failed, or a check
-// failed — the reason on stderr.
+// unmerged, or a check failed — the reason on stderr · 3 still open.
 
 import { execFileSync } from 'node:child_process';
-import { watch } from 'node:fs';
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marketplaceSource, removeConsumers, slug, updateConsumers } from './consumers.mjs';
-import { claim, release, repoDir } from '../../../../plugins/assistant/skills/assistant/scripts/hub.mjs';
-import { watchPr } from '../../../../plugins/assistant/skills/assistant/scripts/pr-watch.mjs';
 
 const pr = process.argv[2];
 const die = (msg) => {
@@ -56,35 +48,33 @@ const files = () => {
     die(`gh api pulls/${pr}/files failed — ${(e.stderr || e.message).trim()}`);
   }
 };
-try {
-  execFileSync('gh', ['webhook', '--help'], { stdio: 'ignore' });
-} catch {
-  die('gh webhook not installed — gh extension install cli/gh-webhook');
-}
-
-// 1. Wait, with the watcher `asst-pr watch --merge` runs: it reads the state once
-// connected, so a merge in between still arrives as an event and a merge before
-// the start is not waited for forever.
-const repo = slug(git(['remote', 'get-url', 'origin']));
-const turnFile = join(repoDir(repo), 'after-merge.lock');
-process.on('exit', () => release(turnFile));
-for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => process.exit(130));
-const waited = await watchPr({ mode: 'merge', repo, pr, timeoutMin: Infinity });
-if (waited.code === 1) die(`#${pr} was closed without merging — nothing to install`);
-if (waited.code !== 0) die(waited.out.trim());
-
-// Two merges close together would sync the main checkout and rewrite the same
-// install records at once, and git refuses a second writer of one index — so
-// steps 2 and 3 run one PR at a time.
-while (!claim(turnFile)) {
-  await new Promise((r) => {
-    const done = () => { w.close(); clearTimeout(t); r(); };
-    const w = watch(dirname(turnFile), done);
-    const t = setTimeout(done, 5000);
-  });
-}
+// 1. One look at the PR.
 const pull = view();
+if (pull.state === 'OPEN') {
+  console.log(`#${pr} is still open — ${pull.url}`);
+  console.log(`next: schedule 'node .claude/skills/plugin-release/scripts/after-merge.mjs ${pr}' to run once in 30 minutes (CronCreate, recurring: false), then end the turn — never wait in a loop`);
+  process.exit(3);
+}
 if (pull.state !== 'MERGED') die(`${pull.url} was closed without merging — nothing to install`);
+
+// Two merges looked at close together would sync the main checkout and rewrite
+// the same install records at once, and git refuses a second writer of one
+// index — so the work below runs one PR at a time. A lock whose owner has died
+// is taken over.
+const repo = slug(git(['remote', 'get-url', 'origin']));
+const lock = join(tmpdir(), `after-merge-${repo.replace('/', '__')}.lock`);
+const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+for (;;) {
+  try {
+    writeFileSync(lock, `${process.pid}\n`, { flag: 'wx' });
+    break;
+  } catch {
+    const owner = Number(readFileSync(lock, 'utf8').trim()) || 0;
+    if (owner && !alive(owner)) { try { unlinkSync(lock); } catch {} continue; }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+  }
+}
+process.on('exit', () => { try { unlinkSync(lock); } catch {} });
 const ref = pull.mergeCommit.oid;
 console.log(`✔ ${pull.url} merged as ${ref.slice(0, 7)}`);
 
