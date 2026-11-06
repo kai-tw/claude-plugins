@@ -41,3 +41,11 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 ## Debt
 - Known debt: <none, or one line each>
 ```
+
+## A request split into sub-tasks
+
+A request one brief cannot hold (SKILL.md step 1) becomes a parent row holding the request
+in its body, and under it one sub-item per task statement, in order (`asst-board create
+<slug> … "Parent item=<parent>"`): each its own row and worktree, each later one
+`Blocked by` the sub-item it waits for. The parent is never dispatched. The split itself is a `Decided` in the
+first brief.
