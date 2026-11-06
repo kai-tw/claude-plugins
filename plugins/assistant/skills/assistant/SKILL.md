@@ -120,7 +120,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    Run `asst-pr ready <slug> <worktree>`, and
    write the delivery summary only once it exits 0, with `PR #<n> ready` in its header.
    The merge waits for the user's word that the PR can merge — nothing schedules a
-   look for it. `asst-pr merged` (run once, then) exiting 0, or the user saying the PR merged → step 8.
+   look for it. Run `asst-pr merged` once when the user says the PR can merge or has merged; exiting 0, or the user saying the PR merged → step 8.
 8. **Close** (you, through `asst-board`): the task row is disposable, so it is
    deleted (`asst-board trash <slug>`) and no record of the task is kept — a row
    never moves to `Shipped`. Run each loaded module's Close step.

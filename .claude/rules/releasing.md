@@ -5,8 +5,8 @@
   `Evals` (`.github/scripts/run-evals.mjs`) is green and the version is bumped — the draft
   state is what stops a merge while the agent is still working. Nothing waits for you:
   while CI runs, schedule one look yourself (`CronCreate`, `recurring: false`), never ask
-  the user to report it. The merge is not looked for: when the user says the PR can merge
-  or has merged, run `node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>`;
+  the user to report it. The merge is not looked for: run it once when the user says the PR can merge or
+  has merged, never on a schedule: `node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>`;
   once the PR has merged it does everything after the merge, and while it's open it exits 3.
 
 - **Changing anything under `plugins/<plugin>/` means bumping `version` in `plugin.json`.**

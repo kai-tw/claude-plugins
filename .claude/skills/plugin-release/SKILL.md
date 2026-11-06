@@ -103,7 +103,7 @@ the marketplace serves `main`; the script says so and names the script below.
 
 ## After the merge
 
-Once the PR is ready, run:
+Run it once when the user says the PR can merge or has merged, never on a schedule:
 
 ```bash
 node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
@@ -112,8 +112,8 @@ node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 It looks at the PR once. Merged: it runs steps 6–8 for every plugin the PR
 changed, syncs the main checkout and removes the PR's worktree and branch. Still
 open: it exits 3 and its `next:` line says to wait for the user's word that the PR
-can merge; run it when the user says the PR merged, never on a schedule. Exit 1 (closed unmerged, or a failed check) prints why; report
-it as it stands.
+can merge. Exit 1 (closed unmerged, or a failed check) prints why; report it as it
+stands.
 
 A running session switches to the updated plugin on its own, at a moment no one can
 predict (`.claude/rules/releasing.md`), so don't tell the user to restart: check the

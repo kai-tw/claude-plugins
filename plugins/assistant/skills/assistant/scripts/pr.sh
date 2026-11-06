@@ -69,7 +69,7 @@ default=$(g symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); 
 # default branch.
 target=$(field base_branch); case "$target" in ""|none) target=$default ;; esac
 refuse() { printf 'asst-pr: NOT READY — %s\n' "$1" >&2; exit 1; }
-# Nothing here waits: an outcome that isn't settled yet names the one look to
+# Nothing here waits: an outcome waiting on CI names the one look to
 # schedule, and the session that scheduled it wakes for that look.
 later() { echo "next: schedule '$1' to run once in $2 minutes (CronCreate, recurring: false), then end the turn — never wait in a loop"; }
 github() {
