@@ -39,8 +39,7 @@ the rest under `low confidence` with their score.
 ## Code review (`verify-code`, or `brief-review`)
 
 Read the project config's `rules:` and `style-pack --paths <the changed files>`. Walk
-the six blocks in order; each finding is one line `[<block>.<n>] file:line —
-what is wrong · failure scenario · Fix: <the change>`:
+the six blocks in order:
 
 1. **Logic** — per user scenario in the brief: entry → decision points → outcome;
    a branch the scenario needs that the diff lacks, or takes wrongly.
@@ -75,13 +74,7 @@ what is wrong · failure scenario · Fix: <the change>`:
 
 On the decision brief alone (`brief-review`), walk blocks 1, 2 and 5 against the
 design: every scenario has a path, every datum and capability one canonical home, every NEW
-thing a reason under Ownership. Then check proportion — style-pack S15 and S16.1 at
-design scale: a NEW thing, guard, retry, fallback or lock whose `Evidence` cites no
-case, or a case that can't happen, is filed with Fix: drop it; a design with fewer
-NEW things that still covers every evidenced case is filed with Fix: that design; a
-`Decided` line that adds or changes a product behaviour (what the user sees, or how
-a feature behaves) is filed with Fix: move it to `Needs you`, quoting the current
-behaviour.
+thing a reason under Ownership, then the form's `Proportion` section.
 File only what would send the build the wrong way.
 
 ## Text review (`verify-text`)
@@ -93,10 +86,7 @@ wins on the facts it states (terms, screen labels, storage formats). A locale
 the glossary declares a mirror of another loads the mirrored locale's file.
 
 Run `strings_check:` when set; its output reaches the report through the shell,
-never retyped (§Filing). Do not re-derive by
-reading what it already decided — term blocklists, punctuation form, second
-person, sort order and missing keys are its job, and a finding that duplicates
-it is dropped.
+never retyped (§Filing). Don't re-check what `strings_check` decides.
 
 For each changed value, read the shipped strings in the same UI role in
 the `ui_strings:` files on the default branch (svn: the last committed revision).
@@ -105,22 +95,14 @@ shipped string it was measured against. Run `asst-strings examples <role> <local
 each changed value too: U3.8 is checked against those pairs, and its finding
 quotes the pair.
 
-Walk U1–U5 in order; each finding is one line `[U<N>.k] <key> · <locale> —
-<what is wrong> · Fix: <the string you would write>`. `Fix:` carries the
+Walk U1–U5 in order. `Fix:` carries the
 replacement string in full, in that locale. A finding without one is not filed —
 the user approves strings at the screen review, and cannot approve a complaint.
 
-For a key whose value one of your findings changes, also report the row the
-delivery summary needs: the key, where it renders, the available width, and each
-locale's value as it stands after your findings are applied. Every other key
-stands as the builder's `strings:` block lists it. Approval status is not part of
-this report — the screen review gives it.
+Approval status is not part of this report — the screen review gives it.
 
 A line no rule you can cite catches, but that you still believe no native
-speaker would write, goes under `Not native`, at most three. They are not
-findings, not scored, and do not block the merge: they feed `ui-text-pack`'s
-rules, not this diff. More than three means a rule is due — say which one you
-would make.
+speaker would write, goes under `Not native`.
 
 ## Filing
 
