@@ -48,7 +48,13 @@ s=$(grep -E '^- \*\*S2\.10 ' "$b")
 echo "s2.10=$s"
 for p in 'more than one site' 'configuration value' 'top of its file' 'finite set' 'inline' \
   'declared in one file and used in another' 'multi-line data tables' \
-  'enumerations another unit reads' 'S4.2'; do
+  'enumerations another unit reads' 'S4.2' 'may stay named with one use site'; do
   grep -qiF "$p" <<<"$s" || echo "s2.10-lacks=$p"
 done
+! grep -qF 'Named even with one use site' <<<"$s" || echo "s2.10-stale=Named even with one use site"
+s=$(grep -E '^- \*\*S4\.4 ' "$b")
+p='a version mismatch that falls back to a default instead of being converted version by version violates it too, always proposed CRITICAL'
+grep -qF "$p" <<<"$s" || echo "s4.4-lacks=$p"
+s=$(grep -E '^- \*\*S16\.2 ' "$b")
+grep -qF 'in full or simplified' <<<"$s" || echo "s16.2-lacks=in full or simplified"
 SH
