@@ -4,4 +4,4 @@ pattern: '^missing='
 flags: m
 match: not_contains
 ---
-Every reference SKILL.md names exists.
+[B1] Every reference SKILL.md names exists.
