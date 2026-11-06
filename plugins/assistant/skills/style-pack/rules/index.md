@@ -51,7 +51,7 @@ on, not by the directory it sits in.
   opening a subscription — violates this rule: execution belongs to the startup flow or to the
   constructor of whatever owns the work.
 - **S1.6 User-visible copy must not enter the state layer** — Check: state carrying finished
-  sentences of copy instead of an error code / enum violates this rule: such copy cannot be
+  sentences of copy violates this rule, even when it also carries an error code / enum: such copy cannot be
   re-localized. The state layer emits codes; the presentation layer turns them into text.
 
 ## S2 — A name must still reveal its owner, kind and category once it leaves its declaration
@@ -105,9 +105,9 @@ in its name. **Violations of this rule are always proposed CRITICAL.**
   a configuration value placed at the top of its file so it is easy to find, or when it is a
   member of a finite set (path, key, identifier), since the compiler will not catch a typo in
   a bare literal or follow a rename; anything else is inlined at its use site with its
-  explanation. Either departure violates this rule. Named even with one use site: a constant
-  declared in one file and used in another, multi-line data tables, and enumerations another
-  unit reads. A store's S4.2 codes are outside this rule: they are written once, in the
+  explanation. Either departure violates this rule. A constant declared in one file and used
+  in another, multi-line data tables, or enumerations another unit reads may stay named with
+  one use site. A store's S4.2 codes are outside this rule: they are written once, in the
   mapping, and not following a rename is their purpose.
 
 ## S3 — Every collapse must be justified at each use site
@@ -167,9 +167,9 @@ data just comes to mean something else.
   rule. Example: one flaky connection flips a record to "none", and the recovery path that
   could fix it is blocked by that very record.
 - **S4.4 A persisted format must declare a version; a mismatch is resolved by step-by-step
-  migration** — Check: a persisted format without a version field, or a version mismatch
-  that falls back to a default instead of being converted version by version, violates this
-  rule, always proposed CRITICAL. Two exceptions must each be stated at the version check:
+  migration** — Check: a persisted format without a version field violates this rule; a
+  version mismatch that falls back to a default instead of being converted version by
+  version violates it too, always proposed CRITICAL. Two exceptions must each be stated at the version check:
   the data can be rebuilt from an authoritative source, or the version encountered is
   **newer** (an older reader must leave it as is, not overwrite it).
 - **S4.5 A shipped migration step is frozen** — Check: a migration step that imports today's
@@ -471,9 +471,9 @@ capability goes through its interface, never building a second one or reaching a
   count. If, once the unit is inlined, readers need to know the same things, it is an
   indirection rather than an abstraction and falls under this rule; so does an extracted
   unit re-checking a condition the caller already checked.
-- **S16.2 A capability must be used through the entry point its owner declares** — Check: a
-  hand-written simplified version of a mechanism the framework or this project already
-  provides, in place of its entry point, violates this rule. Obtaining something from another
+- **S16.2 A capability must be used through the entry point its owner declares** — Check:
+  rebuilding a mechanism the framework or this project already provides, in full or
+  simplified, instead of using its entry point violates this rule. Obtaining something from another
   boundary through an implicit channel, when that boundary has a named entry point, violates
   it too.
 - **S16.3 A fact or a derivation has exactly one declaration site** — Check: a value,
