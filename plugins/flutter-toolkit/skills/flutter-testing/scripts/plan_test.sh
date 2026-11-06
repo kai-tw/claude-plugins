@@ -38,12 +38,12 @@
 #   plan-test --help
 #
 # WHY `--exec` EXISTS
-#   A limit that some runs skip is no limit. `plan-mutation` runs MANY suites
-#   without ever typing `flutter test` at the top level, so the hook cannot see
-#   it and it would use memory without taking a slot. Its launcher routes through here
-#   instead. `--exec` holds its slots for the whole operation, not per inner run:
+#   A limit that some runs skip is no limit. A tool that runs MANY suites
+#   without typing `flutter test` at the top level is invisible to the hook, and
+#   would use memory without taking a slot, so it routes through here.
+#   `--exec` holds its slots for the whole operation, not per inner run:
 #   the inner loop must not thrash the semaphore. It holds one slot per suite
-#   that runs AT ONCE — `--slots n` for `plan-mutation --workers n` — taken all
+#   that runs AT ONCE — `--slots n` for n parallel workers — taken all
 #   together or not at all, since a caller sitting on part of its share starves
 #   everyone and still cannot start.
 #
