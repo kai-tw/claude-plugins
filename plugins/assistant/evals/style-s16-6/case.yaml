@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: style-pack dart
+    EVAL_CMD: style-pack dart | tr -s " \n" " "
   prompt: |
     Print the style rules, then quote core rule S16.6 in full.
 context:

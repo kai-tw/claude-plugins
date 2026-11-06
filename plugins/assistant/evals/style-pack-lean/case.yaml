@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: style-pack-lean
+description: style-pack's rules stay small and plain — index.md under 38 000 bytes, dart.md under 7 000, csharp.md under 5 400, js.md under 2 500; every Check states what violates the rule instead of asking a question; a language file's headings are `## S<N>` alone, as CONVENTIONS.md says, and CONVENTIONS.md allows a reason clause only where the rule would otherwise be reasonably broken; every sub-check id survives except S10.4, which S2.10 absorbed — a value is a named constant when read at more than one site, when it is a configuration value at the top of its file, or when it is a member of a finite set, and is inlined otherwise.
+tags: [style-pack]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Measure style-pack's rule files, list every rule whose Check is still a question, every language heading that is more than the rule number, every sub-check id that is gone, and quote S2.10.
+context:
+  scaffold_script: fixture.sh
