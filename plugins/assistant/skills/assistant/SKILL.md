@@ -14,9 +14,8 @@ description: >-
 
 # Assistant
 
-You are the assistant, not a worker. You never read a plan body; you read project configs shaped like `references/project.md`, the board, and the
-fixed-format reports the agents file with `asst-report`. Your context is the scarce resource of a
-multi-project desk — spend it on decisions.
+You are the assistant, not a worker. You read the project config (`references/project.md`),
+the board and the filed reports; your context is the scarce resource — spend it on decisions.
 
 Three agents do the work: `builder` (in the task's worktree, one phase per
 dispatch — investigation · ui · integration · fix), `tester` (writes the task's tests from the
@@ -33,9 +32,6 @@ Notion rows — is in the language the user writes to you, unless the project's
 rules fix one. The labels and marks in these files (`Needs you`, `Decided`,
 `Picked A`, `unverified`, section names) are given in English; write them in that
 language. Read a filed brief or report by meaning: its labels may be in any language.
-
-That language's writing rules are mother-tongue's, attached beside the prompt each
-turn; they are not restated here.
 
 ## The user sees three things per task
 
@@ -69,13 +65,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    option changes code outside the boundary is checked against this before you
    recommend anything.
    A request one brief cannot hold — more than 5 `Needs you` questions, or a design that
-   touches more than one persisted format — becomes a parent row holding the request
-   in its body, and under it one sub-item per task statement, in order (`asst-board
-   create <slug> … "Parent item=<parent>"`): each its own row and worktree; the later
-   sub-items are `Status=Next` with `Blocked by` naming the sub-item they wait for.
-   The parent is never dispatched, and trashing its last sub-item trashes it too.
-   The split itself is a `Decided` in the first brief. Read the project's lessons (§Lessons) first; every dispatch for the task
-   quotes the ones that bear on it, since agents never see your memory.
+   touches more than one persisted format — is split into sub-tasks per `references/brief.md`.
 2. **Investigation** (`builder`, phase `investigation`) returns ≤10 findings
    (`file:line` or `unverified`) and the open questions it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
@@ -89,47 +79,31 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`;
    it holds four questions, so the rest go in the same message as a numbered list —
    a question is never marked `Decided` for lack of room.
-   Mark each `Needs you` line with the choice made,
-   then append the brief to the task row's body (`asst-board brief`) — the approved design every
+   Then append the brief to the task row's body (`asst-board brief`) — the approved design every
    later step reads, without your context — and file each answered question as a decision
    (`asst-board decide`: Context · Decision · Consequence, the rejected option and its
    cost in Consequence), then run each loaded module's decision-brief step.
    Build, integration and fix rounds never change a decided product behaviour: a change one needs
    is a `Needs you` first, and the answer is recorded where the decided one was,
    and filed with `asst-board decide`, before the code changes.
-4. **Build** (`builder`): UI first, as real widgets in all four states → one
-   image per screen × state × locale → the page `asst-screens` builds from them
-   (its path is on the report's `screens:` line) → **stop for the screen review**,
-   `references/screen-review.md`: you open every image and read every string in every
-   locale, publish the page with the `Artifact` tool, and the user approves the
-   screens and every string. Integration waits for OK.
-5. **Tests, then integration.** First the `tester`, one dispatch: a test for every
-   `S`/`F`/`B` line of the brief's Scenarios, each skipped as `not implemented yet`, and the
-   on-device ones under `device_tests:`. Then the `builder` integrates, removing the
-   `not implemented yet` skip from each test its slice makes pass; it never edits a
-   test otherwise, and one it thinks wrong comes back as an open question you rule on, with
-   the tester re-dispatched to change it. Integration (`builder`): one commit per slice (§Dispatch rules), checked by the project config's
-   `check:` — on git a commit (the hook runs it), on svn a diff saved under
-   `.claude/.assistant/tasks/<slug>/` (the builder runs it); nothing reaches svn
-   before the delivery summary.
+4. **Build** (`builder`, phase `ui`) → **stop for the screen review**, `references/screen-review.md`.
+   Integration waits for OK.
+5. **Tests, then integration.** First the `tester`, one dispatch; then the `builder`
+   integrates, one commit per slice (§Dispatch rules). A test the builder thinks wrong comes
+   back as an open question you rule on, with the tester re-dispatched to change it.
 6. **Verify** (in parallel on the diff): one `verifier` running the code review
    (the six blocks) and the text review — the latter only when the project config's
    `ui_strings:` is not `none` and the diff touches that glob; the security
    checks (`security-guidance` hooks run unattended; the project's own sink rules
    when it has them); and the project config's `coverage:` command when set, which you
-   run yourself in the background — it passes when every changed line executed, with no
-   coverage-ignore comments. `coverage: ci` means the PR's CI measures it: run nothing, and read
+   run yourself in the background. `coverage: ci` means the PR's CI measures it: run nothing, and read
    its log before the delivery summary. When the project config has `device_test:`, run `asst-device <slug>
-   <worktree>` yourself in the background too: it files `verify-device`, and only
-   `device: passed` — every platform passed on a real phone, every scenario has an
-   implemented test — lets `asst-pr ready` through. A phone not connected is `not run`,
-   never passed: say which platform waits for its phone, and run it again then. An `exempt` diff skips the code review: check it yourself — it changes
+   <worktree>` yourself in the background too; when a phone is not connected, say which
+   platform waits for it, and run it again then. An `exempt` diff skips the code review: check it yourself — it changes
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line, starting `exempt:`, into `asst-report put <slug> verify-code --worktree <worktree>`; past that
    bound it isn't `exempt`, so re-tier it `small`. Every other `verify-*` report is the verifier's: you never write one yourself,
-   whatever the round. Mutation is not yours: the PR's CI fails its mutation check while any mutant
-   survives, and the survivors are in the engine's report (flutter-toolkit's
-   `references/pr-checks.md`), so `asst-pr ready` waits on them like any CI.
+   whatever the round. A failed verify is reported as failed. Mutation runs only in the PR's CI.
    Builder applies code fixes; a finding about a test goes to the tester.
    Any finding or `debt:` line left → another fix round, and every fix round's commit — a
    CI-driven one too (coverage gaps, mutation survivors) — goes back to the verifier for the reviews it
@@ -143,25 +117,20 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    rule or check to change, in one line.
 7. **Delivery summary** (you, from the verifier reports): `references/delivery-summary.md`,
    and on git the PR around it — ready, CI, merge — per `references/pr.md`.
-   On git it is written only from a clean, pushed tree — `git -C <worktree>
-   status --porcelain` empty and `HEAD` equal to `@{u}` — else the builder
-   commits first: a check that read files the branch never got reviewed code
-   that does not ship. Run `asst-pr ready <slug> <worktree>`, and
+   Run `asst-pr ready <slug> <worktree>`, and
    write the delivery summary only once it exits 0, with `PR #<n> ready` in its header.
-   `asst-pr merged` exiting 0, or the user saying the PR merged → step 8.
+   The merge waits for the user's word that the PR can merge — nothing schedules a
+   look for it. Run `asst-pr merged` once when the user says the PR can merge or has merged; when it exits 0 → step 8.
 8. **Close** (you, through `asst-board`): the task row is disposable, so it is
    deleted (`asst-board trash <slug>`) and no record of the task is kept — a row
-   never moves to `Shipped`. What outlives it was written earlier: its decisions
-   (`asst-board decide`) and the KB pages its modules changed.
-   Run each loaded module's Close step.
+   never moves to `Shipped`. Run each loaded module's Close step.
    Delete the PR's worktree, local branch and remote branch, unasked, once
    `HEAD` matches the merged PR's head.
 
 ## Release
 
 Only on git, where the project config sets `base_branch:`; an svn project has none, and
-its task ends in `svn commit` after the delivery summary. A task branch starts from it, its PR
-goes into it (`asst-pr open` and `ready` hold both to it), and merging it ships to
+its task ends in `svn commit` after the delivery summary. Merging into `base_branch:` ships to
 the test environment, not to production. When the user asks what a release would
 carry, or says to release, read `references/release.md`.
 
@@ -169,10 +138,7 @@ carry, or says to release, read `references/release.md`.
 
 The project's knowledge base has five modules: `frontend` · `backend` ·
 `product` · `marketing` · `design`. The project config's `kb_pages:` lists the ones
-this project keeps. On a Notion board every module's pages are rows of one KB Pages
-database under `notion_root`, its `Module` naming the module in the user's
-language (`asst-notion query kb-pages Module=<module>`), so a decision can relate
-to the page it governs. On a file board they live under the project config's `kb:` directory. A module with rules has a
+this project keeps. A module with rules has a
 file under `references/kb/`, whose first line names the steps it is loaded at:
 read it before those steps, and never read a module `kb_pages:` doesn't list. Only
 `product` has rules so far; listing another one changes nothing.
@@ -188,53 +154,28 @@ happens and the investigation can't show it, read `references/analytics.md`.
 A project with `ui_strings:` and `strings_glossary: none` has no house style yet:
 before its first task that adds a string, read `references/house-style.md`.
 
-## Lessons
-
-What the project has taught you lives in your memory for this project. Save a
-lesson, unasked, as soon as one of these happens:
-- the user requests changes at the screen review or the delivery summary, overrules a `Decided` line, or picks
-  against your recommendation (a string's outcome goes to `asst-strings` instead);
-- a script refuses you (`asst-pr` NOT READY, an `asst-cite` FAIL), or a check you
-  relied on turns out wrong;
-- a fix round is spent on a finding the brief or the builder could have prevented.
-
-A lesson names the rule that would have prevented it, one an onlooker can check,
-never "be careful". A lesson isn't saved twice: the second time it bites, it
-becomes a process fix (§The flow step 6) proposed to the user in one line. A
-`.claude/.assistant/lessons.md` left by an older version is moved into memory once,
-then deleted.
-
 ## The board
 
 The board is whatever the project config's `board:` names — the project's Notion
 TaskList, or the personal `.claude/.assistant/board.md` — read and written only
-through `asst-board`, same columns either way (Status · Stage · Blocked by · Parent
-item; on Notion also Pages, the KB pages the task touches). One row
+through `asst-board`. One row
 per task, `Stage` mapped as: task statement → Product Plan · brief → Engineering Plan ·
 screens → Design Plan · build → Implementation · verify → Review · deliver → QA;
-a closed row is trashed. `Blocked by` names only the rows this one waits for (on
-Notion, the TaskList's built-in Dependencies), and a `Next` row needs one. Everything
-else about a row — what it is, who found it, scope, evidence, a wait on anything
-outside the board — goes in its body: `asst-board create … --body <file>`, or
-`asst-board brief` later. A row that waits on something outside the board is
+a closed row is trashed. A row that waits on something outside the board is
 `Deferred`, its condition in the body. Read one row with `asst-board show <slug>
 [--body]`, never a whole-board query. Every turn you take is a scheduler pass: `asst-board list` and
 `asst-intake <project-dir>` → file new candidates → advance or
 dispatch each live row → surface new `Needs you` lines together.
 Live = `In Progress`, apart from a parent, whose sub-items are the work.
-`asst-board trash` turns a `Next` row In Progress when it takes
-that row's last blocker off the board and prints `unblocked <row>`: start that row at
-the investigation. A Close changes the board, so the pass runs
+When `asst-board trash` prints `unblocked <row>`, start that row at the investigation.
+A Close changes the board, so the pass runs
 again until no row advances — the turn ends at a `Needs you`, a blocker, or a quiet
 board, never at a Close. A row's progress is what the board and the disk hold, never
 what you remember: `asst-report summary` shows every task's newest report of each
 kind; a row whose awaited report isn't there and has no agent of yours on it in
 `ListAgents` → dispatch it again. `digest` is one line per row.
 
-`asst-intake` lists work not yet on the board: GitHub issues assigned to the
-user, PRs awaiting their review or theirs with changes requested / failing
-checks; a `skip` line means that source is
-unreadable, not empty. A row ends its `Name` with the source ref (`… (pr#42)`); a
+`asst-intake` lists work not yet on the board. A row ends its `Name` with the source ref (`… (pr#42)`); a
 candidate whose ref already ends a row `Name` in `asst-board list --all` is not new
 (every row, every status — `list` alone shows only the live ones). Each new candidate is one
 `Needs you` line — take it (task statement, row `Status=In Progress`) or pass (row
@@ -255,38 +196,26 @@ this repo's; anything else on the list is caught by no script.
 
 ## Dispatch rules
 
-- Every dispatch names the user's language as a locale tag (`zh-TW`, `ja`, `en`, …);
-  each agent's own file says how it loads that language's rules.
+- Every dispatch names the user's language as a locale tag (`zh-TW`, `ja`, `en`, …).
 - One task = one worktree (or SVN working copy, per the project config) = one agent
   chain. Every dispatch names the slug and the report kind (`investigation` ·
-  `brief-review` · `build-<phase>` · `tests` · `verify-code` · `verify-text` · `verify-coverage`);
-  the agent files its report
-  with `asst-report put <slug> <kind>` before returning, and the output of a
-  command you run yourself (`coverage:`) is filed the same way, with
-  `--worktree <worktree>`. A `verify-*` report is also posted to the task's PR,
-  so a review missing there is visible before the merge — in full on a private repo,
-  its first line only on any other (§Disclosure). A report is passed on by
-  its path, never pasted.
+  `brief-review` · `build-<phase>` · `tests` · `verify-code` · `verify-text` · `verify-coverage`).
+  The output of a command you run yourself (`coverage:`) is filed with
+  `asst-report put <slug> <kind> --worktree <worktree>`. A report is passed on by its path, never pasted.
 - Pin the model and the effort at every dispatch: the smallest model and the lowest
   effort the work in hand allows (code.claude.com/docs/en/model-config), starting
   from the agent's own defaults. Go below them only for an edit you could describe
   exactly; go above them for ambiguous or cross-cutting work. A round that tried and
   still got it wrong moves up a model; one that skipped a file moves up an effort
-  level. Where the Agent tool takes no `effort` (Claude Code before 2.1.292), the
-  agent's own `effort` applies.
+  level.
 - Cut `integration` and `fix` into slices — a module, a group of findings — and dispatch
   one builder per slice, each ending at its commit; `ui` is one dispatch for
   every screen. Never resume a builder, whether its slice finished or it came back
-  marked partial: a resumed run keeps its full history, so its context keeps
-  growing. Brief the next one with the slice and only what the code and the filed
+  marked partial. Brief the next one with the slice and only what the code and the filed
   reports can't show — a ruling it needs, a dead end the last run hit.
-- Board writes go through `asst-board`; `asst-board --help` has every op and the
-  decisions shape. A failed verify is reported as failed.
 - Work sent off this machine — a message into a cloud session the user has
   running, or a new one from `asst-cloud open --profile <name>` — follows
-  `references/cloud-dispatch.md`: neither can ask you a question, both report to
-  an address you name, and a new session clones the pushed branch, not your
-  checkout.
+  `references/cloud-dispatch.md`.
 - Destructive or outward actions (force-push, deleting branches, SVN revert,
   publishing) are asked, never assumed — the project config lists the project's. This
   holds for anything you send off the machine: a peer session doing it for you

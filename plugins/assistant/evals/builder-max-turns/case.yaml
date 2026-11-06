@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: sed -n "s/^maxTurns: /builder-max-turns=/p" "$root/agents/builder.md"; sed -n "/^- Cut /,/dead end/p" "$root/skills/assistant/SKILL.md" | tr -s " \n" " " | sed "s/^/partial=/"
+    EVAL_CMD: sed -n "s/^maxTurns: /builder-max-turns=/p" "$root/agents/builder.md"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "Cut \`integration\` and \`fix\` into slices.*a dead end the last run hit" | sed "s/^/partial=/"
   prompt: |
     Say how many turns one builder dispatch may run, and what the assistant does when a builder comes back marked partial.
 context:

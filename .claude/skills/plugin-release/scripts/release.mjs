@@ -152,8 +152,8 @@ if (src?.source === 'git' || src?.source === 'github') {
   if (defaultBranch && branch !== defaultBranch) {
     console.log(`  ⚠ on branch "${branch}", but "${marketplace.name}" serves ${originSlug}@${defaultBranch}.`);
     console.log(`    ${next} is pushed and cannot be installed until it merges — nothing is wrong.`);
-    console.log(`\n    Once the PR is ready, run this — once it has merged, it updates and verifies`);
-    console.log(`    every install; while it's open, it names the next look to schedule:`);
+    console.log(`\n    Run it once when the user says the PR can merge or has merged, never on a schedule —`);
+    console.log(`    it updates and verifies every install; while the PR is open, it says to wait for the user:`);
     console.log(`      node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>`);
     console.log(`\n✔ ${plugin} ${next} committed and pushed on ${branch} — install after merge.`);
     process.exit(0);

@@ -35,9 +35,7 @@ Phases (run only the one named):
   module, the canonical home of each datum or capability the task touches, the
   closest existing feature and how it does it, the rules that bind (`rules:` in
   the project config), and any persisted format or API in play — at most 10 findings.
-  Each `file:line` is relative to the worktree root and is checked by `asst-cite`
-  (its header states the test), so put the thing a finding cites in backticks. A
-  negative claim (only / none / all, in any language) needs a second method
+  A negative claim (only / none / all, in any language) needs a second method
   beside grep, or it is written as `unverified`. Whether a case happens is answered
   by a `file:line` on the path that leads to it or an `experiment:` row you ran,
   never by opinion.
@@ -57,8 +55,7 @@ Phases (run only the one named):
   the `not implemented yet` skip from each one your slice makes pass, and never edit
   a test otherwise — one you think wrong goes on `open questions:` with why. One
   commit, ending the slice the brief names (git: commit, the hook
-  runs `check`, then `asst-pr open <slug> <worktree>` — it pushes and keeps the
-  task's PR a draft; svn: run `check`, save `svn diff` under
+  runs `check`, then `asst-pr open <slug> <worktree>`; svn: run `check`, save `svn diff` under
   `.claude/.assistant/tasks/<slug>/`, commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
   a better fix of your own), except those about a test, which are the tester's; a finding you decline goes on the report's
@@ -81,20 +78,15 @@ write: if reuse looks wrong, report it as an open question.
 
 In `ui`, `integration` and `fix`, before your first edit run `style-pack --paths <the
 files you'll touch>` and read all of it; run it again for a file you add later.
-The verifier checks against it, comments are its S6, and the report's `rules:`
-line names that run — `asst-report` won't file a build report without it.
 Touching any string under the project config's `ui_strings:` means
 also writing to `ui-text-pack --paths <those files>`: every locale in `locales:`
 gets its value in the same pass, each authored in that locale rather than
 translated from the source one (U3), and none of them is approved by you.
 Before writing a value, read the shipped strings: the `ui_strings:` files on the
 default branch (svn: the last committed revision), never this task's own values.
-A shipped value with the same meaning and UI role is reused word for word (U4.4);
-a new one matches the length, set phrases and terms the shipped strings in that
-role use. A concept the OS or app store owns takes the platform's own term (U4.5).
+A new one matches the length and set phrases the shipped strings in that role use.
 Then run `asst-strings examples <role> <locale>` for each role and locale you
-write, and read every pair: the user's rewrites of earlier drafts. Write the way
-the finals are written, and never make a choice a draft there made (U3.8).
+write, and read every pair: the user's rewrites of earlier drafts.
 
 A tone-sensitive string (error, guidance, confirmation, empty state) gets 2–3
 side-by-side options per locale, listed in the report with a one-line trade-off
@@ -109,7 +101,6 @@ mutation run, a test slot that stays busy — goes back on the report as not run
 run is `check: not run — <why>`, and that slice is unfinished, never passed.
 
 The report fills in the form `asst-report form <kind>` prints (`investigation`, or
-`build-<phase>`). File it with `asst-report put <slug> <kind>`, the bare kind — it
-numbers rounds itself — its text on stdin from a heredoc or a file named after the
+`build-<phase>`). File it with `asst-report put <slug> <kind>`, the bare kind, its text on stdin from a heredoc or a file named after the
 slug and kind, never a shared name like `report.md` that another agent may have
 written. Then return only the path it prints; the assistant reads the file.

@@ -5,10 +5,10 @@
   `Evals` (`.github/scripts/run-evals.mjs`) is green and the version is bumped — the draft
   state is what stops a merge while the agent is still working. Nothing waits for you:
   while CI runs, schedule one look yourself (`CronCreate`, `recurring: false`), never ask
-  the user to report it. Right after `gh pr ready`, run `node
-  .claude/skills/plugin-release/scripts/after-merge.mjs <pr>`: once the PR has merged it
-  does everything after the merge; while it's open it exits 3 and names the next look to
-  schedule, so nobody has to report the merge.
+  the user to report it. Never look for the merge on a schedule. Run
+  `node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>` once, when the user says the PR can
+  merge or has merged. Once the PR has merged it does everything after the merge; while the PR is
+  open it exits 3.
 
 - **Changing anything under `plugins/<plugin>/` means bumping `version` in `plugin.json`.**
   Consumers install into `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` — **a

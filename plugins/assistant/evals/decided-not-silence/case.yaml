@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; echo "skill-own-call=$(f skills/assistant/SKILL.md | grep -cF "never makes one their decision")"; echo "skill-silence-accepts=$(f skills/assistant/SKILL.md | grep -cF "Silence on \`Decided\` = accepted")"; echo "brief-own-call=$(f skills/assistant/references/brief.md | grep -cF "silence never makes it theirs")"; echo "brief-silence-accepts=$(f skills/assistant/references/brief.md | grep -cF "silence accepts")"; echo "review-moves=$(f agents/verifier.md | grep -cF "is filed with Fix: move it to \`Needs you\`")"
+    EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; echo "skill-own-call=$(f skills/assistant/SKILL.md | grep -cF "never makes one their decision")"; echo "skill-silence-accepts=$(f skills/assistant/SKILL.md | grep -cF "Silence on \`Decided\` = accepted")"; echo "brief-own-call=$(f skills/assistant/references/brief.md | grep -cF "silence never makes it theirs")"; echo "brief-silence-accepts=$(f skills/assistant/references/brief.md | grep -cF "silence accepts")"; echo "review-moves=$(f skills/assistant/forms/brief-review.md | grep -cF "is filed with Fix: move it to \`Needs you\`")"
   prompt: |
     Say what the user's silence on a `Decided` line means, and where a ruling that changes a product behaviour belongs.
 context:

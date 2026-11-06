@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: pr-merged
-description: asst-pr merged looks once at the task PR and never waits — merged says close the task, closed says tell the user, and still open names the one look to schedule (CronCreate, not a loop). The webhook watcher is gone.
+description: asst-pr merged looks once at the task PR and never waits — merged says close the task, closed says tell the user, and still open says the next step waits for the user (no scheduled look). The webhook watcher is gone.
 tags: [assistant]
 plugins: ["../.."]
 runs: 1

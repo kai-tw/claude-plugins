@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: style-pack dart csharp
+    EVAL_CMD: style-pack dart csharp | tr -s " \n" " "
   prompt: |
     Print the style rules for Dart and C#, then quote core rule S4.2, S4.1-dart and
     S4.1-csharp in full.

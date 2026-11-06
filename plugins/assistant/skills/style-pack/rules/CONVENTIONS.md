@@ -55,12 +55,14 @@ belong in the core rules — move it down to a language file.
 - Core rules: one per section of `index.md` — `## S<N> — <title>` + `**Principle:**` one or
   two sentences, followed by the core rule's sub-checks that **hold across languages**, one
   bullet each:
-  `- **S<N>.k <name>** — Check: <one-line test>. Example: <≤1 sentence>`.
+  `- **S<N>.k <name>** — Check: <a plain statement of what violates the rule>. Example: <≤1 sentence>`.
+  A Check is a statement, never a question. A rule carries no reason clause unless it would
+  otherwise be reasonably broken.
   Core rules and their sub-checks **carry no language**: any language keyword, framework name
   or file extension makes it a language rule or a project rule (per the framework criterion
   above).
 - Language rules: `dart.md` / `csharp.md` / `js.md` use the same form, numbered with a
-  suffix, `S<N>.k-dart`, and hold only **language-specific** concretizations. **A language
+  suffix, `S<N>.k-dart`, under a heading that is `## S<N>` alone, and hold only **language-specific** concretizations. **A language
   file's `k` is its own series, starting at 1**, unrelated to the core rules' `k` under the
   same `S<N>` — the suffix is enough to tell them apart, and forcing a language file to
   renumber whenever a core rule gains a sub-check is needless fragility.

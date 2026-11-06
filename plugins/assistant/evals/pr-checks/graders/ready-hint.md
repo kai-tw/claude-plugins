@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'next: schedule .asst-pr merged x wt. to run once in 30 minutes \(CronCreate, recurring: false\)'
+pattern: 'next: wait for the user to say the PR can merge'
 arm: with-only
 ---
-Turning a PR ready names the one look at the merge to schedule.
+Turning a PR ready says the next step waits for the user.
