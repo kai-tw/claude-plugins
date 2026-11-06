@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: intercept-os
+description: "[S1][S2][S3][B1] intercept's macOS-only rules (bsd-sed-b, dash-path) warn once per turn when uname says Darwin and stay quiet when it says Linux; an any rule (pipe-exit) warns on both; a tool.tsv row with only four columns counts as any."
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Run the intercept hook under a faked Darwin and a faked Linux uname and print which rules fire.
+context:
+  scaffold_script: fixture.sh

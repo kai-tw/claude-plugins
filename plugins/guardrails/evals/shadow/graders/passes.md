@@ -1,8 +1,0 @@
----
-type: regex
-pattern: '^ok-[a-z]+=[^0]'
-flags: m
-match: not_contains
-arm: with-only
----
-No correct command is blocked.

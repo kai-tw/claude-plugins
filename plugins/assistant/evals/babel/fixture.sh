@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
+# check.sh feeds babel.sh wide searches (from the disk or home root) and targeted
+# ones, and prints each exit code. HOME and the session cwd are pinned.
+set -euo pipefail
+cat > check.sh <<'SH'
+root=$1
+export HOME=/Users/me; u=$HOME
+run() { jq -n --arg c "$2" --arg d "${3:-$u/proj}" '{tool_name:"Bash",cwd:$d,tool_input:{command:$c}}' | bash "$root/hooks/checks/babel.sh" 2>/dev/null; echo "$1=$?"; }
+tool() { jq -n --arg t "$2" --arg d "$u/proj" --argjson i "$3" '{tool_name:$t,cwd:$d,tool_input:$i}' | bash "$root/hooks/checks/babel.sh" 2>/dev/null; echo "$1=$?"; }
+run bad-root      'find / -name "*.plist" 2>/dev/null | head'
+run bad-tilde     'cd /tmp && find ~ -type f -name settings.json'
+run bad-qhome     'find "$HOME" -name x'
+run bad-qroot     "find '/' -name x"
+run bad-expanded  "find $u -iname '*claude*'"
+run bad-users     'sudo find /Users -name id_rsa'
+run bad-cdhome    'cd ~ && find . -name x'
+run bad-cdroot    'cd / && rg foo'
+run bad-cwdhome   'rg -n TODO' $u
+run bad-dotdot    'find .. -name x'
+run bad-rg        'rg -l TODO ~/'
+run bad-grep      'grep -rn "apiKey" / 2>/dev/null'
+run bad-greprr    'grep -R foo $HOME'
+run bad-fd        'fd -H config /'
+run bad-fdext     'fd -e plist . ~'
+run bad-lsr       'ls -laR ~'
+run bad-tree      'tree ~'
+run bad-volumes   'find /Volumes -name x'
+run bad-deep      'find ~ -maxdepth 6 -name x'
+run bad-agdeep    'ag --depth 5 foo ~'
+run bad-xargs     'echo x | xargs grep -r foo /'
+tool bad-greptool Grep '{"pattern":"foo","path":"/"}'
+tool bad-globabs  Glob '{"pattern":"/**/*.plist"}'
+tool bad-globhome Glob '{"pattern":"**/*.json","path":"'$u'"}'
+tool bad-globtilde Glob '{"pattern":"~/**/*.json"}'
+run ok-project    'find . -name "*.dart" -newer pubspec.yaml'
+run ok-subdir     'find ~/.claude/plugins -maxdepth 4 -name plugin.json'
+run ok-projpath   "find $u/proj/lib -name '*.dart'"
+run ok-shallow    'find ~ -maxdepth 1 -name ".*rc"'
+run ok-fdshallow  'fd -d 2 . ~'
+run ok-agshallow  'ag --depth 1 foo ~'
+run ok-treeshallow 'tree -L 2 ~'
+run ok-grepflat   'grep -n foo /etc/hosts'
+run ok-grepnorec  'grep foo ~/.zshrc'
+run ok-rgproject  'rg -n TODO src'
+run ok-rgslash    'rg -e / src'
+run ok-rgquoted   'rg -F "/" src'
+run ok-fdext      'fd -e md . docs'
+run ok-ls         'ls -la ~'
+run ok-du         'du -sh ~/*'
+run ok-cdproj     'cd ~/proj && find . -name x'
+run ok-cwdproj    'rg -n TODO'
+run ok-message    'git commit -m "checks: refuse find / and grep -r ~"'
+tool ok-greptool  Grep '{"pattern":"foo","path":"'$u'/proj"}'
+tool ok-globshallow Glob '{"pattern":"*.md","path":"'$u'"}'
+tool ok-globproj  Glob '{"pattern":"src/**/*.ts"}'
+tool ok-globabsproj Glob '{"pattern":"'$u'/proj/**/*.ts"}'
+run ok-heredoc    $'git commit -F - <<\'EOF\'\nfind / -name x is refused now\nEOF'
+mkdir -p fakebin/Darwin fakebin/Linux
+for os in Darwin Linux; do printf '#!/bin/sh\necho %s\n' "$os" > "fakebin/$os/uname"; chmod +x "fakebin/$os/uname"; done
+# spot OS: does the block message under a faked uname suggest mdfind?
+spot() {
+  jq -n --arg d "$u/proj" '{tool_name:"Bash",cwd:$d,tool_input:{command:"find / -name x"}}' \
+    | PATH="$PWD/fakebin/$1:$PATH" bash "$root/hooks/checks/babel.sh" 2>&1 >/dev/null | grep -q mdfind && echo yes || echo no
+}
+echo "mac-mdfind=$(spot Darwin)"
+echo "linux-mdfind=$(spot Linux)"
+SH
