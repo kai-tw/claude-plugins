@@ -84,6 +84,7 @@ gets its value in the same pass, each authored in that locale rather than
 translated from the source one (U3), and none of them is approved by you.
 Before writing a value, read the shipped strings: the `ui_strings:` files on the
 default branch (svn: the last committed revision), never this task's own values.
+A new one matches the length and set phrases the shipped strings in that role use.
 Then run `asst-strings examples <role> <locale>` for each role and locale you
 write, and read every pair: the user's rewrites of earlier drafts.
 

@@ -54,7 +54,8 @@ written: their helpers, fakes, file layout and naming.
   directory. The rest are unit or widget tests beside the code they test.
 - Every test you write starts skipped with the reason `not implemented yet` (Dart:
   `skip: 'not implemented yet'`), so `check` keeps passing while the code doesn't
-  exist yet.- Add each user-visible feature the task creates to the project config's `features:`
+  exist yet.
+- Add each user-visible feature the task creates to the project config's `features:`
   list, one line `- <feature> · <on-device test file>`. A feature with no
   on-device test is written `· none` with the reason, never left off.
 
