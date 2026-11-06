@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'the user saying the PR merged → step 8'
+pattern: 'asst-pr merged. once when the user says the PR can merge or has merged; when it exits 0 → step 8'
 arm: with-only
 ---
-Close starts when the user says the PR merged.
+The user's word that the PR can merge or has merged triggers one `asst-pr merged` run; Close (step 8) follows its exit 0.
