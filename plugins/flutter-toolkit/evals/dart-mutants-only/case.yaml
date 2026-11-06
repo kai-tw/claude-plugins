@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: dart-mutants-only
+description: The plugin ships no mutation launcher or script; the PR-checks mutation job runs dart_mutants and posts no review; SKILL.md sends Dart to dart_mutants and JS/TS to Stryker.
+tags: [mutation]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: f="$root/skills/flutter-testing"; echo "launchers=$(ls "$root/bin" | grep -c mutation)"; echo "named=$(grep -rIl --exclude-dir=evals -e plan-mutation -e mutation.sh -e stryker_mutate -e review.sh "$root/.." "$root/../../README.md" | wc -l | xargs)"; job=$(sed -n "/^  mutation:/,/^[^ ]/p" "$f/references/pr-checks.md"); echo "job_cmd=$(grep -Ec "dart_mutants.* --diff .*--fail-on-survivors" <<<"$job")"; echo "job_review=$(grep -Eic "review|comment" <<<"$job")"; echo "skill_dart=$(grep -c dart_mutants "$f/SKILL.md")"; echo "skill_js=$(grep -c "npx stryker run" "$f/SKILL.md")"
+  prompt: |
+    Count mutation launchers in bin/, files under plugins/ or README.md that name the removed mutation tools, dart_mutants --diff --fail-on-survivors lines and review or comment steps in the PR-checks mutation job, and SKILL.md lines pointing to dart_mutants and to npx stryker run.
+context:
+  scaffold_script: fixture.sh

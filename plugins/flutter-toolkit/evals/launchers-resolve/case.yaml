@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: launchers-resolve
-description: All three launchers resolve to the implementations under skills/flutter-testing/scripts; --help takes no slot.
+description: Both launchers resolve to the implementations under skills/flutter-testing/scripts; --help takes no slot.
 tags: [launchers]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: plan-test --help | head -1; plan-coverage --help 2>&1 | head -1; plan-mutation --help 2>&1 | head -1; echo "exit=$?"
+    EVAL_CMD: plan-test --help | head -1; plan-coverage --help 2>&1 | head -1; echo "exit=$?"
   prompt: |
-    Print the first line of --help for each of plan-test, plan-coverage and plan-mutation.
+    Print the first line of --help for each of plan-test, plan-coverage.
 context:
   scaffold_script: fixture.sh
