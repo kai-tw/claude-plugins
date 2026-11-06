@@ -6,13 +6,14 @@ checks where the plan allows it.
 - **Line coverage.** `plan-coverage --diff <PR base>` fails the job when a
   line the PR changed isn't executed by any test.
 - **Mutation, scoped after Google's practice.** `dart run dart_mutants --diff
-  <PR base> --fail-on-survivors` mutates only the lines the PR changed, one
-  mutant a line, and the job fails while any mutant survives, including one on
-  a line no test executes; the survivors are in the engine's report in the job
-  log. A JS/TS package runs `npx stryker run` with `thresholds.break` set in its
-  Stryker config instead. `dart_mutants` is a `dev_dependency` of the project
-  and checks its version against github.com, so the runner needs network access
-  to it.
+  <PR base> --test-command "flutter test"` mutates only the lines the PR
+  changed, one mutant a line, and the job fails while any mutant survives on
+  one of them; the survivors are in the engine's report in the job log.
+  `--test-command` is required. A JS/TS package runs `npx stryker run` with
+  `thresholds.break: 100` in its Stryker config, so any survivor fails the
+  check, and needs no step in the workflow below. `dart_mutants` is a
+  `dev_dependency` of the project and checks its version against github.com, so
+  the runner needs network access to it.
 
 ## The runner
 
@@ -77,7 +78,7 @@ jobs:
       - name: Prepare
         run: flutter pub get && dart run build_runner build --delete-conflicting-outputs
       - name: Mutants on changed lines
-        run: dart run dart_mutants --diff "origin/$GITHUB_BASE_REF" --fail-on-survivors --workers auto
+        run: dart run dart_mutants --diff "origin/$GITHUB_BASE_REF" --test-command "flutter test" --workers auto
 ```
 
 The checkout is the PR's head, not GitHub's merge commit, so the lines the

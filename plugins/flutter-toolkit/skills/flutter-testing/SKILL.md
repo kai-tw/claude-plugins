@@ -36,11 +36,10 @@ allowed-tools:
   `--diff <ref>` measures the lines changed since `<ref>` — a PR's base, in CI. It
   takes a test slot only once a changed Dart file needs measuring; a change with
   none passes without waiting for one.
-- Mutation: Dart → `dart run dart_mutants` (flags in its `--help`; needs `dart_mutants`
-  in `dev_dependencies`), JS/TS → `npx stryker run`, each with its own reports.
+- Mutation: Dart → `dart run dart_mutants` (flags in its `--help`; `--test-command` is
+  required; needs `dart_mutants` in `dev_dependencies`), JS/TS → `npx stryker run`, each with its own reports.
   dart_mutants keeps its own machine-wide slots (`$DART_MUTANTS_SLOTS`,
-  `$DART_MUTANTS_SLOT_DIR`), separate from plan-test's. While it runs the working
-  tree holds live mutants; read files via `git show HEAD:<path>`. Start a long run
+  `$DART_MUTANTS_SLOT_DIR`), separate from plan-test's. Start a long run
   with the Bash tool's `run_in_background: true` — never `&`, `nohup`, `disown` or
   `setsid`, which the harness cannot see — then end the turn: the session is woken
   when it exits. Never `Monitor`, `tail -f` or a blocking wait on it.
