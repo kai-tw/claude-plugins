@@ -127,8 +127,8 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line, starting `exempt:`, into `asst-report put <slug> verify-code --worktree <worktree>`; past that
    bound it isn't `exempt`, so re-tier it `small`. Every other `verify-*` report is the verifier's: you never write one yourself,
-   whatever the round. Mutation is not yours: the PR's CI comments its survivors at
-   their lines and fails its check while any survive (flutter-toolkit's
+   whatever the round. Mutation is not yours: the PR's CI fails its mutation check while any mutant
+   survives, and the survivors are in the engine's report (flutter-toolkit's
    `references/pr-checks.md`), so `asst-pr ready` waits on them like any CI.
    Builder applies code fixes; a finding about a test goes to the tester.
    Any finding or `debt:` line left → another fix round, and every fix round's commit — a

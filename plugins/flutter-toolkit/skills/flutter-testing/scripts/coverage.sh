@@ -2,7 +2,7 @@
 # coverage.sh — did the tests EXECUTE the lines this change touched?
 #
 # WHY THIS EXISTS, AND WHY IT IS NOT A PERCENTAGE
-#   `plan-mutation` asks whether a line's effect is asserted. It cannot ask
+#   mutation testing asks whether a line's effect is asserted. It cannot ask
 #   whether the line ran at all: a line no test executes produces no mutant, so
 #   it never survives and never appears. The two checks stack — this measures
 #   which lines run, mutation measures what the tests assert about them — and
@@ -94,7 +94,7 @@ while [ $# -gt 0 ]; do
     --)       shift; break ;;
     -h|--help) sed -n '2,64p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # A flag this script does not know is never forwarded silently. Measured on
-    # mutation.sh's predecessor: an unrecognised flag fell through into the test
+    # an earlier launcher: an unrecognised flag fell through into the test
     # command, the run widened to the whole suite, and the score looked normal.
     -*)       echo "plan-coverage: unknown flag '$1'. The test command goes after \`--\`." >&2
               echo "  usage: plan-coverage [--diff <ref> | --files a.dart …] -- <test-command…>" >&2
@@ -109,7 +109,7 @@ root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "plan-coverage: not 
 cd "$root" || exit 2
 
 # --- what to measure --------------------------------------------------------
-# Identical scoping to plan-mutation, deliberately: the two checks must measure
+# Scoped like the mutation check, deliberately: the two checks must measure
 # the same file set or "executed, then asserted" is being claimed over two
 # different populations. Generated files are excluded — nobody hand-writes them.
 base=
@@ -186,7 +186,7 @@ test_rc=$?
 elapsed=$(( $(date +%s) - started ))
 
 # A FAILING SUITE GIVES NO LINE COVERAGE.
-# Same reasoning plan-mutation applies to an aborted engine: a failing test may
+# Same reasoning as for an aborted mutation engine: a failing test may
 # have exited before the lines it was going to execute, so the gaps below would
 # be artefacts of the failure rather than findings about the tests.
 if [ "$test_rc" -ne 0 ]; then

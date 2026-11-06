@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Did the tests EXECUTE the lines this change touched? The half plan-mutation
-# cannot see — an unexecuted line produces no mutant, so it never survives.
+# Did the tests EXECUTE the lines this change touched? The half mutation
+# testing cannot see — an unexecuted line produces no mutant, so it never survives.
 #
 # A launcher, not an implementation — the script lives with the skill that owns
 # it (see the exec line). It exists so skill files, agent files and this

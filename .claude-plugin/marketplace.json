@@ -23,7 +23,7 @@
     },
     {
       "name": "flutter-toolkit",
-      "description": "Flutter testing on a shared machine — plan-test concurrency limit, line coverage and mutation score over the diff (Dart and JS/TS)",
+      "description": "Flutter testing on a shared machine — plan-test concurrency limit, line coverage over the diff",
       "source": "./plugins/flutter-toolkit",
       "category": "development",
       "author": {
