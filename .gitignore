@@ -5,3 +5,7 @@
 # as a directory marketplace
 .claude/settings.local.json
 
+
+# assistant plugin state (personal, unversioned)
+.claude/.assistant/
+.claude/worktrees/

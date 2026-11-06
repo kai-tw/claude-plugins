@@ -1,5 +1,7 @@
 {
   "enabledPlugins": {
-    "mother-tongue@kai-tw": true
+    "mother-tongue@kai-tw": true,
+    "assistant@kai-tw": true,
+    "security-guidance@claude-plugins-official": true
   }
 }
