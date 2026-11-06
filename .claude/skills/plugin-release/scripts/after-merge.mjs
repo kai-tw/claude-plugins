@@ -4,10 +4,8 @@
 // verify it, uninstall every install of a plugin the PR deleted, sync the main
 // checkout, and remove the PR's local worktree and branch.
 //
-// Nothing here waits. While the PR is still open it says so and exits 3, and the
-// session schedules the next look itself (CronCreate, recurring: false); the app's
-// PR monitor wakes a session on CI failures, conflicts and review comments, never
-// on a merge.
+// Nothing here waits. While the PR is still open it says so and exits 3; the user
+// says when the PR can merge, and nothing is scheduled for it.
 //
 // Usage: node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 // Exit: 0 merged and every install verified (or no plugin to install) · 1 closed
@@ -52,7 +50,7 @@ const files = () => {
 const pull = view();
 if (pull.state === 'OPEN') {
   console.log(`#${pr} is still open — ${pull.url}`);
-  console.log(`next: schedule 'node .claude/skills/plugin-release/scripts/after-merge.mjs ${pr}' to run once in 30 minutes (CronCreate, recurring: false), then end the turn — never wait in a loop`);
+  console.log(`next: wait for the user to say the PR can merge`);
   process.exit(3);
 }
 if (pull.state !== 'MERGED') die(`${pull.url} was closed without merging — nothing to install`);

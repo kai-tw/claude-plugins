@@ -13,6 +13,7 @@
 #          look once at CI on the pushed HEAD and print every check
 #        asst-pr merged <task-slug> <worktree>
 #          look once at whether the task's PR merged, closed, or is still open
+#          (run when the user says it can merge or has merged — never scheduled)
 #        asst-pr release <label> <checkout> [--dry-run | --run <id>]
 #          base_branch: projects only — list what base_branch's head carries
 #          that the default branch lacks, then start the repo's release.yml on
@@ -214,7 +215,7 @@ case "$op" in
     case "$state" in
       MERGED) echo "asst-pr: #$num MERGED as ${oid:0:7}"; echo "next: close the task (step 8)"; exit 0 ;;
       CLOSED) echo "asst-pr: #$num CLOSED without merging"; echo "next: tell the user #$num closed without merging"; exit 1 ;;
-      *) echo "asst-pr: #$num still open"; later "asst-pr merged $slug $wt" 30; exit 3 ;;
+      *) echo "asst-pr: #$num still open"; echo "next: wait for the user to say the PR can merge"; exit 3 ;;
     esac ;;
   ready)
     [ -z "$(g status --porcelain)" ] || refuse "uncommitted changes in $wt — commit first"
@@ -287,6 +288,6 @@ $leaks"
     if [ "$draft" = true ]; then (cd "$wt" && gh pr ready "$num") || exit 2; fi
     echo "asst-pr: #$num ready (reviews: $reviews)"
     echo "next: write the delivery summary"
-    later "asst-pr merged $slug $wt" 30 ;;
+    echo "next: wait for the user to say the PR can merge" ;;
   *) usage ;;
 esac

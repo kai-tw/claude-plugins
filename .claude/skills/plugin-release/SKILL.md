@@ -111,10 +111,8 @@ node .claude/skills/plugin-release/scripts/after-merge.mjs <pr>
 
 It looks at the PR once. Merged: it runs steps 6–8 for every plugin the PR
 changed, syncs the main checkout and removes the PR's worktree and branch. Still
-open: it exits 3 and its `next:` line names the look to schedule once
-(`CronCreate`, `recurring: false`), so a merge needs no one to report it — the
-app's PR monitor wakes a session on CI failures, conflicts and review comments,
-never on a merge. Exit 1 (closed unmerged, or a failed check) prints why; report
+open: it exits 3 and its `next:` line says to wait for the user's word that the PR
+can merge; run it when the user says the PR merged, never on a schedule. Exit 1 (closed unmerged, or a failed check) prints why; report
 it as it stands.
 
 A running session switches to the updated plugin on its own, at a moment no one can
