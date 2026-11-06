@@ -5,7 +5,7 @@ Read at step 4, once the builder's `ui` report is filed.
 ## Before the user sees it
 
 Open every image and read every string in every locale, beside the existing screen
-that does the same job. What breaks a rule or a lesson goes back to the builder, and
+that does the same job. What breaks a rule goes back to the builder, and
 every open question it reports that changes what the user sees is a `Needs you`.
 
 ## Publishing the page

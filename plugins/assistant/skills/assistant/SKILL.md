@@ -74,8 +74,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    create <slug> … "Parent item=<parent>"`): each its own row and worktree; the later
    sub-items are `Status=Next` with `Blocked by` naming the sub-item they wait for.
    The parent is never dispatched, and trashing its last sub-item trashes it too.
-   The split itself is a `Decided` in the first brief. Read the project's lessons (§Lessons) first; every dispatch for the task
-   quotes the ones that bear on it, since agents never see your memory.
+   The split itself is a `Decided` in the first brief.
 2. **Investigation** (`builder`, phase `investigation`) returns ≤10 findings
    (`file:line` or `unverified`) and the open questions it could not settle.
    `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
@@ -187,22 +186,6 @@ happens and the investigation can't show it, read `references/analytics.md`.
 
 A project with `ui_strings:` and `strings_glossary: none` has no house style yet:
 before its first task that adds a string, read `references/house-style.md`.
-
-## Lessons
-
-What the project has taught you lives in your memory for this project. Save a
-lesson, unasked, as soon as one of these happens:
-- the user requests changes at the screen review or the delivery summary, overrules a `Decided` line, or picks
-  against your recommendation (a string's outcome goes to `asst-strings` instead);
-- a script refuses you (`asst-pr` NOT READY, an `asst-cite` FAIL), or a check you
-  relied on turns out wrong;
-- a fix round is spent on a finding the brief or the builder could have prevented.
-
-A lesson names the rule that would have prevented it, one an onlooker can check,
-never "be careful". A lesson isn't saved twice: the second time it bites, it
-becomes a process fix (§The flow step 6) proposed to the user in one line. A
-`.claude/.assistant/lessons.md` left by an older version is moved into memory once,
-then deleted.
 
 ## The board
 
