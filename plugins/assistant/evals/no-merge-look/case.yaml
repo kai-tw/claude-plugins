@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: no-merge-look
+description: Nothing schedules a look at a PR's merge — after-merge.mjs on a still-open PR exits 3 and says the next step waits for the user, and the assistant's pr.md and SKILL.md, the repo's releasing rules and plugin-release SKILL.md no longer tell the agent to schedule a merge look.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: repo="$root/../.."; export PATH="$PWD/stub:$PATH"; node "$repo/.claude/skills/plugin-release/scripts/after-merge.mjs" 7 > am.out 2>&1; echo "after-merge=$?"; sed "s/^/am: /" am.out; n="schedule .(node |asst-pr )[^.]{0,120}(merged|after-merge)|(merged|after-merge)[^.]{0,80}CronCreate|CronCreate[^.]{0,80}(merged|after-merge)|still open[^.]{0,80}(schedule|look)"; for f in "$root/skills/assistant/references/pr.md" "$root/skills/assistant/SKILL.md"; do echo "look-in-$(basename "$(dirname "$f")")/$(basename "$f")=$(tr -s " \n" " " < "$f" | grep -oE "$n" | wc -l | tr -d " ")"; done; for f in "$repo/.claude/rules/releasing.md" "$repo/.claude/skills/plugin-release/SKILL.md"; do echo "look-in-$(basename "$(dirname "$f")")/$(basename "$f")=$(tr -s " \n" " " < "$f" | grep -oE "$n|look to schedule|names the (next )?look" | wc -l | tr -d " ")"; done; echo "step7-user=$(tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "waits for the user.s word that the PR can merge" | wc -l | tr -d " ")"
+  prompt: |
+    Say what after-merge.mjs does for a PR that is still open, and whether any guide still tells the agent to schedule a look at a PR's merge.
+context:
+  scaffold_script: fixture.sh
