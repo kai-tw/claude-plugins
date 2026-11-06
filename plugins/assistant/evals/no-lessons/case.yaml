@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: no-lessons
+description: The assistant keeps no lessons of its own — no Lessons section, no lessons file, no rule to save, read or quote lessons in dispatches, and the screen review no longer sends back "a rule or a lesson" — while the process-fix proposal stays.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: t=$(find "$root/skills" -name "*.md" -exec cat {} + | tr -s " \n" " "); n() { echo "$1=$(grep -oF -- "$2" <<< "$t" | wc -l | tr -d " ")"; }; n heading "## Lessons"; n section-ref "§Lessons"; n file "lessons.md"; n save "Save a lesson"; n quote "quotes the ones that bear on it"; n review "a rule or a lesson"; grep -oF "proposes the process fix" <<< "$t"
+  prompt: |
+    Say whether the assistant skills have a Lessons section or a lessons file, whether they tell the assistant to save, read or quote lessons, and whether the process fix is still proposed.
+context:
+  scaffold_script: fixture.sh
