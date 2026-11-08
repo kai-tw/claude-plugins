@@ -117,6 +117,16 @@ applies() {
   [ $any = 0 ]
 }
 
+# The file a path really resolves to (readlink -f is not on BSD): follow each link by hand.
+real_name() {
+  local f=$1 n=0 l
+  while [ -L "$f" ] && [ $n -lt 40 ]; do
+    l=$(readlink "$f"); n=$((n + 1))
+    case "$l" in /*) f=$l ;; *) f="$(dirname -- "$f")/$l" ;; esac
+  done
+  printf '%s\n' "$f"
+}
+
 cat "$rules/index.md"
 printf '%s\n' ${langs[@]+"${langs[@]}"} | awk 'NF && !seen[$0]++' | while read -r l; do echo; cat "$rules/$l.md"; done
 [ -n "$project" ] || exit 0
@@ -124,5 +134,11 @@ if [ -d "$project" ]; then
   find -L "$project" -type f -name '*.md' | LC_ALL=C sort
 else
   echo "$project"
-fi | while IFS= read -r f; do applies "$f" && { echo; cat "$f"; }; done
+fi | while IFS= read -r f; do
+  case "$(real_name "$f")" in
+    *.md) ;;
+    *) echo "style-pack: skipped '$f' — it resolves to a file that is not Markdown" >&2; continue ;;
+  esac
+  applies "$f" && { echo; cat "$f"; }
+done
 exit 0
