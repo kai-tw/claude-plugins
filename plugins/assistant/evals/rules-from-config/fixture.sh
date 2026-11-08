@@ -17,6 +17,15 @@ proj b1absent ''
 proj b2 'rules: .claude/rules'
 proj b3 'rules: .claude/rules'
 proj f1 'rules: .claude/no-such-rules'
+# g: one rules file per paths: spelling, each printing its own marker.
+mkdir -p g/.claude/rules; git init -q g; printf 'vcs: git\nrules: .claude/rules\n' > g/.claude/assistant.md
+printf -- '---\npaths:\n  - "lib/**"\n---\nG-LIST\n' > g/.claude/rules/list.md
+printf -- '---\npaths: lib/[a.dart\n---\nG-BAD\n' > g/.claude/rules/bad.md
+printf -- '---\npaths: lib/[!a].dart\n---\nG-NEG\n' > g/.claude/rules/neg.md
+printf -- '---\npaths: ["src/**/*.{ts,tsx}"]\n---\nG-INLINE\n' > g/.claude/rules/inline.md
+# sl: a rules .md that is a symlink to a file outside the folder.
+mkdir -p sl/.claude/rules sl/.claude/elsewhere; git init -q sl; printf 'vcs: git\nrules: .claude/rules\n' > sl/.claude/assistant.md
+printf 'SL-LINKED\n' > sl/.claude/elsewhere/ext.md; ln -s ../elsewhere/ext.md sl/.claude/rules/link.md
 cat > check.sh <<'SH'
 root=$1
 # on <dir> <args…>: run style-pack there; leaves out, err and rc beside it.
@@ -55,6 +64,19 @@ has b3.out PROJ-LIB b3-lib
 on f1 --paths lib/a.dart
 [ "$(cat f1.rc)" != 0 ] && echo f1-rc=nonzero || echo f1-rc=zero
 has f1.err '\.claude/no-such-rules' f1-names-path
+on g --paths lib/a.dart
+has g.out G-LIST g-list-lib
+has g.out G-BAD g-bad-printed
+has g.err 'lib/\[a\.dart' g-bad-names-glob
+has g.out G-NEG g-neg-a
+on g --paths lib/b.dart
+has g.out G-NEG g-neg-b
+on g --paths test/a_test.dart
+has g.out G-LIST g-list-test
+on g --paths src/x/a.tsx
+has g.out G-INLINE g-inline
+on sl --paths lib/a.dart
+has sl.out SL-LINKED sl-symlink
 # No plugin file still reads the old hard-coded folder.
 echo "old-folder=$(grep -rl 'style-rules' "$root" --exclude-dir=evals | wc -l | tr -d ' ')"
 SH
