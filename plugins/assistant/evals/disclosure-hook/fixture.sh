@@ -38,7 +38,7 @@ SH
 chmod +x stub/gh
 cat > check.sh <<'SH'
 root=$1; export EVAL_WS=$PWD PATH="$PWD/stub:$PATH" HOME=/Users/dev
-echo 'Mentions /Users/dev/GitHub/other/lib/x.dart' > body.txt
+printf '%s\n' 'Notes in /Users/dev/GitHub/filed/n.md' 'Ported from acme/secret-app' > wt/body.txt
 run() { # name branch cmd [vis]
   git -C wt switch -q "$2"; : > gh.calls
   err=$(jq -n --arg c "$3" --arg d "$PWD/wt" '{session_id:"eval",cwd:$d,hook_event_name:"PreToolUse",tool_name:"Bash",tool_input:{command:$c}}' \
