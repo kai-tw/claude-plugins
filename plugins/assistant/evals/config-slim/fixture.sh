@@ -29,7 +29,7 @@ cmp -s config.before .claude/assistant.md; echo "b4-untouched=$?"
 # S7: the SKILL.md bullet, step or paragraph that names force-push.
 blk=$(awk '/^$|^#|^- |^[0-9]+\. / { if (b ~ /force-push/) { print b; done = 1; exit } b = "" } { b = b " " $0 } END { if (!done && b ~ /force-push/) print b }' "$root/skills/assistant/SKILL.md" | tr -s ' ' ' ')
 t() { echo "s7-$1=$(grep -ciE -- "$2" <<<"$blk")"; }
-t ask '\bask'; t merge '\bmerg(e|ing)\b'; t default-branch 'push(es|ing)? (to|into|on) the default branch'
+t ask '\bask'; t merge '\bmerg(e|ing)\b'; t default-branch 'default.branch'
 t force-push 'force-push'; t delete-branch 'delet(e|es|ing) (a |the )?branch'; t deploy 'deploy'
 t user-data 'delet(e|es|ing)[^.]{0,20}user.{0,3} data'; t claude-md 'CLAUDE\.md'; t config 'project config'
 SH

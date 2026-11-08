@@ -19,6 +19,8 @@ git add -A; git commit -qm base; git push -q origin HEAD:main 2>/dev/null
 git remote set-head origin main 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 git switch -qc leak; echo '// ported from acme/secret-app' >> lib/a.txt; git commit -qam 'Guard the parser'
 git switch -q main; git switch -qc clean; echo three >> lib/a.txt; git commit -qam 'Parse faster, closes #1'
+git remote add gl https://gitlab.example.com/acme/lib.git
+git update-ref refs/remotes/gl/main main
 cd ..
 git init -q -b main nobase
 (cd nobase && git config user.email e@e && git config user.name e && echo x > a.txt && git add -A && git commit -qm base)
@@ -75,6 +77,7 @@ run push-config   leak  'git -c core.x=1 push origin HEAD:leak'
 run push-env      leak  'GIT_TRACE=0 git push origin HEAD:leak'
 CWD=. run push-cd leak  "cd $PWD/wt && git push origin HEAD:leak"
 CWD=. run cd-file clean "cd $PWD/wt && gh pr create --title T --body-file body.txt"
+run push-gitlab   leak  'git push gl HEAD:leak'
 run push-ref      clean 'git push origin leak'
 run push-ref-ok   leak  'git push origin clean'
 DIR=nobase CWD=nobase run no-base main 'git push origin HEAD:main'
