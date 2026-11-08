@@ -96,10 +96,10 @@ case "$op" in
     fi
     # A builder that never loaded the style pack writes code the verifier then
     # checks against rules the builder never saw.
-    case "$kind" in build-ui|build-integration|build-fix)
+    case "$kind" in build-ui|build-integration|build-fix|tests)
       grep -q '^rules: style-pack --paths ' "$f.partial" || {
         rm -f "$f.partial"
-        echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit (builder.md)" >&2
+        echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit (builder.md, tester.md)" >&2
         exit 1
       } ;;
     esac

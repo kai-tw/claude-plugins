@@ -3,4 +3,5 @@ scenarios:
 uncovered: <none, or one line each: <id> — why it can't be tested here>
 features: <the lines added to the feature list, or none>
 open questions: <none, or one line each>
+rules: style-pack --paths <the test files>
 check: <passed | not run — why>
