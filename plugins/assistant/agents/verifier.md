@@ -74,7 +74,8 @@ the six blocks in order:
 
 Then the user's memories: from the MEMORY.md index in your context, open each
 `feedback` or `user` memory that bears on the diff, and file each departure as a
-finding citing its file name — in a public repo, only that and the line that applies here.
+finding citing only its file name and the line that applies here, never another
+project's content.
 
 On the decision brief alone (`brief-review`), walk blocks 1, 2 and 5 against the
 design: every scenario has a path, every datum and capability one canonical home, every NEW
@@ -117,4 +118,3 @@ Run only what finishes inside this dispatch, never waiting in a `sleep` or
 the string checks after your report — `{ cat <report>; echo '## String checks';
 <commands>; } | asst-report put <slug> verify-text` — or `## String checks none`
 when the project has none. Then return only the paths it prints.
-Write nothing else.

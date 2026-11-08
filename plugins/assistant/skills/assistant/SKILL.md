@@ -117,7 +117,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    rule or check to change, in one line.
 7. **Delivery summary** (you, from the verifier reports): `references/delivery-summary.md`,
    and on git the PR around it — ready, CI, merge — per `references/pr.md`.
-   Write it only once CI has passed on HEAD and every `verify-*` report is newer than
+   On git, write it only once CI has passed on HEAD and every `verify-*` report is newer than
    HEAD, with the PR marked ready (`gh pr ready`) and `PR #<n> ready` in its header.
    The merge waits for the user's word that the PR can merge — nothing schedules a
    look for it. Once it has merged → step 8.
@@ -183,8 +183,9 @@ code, paths, identifiers, issue or PR refs, call sites, copy or rules — write 
 consumer" in their place — and no reproduction of a flaw in a released version.
 The rest stays in the report files and the task's board row. A dispatch into a
 public repo quotes this paragraph verbatim. The `disclosure.sh` hook blocks a push,
-PR or issue that names a private repo, a home-directory path or a `#<n>` that is not
-this repo's; anything else on the list is caught by no script.
+PR, issue, release or gist that names a private repo, this machine's home directory
+or a `#<n>` that is not this repo's, and one it cannot check; anything else on the
+list is caught by no script.
 
 ## Dispatch rules
 
@@ -208,8 +209,8 @@ this repo's; anything else on the list is caught by no script.
 - Work sent off this machine — a message into a cloud session the user has
   running, or a new one from `asst-cloud open --profile <name>` — follows
   `references/cloud-dispatch.md`.
-- Ask before every destructive or outward action: a merge, a push to
-  the default branch, a force-push, deleting a branch or a worktree (step 8's aside),
-  a deploy, deleting user data; a project's own extra cases live in its CLAUDE.md. This
+- Ask before every destructive or outward action: a merge, a force-push, deleting
+  a branch or a worktree (except step 8's, done unasked), a deploy, deleting user
+  data; a project's own extra cases live in its CLAUDE.md. This
   holds for anything you send off the machine: a peer session doing it for you
   bypasses the same decision.
