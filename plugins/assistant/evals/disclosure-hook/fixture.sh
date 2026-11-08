@@ -47,6 +47,15 @@ printf '%s\n' 'Host github.com-work' '  HostName github.com' 'Host gitlab-work' 
   'Host gl-jump' '  HostName gitlab.example.com' '  ProxyJump jump.example.com' > ssh_config
 git init -q -b main nobase
 (cd nobase && git config user.email e@e && git config user.name e && echo x > a.txt && git add -A && git commit -qm base)
+# wt-sig: log.showSignature with a gpg.program that would create ran-gpg.
+cp -R wt wt-sig; git -C wt-sig config log.showSignature true; git -C wt-sig config gpg.program "touch $PWD/ran-gpg; false"
+# leak is re-made with a gpgsig header, so showSignature would call gpg.program on it.
+sigc=$(git -C wt-sig cat-file commit leak | awk 'NR==1,/^$/ { if (/^committer /) { print; print "gpgsig -----BEGIN PGP SIGNATURE-----"; print " "; print " AAAA"; print " -----END PGP SIGNATURE-----"; next } } { print }' | git -C wt-sig hash-object -t commit -w --stdin)
+git -C wt-sig update-ref refs/heads/leak "$sigc"
+# nobase-up: no base branch; origin's uploadpack would create ran-up if anything contacted it.
+cp -R nobase nobase-up; git -C nobase-up remote add origin "$PWD/origin.git"
+git -C nobase-up config remote.origin.uploadpack "touch $PWD/ran-up; git-upload-pack"
+printf '[core]\n\tsshCommand = ssh\n' > inc.conf
 mkdir -p stub
 cat > stub/gh <<'SH'
 #!/usr/bin/env bash
@@ -132,6 +141,11 @@ DIR=wt-rewrite CWD=wt-rewrite run push-rewrite leak 'git push gl HEAD:leak'
 run push-ref      clean 'git push origin leak'
 run push-ref-ok   leak  'git push origin clean'
 DIR=nobase CWD=nobase run no-base main 'git push origin HEAD:main'
+DIR=wt-sig CWD=wt-sig run push-sig leak 'git push origin HEAD:leak'
+echo "push-sig-ran=$([ -e ran-gpg ] && echo yes || echo no)"
+DIR=nobase-up CWD=nobase-up run no-base-up main 'git push origin HEAD:main'
+echo "no-base-up-ran=$([ -e ran-up ] && echo yes || echo no)"
+run push-ssh-include leak "git -c include.path=$PWD/inc.conf push glw HEAD:leak"
 # the stub fails every call when GH_BROKEN is set
 export GH_BROKEN=1
 run gh-down       clean 'git push origin HEAD:clean'

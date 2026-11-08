@@ -27,8 +27,8 @@
 # variable, stdin, gh or the base branch unavailable — it blocks with the
 # reason rather than letting through unchecked.
 #
-# Every git call here is local, with fsmonitor off (git below) and no diff
-# driver; `ssh -G` may run a Match exec from the user's own ~/.ssh/config, which
+# Every git call here is local, with fsmonitor off (git below), no signature
+# check (log --no-show-signature) and no diff driver; `ssh -G` may run a Match exec from the user's own ~/.ssh/config, which
 # is accepted.
 #
 # Each gh or network call is cut off after $GH_TIMEOUT seconds and no `#<n>` is
@@ -68,13 +68,17 @@ a_dir=() a_refs=() a_text=() a_gist=() a_off=()
 # ssh_host <host> — the host ssh connects to for <host>, as plain `ssh -G` prints
 # it from the user's ssh config without connecting. Nothing when git would run
 # a command set in GIT_SSH_COMMAND, GIT_SSH or core.sshCommand (here or in the
-# command) in its place — this hook runs before the user approves the command,
+# command: -c, --config-env, include.path, GIT_CONFIG*) in its place — this hook runs before the user approves the command,
 # so it runs nothing a repo or the environment sets — or when ssh would go
 # through a ProxyCommand or ProxyJump, whose last hop it cannot see.
 ssh_host() {
   [ -z "${GIT_SSH_COMMAND:-}${GIT_SSH:-}" ] || return 0
   git -C "$GIT_AT" config core.sshCommand >/dev/null 2>&1 && return 0
-  case "$(printf '%s' "$cmd" | tr '[:upper:]' '[:lower:]')" in *git_ssh*|*sshcommand*) return 0 ;; esac
+  case "$(printf '%s' "$cmd" | tr '[:upper:]' '[:lower:]')" in
+    *git_ssh*|*git_config*|*sshcommand*|*include.path*|*includeif*|*--config-env*) return 0 ;;
+  esac
+  # A -c in the command (git's, or glued to its value) can set any of them.
+  case "$cmd" in *[[:space:]]-c*) return 0 ;; esac
   run_bounded "${GH_TIMEOUT:-10}" ssh -G "$1" 2>/dev/null </dev/null | awk '
     ($1 == "proxycommand" || $1 == "proxyjump") && tolower($2) != "none" { proxy = 1 }
     $1 == "hostname" { h = tolower($2) }
@@ -304,7 +308,7 @@ for k in "${!a_dir[@]}"; do
       while IFS= read -r ref; do
         # A ref that names no commit fails the push itself: nothing is sent.
         git -C "$d" rev-parse --verify --quiet "$ref^{commit}" >/dev/null || continue
-        msgs=$(git -C "$d" log --format=%B "$base..$ref" 2>/dev/null)
+        msgs=$(git -C "$d" log --no-show-signature --format=%B "$base..$ref" 2>/dev/null)
         # No diff driver or textconv: they are commands the repo sets (see ssh_host).
         added=$(git -C "$d" diff --no-ext-diff --no-textconv "$base...$ref" 2>/dev/null | grep '^+' | grep -v '^+++' | cut -c2-)
         leaks+=$(scan "commit message" "$msgs"; foreign_refs "commit message" "$msgs"; scan "diff" "$added")$'\n'
