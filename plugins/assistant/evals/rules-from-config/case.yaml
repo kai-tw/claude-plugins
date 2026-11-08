@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: rules-from-config
+description: style-pack reads the project's rules from the config's `rules:` line and nowhere else — a folder gives every .md without `paths:` plus those whose `paths:` match, a single file gives that file, `none` or no line gives only the core and language rules, a .md path still prints core and project rules, a non-matching `paths:` hides a file, and a missing path fails naming it.
+tags: [style-pack, rules]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Run style-pack --paths in projects whose config sets rules to a folder, a file, none, nothing and a missing path, and print what each run prints.
+context:
+  scaffold_script: fixture.sh
