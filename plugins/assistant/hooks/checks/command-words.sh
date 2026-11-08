@@ -9,18 +9,32 @@
 # command_words <cmd> — each simple command of <cmd>, every word ended by \037
 # and every command by \036. Commands end at a newline, ; & && | || ( or )
 # outside quotes; quotes are removed, backslash escapes applied, redirections,
-# comments and here-document bodies dropped.
+# comments and here-document bodies dropped. The commands inside a $(…) or `…`
+# come too, before the command holding it, as the shell runs them.
 command_words() {
+  local rec
+  while IFS= read -r -d $'\036' rec; do
+    case "$rec" in
+      $'\035'*) command_words "${rec#?}" ;;
+      *) printf '%s\036' "$rec" ;;
+    esac
+  done < <(command_words_awk "$1")
+}
+
+# command_words_awk <cmd> — command_words for <cmd> without reading inside a
+# substitution: each one's text comes as a record of its own, marked by a
+# leading \035, before the command holding it.
+command_words_awk() {
   # awk, not sed: BSD sed writes a literal `n` for `\n`. LC_ALL=C walks bytes,
   # which keeps every multibyte character whole between the ASCII ones it looks for.
   printf '%s' "$1" | LC_ALL=C awk '
     function word() {
-      if (inw && !skip) printf "%s\037", w
+      if (inw && !skip) cur = cur w "\037"
       else if (inw && heredoc == "?") heredoc = w
       if (inw) skip = 0
       w = ""; inw = 0
     }
-    function end() { word(); skip = 0; printf "\036" }
+    function end() { word(); skip = 0; printf "%s%s\036", subs, cur; subs = cur = "" }
     # The next character, or one no test matches past the end: BSD awk finds ""
     # in every string, so a lookahead returning "" would loop forever.
     function nx() { return i < n ? substr(s, i + 1, 1) : "\001" }
@@ -33,9 +47,19 @@ command_words() {
         # $(…) stays whole, quotes and all, up to its matching parenthesis: a
         # quote in a here-document inside it would otherwise end the word.
         if (c == "$" && nx() == "(") {
-          w = w "$("; i += 2; d = 1
+          w = w "$("; i += 2; d = 1; st = i
           while (i <= n && d > 0) { c = substr(s, i, 1); if (c == "(") d++; else if (c == ")") d--; w = w c; i++ }
-          i--; inw = 1; continue
+          i--; inw = 1; subs = subs "\035" substr(s, st, i - st + (d > 0)) "\036"; continue
+        }
+        # `…` likewise, up to the next unescaped backquote; \` \\ \$ in it are unescaped.
+        if (c == "`") {
+          t = ""
+          for (i++; i <= n && substr(s, i, 1) != "`"; i++) {
+            c = substr(s, i, 1)
+            if (c == "\\" && index("`\\$", nx())) { i++; c = substr(s, i, 1) }
+            t = t c
+          }
+          w = w "`" t "`"; inw = 1; subs = subs "\035" t "\036"; continue
         }
         if (q == "\"") {
           if (c == "\\" && index("\"\\$`", nx())) { i++; w = w substr(s, i, 1) }

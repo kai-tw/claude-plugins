@@ -16,10 +16,11 @@
 #
 # A push whose remote is definitely not on GitHub writes to no GitHub repo
 # (§Disclosure) and is allowed without calling gh: the remote is picked the way
-# git does, its URL expanded by git, and the host must be a real one (it holds a
-# dot) other than github.com and its subdomains. An alias, a local path or
-# file:// remote, an unparsable URL or an unresolvable remote is scanned. gh
-# commands always target GitHub.
+# git does, each URL it pushes to expanded by git and an ssh host by ssh's
+# config, and every host must be a real one (it holds a dot) other than
+# github.com and its subdomains. A local path or file:// remote, an unparsable
+# URL or an unresolvable remote or host is scanned. gh commands always target
+# GitHub.
 #
 # It guards against a slip, not a workaround: a push from inside a script is
 # not seen. What it cannot work out here — a directory or ref held in a
@@ -58,34 +59,52 @@ LONG=' title body body-file base head repo label assignee reviewer milestone pro
 # commits it sends (one per line), the text it sends, and 1 for a gist.
 a_dir=() a_refs=() a_text=() a_gist=() a_off=()
 
+# ssh_host <host> — the host the ssh git uses in $GIT_AT connects to for <host>
+# (GIT_SSH_COMMAND, core.sshCommand, GIT_SSH, then ssh, git's order), as its
+# `-G` prints it without connecting; nothing when that ssh has no -G.
+ssh_host() {
+  local c
+  c=${GIT_SSH_COMMAND:-$(git -C "$GIT_AT" config core.sshCommand 2>/dev/null)}
+  # git runs a GIT_SSH_COMMAND or core.sshCommand through the shell, GIT_SSH as a program.
+  if [ -n "$c" ]; then set -- sh -c "$c"' -G "$1"' - "$1"; else set -- "${GIT_SSH:-ssh}" -G "$1"; fi
+  run_bounded "${GH_TIMEOUT:-10}" "$@" 2>/dev/null </dev/null | awk '$1 == "hostname" { print tolower($2); exit }'
+}
+
 # url_off <url> — succeeds only when <url> names a real host (a dot in it, plain
-# characters only) that is not github.com or below it. A local path, a bare
-# alias such as an ssh `gh`, an IPv6 literal or anything unparsable fails.
+# characters only) that is not github.com or below it. An ssh URL's host is the
+# one ssh connects to after its config (`Host github.com-work` may be github.com).
+# A local path, an IPv6 literal or anything unparsable fails.
 url_off() {
-  local u h
+  local u h ssh=1
   u=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
   case "$u" in
-    *://*) h=${u#*://}; h=${h%%/*}; h=${h##*@}; h=${h%%:*} ;;
+    ssh://*|git+ssh://*|ssh+git://*) h=${u#*://}; h=${h%%/*}; h=${h##*@}; h=${h%%:*} ;;
+    *://*) h=${u#*://}; h=${h%%/*}; h=${h##*@}; h=${h%%:*}; ssh= ;;
     *:*) h=${u%%:*}; h=${h##*@} ;;
     *) return 1 ;;
   esac
+  if [ -n "$ssh" ]; then
+    case "$h" in ''|-*|*/*) return 1 ;; esac
+    h=$(ssh_host "$h")
+  fi
   [[ $h =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ && $h == *.* && $h != *..* ]] || return 1
   case "$h" in github.com|*.github.com) return 1 ;; esac
   return 0
 }
 
 # push_off — prints 1 when the remote the push in GIT_ARGS targets (run in
-# $GIT_AT) is definitely not on GitHub: its URL, as git expands it (insteadOf
-# and pushInsteadOf applied), has a real host other than github.com. Anything
-# else — an alias, a local path, a remote that cannot be resolved — prints
-# nothing, so the push is checked.
+# $GIT_AT) is definitely not on GitHub: every URL it pushes to, as git expands
+# it (insteadOf and pushInsteadOf applied), passes url_off. Anything else — a
+# local path, a remote that cannot be resolved — prints nothing, so the push is
+# checked.
 push_off() {
   local w i=0 n=${#GIT_ARGS[@]} r='' u b
+  # A remote named in place wins over --repo (git-push(1)).
   while [ $i -lt $n ]; do
     w=${GIT_ARGS[$i]}; i=$((i + 1))
     case "$w" in
-      --repo) r=${GIT_ARGS[$i]:-}; break ;;
-      --repo=*) r=${w#*=}; break ;;
+      --repo) r=${GIT_ARGS[$i]:-}; i=$((i + 1)) ;;
+      --repo=*) r=${w#*=} ;;
       -o|--push-option|--receive-pack|--exec) i=$((i + 1)) ;;
       -*) ;;
       *) r=$w; break ;;
@@ -102,10 +121,12 @@ push_off() {
   case "$r" in *'$'*|*'`'*|-*) return 0 ;; esac
   u=$(git -C "$GIT_AT" ls-remote --get-url "$r" 2>/dev/null) || return 0
   url_off "$u" || return 0
-  # A named remote may push elsewhere than it fetches.
+  # A named remote may push elsewhere than it fetches, and to every URL it lists.
   case "$r" in
     *:*|*/*) ;;
-    *) u=$(git -C "$GIT_AT" remote get-url --push "$r" 2>/dev/null) || return 0; url_off "$u" || return 0 ;;
+    *)
+      u=$(git -C "$GIT_AT" remote get-url --push --all "$r" 2>/dev/null) && [ -n "$u" ] || return 0
+      while IFS= read -r w; do url_off "$w" || return 0; done <<<"$u" ;;
   esac
   echo 1
 }

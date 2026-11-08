@@ -11,7 +11,9 @@ val() { sed -nE "s/^[[:space:]]*$1:[[:space:]]*'?([^']*)'?[[:space:]]*$/\1/p" "$
 fail=0
 for c in "${cases[@]}"; do
   dir="$root/evals/$c"; [ -f "$dir/case.yaml" ] || continue
-  ws=$(mktemp -d); cmd=$(val EVAL_CMD "$dir/case.yaml"); sc=$(val scaffold_script "$dir/case.yaml")
+  # Without its own workspace a fixture would overwrite the directory run.sh runs in.
+  ws=$(mktemp -d) && [ -d "$ws" ] || { echo "run.sh: mktemp -d failed; stopped before $c" >&2; exit 1; }
+  cmd=$(val EVAL_CMD "$dir/case.yaml"); sc=$(val scaffold_script "$dir/case.yaml")
   out=$(cd "$ws" && bash "$dir/$sc" >/dev/null 2>&1 && PATH="$root/bin:$PATH" eval "$cmd" 2>&1)
   rm -rf "$ws"
   for g in "$dir"/graders/*.md; do
