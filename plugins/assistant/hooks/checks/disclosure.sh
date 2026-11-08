@@ -14,9 +14,12 @@
 # holds `-_.` or a capital · "$HOME/" · a `#<n>` that is no issue or PR of this
 # repo. A gist is scanned whatever this repo's visibility: it is not part of it.
 #
-# A push whose remote is known not to be on github.com writes to no GitHub repo
-# (§Disclosure): it is allowed without calling gh. gh commands always target
-# GitHub.
+# A push whose remote is definitely not on GitHub writes to no GitHub repo
+# (§Disclosure) and is allowed without calling gh: the remote is picked the way
+# git does, its URL expanded by git, and the host must be a real one (it holds a
+# dot) other than github.com and its subdomains. An alias, a local path or
+# file:// remote, an unparsable URL or an unresolvable remote is scanned. gh
+# commands always target GitHub.
 #
 # It guards against a slip, not a workaround: a push from inside a script is
 # not seen. What it cannot work out here — a directory or ref held in a
@@ -55,9 +58,27 @@ LONG=' title body body-file base head repo label assignee reviewer milestone pro
 # commits it sends (one per line), the text it sends, and 1 for a gist.
 a_dir=() a_refs=() a_text=() a_gist=() a_off=()
 
+# url_off <url> — succeeds only when <url> names a real host (a dot in it, plain
+# characters only) that is not github.com or below it. A local path, a bare
+# alias such as an ssh `gh`, an IPv6 literal or anything unparsable fails.
+url_off() {
+  local u h
+  u=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
+  case "$u" in
+    *://*) h=${u#*://}; h=${h%%/*}; h=${h##*@}; h=${h%%:*} ;;
+    *:*) h=${u%%:*}; h=${h##*@} ;;
+    *) return 1 ;;
+  esac
+  [[ $h =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ && $h == *.* && $h != *..* ]] || return 1
+  case "$h" in github.com|*.github.com) return 1 ;; esac
+  return 0
+}
+
 # push_off — prints 1 when the remote the push in GIT_ARGS targets (run in
-# $GIT_AT) is known and not on github.com; prints nothing otherwise, so a remote
-# that cannot be resolved is still checked.
+# $GIT_AT) is definitely not on GitHub: its URL, as git expands it (insteadOf
+# and pushInsteadOf applied), has a real host other than github.com. Anything
+# else — an alias, a local path, a remote that cannot be resolved — prints
+# nothing, so the push is checked.
 push_off() {
   local w i=0 n=${#GIT_ARGS[@]} r='' u b
   while [ $i -lt $n ]; do
@@ -71,17 +92,22 @@ push_off() {
     esac
   done
   if [ -z "$r" ]; then
+    # The remote git picks: branch pushRemote, remote.pushDefault, branch remote, origin.
     b=$(git -C "$GIT_AT" symbolic-ref --quiet --short HEAD 2>/dev/null) || b=
-    [ -z "$b" ] || r=$(git -C "$GIT_AT" config "branch.$b.pushRemote" 2>/dev/null || git -C "$GIT_AT" config "branch.$b.remote" 2>/dev/null)
+    if [ -n "$b" ]; then r=$(git -C "$GIT_AT" config "branch.$b.pushRemote" 2>/dev/null) || r=; fi
+    if [ -z "$r" ]; then r=$(git -C "$GIT_AT" config remote.pushDefault 2>/dev/null) || r=; fi
+    if [ -z "$r" ] && [ -n "$b" ]; then r=$(git -C "$GIT_AT" config "branch.$b.remote" 2>/dev/null) || r=; fi
     [ -n "$r" ] || r=origin
   fi
+  case "$r" in *'$'*|*'`'*|-*) return 0 ;; esac
+  u=$(git -C "$GIT_AT" ls-remote --get-url "$r" 2>/dev/null) || return 0
+  url_off "$u" || return 0
+  # A named remote may push elsewhere than it fetches.
   case "$r" in
-    *'$'*|*'`'*) return 0 ;;
-    *:*|*/*) u=$r ;;
-    *) u=$(git -C "$GIT_AT" remote get-url --push "$r" 2>/dev/null) || return 0 ;;
+    *:*|*/*) ;;
+    *) u=$(git -C "$GIT_AT" remote get-url --push "$r" 2>/dev/null) || return 0; url_off "$u" || return 0 ;;
   esac
-  [ -n "$u" ] || return 0
-  case "$u" in *github.com[:/]*) ;; *) echo 1 ;; esac
+  echo 1
 }
 
 # push_refs — the source refs of the push in GIT_ARGS, one per line: HEAD with no
@@ -226,7 +252,7 @@ for k in "${!a_dir[@]}"; do
   d=${a_dir[$k]}
   # A directory that does not exist fails the command itself: nothing is sent.
   [ -d "$d" ] || continue
-  # A push to a remote that is not on github.com writes to no GitHub repo.
+  # A push to a remote that is definitely not on GitHub writes to no GitHub repo.
   [ -z "${a_off[$k]}" ] || continue
   if [ -z "${a_gist[$k]}" ]; then
     vis=$(gh_visibility "$d") || unread "GitHub did not say whether this repo is private ($(gh_unusable "$d"))" "fix gh, or run it again once GitHub answers"
