@@ -26,6 +26,8 @@ printf -- '---\npaths: ["src/**/*.{ts,tsx}"]\n---\nG-INLINE\n' > g/.claude/rules
 # sl: a rules .md that is a symlink to a file outside the folder.
 mkdir -p sl/.claude/rules sl/.claude/elsewhere; git init -q sl; printf 'vcs: git\nrules: .claude/rules\n' > sl/.claude/assistant.md
 printf 'SL-LINKED\n' > sl/.claude/elsewhere/ext.md; ln -s ../elsewhere/ext.md sl/.claude/rules/link.md
+# A rules x.md that is a symlink to a non-.md file must not print the file; stderr names it.
+printf 'SL-SECRET\n' > sl/.claude/elsewhere/secret.txt; ln -s ../elsewhere/secret.txt sl/.claude/rules/x.md
 cat > check.sh <<'SH'
 root=$1
 # on <dir> <args…>: run style-pack there; leaves out, err and rc beside it.
@@ -77,6 +79,8 @@ on g --paths src/x/a.tsx
 has g.out G-INLINE g-inline
 on sl --paths lib/a.dart
 has sl.out SL-LINKED sl-symlink
+has sl.out SL-SECRET sl-nonmd-printed
+has sl.err 'x\.md' sl-nonmd-names
 # No plugin file still reads the old hard-coded folder.
 echo "old-folder=$(grep -rl 'style-rules' "$root" --exclude-dir=evals | wc -l | tr -d ' ')"
 SH
