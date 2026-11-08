@@ -9,7 +9,7 @@ The pages are titled in the user's language:
   `asst-notion query kb-pages Module=<product module>`; record no page id. A new
   page is a new row: `asst-notion create` with `"db":"kb-pages"`, its Module and
   Kind, and the page as `bodyFile`.
-- **File board**: `.claude/.assistant/kb/product/features/<feature>.md` and
+- **Any other tracker**: `.claude/.assistant/kb/product/features/<feature>.md` and
   `.claude/.assistant/kb/product/shared/<design>.md`.
 
 A project with no shared designs leaves that part out; a behaviour two features
