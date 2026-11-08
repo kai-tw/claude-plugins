@@ -14,6 +14,10 @@
 # holds `-_.` or a capital · "$HOME/" · a `#<n>` that is no issue or PR of this
 # repo. A gist is scanned whatever this repo's visibility: it is not part of it.
 #
+# A push whose remote is known not to be on github.com writes to no GitHub repo
+# (§Disclosure): it is allowed without calling gh. gh commands always target
+# GitHub.
+#
 # It guards against a slip, not a workaround: a push from inside a script is
 # not seen. What it cannot work out here — a directory or ref held in a
 # variable, stdin, gh or the base branch unavailable — it blocks with the
@@ -49,7 +53,36 @@ LONG=' title body body-file base head repo label assignee reviewer milestone pro
 
 # One entry per publishing command: the directory it runs in, the refs whose
 # commits it sends (one per line), the text it sends, and 1 for a gist.
-a_dir=() a_refs=() a_text=() a_gist=()
+a_dir=() a_refs=() a_text=() a_gist=() a_off=()
+
+# push_off — prints 1 when the remote the push in GIT_ARGS targets (run in
+# $GIT_AT) is known and not on github.com; prints nothing otherwise, so a remote
+# that cannot be resolved is still checked.
+push_off() {
+  local w i=0 n=${#GIT_ARGS[@]} r='' u b
+  while [ $i -lt $n ]; do
+    w=${GIT_ARGS[$i]}; i=$((i + 1))
+    case "$w" in
+      --repo) r=${GIT_ARGS[$i]:-}; break ;;
+      --repo=*) r=${w#*=}; break ;;
+      -o|--push-option|--receive-pack|--exec) i=$((i + 1)) ;;
+      -*) ;;
+      *) r=$w; break ;;
+    esac
+  done
+  if [ -z "$r" ]; then
+    b=$(git -C "$GIT_AT" symbolic-ref --quiet --short HEAD 2>/dev/null) || b=
+    [ -z "$b" ] || r=$(git -C "$GIT_AT" config "branch.$b.pushRemote" 2>/dev/null || git -C "$GIT_AT" config "branch.$b.remote" 2>/dev/null)
+    [ -n "$r" ] || r=origin
+  fi
+  case "$r" in
+    *'$'*|*'`'*) return 0 ;;
+    *:*|*/*) u=$r ;;
+    *) u=$(git -C "$GIT_AT" remote get-url --push "$r" 2>/dev/null) || return 0 ;;
+  esac
+  [ -n "$u" ] || return 0
+  case "$u" in *github.com[:/]*) ;; *) echo 1 ;; esac
+}
 
 # push_refs — the source refs of the push in GIT_ARGS, one per line: HEAD with no
 # refspec, `--all` / `--tags` for those flags; none for a delete.
@@ -84,7 +117,7 @@ while read_command; do
     [ -n "$GIT_AT" ] || unread "the repo this push runs in is held in a variable or \`cd -\`" "write its path out"
     refs=$(push_refs)
     case "$refs" in *'$'*|*'`'*) unread "a ref this push sends is held in a variable" "write the ref out" ;; esac
-    a_dir+=("$GIT_AT") a_refs+=("$refs") a_text+=("") a_gist+=("")
+    a_dir+=("$GIT_AT") a_refs+=("$refs") a_text+=("") a_gist+=("") a_off+=("$(push_off)")
     continue
   fi
   # Neither cd, git nor gh: this command publishes nothing.
@@ -133,7 +166,7 @@ while read_command; do
     text+=$'\n'$(cat "$p")
   done
   refs=; [ -z "$commits" ] || refs=$head
-  a_dir+=("$dir") a_refs+=("$refs") a_text+=("$text") a_gist+=("$gist")
+  a_dir+=("$dir") a_refs+=("$refs") a_text+=("$text") a_gist+=("$gist") a_off+=("")
 done < <(command_words "$cmd")
 
 [ ${#a_dir[@]} -gt 0 ] || exit 0
@@ -193,6 +226,8 @@ for k in "${!a_dir[@]}"; do
   d=${a_dir[$k]}
   # A directory that does not exist fails the command itself: nothing is sent.
   [ -d "$d" ] || continue
+  # A push to a remote that is not on github.com writes to no GitHub repo.
+  [ -z "${a_off[$k]}" ] || continue
   if [ -z "${a_gist[$k]}" ]; then
     vis=$(gh_visibility "$d") || unread "GitHub did not say whether this repo is private ($(gh_unusable "$d"))" "fix gh, or run it again once GitHub answers"
     # A private repo may hold anything §Disclosure keeps out of a public one.
