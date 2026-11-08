@@ -26,13 +26,25 @@ git remote add work git@github.com-work:acme/lib.git
 git remote add upper git@GitHub.COM:acme/lib.git
 git remote add short gh:acme/lib
 git remote add loc ../origin.git
+git remote add glw git@gitlab-work:acme/lib.git
+git remote add glp git@gl-proxy:acme/lib.git
+git remote add glj git@gl-jump:acme/lib.git
+# mirror fetches from gitlab but pushes to gitlab and github.com both.
+git remote add mirror https://gitlab.example.com/acme/lib.git
+git remote set-url --add --push mirror https://gitlab.example.com/acme/lib.git
+git remote set-url --add --push mirror git@github.com:acme/lib.git
 cd ..
 # wt-default: remote.pushDefault names gl. wt-rewrite: gl is rewritten to github.com.
+# wt-sshcmd: core.sshCommand would create ran-conf if anything ran it.
 cp -R wt wt-default; git -C wt-default config remote.pushDefault gl
 cp -R wt wt-rewrite; git -C wt-rewrite config url.https://github.com/.insteadOf https://gitlab.example.com/
-# home/.ssh/config maps the Host github.com-work to HostName github.com; the real ~/.ssh is never read.
-mkdir -p home/.ssh
-printf 'Host github.com-work\n  HostName github.com\n  User git\n' > home/.ssh/config
+cp -R wt wt-sshcmd; git -C wt-sshcmd config core.sshCommand "touch $PWD/ran-conf; ssh"
+# ssh_config maps github.com-work to github.com and gitlab-work, gl-proxy and gl-jump to
+# gitlab.example.com, the last two through a proxy. stub/ssh is the real ssh reading only it
+# ($SSH_CFG when set), since OpenSSH finds ~/.ssh/config through the password database, not $HOME.
+printf '%s\n' 'Host github.com-work' '  HostName github.com' 'Host gitlab-work' '  HostName gitlab.example.com' \
+  'Host gl-proxy' '  HostName gitlab.example.com' '  ProxyCommand nc %h %p' \
+  'Host gl-jump' '  HostName gitlab.example.com' '  ProxyJump jump.example.com' > ssh_config
 git init -q -b main nobase
 (cd nobase && git config user.email e@e && git config user.name e && echo x > a.txt && git add -A && git commit -qm base)
 mkdir -p stub
@@ -56,6 +68,8 @@ case "$1 $2" in
 esac
 SH
 chmod +x stub/gh
+printf '#!/bin/sh\nexec %s -F "${SSH_CFG:-$EVAL_WS/ssh_config}" "$@"\n' "$(command -v ssh)" > stub/ssh
+chmod +x stub/ssh
 cat > check.sh <<'SH'
 root=$1; export EVAL_WS=$PWD PATH="$PWD/stub:$PATH" HOME=$(printf '/%s/dev' Users)
 ref=$(printf '#%s' 346); other=$(printf '/%s/other/GitHub/x' Users); mine="$HOME/GitHub/other/lib/x.dart"
@@ -91,7 +105,25 @@ CWD=. run cd-file clean "cd $PWD/wt && gh pr create --title T --body-file body.t
 run push-gitlab   leak  'git push gl HEAD:leak'
 run pr-sub        clean "url=\$(gh pr create --title T --body \"Reads $mine\")"
 run push-sub      leak  'out=$(git push origin HEAD:leak 2>&1)'
-HOME=$PWD/home GIT_SSH_COMMAND="ssh -F $PWD/home/.ssh/config" run push-ssh-alias leak 'git push work HEAD:leak'
+run push-tick     leak  'x=`git push origin HEAD:leak`'
+run push-mirror   leak  'git push mirror HEAD:leak'
+run push-repo-flag leak 'git push --repo=gl origin HEAD:leak'
+run push-ssh-alias leak 'git push work HEAD:leak'
+run push-ssh-off  leak  'git push glw HEAD:leak'
+# A command set for git's ssh is never run, and leaves the host unresolved.
+GIT_SSH_COMMAND="touch $PWD/ran-env; ssh" run push-ssh-cmd leak 'git push glw HEAD:leak'
+echo "push-ssh-cmd-ran=$([ -e ran-env ] && echo yes || echo no)"
+DIR=wt-sshcmd CWD=wt-sshcmd run push-ssh-conf leak 'git push glw HEAD:leak'
+echo "push-ssh-conf-ran=$([ -e ran-conf ] && echo yes || echo no)"
+run push-ssh-inline leak 'GIT_SSH_COMMAND=ssh git push glw HEAD:leak'
+SSH_CFG=/dev/null run push-ssh-noconf leak 'git push work HEAD:leak'
+run push-ssh-proxy leak 'git push glp HEAD:leak'
+run push-ssh-jump leak  'git push glj HEAD:leak'
+# A cd in a subshell ends with it.
+run cd-sub        leak  "x=\$(cd $PWD/nowhere); git push origin HEAD:leak"
+run cd-tick       leak  "x=\`cd $PWD/nowhere\`; git push origin HEAD:leak"
+run cd-paren      leak  "(cd $PWD/nowhere); git push origin HEAD:leak"
+CWD=. run cd-paren-in leak "(cd $PWD/wt && git push origin HEAD:leak)"
 run push-upper    leak  'git push upper HEAD:leak'
 run push-short    leak  'git push short HEAD:leak'
 run push-local    leak  'git push loc HEAD:leak'

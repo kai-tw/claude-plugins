@@ -32,7 +32,8 @@ set -uo pipefail
 payload="$(cat 2>/dev/null)"
 cmd="$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null || true)"
 [ -z "$cmd" ] && exit 0
-printf '%s' "$cmd" | grep -qE '(^|[[:space:]])git([[:space:]]|$)' || exit 0
+# No `push` in it: no command this hook acts on can be there.
+case "$cmd" in *push*) ;; *) exit 0 ;; esac
 
 cwd="$(printf '%s' "$payload" | jq -r '.cwd // empty' 2>/dev/null || true)"
 [ -n "$cwd" ] || cwd="$PWD"
@@ -54,11 +55,10 @@ deny() {
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=command-words.sh
 source "$here/command-words.sh"
-dir=$cwd
+CMD_DIR=$cwd
 while read_command; do
-  if d=$(cd_dir "$dir"); then dir=$d; continue; fi
   # Not a push: nothing here can overwrite a branch.
-  git_command "$dir" && [ "$GIT_SUB" = push ] || continue
+  git_command "$CMD_DIR" && [ "$GIT_SUB" = push ] || continue
   repo=$GIT_AT
   set -- ${GIT_ARGS[@]+"${GIT_ARGS[@]}"}
 

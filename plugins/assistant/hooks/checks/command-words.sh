@@ -10,12 +10,13 @@
 # and every command by \036. Commands end at a newline, ; & && | || ( or )
 # outside quotes; quotes are removed, backslash escapes applied, redirections,
 # comments and here-document bodies dropped. The commands inside a $(…) or `…`
-# come too, before the command holding it, as the shell runs them.
+# come too, before the command holding it, as the shell runs them. A subshell —
+# a $(…), `…` or ( … ) — opens with the record \034( and closes with \034).
 command_words() {
   local rec
   while IFS= read -r -d $'\036' rec; do
     case "$rec" in
-      $'\035'*) command_words "${rec#?}" ;;
+      $'\035'*) printf '\034(\036'; command_words "${rec#?}"; printf '\034)\036' ;;
       *) printf '%s\036' "$rec" ;;
     esac
   done < <(command_words_awk "$1")
@@ -90,7 +91,8 @@ command_words_awk() {
           }
           heredoc = ""; continue
         }
-        if (index(";&|()", c)) { end(); continue }
+        if (index(";&|", c)) { end(); continue }
+        if (c == "(" || c == ")") { end(); printf "\034%s\036", c; continue }
         w = w c; inw = 1
       }
       end()
@@ -100,21 +102,34 @@ command_words_awk() {
 # read_command — reads the next command of command_words' output from stdin into
 # the array CMD_WORDS, minus what runs it without being it: VAR=x assignments,
 # `command`, `sudo`, `env`, `exec`, `nohup`, `time` and the keywords `if then
-# else elif do while until ! {`. Fails at the end of the input.
+# else elif do while until ! {`. CMD_DIR, set by the caller to where the whole
+# command runs, is kept as the directory each command runs in (empty when it
+# cannot be read here): a cd or pushd moves it and is not returned, and the end
+# of a subshell restores it, as the shell does. Fails at the end of the input.
+CMD_DIR='' CMD_DIRS=()
 read_command() {
-  local rec w
-  IFS= read -r -d $'\036' rec || return 1
-  CMD_WORDS=()
-  while IFS= read -r -d $'\037' w; do
-    if [ ${#CMD_WORDS[@]} -eq 0 ]; then
-      case "$w" in
-        command|sudo|env|exec|nohup|time|if|then|else|elif|do|while|until|'!'|'{') continue ;;
-        [A-Za-z_]*=*) [[ ${w%%=*} =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && continue ;;
-      esac
-    fi
-    CMD_WORDS+=("$w")
-  done <<<"$rec"
-  return 0
+  local rec w d n
+  while IFS= read -r -d $'\036' rec; do
+    n=${#CMD_DIRS[@]}
+    case "$rec" in
+      $'\034(') CMD_DIRS+=("$CMD_DIR"); continue ;;
+      # A ) with no ( open ends a case pattern, not a subshell.
+      $'\034)') [ "$n" -gt 0 ] || continue; CMD_DIR=${CMD_DIRS[$((n - 1))]}; unset "CMD_DIRS[$((n - 1))]"; continue ;;
+    esac
+    CMD_WORDS=()
+    while IFS= read -r -d $'\037' w; do
+      if [ ${#CMD_WORDS[@]} -eq 0 ]; then
+        case "$w" in
+          command|sudo|env|exec|nohup|time|if|then|else|elif|do|while|until|'!'|'{') continue ;;
+          [A-Za-z_]*=*) [[ ${w%%=*} =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && continue ;;
+        esac
+      fi
+      CMD_WORDS+=("$w")
+    done <<<"$rec"
+    if d=$(cd_dir "$CMD_DIR"); then CMD_DIR=$d; continue; fi
+    return 0
+  done
+  return 1
 }
 
 # word_unknown <word> — succeeds when <word> holds an expansion this file does not

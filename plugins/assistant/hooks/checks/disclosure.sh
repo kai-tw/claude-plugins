@@ -17,10 +17,10 @@
 # A push whose remote is definitely not on GitHub writes to no GitHub repo
 # (§Disclosure) and is allowed without calling gh: the remote is picked the way
 # git does, each URL it pushes to expanded by git and an ssh host by ssh's
-# config, and every host must be a real one (it holds a dot) other than
-# github.com and its subdomains. A local path or file:// remote, an unparsable
-# URL or an unresolvable remote or host is scanned. gh commands always target
-# GitHub.
+# config (see ssh_host), and every host must be a real one (it ends in a
+# top-level domain) other than github.com and its subdomains. A local path or
+# file:// remote, an unparsable URL or an unresolvable remote or host is
+# scanned. gh commands always target GitHub.
 #
 # It guards against a slip, not a workaround: a push from inside a script is
 # not seen. What it cannot work out here — a directory or ref held in a
@@ -59,21 +59,27 @@ LONG=' title body body-file base head repo label assignee reviewer milestone pro
 # commits it sends (one per line), the text it sends, and 1 for a gist.
 a_dir=() a_refs=() a_text=() a_gist=() a_off=()
 
-# ssh_host <host> — the host the ssh git uses in $GIT_AT connects to for <host>
-# (GIT_SSH_COMMAND, core.sshCommand, GIT_SSH, then ssh, git's order), as its
-# `-G` prints it without connecting; nothing when that ssh has no -G.
+# ssh_host <host> — the host ssh connects to for <host>, as plain `ssh -G` prints
+# it from the user's ssh config without connecting. Nothing when git would run
+# a command set in GIT_SSH_COMMAND, GIT_SSH or core.sshCommand (here or in the
+# command) in its place — this hook runs before the user approves the command,
+# so it runs nothing a repo or the environment sets — or when ssh would go
+# through a ProxyCommand or ProxyJump, whose last hop it cannot see.
 ssh_host() {
-  local c
-  c=${GIT_SSH_COMMAND:-$(git -C "$GIT_AT" config core.sshCommand 2>/dev/null)}
-  # git runs a GIT_SSH_COMMAND or core.sshCommand through the shell, GIT_SSH as a program.
-  if [ -n "$c" ]; then set -- sh -c "$c"' -G "$1"' - "$1"; else set -- "${GIT_SSH:-ssh}" -G "$1"; fi
-  run_bounded "${GH_TIMEOUT:-10}" "$@" 2>/dev/null </dev/null | awk '$1 == "hostname" { print tolower($2); exit }'
+  [ -z "${GIT_SSH_COMMAND:-}${GIT_SSH:-}" ] || return 0
+  git -C "$GIT_AT" config core.sshCommand >/dev/null 2>&1 && return 0
+  case "$(printf '%s' "$cmd" | tr '[:upper:]' '[:lower:]')" in *git_ssh*|*sshcommand*) return 0 ;; esac
+  run_bounded "${GH_TIMEOUT:-10}" ssh -G "$1" 2>/dev/null </dev/null | awk '
+    ($1 == "proxycommand" || $1 == "proxyjump") && tolower($2) != "none" { proxy = 1 }
+    $1 == "hostname" { h = tolower($2) }
+    END { if (!proxy) print h }'
 }
 
-# url_off <url> — succeeds only when <url> names a real host (a dot in it, plain
-# characters only) that is not github.com or below it. An ssh URL's host is the
-# one ssh connects to after its config (`Host github.com-work` may be github.com).
-# A local path, an IPv6 literal or anything unparsable fails.
+# url_off <url> — succeeds only when <url> names a real host (plain characters,
+# ending in a top-level domain: letters or an xn-- label) that is not github.com
+# or below it. An ssh URL's host is the one ssh connects to after its config
+# (`Host github.com-work` may be github.com). A local path, an IP literal or
+# anything unparsable fails.
 url_off() {
   local u h ssh=1
   u=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
@@ -87,7 +93,7 @@ url_off() {
     case "$h" in ''|-*|*/*) return 1 ;; esac
     h=$(ssh_host "$h")
   fi
-  [[ $h =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ && $h == *.* && $h != *..* ]] || return 1
+  [[ $h =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ && $h == *.* && $h != *..* && ${h##*.} =~ ^([a-z]+|xn--[a-z0-9-]+)$ ]] || return 1
   case "$h" in github.com|*.github.com) return 1 ;; esac
   return 0
 }
@@ -155,9 +161,9 @@ push_refs() {
   [ -n "$any$del" ] || echo HEAD
 }
 
-dir=$cwd
+CMD_DIR=$cwd
 while read_command; do
-  if d=$(cd_dir "$dir"); then dir=$d; continue; fi
+  dir=$CMD_DIR
   if git_command "$dir"; then
     # Any git command but push sends nothing.
     [ "$GIT_SUB" = push ] || continue
@@ -295,7 +301,8 @@ for k in "${!a_dir[@]}"; do
         # A ref that names no commit fails the push itself: nothing is sent.
         git -C "$d" rev-parse --verify --quiet "$ref^{commit}" >/dev/null || continue
         msgs=$(git -C "$d" log --format=%B "$base..$ref" 2>/dev/null)
-        added=$(git -C "$d" diff "$base...$ref" 2>/dev/null | grep '^+' | grep -v '^+++' | cut -c2-)
+        # No diff driver or textconv: they are commands the repo sets (see ssh_host).
+        added=$(git -C "$d" diff --no-ext-diff --no-textconv "$base...$ref" 2>/dev/null | grep '^+' | grep -v '^+++' | cut -c2-)
         leaks+=$(scan "commit message" "$msgs"; foreign_refs "commit message" "$msgs"; scan "diff" "$added")$'\n'
       done <<<"$list"
     done <<<"${a_refs[$k]}"
