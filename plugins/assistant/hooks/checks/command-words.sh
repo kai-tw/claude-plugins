@@ -105,8 +105,9 @@ command_words_awk() {
 # else elif do while until ! {`. CMD_DIR, set by the caller to where the whole
 # command runs, is kept as the directory each command runs in (empty when it
 # cannot be read here): a cd or pushd moves it and is not returned, and the end
-# of a subshell restores it, as the shell does. Fails at the end of the input.
-CMD_DIR='' CMD_DIRS=()
+# of a subshell restores it, as the shell does. The assignments in front of the
+# command are kept in CMD_ENV, one per line. Fails at the end of the input.
+CMD_DIR='' CMD_DIRS=() CMD_ENV=''
 read_command() {
   local rec w d n
   while IFS= read -r -d $'\036' rec; do
@@ -116,12 +117,12 @@ read_command() {
       # A ) with no ( open ends a case pattern, not a subshell.
       $'\034)') [ "$n" -gt 0 ] || continue; CMD_DIR=${CMD_DIRS[$((n - 1))]}; unset "CMD_DIRS[$((n - 1))]"; continue ;;
     esac
-    CMD_WORDS=()
+    CMD_WORDS=() CMD_ENV=''
     while IFS= read -r -d $'\037' w; do
       if [ ${#CMD_WORDS[@]} -eq 0 ]; then
         case "$w" in
           command|sudo|env|exec|nohup|time|if|then|else|elif|do|while|until|'!'|'{') continue ;;
-          [A-Za-z_]*=*) [[ ${w%%=*} =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && continue ;;
+          [A-Za-z_]*=*) [[ ${w%%=*} =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && { CMD_ENV+=$w$'\n'; continue; } ;;
         esac
       fi
       CMD_WORDS+=("$w")
@@ -156,16 +157,24 @@ cd_dir() {
 
 # git_command <dir> — when CMD_WORDS is a git command, sets GIT_SUB to its
 # subcommand, GIT_ARGS to the words after it and GIT_AT to the directory it
-# runs in after every -C (empty when that cannot be read here); fails otherwise.
+# runs in after every -C (empty when that cannot be read here) and GIT_CFG to 1
+# when this invocation sets git's config or ssh command itself: a -c or
+# --config-env before the subcommand, or a GIT_CONFIG* / GIT_SSH* assignment in
+# front of it. Fails when it is no git command.
 git_command() {
   [ "${CMD_WORDS[0]:-}" = git ] || return 1
   local i=1 n=${#CMD_WORDS[@]} w
-  GIT_AT=$1 GIT_SUB='' GIT_ARGS=()
+  GIT_AT=$1 GIT_SUB='' GIT_ARGS=() GIT_CFG=''
+  case "$(printf '%s' "$CMD_ENV" | tr '[:upper:]' '[:lower:]')" in
+    *git_config*|*git_ssh*) GIT_CFG=1 ;;
+  esac
   while [ $i -lt $n ]; do
     w=${CMD_WORDS[$i]}; i=$((i + 1))
     case "$w" in
       -C) GIT_AT=$(word_dir "$GIT_AT" "${CMD_WORDS[$i]:-}"); i=$((i + 1)) ;;
-      -c|--git-dir|--work-tree|--namespace|--config-env|--super-prefix) i=$((i + 1)) ;;
+      -c|--config-env) GIT_CFG=1; i=$((i + 1)) ;;
+      --config-env=*) GIT_CFG=1 ;;
+      --git-dir|--work-tree|--namespace|--super-prefix) i=$((i + 1)) ;;
       -*) ;;
       *) GIT_SUB=$w; break ;;
     esac

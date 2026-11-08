@@ -147,6 +147,13 @@ echo "push-sig-ran=$([ -e ran-gpg ] && echo yes || echo no)"
 DIR=nobase-up CWD=nobase-up run no-base-up main 'git push origin HEAD:main'
 echo "no-base-up-ran=$([ -e ran-up ] && echo yes || echo no)"
 run push-ssh-include leak "git -c include.path=$PWD/inc.conf push glw HEAD:leak"
+run push-ssh-dashc leak "git -c core.sshCommand=ssh push glw HEAD:leak"
+run push-ssh-cfgenv leak "git --config-env=core.sshCommand=X push glw HEAD:leak"
+run push-ssh-cfgcount leak "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.sshCommand GIT_CONFIG_VALUE_0=ssh git push glw HEAD:leak"
+# A -c or a word like it that is not on the push's own git leaves the ssh alias resolvable.
+run push-ssh-msg leak 'git commit -m "use -c here" && git push glw HEAD:leak'
+run push-ssh-commit-c leak 'git -c user.name=x commit --allow-empty -qm x && git push glw HEAD:leak'
+run push-ssh-head-c leak 'head -c 5 lib/a.txt | cat; git push glw HEAD:leak'
 # the stub fails every call when GH_BROKEN is set
 export GH_BROKEN=1
 run gh-down       clean 'git push origin HEAD:clean'

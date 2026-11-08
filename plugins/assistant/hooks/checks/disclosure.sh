@@ -67,18 +67,15 @@ a_dir=() a_refs=() a_text=() a_gist=() a_off=()
 
 # ssh_host <host> — the host ssh connects to for <host>, as plain `ssh -G` prints
 # it from the user's ssh config without connecting. Nothing when git would run
-# a command set in GIT_SSH_COMMAND, GIT_SSH or core.sshCommand (here or in the
-# command: -c, --config-env, include.path, GIT_CONFIG*) in its place — this hook runs before the user approves the command,
+# a command set in GIT_SSH_COMMAND, GIT_SSH or core.sshCommand (here or on this
+# push's own git: -c, --config-env, GIT_CONFIG*) in its place — this hook runs before the user approves the command,
 # so it runs nothing a repo or the environment sets — or when ssh would go
 # through a ProxyCommand or ProxyJump, whose last hop it cannot see.
 ssh_host() {
   [ -z "${GIT_SSH_COMMAND:-}${GIT_SSH:-}" ] || return 0
   git -C "$GIT_AT" config core.sshCommand >/dev/null 2>&1 && return 0
-  case "$(printf '%s' "$cmd" | tr '[:upper:]' '[:lower:]')" in
-    *git_ssh*|*git_config*|*sshcommand*|*include.path*|*includeif*|*--config-env*) return 0 ;;
-  esac
-  # A -c in the command (git's, or glued to its value) can set any of them.
-  case "$cmd" in *[[:space:]]-c*) return 0 ;; esac
+  # This push's own -c, --config-env or GIT_CONFIG* / GIT_SSH* assignment can set any of them.
+  [ -z "${GIT_CFG:-}" ] || return 0
   run_bounded "${GH_TIMEOUT:-10}" ssh -G "$1" 2>/dev/null </dev/null | awk '
     ($1 == "proxycommand" || $1 == "proxyjump") && tolower($2) != "none" { proxy = 1 }
     $1 == "hostname" { h = tolower($2) }
