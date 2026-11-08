@@ -19,8 +19,8 @@ strings are facts for the project rules). It defines only **precedence**, not wh
 holds each level: once named, renaming or removing that file breaks the core rules.
 
 Which file holds which level is recorded here: the locale rules are `zh-Hant.md` /
-`ja.md` / `en.md`; the project rules are what each project's config names in `rules:`, or the glossary
-the project declares in `strings_glossary:`.
+`ja.md` / `en.md`; the project rules are what each project's config names in `rules:`, and the project's
+string glossary (in those rules, or where its CLAUDE.md points).
 
 **Where a core rule goes (the only test).** A rule enters `index.md` only if it **holds in
 every locale**. "This rule does not hold in Japanese" is not an exception but proof it does

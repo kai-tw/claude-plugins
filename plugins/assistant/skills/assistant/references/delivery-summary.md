@@ -38,5 +38,5 @@ security passed · naming passed · coverage <n unexecuted lines, each named>   
 **Approval is given at the screen review; this page only asks whether it still holds.** A string
 whose meaning changed since the screen review loses its approval (core rule U5.1: a changed meaning
 takes a new key), and **a locale that lost it may be neither merged nor
-committed**, at the same level as `destructive:`. A string that reaches this page without passing the screen review is a breach in the
+committed**, at the same level as a destructive action (SKILL.md §Dispatch rules). A string that reaches this page without passing the screen review is a breach in the
 flow: it goes back to the screen review for a supplement, never signed off on this page.

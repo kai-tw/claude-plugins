@@ -93,8 +93,8 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    integrates, one commit per slice (§Dispatch rules). A test the builder thinks wrong comes
    back as an open question you rule on, with the tester re-dispatched to change it.
 6. **Verify** (in parallel on the diff): one `verifier` running the code review
-   (the six blocks) and the text review — the latter only when the project config's
-   `ui_strings:` is not `none` and the diff touches that glob; the security
+   (the six blocks) and the text review — the latter only when the diff touches the
+   project's user-visible strings; the security
    checks (`security-guidance` hooks run unattended; the project's own sink rules
    when it has them); and the project config's `coverage:` command when set, which you
    run yourself in the background. `coverage: ci` means the PR's CI measures it: run nothing, and read
@@ -138,11 +138,10 @@ carry, or says to release, read `references/release.md`.
 ## KB modules
 
 The project's knowledge base has five modules: `frontend` · `backend` ·
-`product` · `marketing` · `design`. The project config's `kb_pages:` lists the ones
-this project keeps. A module with rules has a
+`product` · `marketing` · `design`. A module with rules has a
 file under `references/kb/`, whose first line names the steps it is loaded at:
-read it before those steps, and never read a module `kb_pages:` doesn't list. Only
-`product` has rules so far; listing another one changes nothing.
+read it before those steps when the project keeps that module's pages (Notion KB
+Pages rows, or `<kb>/<module>/` on a file board). Only `product` has rules so far.
 
 ## Usage data
 
@@ -152,7 +151,7 @@ happens and the investigation can't show it, read `references/analytics.md`.
 
 ## House style for strings
 
-A project with `ui_strings:` and `strings_glossary: none` has no house style yet:
+A project with user-visible strings and no string glossary has no house style yet:
 before its first task that adds a string, read `references/house-style.md`.
 
 ## The board
@@ -217,7 +216,8 @@ this repo's; anything else on the list is caught by no script.
 - Work sent off this machine — a message into a cloud session the user has
   running, or a new one from `asst-cloud open --profile <name>` — follows
   `references/cloud-dispatch.md`.
-- Destructive or outward actions (force-push, deleting branches, SVN revert,
-  publishing) are asked, never assumed — the project config lists the project's. This
+- Ask before every destructive or outward action: a merge, a push to
+  the default branch, a force-push, deleting a branch or a worktree (step 8's aside),
+  a deploy, deleting user data; a project's own extra cases live in its CLAUDE.md. This
   holds for anything you send off the machine: a peer session doing it for you
   bypasses the same decision.
