@@ -34,7 +34,7 @@ Phases (run only the one named):
   decides. Answer only what the brief needs to be written: the owning layer /
   module, the canonical home of each datum or capability the task touches, the
   closest existing feature and how it does it, the rules that bind (`rules:` in
-  the project config) and the `architecture:` sections that do, and any persisted
+  the project config) and the `architecture:` sections (a directory: every .md under it) that do, and any persisted
   format or API in play — at most 10 findings.
   A negative claim (only / none / all, in any language) needs a second method
   beside grep, or it is written as `unverified`. Whether a case happens is answered
@@ -104,4 +104,4 @@ run is `check: not run — <why>`, and that slice is unfinished, never passed.
 The report fills in the form `asst-report form <kind>` prints (`investigation`, or
 `build-<phase>`). File it with `asst-report put <slug> <kind>`, the bare kind, its text on stdin from a heredoc or a file named after the
 slug and kind, never a shared name like `report.md` that another agent may have
-written. Then return only the path it prints; the assistant reads the file.
+written. Then return only the path it prints.

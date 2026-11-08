@@ -62,7 +62,7 @@ the six blocks in order:
    the reason found in the code or `no reason found`; each place the code differs
    from a product behaviour on a product page the brief links or wrote, with Fix: change
    the code to match the page; each departure from what the `architecture:` document
-   in the task's worktree states, unless the brief records the user approving it,
+   (a directory: every .md under it) in the task's worktree states, unless the brief records the user approving it,
    with Fix: follow the document; and each hunk outside the
    task statement's boundary, filed unless a filed finding shows this task's
    diff changed the behaviour there, with Fix: revert it and file a `Backlog` row.
@@ -114,5 +114,5 @@ Run only what finishes inside this dispatch, never waiting in a `sleep` or
 `until` loop. On the text review, let the shell append
 `strings_check:` after your report — `{ cat <report>; echo '## strings_check';
 <command>; } | asst-report put <slug> verify-text` — or `## strings_check none`
-when the project config has none. Then return only the paths it prints; the assistant
-reads the files. Write nothing else.
+when the project config has none. Then return only the paths it prints.
+Write nothing else.

@@ -11,7 +11,7 @@ a link to its page section, never a restatement. Once answered, each `Needs you`
 When the project config sets `architecture:`, read that document in the task's worktree
 and cite it by path and section heading, never copying its text. A design that
 departs from what the architecture document states is `Needs you`, citing the section,
-and the departing option rewrites that section in the same task's diff; where the
+and the departing option rewrites that section in the same task's diff, and that file joins the task statement's boundary; where the
 document says nothing, `Decided` stays allowed.
 Labels and marks are written in the user's language (SKILL.md §Language); later
 steps find sections by meaning, so a filed brief may carry them in any language.
