@@ -21,6 +21,6 @@ values, `sql` for anything else. Every query is capped at 1 GB billed.
   a step of a flow most users who start it never reach; a parameter value the
   code can't produce.
 - Numbers point a direction and never decide: each finding the user should act
-  on becomes one Backlog row, `asst-board create <slug> Name=… Status=Backlog
-  Stage="Product Plan" --body <file>` (on Notion with `"Pages=<page>,…"`), its body
+  on becomes one row in the project's tracker, `Status=Backlog`
+  `Stage=Product Plan` (on Notion with `Pages=<page>,…`), its body
   holding the numbers, the window, the query and the open question it raises.

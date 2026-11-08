@@ -1,27 +1,27 @@
 ---
 name: scribe
 description: >-
-  The assistant's persistence toolbelt: `asst-board` (task rows, brief, decisions —
-  Notion or a local board file, per the project config), `asst-notion` (the Notion
-  request builder + writer behind it), `asst-section` (edit one `## ` section of a
-  local Markdown body). Used by the assistant and the `builder` agent; not a user
-  entry point.
+  The assistant's Notion toolbelt: `asst-notion` (the Notion request builder +
+  writer) and `asst-section` (edit one `## ` section of a local Markdown body).
+  Used by the assistant; not a user entry point.
 ---
 
 # Scribe toolbelt
 
-- `asst-board create|set|brief|decide|trash|list … [--dry-run]` — the board behind one
-  op vocabulary; the project config's `board:` picks Notion (via `asst-notion`) or
-  `.claude/.assistant/board.md`. A row's properties are Name · Status · Stage ·
-  `Blocked by` (the rows it waits for); what the row is goes in its body
-  (`create … --body <file>`). `asst-board --help` has the decisions shape.
-- `asst-notion <cmd> … --root <page-id>` — `node` builder over Notion's `ntn` CLI.
+- `asst-notion <cmd> … --root <page-id>` — `node` builder over Notion's `ntn` CLI;
+  the root id is the one the project's CLAUDE.md gives.
   Property encoding, DB registry, option validation, verify-after-write live in
   the script; `asst-notion --help` lists the commands. Writes are dry-run until
   `--commit`. A project that names its databases or properties in its own
   language maps them in `.claude/kb-databases.txt`, one per line:
   `decision-log = <title>`, `decision-log.Pages = <property name>`;
   `asst-notion schema <db>` shows the names in use.
+- A Notion tracker: a task is a `tasklist` row (`asst-notion create`, its page id kept
+  in `.claude/.assistant/tasks/<slug>/page`), `Blocked by` and `Parent item` taking
+  page ids; the brief goes in with `append`; each decision is one `decision-log` row
+  (Name = the question, Context · Decision · Consequence, `Pages` = KB page titles,
+  `Task` = the task row, `Status=Active`, `Decided` = today); Close is `trash`.
+  Read rows with `query tasklist`, one row with `get <page-id> [--body]`.
 - `asst-section replace|append|get <file> <heading> [md|-]` — edit one section of
   a body file; upload afterwards with `asst-notion update`.
 - `ntn` gotchas the CLI does not tell you: any `ntn` call hangs or eats a loop's

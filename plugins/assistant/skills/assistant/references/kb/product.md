@@ -3,14 +3,14 @@
 Load at: decision brief (step 3) · the user's request for a page.
 
 The pages are titled in the user's language:
-- **Notion** (`board: notion`): rows of KB Pages whose `Module` is the product
+- **Notion**: rows of KB Pages whose `Module` is the product
   module, and whose `Kind` is feature (a page per feature) or shared design (a page
   per screen or interaction rule several features use). Find them with
   `asst-notion query kb-pages Module=<product module>`; record no page id. A new
   page is a new row: `asst-notion create` with `"db":"kb-pages"`, its Module and
   Kind, and the page as `bodyFile`.
-- **File board**: `<kb>/product/features/<feature>.md` and
-  `<kb>/product/shared/<design>.md`, changed on the task's own branch, so a page
+- **File board**: `.claude/.assistant/kb/product/features/<feature>.md` and
+  `.claude/.assistant/kb/product/shared/<design>.md`, changed on the task's own branch, so a page
   merges with the code that follows it.
 
 A project with no shared designs leaves that part out; a behaviour two features
@@ -54,11 +54,10 @@ app doesn't follow the rule.
   writing the brief; its product-behaviour lines quote or link them (`brief.md`).
 - Once the user answers, write each decided behaviour onto its page before
   Build starts. A feature with no page gets one holding only what this task
-  decided, its intro saying so. Each open question filed with `asst-board decide` names those
-  pages on its `**Pages**:` line, by their exact titles, so the page's Related
-  decisions show it; a new page is created first, or `decide` stops on its title.
-  On Notion, the task row names the same pages (`asst-board set <slug>
-  "Pages=<title>,…"`), so it shows in each page's last section as code that
+  decided, its intro saying so. Each decision filed names those pages by their
+  exact titles (on Notion its `Pages` relation), so the page's Related decisions
+  show it; a new page is created first, or the relation can't name it.
+  On Notion, the task row names the same pages (`Pages=<title>,…`), so it shows in each page's last section as code that
   doesn't match yet, until it is trashed at Close.
 
 ## On the user's request
@@ -67,8 +66,8 @@ One page at a time, written from the code.
 - Read the default branch; the page says it was read from the code and not
   reproduced on a device.
 - Each place the app differs from the page goes in its last section. All of one
-  page's differences go into one row, `asst-board create … Status=Backlog
-  Stage="Product Plan" --body <file>`: where it was found, what the app does now,
+  page's differences go into one row, `Status=Backlog` `Stage=Product Plan`, its
+  body: where it was found, what the app does now,
   the ruling, a to-do list. On Notion the row carries `"Pages=<this page>"`, so it
   shows in the page's last section; in a directory the page links to it.
 - On Notion, upload with `ntn pages edit <id> < page.md` (the Related decisions

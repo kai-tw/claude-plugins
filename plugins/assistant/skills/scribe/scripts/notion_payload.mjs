@@ -846,7 +846,7 @@ function printFilter(dbKey, pairs, jsonOnly) {
   if (jsonOnly) { console.log(json); return; }
   console.log(`ds:     ${ds}`);
   console.log(`filter: ${json}`);
-  console.log(`\nrun:\n  asst-notion query ${dbKey} ${pairs.map((p) => `'${p}'`).join(' ')} --root <notion_root>`);
+  console.log(`\nrun:\n  asst-notion query ${dbKey} ${pairs.map((p) => `'${p}'`).join(' ')} --root <page-id>`);
 }
 
 // ── query: every matching row, never one page of them ──────────────────────────
