@@ -74,7 +74,8 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    for the brief (§KB modules), `references/brief.md`. When the design hinges on
    whether a case happens and no finding shows it, send the investigation back once to
    measure it; a case still unshown is cut, not handled. When the
-   design adds a class, a dependency or a persisted format, one `verifier`
+   design adds a class, a dependency or a persisted format, or the project config
+   sets `architecture:`, one `verifier`
    `brief-review` on the draft first, so the user
    is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`;
    it holds four questions, so the rest go in the same message as a numbered list —

@@ -26,6 +26,7 @@ strings_check: <command or none>          # the project's mechanical string chec
 analytics:  <gcp-project or none>          # the project the Firebase / GA4 BigQuery export lands in; asst-analytics reads it (references/analytics.md)
 cloud_fire: <url or none>                  # the routine's /fire endpoint, for when asst-cloud cannot open a cloud session; the token is read only from an environment variable
 rules:      <path>                         # the project's .claude/rules/ — the project-rules layer under style-pack §Precedence; the verifier checks against both
+architecture: <path or none>               # the repo's architecture document, a file or a directory whose every .md is read; a missing entry is none, never asked. references/brief.md says how it binds
 destructive: <list>                        # actions the assistant must ask before (svn commit / revert, force-push, …)
 ```
 

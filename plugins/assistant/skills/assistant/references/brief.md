@@ -8,6 +8,11 @@ feature behaves — is `Needs you`, quoting the product page's current text (or,
 where no page covers it, how the app behaves now); one the task keeps as is gets
 a link to its page section, never a restatement. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
+When the project config sets `architecture:`, read that document in the task's worktree
+and cite it by path and section heading, never copying its text. A design that
+departs from what the architecture document states is `Needs you`, citing the section,
+and the departing option rewrites that section in the same task's diff, and that file joins the task statement's boundary; where the
+document says nothing, `Decided` stays allowed.
 Labels and marks are written in the user's language (SKILL.md §Language); later
 steps find sections by meaning, so a filed brief may carry them in any language.
 The design covers the cases shown to happen and nothing more: a NEW thing, guard,
@@ -24,7 +29,7 @@ retry, fallback or lock with no evidence on the `Evidence` line is cut.
 ```mermaid
 flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 ```
-- Ownership: <each NEW thing — why new, which layer, who owns its state>
+- Ownership: <each NEW thing — why new, which layer, who owns its state, the architecture section it follows (path § heading)>
 - Data flow and state: <source → sink; shared state: who writes, does order matter>
 - Boundaries: <persisted format / schema / API touched? old version behaviour> or none
 - Evidence: <each NEW thing, guard, retry, fallback or lock → the case it handles · where that case is shown to happen (file:line · experiment · issue)>
