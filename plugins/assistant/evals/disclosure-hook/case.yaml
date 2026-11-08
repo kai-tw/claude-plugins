@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: disclosure-hook
+description: "[S9][S10][B5] The disclosure PreToolUse hook blocks (exit 2, hits on stderr) a git push whose new lines name a private repo, and a gh pr create whose body names a home-directory path or another repo's #n, on a public repo; lets the same commands through on a private repo or when clean; and does nothing, calling no gh, for an unrelated command."
+tags: [hooks, disclosure]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the disclosure hook push and PR commands on a public and a private repo with a fake gh, and print each exit code, stderr and whether gh was called.
+context:
+  scaffold_script: fixture.sh
