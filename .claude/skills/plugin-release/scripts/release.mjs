@@ -71,6 +71,9 @@ if (!commit) {
   process.exit(0);
 }
 
+// Nothing changed since the tag: a bump would ship the same content under a new version.
+if (lastTag && !changed.length) die(`nothing has changed in plugins/${plugin}/ since ${lastTag} — nothing to release`);
+
 // A release must not sweep up unrelated edits.
 const dirty = run('git', ['status', '--porcelain']);
 if (dirty) die(`working tree is dirty — commit or stash first:\n${dirty}`);
