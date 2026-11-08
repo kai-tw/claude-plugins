@@ -47,8 +47,9 @@ printf '%s\n' 'Host github.com-work' '  HostName github.com' 'Host gitlab-work' 
   'Host gl-jump' '  HostName gitlab.example.com' '  ProxyJump jump.example.com' > ssh_config
 git init -q -b main nobase
 (cd nobase && git config user.email e@e && git config user.name e && echo x > a.txt && git add -A && git commit -qm base)
-# wt-sig: log.showSignature with a gpg.program that would create ran-gpg.
-cp -R wt wt-sig; git -C wt-sig config log.showSignature true; git -C wt-sig config gpg.program "touch $PWD/ran-gpg; false"
+# wt-sig: log.showSignature with a gpg.program (an executable, since git runs it without a shell) that would create ran-gpg.
+cp -R wt wt-sig; git -C wt-sig config log.showSignature true; printf '#!/bin/sh\ntouch "%s/ran-gpg"\nexit 1\n' "$PWD" > stub-gpg; chmod +x stub-gpg
+git -C wt-sig config gpg.program "$PWD/stub-gpg"
 # leak is re-made with a gpgsig header, so showSignature would call gpg.program on it.
 sigc=$(git -C wt-sig cat-file commit leak | awk 'NR==1,/^$/ { if (/^committer /) { print; print "gpgsig -----BEGIN PGP SIGNATURE-----"; print " "; print " AAAA"; print " -----END PGP SIGNATURE-----"; next } } { print }' | git -C wt-sig hash-object -t commit -w --stdin)
 git -C wt-sig update-ref refs/heads/leak "$sigc"
