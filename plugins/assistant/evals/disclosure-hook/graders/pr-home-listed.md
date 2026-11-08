@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^  .*/Users/kai/GitHub/other'
+pattern: '^  .*/Users/dev/GitHub/other'
 flags: m
 ---
 [S10] The block message lists the path.

@@ -65,3 +65,7 @@
   `release.mjs` once, when the change has settled and the PR is really going out. While a
   plugin still has an unmerged PR, add later changes to that PR: a second PR stacked on it
   bumps again, adding a version and another round of consumer updates.
+- **This repo's check is `node .github/scripts/validate.mjs && node .github/scripts/run-evals.mjs --base main`.**
+  CI runs the same two (`.github/workflows/validate.yml`); run it before every commit on a PR branch.
+- **Uninstalling a plugin from a consumer project is asked first**, like a merge or a
+  force-push: the install belongs to that project, not to this repo.

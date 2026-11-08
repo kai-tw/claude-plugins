@@ -2,7 +2,7 @@
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # wt: branch leak adds a line naming acme/secret-app, branch clean adds a harmless line, both off a pushed main.
 # stub/gh is repo acme/lib, visibility $GH_VIS (PUBLIC when unset); acme/secret-app is private; only #1 exists;
-# every call is appended to gh.calls. check.sh feeds hooks/checks/disclosure-gate.sh PreToolUse JSON and prints
+# every call is appended to gh.calls. check.sh feeds hooks/checks/disclosure.sh PreToolUse JSON and prints
 # `<name>=<exit>` then the hook's stderr, indented; `<name>-gh=<n>` is the number of gh calls it made.
 set -euo pipefail
 git init -q --bare origin.git
@@ -37,22 +37,22 @@ esac
 SH
 chmod +x stub/gh
 cat > check.sh <<'SH'
-root=$1; export EVAL_WS=$PWD PATH="$PWD/stub:$PATH"
-echo 'Mentions /Users/kai/GitHub/other/lib/x.dart' > body.txt
+root=$1; export EVAL_WS=$PWD PATH="$PWD/stub:$PATH" HOME=/Users/dev
+echo 'Mentions /Users/dev/GitHub/other/lib/x.dart' > body.txt
 run() { # name branch cmd [vis]
   git -C wt switch -q "$2"; : > gh.calls
   err=$(jq -n --arg c "$3" --arg d "$PWD/wt" '{session_id:"eval",cwd:$d,hook_event_name:"PreToolUse",tool_name:"Bash",tool_input:{command:$c}}' \
-    | (cd wt && GH_VIS=${4:-PUBLIC} bash "$root/hooks/checks/disclosure-gate.sh" 2>&1 >/dev/null)); rc=$?
+    | (cd wt && GH_VIS=${4:-PUBLIC} bash "$root/hooks/checks/disclosure.sh" 2>&1 >/dev/null)); rc=$?
   echo "$1=$rc"; [ -z "$err" ] || sed 's/^/  /' <<<"$err"
   echo "$1-gh=$(grep -c . gh.calls)"
 }
 run push-leak     leak  'git push origin HEAD:leak'
 run push-private  leak  'git push origin HEAD:leak' PRIVATE
 run push-clean    clean 'git push origin HEAD:clean'
-run pr-home       clean 'gh pr create --title T --body "Reads /Users/kai/GitHub/other/lib/x.dart"'
+run pr-home       clean 'gh pr create --title T --body "Reads /Users/dev/GitHub/other/lib/x.dart"'
 run pr-ref        clean 'gh pr create --title T --body "Follow-up of #346"'
 run pr-file       clean 'gh pr create --title T --body-file body.txt'
-run pr-private    clean 'gh pr create --title T --body "Reads /Users/kai/GitHub/other/lib/x.dart"' PRIVATE
+run pr-private    clean 'gh pr create --title T --body "Reads /Users/dev/GitHub/other/lib/x.dart"' PRIVATE
 run pr-clean      clean 'gh pr create --title T --body "Parses faster, see #1"'
 run other-ls      leak  'ls -la lib'
 run other-status  leak  'git status --short'

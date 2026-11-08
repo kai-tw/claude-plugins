@@ -44,8 +44,7 @@ widget, on-device) closest to the code under test, and write yours the way they 
 written: their helpers, fakes, file layout and naming.
 
 - Every `S<n>`, `F<n>` and `B<n>` in `## Scenarios` gets at least one test whose
-  name starts with that id in brackets (`[S2] …`, `[F1] …`). `asst-device`
-  matches tests to the brief by that prefix only.
+  name starts with that id in brackets (`[S2] …`, `[F1] …`).
 - Each test asserts what the user sees or keeps (the screen, the stored data,
   the message in the approved string), never that a method was called.
 - A scenario that crosses the app's edge — a real network call, the OS (a

@@ -13,7 +13,7 @@
 #
 # A verify-<review> report is also posted to the task's PR as a comment: the user
 # merges from the PR page, so a review missing there is seen before the merge, not
-# found in a directory nobody opens. The file stays the record asst-pr ready reads.
+# found in a directory nobody opens.
 # A repo not known to be private gets the first line only: a report carries what
 # its verifier read outside the repo, and how to break code already released.
 # --worktree names the task's checkout when the caller is not in it; --no-post

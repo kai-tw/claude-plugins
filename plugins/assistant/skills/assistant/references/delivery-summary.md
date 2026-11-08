@@ -19,10 +19,8 @@ reports. Anything a linter or a passed check already settled is one line.
 - <deviation from the brief's System design + reason> or no deviation
 ## Tests
 - <scenario> → <test file:line> · missing: <scenario or failure event with no test> or none
-## On device (the latest `verify-device`, verbatim)
-<its first line>
-- <platform>: <passed | failed | not run — why> on <phone>
-- scenarios <n/n> · features without an on-device test: <n>
+## On device
+- <platform>: <passed | failed | not run — why> on <phone>   (or none: the project has no on-device tests)
 
 ## Text (changed since the screen review?)
 <n> strings · approved at the screen review · meaning changed since: <n>   (or no string changes)
