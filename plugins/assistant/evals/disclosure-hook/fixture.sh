@@ -19,6 +19,7 @@ git add -A; git commit -qm base; git push -q origin HEAD:main 2>/dev/null
 git remote set-head origin main 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 git switch -qc leak; echo '// ported from acme/secret-app' >> lib/a.txt; git commit -qam 'Guard the parser'
 git switch -q main; git switch -qc clean; echo three >> lib/a.txt; git commit -qam 'Parse faster, closes #1'
+git remote set-url origin https://github.com/acme/lib.git
 git remote add gl https://gitlab.example.com/acme/lib.git
 git update-ref refs/remotes/gl/main main
 cd ..
