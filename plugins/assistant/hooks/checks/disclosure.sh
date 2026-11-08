@@ -76,6 +76,11 @@ ssh_host() {
   git -C "$GIT_AT" config core.sshCommand >/dev/null 2>&1 && return 0
   # This push's own -c, --config-env or GIT_CONFIG* / GIT_SSH* assignment can set any of them.
   [ -z "${GIT_CFG:-}" ] || return 0
+  # Words that never show up in an ordinary command, anywhere in it: an earlier
+  # `export GIT_SSH_COMMAND=…` or `git config core.sshCommand …` sets one too.
+  case "$(printf '%s' "$cmd" | tr '[:upper:]' '[:lower:]')" in
+    *sshcommand*|*include.path*|*includeif*|*git_ssh*|*git_config*) return 0 ;;
+  esac
   run_bounded "${GH_TIMEOUT:-10}" ssh -G "$1" 2>/dev/null </dev/null | awk '
     ($1 == "proxycommand" || $1 == "proxyjump") && tolower($2) != "none" { proxy = 1 }
     $1 == "hostname" { h = tolower($2) }

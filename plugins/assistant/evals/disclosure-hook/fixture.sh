@@ -150,6 +150,10 @@ run push-ssh-include leak "git -c include.path=$PWD/inc.conf push glw HEAD:leak"
 run push-ssh-dashc leak "git -c core.sshCommand=ssh push glw HEAD:leak"
 run push-ssh-cfgenv leak "git --config-env=core.sshCommand=X push glw HEAD:leak"
 run push-ssh-cfgcount leak "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.sshCommand GIT_CONFIG_VALUE_0=ssh git push glw HEAD:leak"
+run push-ssh-cfgenv-sp leak "git --config-env core.sshCommand=X push glw HEAD:leak"
+run push-ssh-export leak 'export GIT_SSH_COMMAND=x; git push glw HEAD:leak'
+run push-ssh-gitcfg leak 'git config core.sshCommand x && git push glw HEAD:leak'
+run push-ssh-gitdir leak "git --git-dir=$PWD/wt/.git push glw HEAD:leak"
 # A -c or a word like it that is not on the push's own git leaves the ssh alias resolvable.
 run push-ssh-msg leak 'git commit -m "use -c here" && git push glw HEAD:leak'
 run push-ssh-commit-c leak 'git -c user.name=x commit --allow-empty -qm x && git push glw HEAD:leak'

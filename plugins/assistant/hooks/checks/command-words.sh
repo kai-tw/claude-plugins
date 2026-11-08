@@ -158,15 +158,16 @@ cd_dir() {
 # git_command <dir> — when CMD_WORDS is a git command, sets GIT_SUB to its
 # subcommand, GIT_ARGS to the words after it and GIT_AT to the directory it
 # runs in after every -C (empty when that cannot be read here) and GIT_CFG to 1
-# when this invocation sets git's config or ssh command itself: a -c or
-# --config-env before the subcommand, or a GIT_CONFIG* / GIT_SSH* assignment in
+# when this invocation sets git's config or ssh command itself, or moves the
+# config it reads: a -c, --config-env or --git-dir before the subcommand, or a
+# GIT_CONFIG* / GIT_SSH* / GIT_DIR assignment in
 # front of it. Fails when it is no git command.
 git_command() {
   [ "${CMD_WORDS[0]:-}" = git ] || return 1
   local i=1 n=${#CMD_WORDS[@]} w
   GIT_AT=$1 GIT_SUB='' GIT_ARGS=() GIT_CFG=''
   case "$(printf '%s' "$CMD_ENV" | tr '[:upper:]' '[:lower:]')" in
-    *git_config*|*git_ssh*) GIT_CFG=1 ;;
+    *git_config*|*git_ssh*|*git_dir*) GIT_CFG=1 ;;
   esac
   while [ $i -lt $n ]; do
     w=${CMD_WORDS[$i]}; i=$((i + 1))
@@ -174,7 +175,9 @@ git_command() {
       -C) GIT_AT=$(word_dir "$GIT_AT" "${CMD_WORDS[$i]:-}"); i=$((i + 1)) ;;
       -c|--config-env) GIT_CFG=1; i=$((i + 1)) ;;
       --config-env=*) GIT_CFG=1 ;;
-      --git-dir|--work-tree|--namespace|--super-prefix) i=$((i + 1)) ;;
+      --git-dir) GIT_CFG=1; i=$((i + 1)) ;;
+      --git-dir=*) GIT_CFG=1 ;;
+      --work-tree|--namespace|--super-prefix) i=$((i + 1)) ;;
       -*) ;;
       *) GIT_SUB=$w; break ;;
     esac
