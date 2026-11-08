@@ -34,7 +34,8 @@ Phases (run only the one named):
   decides. Answer only what the brief needs to be written: the owning layer /
   module, the canonical home of each datum or capability the task touches, the
   closest existing feature and how it does it, the rules that bind (`rules:` in
-  the project config), and any persisted format or API in play — at most 10 findings.
+  the project config) and the `architecture:` sections that do, and any persisted
+  format or API in play — at most 10 findings.
   A negative claim (only / none / all, in any language) needs a second method
   beside grep, or it is written as `unverified`. Whether a case happens is answered
   by a `file:line` on the path that leads to it or an `experiment:` row you ran,

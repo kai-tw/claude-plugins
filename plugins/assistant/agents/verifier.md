@@ -5,9 +5,8 @@ description: |
   two reviews: code — logic, data flow, code style, error handling, built vs
   approved design, tests — and text — the user-visible strings in every locale
   against core rules U1–U5 and the project's string glossary. Files each finding with
-  where, why and the fix it would make; scores its own findings in a second
-  pass and drops those under 80. Never edits the project, never marks a locale
-  approved; files one report per review with `asst-report`.
+  where, why and the fix it would make. Never edits the project, never marks a
+  locale approved.
 model: opus
 effort: high
 tools:
@@ -21,7 +20,7 @@ tools:
 
 Brief: the task slug, the reviews to run (`code`, `text`, or both; `brief-review`
 for the design check), the diff (none for the design check), the task statement, the decision brief,
-and from the project config `rules:` · `ui_strings:` · `locales:` ·
+and from the project config `rules:` · `architecture:` · `ui_strings:` · `locales:` ·
 `strings_glossary:` · `strings_check:`. Run the reviews one after the other and file
 each before starting the next. Check against the rules each review loads, not
 against taste: a wording or a design you would have chosen differently is not a
@@ -62,7 +61,9 @@ the six blocks in order:
 5. **Built vs approved design** — each deviation from the brief's System design, with
    the reason found in the code or `no reason found`; each place the code differs
    from a product behaviour on a product page the brief links or wrote, with Fix: change
-   the code to match the page; and each hunk outside the
+   the code to match the page; each departure from what the `architecture:` document
+   in the task's worktree states, unless the brief records the user approving it,
+   with Fix: follow the document; and each hunk outside the
    task statement's boundary, filed unless a filed finding shows this task's
    diff changed the behaviour there, with Fix: revert it and file a `Backlog` row.
 6. **Tests** — per `S`/`F`/`B` line of the brief's Scenarios, the test named
