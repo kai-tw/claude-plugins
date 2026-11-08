@@ -22,7 +22,17 @@ git switch -q main; git switch -qc clean; echo three >> lib/a.txt; git commit -q
 git remote set-url origin https://github.com/acme/lib.git
 git remote add gl https://gitlab.example.com/acme/lib.git
 git update-ref refs/remotes/gl/main main
+git remote add work git@github.com-work:acme/lib.git
+git remote add upper git@GitHub.COM:acme/lib.git
+git remote add short gh:acme/lib
+git remote add loc ../origin.git
 cd ..
+# wt-default: remote.pushDefault names gl. wt-rewrite: gl is rewritten to github.com.
+cp -R wt wt-default; git -C wt-default config remote.pushDefault gl
+cp -R wt wt-rewrite; git -C wt-rewrite config url.https://github.com/.insteadOf https://gitlab.example.com/
+# home/.ssh/config maps the Host github.com-work to HostName github.com; the real ~/.ssh is never read.
+mkdir -p home/.ssh
+printf 'Host github.com-work\n  HostName github.com\n  User git\n' > home/.ssh/config
 git init -q -b main nobase
 (cd nobase && git config user.email e@e && git config user.name e && echo x > a.txt && git add -A && git commit -qm base)
 mkdir -p stub
@@ -79,6 +89,14 @@ run push-env      leak  'GIT_TRACE=0 git push origin HEAD:leak'
 CWD=. run push-cd leak  "cd $PWD/wt && git push origin HEAD:leak"
 CWD=. run cd-file clean "cd $PWD/wt && gh pr create --title T --body-file body.txt"
 run push-gitlab   leak  'git push gl HEAD:leak'
+run pr-sub        clean "url=\$(gh pr create --title T --body \"Reads $mine\")"
+run push-sub      leak  'out=$(git push origin HEAD:leak 2>&1)'
+HOME=$PWD/home GIT_SSH_COMMAND="ssh -F $PWD/home/.ssh/config" run push-ssh-alias leak 'git push work HEAD:leak'
+run push-upper    leak  'git push upper HEAD:leak'
+run push-short    leak  'git push short HEAD:leak'
+run push-local    leak  'git push loc HEAD:leak'
+DIR=wt-default CWD=wt-default run push-default leak 'git push'
+DIR=wt-rewrite CWD=wt-rewrite run push-rewrite leak 'git push gl HEAD:leak'
 run push-ref      clean 'git push origin leak'
 run push-ref-ok   leak  'git push origin clean'
 DIR=nobase CWD=nobase run no-base main 'git push origin HEAD:main'
