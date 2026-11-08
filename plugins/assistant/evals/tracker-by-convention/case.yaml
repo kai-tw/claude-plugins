@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: tracker-by-convention
+description: The project config lists only coverage, render, analytics, rules and architecture; nothing the plugin ships outside evals/ names asst-board, board.mjs or the config fields board, vcs, kb and notion_root, and bin/asst-board is gone. SKILL.md says where tasks live follows the project's convention in its CLAUDE.md, asked once and written there when none is found, lists the Status and Stage vocabulary, and keeps the unblock and close-the-parent rules. The svn rules apply to a repo with `.svn` and no `.git`; the Notion root id is read from CLAUDE.md and passed to asst-notion `--root`.
+tags: [config, assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    List the fields the assistant's project config reference documents, say whether the plugin still names asst-board or the board, vcs, kb or notion_root fields, and quote how the assistant decides where a project's tasks live, which version control it is on, and where the Notion root id comes from.
+context:
+  scaffold_script: fixture.sh

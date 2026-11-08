@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: notion-blocked-by
+description: asst-notion writes a TaskList row's Blocked by as the Dependencies relation; a workspace without Dependencies gets told to turn it on.
+tags: [asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export NTN_BIN=$PWD/ntn; asst-notion create row.json --root abcdefabcdefabcdefabcdefabcdefab --commit 2>&1; echo "no_deps=$?"; touch deps; asst-notion create row.json --root abcdefabcdefabcdefabcdefabcdefab --commit >/dev/null; echo "create=$?"; echo "--- log"; cat ntn.log
+  prompt: |
+    ./ntn stands in for the Notion CLI (export NTN_BIN=$PWD/ntn). With asst-notion, root abcdefabcdefabcdefabcdefabcdefab, create the TaskList row in row.json (a Next row blocked by page aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa), once before Dependencies exist and once after (touch deps); print the ntn log.
+context:
+  scaffold_script: fixture.sh

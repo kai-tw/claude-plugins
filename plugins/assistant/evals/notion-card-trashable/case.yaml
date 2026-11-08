@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: notion-card-trashable
+description: a TaskList card made by asst-notion create carries the generated marker, so asst-notion trash accepts it.
+tags: [asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 6
+  allowed_tools: [Read, Glob, Grep, Bash]
+  env:
+    EVAL_CMD: export NTN_BIN=$PWD/ntn; asst-notion create row.json --root abcdefabcdefabcdefabcdefabcdefab --commit >/dev/null 2>&1; asst-notion trash 0123456789abcdef0123456789abcdef
+  prompt: |
+    ./ntn stands in for the Notion CLI (export NTN_BIN=$PWD/ntn). Create the TaskList card in row.json with asst-notion (root abcdefabcdefabcdefabcdefabcdefab), then dry-run asst-notion trash on the page id it got, 0123456789abcdef0123456789abcdef.
+context:
+  scaffold_script: fixture.sh
