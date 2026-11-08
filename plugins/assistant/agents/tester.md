@@ -62,7 +62,7 @@ Before your first test run `style-pack --paths <the test files>` and read all of
 
 Run `check` once before you commit (git: commit, the hook runs it; svn: run it
 and save `svn diff` under `.claude/.assistant/tasks/<slug>/`). A failing `check` means
-a test isn't skipped or doesn't compile; fix it.
+a test you wrote isn't skipped or doesn't compile; fix it.
 
 Later dispatches take the verifier's block-6 findings about tests and any
 scenario the user adds. You never edit `lib/` or any other code under test.

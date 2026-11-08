@@ -21,7 +21,7 @@ allowed-tools:
   named on stderr.
 - `§Precedence` in `rules/index.md` is the one version of how the three levels rank:
   core rules (`index.md`) · locale rules (`zh-Hant.md` / `ja.md` / `en.md`) · project
-  rules (a project's `.claude/rules/` and its glossary, `strings_glossary:`).
+  rules (what the project config's `rules:` names, and its glossary, `strings_glossary:`).
 - What this pack does **not** carry: anything a script can decide (term
   blocklists, punctuation width, second person, missing translations) — that
   belongs to each project's string checker, per the inclusion criteria in

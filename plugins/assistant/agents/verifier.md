@@ -37,7 +37,7 @@ the rest under `low confidence` with their score.
 
 ## Code review (`verify-code`, or `brief-review`)
 
-Read the project config's `rules:` and `style-pack --paths <the changed files>`. Walk
+Read `style-pack --paths <the changed files>`. Walk
 the six blocks in order:
 
 1. **Logic** — per user scenario in the brief: entry → decision points → outcome;

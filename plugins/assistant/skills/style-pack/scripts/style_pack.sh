@@ -60,12 +60,13 @@ for p in ${paths[@]+"${paths[@]}"}; do
   esac
 done
 # A `paths:` glob as an anchored regex: `**/` matches zero or more directories, `*` and `?`
-# stay inside one, `{a,b}` is either.
+# stay inside one, `{a,b}` is either, `[!a]` is `[^a]`.
 glob_re() {
   local g=$1 r= c i depth=0
   for ((i = 0; i < ${#g}; i++)); do
     c=${g:i:1}
     case "$c" in
+      '[') if [ "${g:i+1:1}" = '!' ]; then r+='[^'; i=$((i + 1)); else r+='['; fi ;;
       '*') if [ "${g:i+1:1}" = '*' ]; then
              if [ "${g:i+2:1}" = / ]; then r+='(.*/)?'; i=$((i + 2)); else r+='.*'; i=$((i + 1)); fi
            else r+='[^/]*'; fi ;;
@@ -87,16 +88,31 @@ globs_of() {
        /^paths:/ { on = 1; v = $0; sub(/^paths:[ \t]*/, "", v); if (v != "") { emit(v); on = 0 }; next }
        on && /^[ \t]*-[ \t]*/ { v = $0; sub(/^[ \t]*-[ \t]*/, "", v); emit(v); next }
        { on = 0 }
-       function emit(v,  n, a, k) {
-         if (v ~ /^\[/) { gsub(/^\[|\][ \t]*$/, "", v); n = split(v, a, /,[ \t]*/) } else { n = 1; a[1] = v }
+       function emit(v,  n, a, k, c, d) {
+         n = 1; a[1] = v
+         if (v ~ /^\[/) {
+           gsub(/^\[|\][ \t]*$/, "", v); a[1] = ""
+           # A comma inside `{a,b}` belongs to the glob, so only one outside braces splits.
+           for (k = 1; k <= length(v); k++) {
+             c = substr(v, k, 1)
+             if (c == "{") d++; else if (c == "}") d--
+             if (c == "," && d <= 0) a[++n] = ""; else a[n] = a[n] c
+           }
+         }
          for (k = 1; k <= n; k++) { gsub(/^[ \t"\047]+|[ \t"\047]+$/, "", a[k]); if (a[k] != "") print a[k] }
        }' "$1"
 }
 applies() {
-  local g re p any=0
+  local g re p any=0 rc
   while IFS= read -r g; do
     any=1; re=$(glob_re "$g")
-    for p in ${rel[@]+"${rel[@]}"}; do [[ $p =~ $re ]] && return 0; done
+    for p in ${rel[@]+"${rel[@]}"}; do
+      [[ $p =~ $re ]]; rc=$?
+      [ $rc = 0 ] && return 0
+      # An invalid regex (rc 2) can't say the file doesn't apply, so it prints rather
+      # than drop the file unseen.
+      [ $rc = 2 ] && { echo "style-pack: invalid paths: glob '$g' in $1 — printed anyway" >&2; return 0; }
+    done
   done < <(globs_of "$1")
   [ $any = 0 ]
 }
@@ -105,7 +121,7 @@ cat "$rules/index.md"
 printf '%s\n' ${langs[@]+"${langs[@]}"} | awk 'NF && !seen[$0]++' | while read -r l; do echo; cat "$rules/$l.md"; done
 [ -n "$project" ] || exit 0
 if [ -d "$project" ]; then
-  find "$project" -type f -name '*.md' | LC_ALL=C sort
+  find -L "$project" -type f -name '*.md' | LC_ALL=C sort
 else
   echo "$project"
 fi | while IFS= read -r f; do applies "$f" && { echo; cat "$f"; }; done
