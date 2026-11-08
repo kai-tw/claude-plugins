@@ -28,6 +28,8 @@
 #   from here.
 
 set -uo pipefail
+# This runs before the user approves: no fsmonitor program from a repo's config.
+git() { command git -c core.fsmonitor=false "$@"; }
 
 payload="$(cat 2>/dev/null)"
 cmd="$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null || true)"

@@ -27,11 +27,17 @@
 # variable, stdin, gh or the base branch unavailable — it blocks with the
 # reason rather than letting through unchecked.
 #
+# Every git call here is local, with fsmonitor off (git below) and no diff
+# driver; `ssh -G` may run a Match exec from the user's own ~/.ssh/config, which
+# is accepted.
+#
 # Each gh or network call is cut off after $GH_TIMEOUT seconds and no `#<n>` is
 # looked up after 60, so the hook ends well inside its 120-second timeout in
 # hooks.json: a hook that times out lets the command run unchecked.
 
 set -uo pipefail
+# This runs before the user approves: no fsmonitor program from a repo's config.
+git() { command git -c core.fsmonitor=false "$@"; }
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=command-words.sh
 source "$here/command-words.sh"
@@ -234,16 +240,14 @@ private_names() {
   done 2>/dev/null | sort -u
 }
 
-# base_of <dir> — origin's default branch in <dir>, or the commit origin's HEAD
-# names; fails when none is known here.
+# base_of <dir> — origin's default branch in <dir> as already fetched; fails
+# when none is known here (it never asks the remote).
 base_of() {
   local d=$1 b
   b=$(git -C "$d" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null) && { echo "$b"; return 0; }
   for b in origin/main origin/master; do
     git -C "$d" rev-parse --verify --quiet "$b^{commit}" >/dev/null && { echo "$b"; return 0; }
   done
-  b=$(run_bounded "${GH_TIMEOUT:-10}" git -C "$d" ls-remote --symref origin HEAD 2>/dev/null | awk '$1 != "ref:" && $2 == "HEAD" { print $1; exit }')
-  [ -n "$b" ] && git -C "$d" cat-file -e "$b^{commit}" 2>/dev/null && { echo "$b"; return 0; }
   return 1
 }
 
