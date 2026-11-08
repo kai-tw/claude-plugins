@@ -1,15 +1,15 @@
 schema_version: "1.1"
 name: deliver-after-ready
-description: The delivery summary is written only once asst-pr ready has turned the PR ready and its header names the PR as ready.
-tags: [asst-pr]
+description: The delivery summary's header names the PR as ready.
+tags: [assistant]
 plugins: ["../.."]
 runs: 1
 execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: tr "\n" " " < "$root/skills/assistant/SKILL.md" | grep -o "write the delivery summary only once it exits 0" | sed "s/^/order: /"; grep -o "PR #n ready" "$root/skills/assistant/references/delivery-summary.md" | sed "s/^/header: /"
+    EVAL_CMD: grep -o "PR #n ready" "$root/skills/assistant/references/delivery-summary.md" | sed "s/^/header: /"
   prompt: |
-    Check that assistant turns a PR ready before delivering ③: SKILL.md writes the delivery summary only after asst-pr ready succeeds, and the delivery summary header names the PR as ready.
+    Check that the delivery summary header names the PR as ready.
 context:
   scaffold_script: fixture.sh

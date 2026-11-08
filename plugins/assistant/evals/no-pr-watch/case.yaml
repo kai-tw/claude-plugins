@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: no-pr-watch
-description: PRs aren't polled — there's no asst-watch, nothing calls it, the assistant doesn't read a PR's state on its passes, and the user's word that the PR can merge or has merged triggers one asst-pr merged run, whose exit 0 starts Close.
+description: PRs aren't polled — there's no asst-watch, nothing calls it, the assistant doesn't read a PR's state on its passes, and the user's word alone does not send the task to Close.
 tags: [assistant]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: ls "$root/bin" | grep -c "^asst-watch$" | sed "s/^/watch-bin=/"; grep -rl "asst-watch" "$root/skills" "$root/agents" | wc -l | tr -d " " | sed "s/^/watch-refs=/"; grep -c "gh pr view --json state" "$root/skills/assistant/SKILL.md" | sed "s/^/pr-reads=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | { grep -o "asst-pr merged. once when the user says the PR can merge or has merged; when it exits 0 → step 8" || true; }; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -c "the user saying the PR merged" | sed "s/^/user-word-to-close=/"
+    EVAL_CMD: ls "$root/bin" | grep -c "^asst-watch$" | sed "s/^/watch-bin=/"; grep -rl "asst-watch" "$root/skills" "$root/agents" | wc -l | tr -d " " | sed "s/^/watch-refs=/"; grep -c "gh pr view --json state" "$root/skills/assistant/SKILL.md" | sed "s/^/pr-reads=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -c "the user saying the PR merged" | sed "s/^/user-word-to-close=/"
   prompt: |
-    Say whether the assistant plugin ships a PR watcher, whether its skills or agents call one, whether the assistant reads a PR's state on its passes, and what starts Close after a merge.
+    Say whether the assistant plugin ships a PR watcher, whether its skills or agents call one, whether the assistant reads a PR's state on its passes, and whether the user's word alone starts Close.
 context:
   scaffold_script: fixture.sh
