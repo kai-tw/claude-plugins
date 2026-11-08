@@ -3,7 +3,6 @@
 One file per project; the flow is one, the differences live here. Missing entry →
 the assistant asks once and writes it. `asst-*` scripts key their state on the
 directory holding this file (`.claude/.assistant/`, personal and unversioned).
-`style-rules/*.md` under it: personal style rules, loaded by `style-pack`.
 
 ```
 vcs:        git | svn                      # git: worktree per task, one commit per slice, hook runs `check`; svn: working copy per task, a saved diff per slice, builder runs `check`, nothing committed before the delivery summary
@@ -25,7 +24,7 @@ strings_glossary: <path or none>          # the project's own string glossary wh
 strings_check: <command or none>          # the project's mechanical string checks (term blocklist, sort, duplicates); failing blocks the delivery summary
 analytics:  <gcp-project or none>          # the project the Firebase / GA4 BigQuery export lands in; asst-analytics reads it (references/analytics.md)
 cloud_fire: <url or none>                  # the routine's /fire endpoint, for when asst-cloud cannot open a cloud session; the token is read only from an environment variable
-rules:      <path>                         # the project's .claude/rules/ — the project-rules layer under style-pack §Precedence; the verifier checks against both
+rules:      <path or none>                 # the project's rules, a file or a directory whose every .md is read — the project-rules layer under style-pack §Precedence. `style-pack --paths` prints them (a missing entry reads as none), skipping a file whose `paths:` frontmatter matches none of the paths
 architecture: <path or none>               # the repo's architecture document, a file or a directory whose every .md is read; a missing entry is none, never asked. references/brief.md says how it binds
 destructive: <list>                        # actions the assistant must ask before (svn commit / revert, force-push, …)
 ```

@@ -14,9 +14,11 @@ allowed-tools:
 # Style pack
 
 - `style-pack --paths <file…>` — the core rules + the language rules those extensions map
-  to (the map lives in the script) + `./.claude/.assistant/style-rules/*.md`.
+  to (the map lives in the script; a path outside it gets none, noted on stderr) + the
+  project rules: the file, or every `.md` in the directory, that the project config's
+  `rules:` names, skipping a file whose `paths:` frontmatter matches none of the paths.
   `style-pack dart csharp js` names the languages directly.
 - `§Precedence` in `rules/index.md` is the one version of how the three levels rank:
   core rules (`index.md`) · language rules (`dart.md` / `csharp.md` / `js.md`) · project
-  rules (a project's `.claude/rules/` and `.claude/.assistant/style-rules/`).
+  rules (what the project config's `rules:` names).
 - Adding or changing a rule: `${CLAUDE_PLUGIN_ROOT}/skills/style-pack/rules/CONVENTIONS.md`.

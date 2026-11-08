@@ -20,7 +20,7 @@ levels core rules / language rules / project rules and what each may do), not wh
 holds each level: once a file is named, renaming or deleting it breaks the core rules.
 
 Which files hold which level is stated here: the language rules are `dart.md` / `csharp.md` /
-`js.md`, the project rules are each project's `.claude/rules/` and `.claude/.assistant/style-rules/`.
+`js.md`, the project rules are what each project's config names in `rules:`.
 How to report a conflict is stated here too — when a conflict is reported as `inconclusive`,
 its evidence format is in this pack's `references/evidence.md`.
 

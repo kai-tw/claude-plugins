@@ -55,7 +55,7 @@ shift 3
 [ -d "$wt" ] || { echo "asst-pr: no worktree at $wt" >&2; exit 2; }
 root=$(cd "$wt" && asst_root)
 config="$root/.claude/assistant.md"
-field() { sed -nE "s/^$1:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" "$config" 2>/dev/null | head -1; }
+field() { asst_field "$config" "$1"; }
 if [ "$(field vcs)" = svn ]; then
   [ "$op" = release ] && { echo "asst-pr: vcs is svn — base_branch and releases are git only; an svn task ends in svn commit after the delivery summary" >&2; exit 2; }
   echo "asst-pr: vcs is svn — there is no PR; the task ends in svn commit after the delivery summary" >&2; exit 2
