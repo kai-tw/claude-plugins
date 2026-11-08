@@ -15,4 +15,7 @@ asst_root() {
   done
   [ -n "$main" ] && echo "$main" || pwd
 }
+# asst_field <config> <name> — the value of `<name>:` in a project config, its comment
+# dropped; empty when the line or the file is missing.
+asst_field() { sed -nE "s/^$2:[[:space:]]*([^#]*[^#[:space:]]).*/\1/p" "$1" 2>/dev/null | head -1; }
 [ "${BASH_SOURCE[0]}" = "$0" ] && asst_root

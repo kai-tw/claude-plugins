@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'exit=2'
+pattern: 'exit=0'
 flags: m
 arm: with-only
 ---
-Unknown means refused.
+No language file is not an error.

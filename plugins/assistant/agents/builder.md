@@ -56,7 +56,8 @@ Phases (run only the one named):
   the `not implemented yet` skip from each one your slice makes pass, and never edit
   a test otherwise — one you think wrong goes on `open questions:` with why. One
   commit, ending the slice the brief names (git: commit, the hook
-  runs `check`, then `asst-pr open <slug> <worktree>`; svn: run `check`, save `svn diff` under
+  runs the checks, then push and, when the branch has no PR yet, open one with
+  `gh pr create --draft`; svn: run them, save `svn diff` under
   `.claude/.assistant/tasks/<slug>/`, commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
   a better fix of your own), except those about a test, which are the tester's; a finding you decline goes on the report's
@@ -79,11 +80,10 @@ write: if reuse looks wrong, report it as an open question.
 
 In `ui`, `integration` and `fix`, before your first edit run `style-pack --paths <the
 files you'll touch>` and read all of it; run it again for a file you add later.
-Touching any string under the project config's `ui_strings:` means
-also writing to `ui-text-pack --paths <those files>`: every locale in `locales:`
-gets its value in the same pass, each authored in that locale rather than
+Touching any user-visible string means also reading `ui-text-pack --paths <its
+locale files>`: every locale the project ships gets its value in the same pass, each authored in that locale rather than
 translated from the source one (U3), and none of them is approved by you.
-Before writing a value, read the shipped strings: the `ui_strings:` files on the
+Before writing a value, read the shipped strings: those locale files on the
 default branch (svn: the last committed revision), never this task's own values.
 A new one matches the length and set phrases the shipped strings in that role use.
 Then run `asst-strings examples <role> <locale>` for each role and locale you
@@ -98,7 +98,8 @@ first created in the `integration` phase follows the same rule, listed in that p
 Run only what finishes inside this dispatch, and never wait on anything with a
 `sleep` or `until` loop; a command that can't finish here — a full coverage or
 mutation run, a test slot that stays busy — goes back on the report as not run.
-`check: passed` means the whole `check` command ran to its end and passed; one that couldn't
+The checks are the project's lint, format and test commands, as its CLAUDE.md, hooks or CI name them.
+`check: passed` means every one ran to its end and passed; one that couldn't
 run is `check: not run — <why>`, and that slice is unfinished, never passed.
 
 The report fills in the form `asst-report form <kind>` prints (`investigation`, or

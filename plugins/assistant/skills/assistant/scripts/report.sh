@@ -13,7 +13,7 @@
 #
 # A verify-<review> report is also posted to the task's PR as a comment: the user
 # merges from the PR page, so a review missing there is seen before the merge, not
-# found in a directory nobody opens. The file stays the record asst-pr ready reads.
+# found in a directory nobody opens.
 # A repo not known to be private gets the first line only: a report carries what
 # its verifier read outside the repo, and how to break code already released.
 # --worktree names the task's checkout when the caller is not in it; --no-post
@@ -94,12 +94,12 @@ case "$op" in
     if [ ! -s "$f.partial" ]; then
       rm -f "$f.partial"; echo "asst-report: empty report on stdin — nothing filed" >&2; exit 1
     fi
-    # A builder that never loaded the style pack writes code the verifier then
-    # checks against rules the builder never saw.
-    case "$kind" in build-ui|build-integration|build-fix)
+    # A builder or tester that never loaded the style pack writes code the verifier then
+    # checks against rules it never saw.
+    case "$kind" in build-ui|build-integration|build-fix|tests)
       grep -q '^rules: style-pack --paths ' "$f.partial" || {
         rm -f "$f.partial"
-        echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit (builder.md)" >&2
+        echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit or test (builder.md, tester.md)" >&2
         exit 1
       } ;;
     esac

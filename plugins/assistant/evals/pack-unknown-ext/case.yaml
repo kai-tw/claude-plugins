@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: pack-unknown-ext
-description: An unknown extension → exit 2, nothing printed.
+description: An extension with no language file → exit 0, core rules printed, a note on stderr.
 tags: [style-pack]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: style-pack --paths lib/a.py; echo "exit=$?"
+    EVAL_CMD: style-pack --paths lib/a.py 2>&1; echo "exit=$?"
   prompt: |
-    Print the style rules a review of lib/a.py should cite; print the exit code.
+    Print the style rules a review of lib/a.py should cite, with any message the tool writes to stderr; print the exit code.
 context:
   scaffold_script: fixture.sh

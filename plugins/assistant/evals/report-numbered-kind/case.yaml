@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: report-numbered-kind
+description: asst-report put refuses a kind that carries a round number.
+tags: [asst-report]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: (cd wt && echo r | asst-report put x verify-code-2); echo "numbered=$?"
+  prompt: |
+    File a report under a numbered kind and print the output and exit code.
+context:
+  scaffold_script: fixture.sh

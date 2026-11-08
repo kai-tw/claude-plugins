@@ -93,14 +93,13 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    integrates, one commit per slice (§Dispatch rules). A test the builder thinks wrong comes
    back as an open question you rule on, with the tester re-dispatched to change it.
 6. **Verify** (in parallel on the diff): one `verifier` running the code review
-   (the six blocks) and the text review — the latter only when the project config's
-   `ui_strings:` is not `none` and the diff touches that glob; the security
+   (the six blocks) and the text review — the latter only when the diff touches the
+   project's user-visible strings; the security
    checks (`security-guidance` hooks run unattended; the project's own sink rules
    when it has them); and the project config's `coverage:` command when set, which you
    run yourself in the background. `coverage: ci` means the PR's CI measures it: run nothing, and read
-   its log before the delivery summary. When the project config has `device_test:`, run `asst-device <slug>
-   <worktree>` yourself in the background too; when a phone is not connected, say which
-   platform waits for it, and run it again then. An `exempt` diff skips the code review: check it yourself — it changes
+   its log before the delivery summary. On-device tests, when the project has them, you run
+   yourself the project's way; a platform whose phone is not connected waits for it, named. An `exempt` diff skips the code review: check it yourself — it changes
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line, starting `exempt:`, into `asst-report put <slug> verify-code --worktree <worktree>`; past that
    bound it isn't `exempt`, so re-tier it `small`. Every other `verify-*` report is the verifier's: you never write one yourself,
@@ -118,31 +117,23 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    rule or check to change, in one line.
 7. **Delivery summary** (you, from the verifier reports): `references/delivery-summary.md`,
    and on git the PR around it — ready, CI, merge — per `references/pr.md`.
-   Run `asst-pr ready <slug> <worktree>`, and
-   write the delivery summary only once it exits 0, with `PR #<n> ready` in its header.
+   On git, write it only once CI has passed on HEAD and every `verify-*` report is newer than
+   HEAD, with the PR marked ready (`gh pr ready`) and `PR #<n> ready` in its header.
    The merge waits for the user's word that the PR can merge — nothing schedules a
-   look for it. Run `asst-pr merged` once when the user says the PR can merge or has merged; when it exits 0 → step 8.
+   look for it. Once it has merged → step 8.
 8. **Close** (you, through `asst-board`): the task row is disposable, so it is
    deleted (`asst-board trash <slug>`) and no record of the task is kept — a row
    never moves to `Shipped`. Run each loaded module's Close step.
    Delete the PR's worktree, local branch and remote branch, unasked, once
    `HEAD` matches the merged PR's head.
 
-## Release
-
-Only on git, where the project config sets `base_branch:`; an svn project has none, and
-its task ends in `svn commit` after the delivery summary. Merging into `base_branch:` ships to
-the test environment, not to production. When the user asks what a release would
-carry, or says to release, read `references/release.md`.
-
 ## KB modules
 
 The project's knowledge base has five modules: `frontend` · `backend` ·
-`product` · `marketing` · `design`. The project config's `kb_pages:` lists the ones
-this project keeps. A module with rules has a
+`product` · `marketing` · `design`. A module with rules has a
 file under `references/kb/`, whose first line names the steps it is loaded at:
-read it before those steps, and never read a module `kb_pages:` doesn't list. Only
-`product` has rules so far; listing another one changes nothing.
+read it before those steps when the project keeps that module's pages (Notion KB
+Pages rows, or `<kb>/<module>/` on a file board). Only `product` has rules so far.
 
 ## Usage data
 
@@ -152,7 +143,7 @@ happens and the investigation can't show it, read `references/analytics.md`.
 
 ## House style for strings
 
-A project with `ui_strings:` and `strings_glossary: none` has no house style yet:
+A project with user-visible strings and no string glossary has no house style yet:
 before its first task that adds a string, read `references/house-style.md`.
 
 ## The board
@@ -191,9 +182,10 @@ taken back. A public repo receives only what it already shows: no other repo's
 code, paths, identifiers, issue or PR refs, call sites, copy or rules — write "a
 consumer" in their place — and no reproduction of a flaw in a released version.
 The rest stays in the report files and the task's board row. A dispatch into a
-public repo quotes this paragraph verbatim. `asst-pr` refuses to push or turn
-ready what names a private repo, a home-directory path or a `#<n>` that is not
-this repo's; anything else on the list is caught by no script.
+public repo quotes this paragraph verbatim. The `disclosure.sh` hook blocks a push,
+PR, issue, release or gist that names a private repo, this machine's home directory
+or a `#<n>` that is not this repo's, and one it cannot check; anything else on the
+list is caught by no script.
 
 ## Dispatch rules
 
@@ -217,7 +209,8 @@ this repo's; anything else on the list is caught by no script.
 - Work sent off this machine — a message into a cloud session the user has
   running, or a new one from `asst-cloud open --profile <name>` — follows
   `references/cloud-dispatch.md`.
-- Destructive or outward actions (force-push, deleting branches, SVN revert,
-  publishing) are asked, never assumed — the project config lists the project's. This
+- Ask before every destructive or outward action: a merge, a force-push, deleting
+  a branch or a worktree (except step 8's, done unasked), a deploy, deleting user
+  data; a project's own extra cases live in its CLAUDE.md. This
   holds for anything you send off the machine: a peer session doing it for you
   bypasses the same decision.

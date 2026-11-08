@@ -24,8 +24,7 @@
 //
 // decisions.md: `# <task name>`, then one `### <question>` per ruling with a
 // `**Pages**: <title>[, <title>]` line naming the KB pages it governs, any module
-// (`none` when it governs none; required unless the project config's kb_pages is none)
-// and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
+// (optional; `none` when it governs none) and **Context** / **Decision** / **Consequence** paragraphs. notion: one Decision Log
 // row per question, Pages = a relation to those KB Pages rows, Task = a relation to the task's
 // TaskList row, empty once that row is trashed; file: appended to
 // <kb>/decisions/<slug>.md, under the # heading.
@@ -181,10 +180,6 @@ switch (op) {
     const [slug, file] = rest; if (!slug || !file || !existsSync(file)) fail('decide <slug|page-id> <decisions.md>');
     const md = readFileSync(file, 'utf8'); const decs = decisions(md);
     if (!decs.length) fail(`${file} has no "### <question>" block`);
-    // A KB page lists its decisions by Pages, so a decision without one never shows on any page.
-    const keepsPages = !['', 'none'].includes((config.kb_pages ?? '').trim());
-    const unplaced = keepsPages ? decs.filter(d => d.Pages === undefined).map(d => `"${d.Name}"`) : [];
-    if (unplaced.length) fail(`decision ${unplaced.join(', ')} has no **Pages** line: under its ### heading, name the KB pages it governs by their exact titles, "**Pages**: <title>[, <title>]", or "**Pages**: none".`);
     const name = (md.match(/^# (.+)$/m) ?? [, slug])[1].trim();
     if (backend === 'file') {
       if (!config.kb) fail('the project config has board: file but no kb: <dir>');

@@ -8,19 +8,14 @@ Read at step 7, before the delivery summary. Git only; on svn the task ends in
 Rewrite the PR's title and body from the delivery summary first (`gh pr edit`): the
 draft's describe the plan, not what shipped.
 
-A backend change an app relies on reaches production only after the app task that
-calls it filed `device: passed`: the backend task's delivery summary names that app
-task and quotes its `verify-device` first line, and until it reads `device: passed`
-the merge (or, where the project config sets `base_branch:`, the release that carries
-it) isn't offered.
-
-Then run `asst-pr ready <slug> <worktree>` to take the PR out of draft. A draft means
-work is still in progress, so a delivery summary sent while the PR is a draft tells
-the user it's done when it can't be merged yet. Whatever `ready` refuses on is
-unfinished work: finish it, don't deliver around it. Every `asst-pr` outcome ends with
-a `next:` line; do what it says. Nothing waits for you: one not settled yet (CI still
-running) names the look to schedule once with `CronCreate` (`recurring: false`), and
-you end the turn — nothing else reports a passing run, and you never wait in a loop.
+Then take the PR out of draft with `gh pr ready`, once CI has passed on HEAD
+(`gh pr checks`; where CI skips drafts, mark it ready first so CI runs) and every
+`verify-*` report is newer than HEAD. A draft means work is still in progress, so a
+delivery summary sent while the PR is a draft tells the user it's done when it can't
+be merged yet. A failed check or a stale report is unfinished work: finish it, don't
+deliver around it. Nothing waits for you: while CI is still running, schedule one
+look with `CronCreate` (`recurring: false`) and end the turn — nothing else reports
+a passing run, and you never wait in a loop.
 The merge is not looked for: it waits for the user's word that the PR can merge or
 has merged. Tasks' PRs are looked at side by side, each
 on its own schedule.

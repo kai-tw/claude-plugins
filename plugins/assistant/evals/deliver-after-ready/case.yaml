@@ -1,15 +1,15 @@
 schema_version: "1.1"
 name: deliver-after-ready
-description: The delivery summary is written only once asst-pr ready has turned the PR ready and its header names the PR as ready.
-tags: [asst-pr]
+description: "The delivery summary header names the PR as ready, and SKILL.md step 7 says that on git the summary is written only once CI has passed on HEAD and every verify report is newer than HEAD."
+tags: [assistant]
 plugins: ["../.."]
 runs: 1
 execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: tr "\n" " " < "$root/skills/assistant/SKILL.md" | grep -o "write the delivery summary only once it exits 0" | sed "s/^/order: /"; grep -o "PR #n ready" "$root/skills/assistant/references/delivery-summary.md" | sed "s/^/header: /"
+    EVAL_CMD: grep -o "PR #n ready" "$root/skills/assistant/references/delivery-summary.md" | sed "s/^/header: /"; s=$(awk "/^7[.] /{f=1} /^8[.] /{f=0} f" "$root/skills/assistant/SKILL.md" | tr -s " \n" " "); echo "step7-git-ci-and-verify-before-summary=$(grep -cE "git[^.]*CI has passed on HEAD[^.]*newer than HEAD|CI has passed on HEAD[^.]*newer than HEAD[^.]*git" <<< "$s")"
   prompt: |
-    Check that assistant turns a PR ready before delivering ③: SKILL.md writes the delivery summary only after asst-pr ready succeeds, and the delivery summary header names the PR as ready.
+    Check that the delivery summary header names the PR as ready and that step 7 of SKILL.md ties the summary, on git, to CI passing on HEAD and fresh verify reports.
 context:
   scaffold_script: fixture.sh

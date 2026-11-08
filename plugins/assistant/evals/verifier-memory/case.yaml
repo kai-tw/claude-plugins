@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: verifier-memory
+description: The verifier's code review checks the diff against the user's memories — it reads the MEMORY.md index already in its context, opens each feedback or user memory that bears on the diff, and files a departure as a finding citing that memory's file name.
+tags: [agents, verifier]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: t=$(tr -s " \n" " " < "$root/agents/verifier.md"); c() { echo "$1=$(grep -ciE -- "$2" <<< "$t")"; }; c index "MEMORY\.md"; c kinds "(feedback|user)[^.]{0,40}(feedback|user)[^.]{0,40}memor|memor[^.]{0,40}(feedback|user)[^.]{0,40}(feedback|user)"; c opens "open[^.]{0,80}memor"; c cite "cit(e|es|ing)[^.]{0,80}(file ?name|memory)|(file ?name|memory)[^.]{0,80}cit(e|ed)"; c finding "memor[^.]{0,200}finding|finding[^.]{0,200}memor"
+  prompt: |
+    Say how the assistant's verifier checks a diff against the user's memories and how it files a departure.
+context:
+  scaffold_script: fixture.sh

@@ -8,7 +8,7 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: for i in 1 2 3 4 5 6 7 8 9 10; do echo r | asst-report put a verify-code >/dev/null; done; echo r | asst-report put a investigation >/dev/null; echo r | asst-report put b tests >/dev/null; asst-report summary; echo "exit=$?"
+    EVAL_CMD: for i in 1 2 3 4 5 6 7 8 9 10; do echo r | asst-report put a verify-code >/dev/null; done; echo r | asst-report put a investigation >/dev/null; echo "rules: style-pack --paths t" | asst-report put b tests >/dev/null; asst-report summary; echo "exit=$?"
   prompt: |
     Show the newest report of each kind for every task.
 context:

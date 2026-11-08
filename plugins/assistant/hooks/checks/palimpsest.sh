@@ -28,11 +28,14 @@
 #   from here.
 
 set -uo pipefail
+# This runs before the user approves: no fsmonitor program from a repo's config.
+git() { command git -c core.fsmonitor=false "$@"; }
 
 payload="$(cat 2>/dev/null)"
 cmd="$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null || true)"
 [ -z "$cmd" ] && exit 0
-printf '%s' "$cmd" | grep -qE '(^|[[:space:]])git([[:space:]]|$)' || exit 0
+# No `push` in it: no command this hook acts on can be there.
+case "$cmd" in *push*) ;; *) exit 0 ;; esac
 
 cwd="$(printf '%s' "$payload" | jq -r '.cwd // empty' 2>/dev/null || true)"
 [ -n "$cwd" ] || cwd="$PWD"
@@ -49,23 +52,17 @@ deny() {
   exit 2
 }
 
-# One statement per line, so a push buried after && or ; is still examined.
-# Written for bash 3.2 (macOS's /bin/bash): no `mapfile`, and awk rather than
-# sed, whose BSD build writes a literal `n` for `\n` in a replacement.
-segs=()
-while IFS= read -r line; do segs+=("$line"); done < <(printf '%s\n' "$cmd" | awk '{ gsub(/&&|\|\||[;|]/, "\n"); print }')
-
-for seg in "${segs[@]}"; do
-  printf '%s' "$seg" | grep -qE '^[[:space:]]*(sudo[[:space:]]+)?git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+push([[:space:]]|$)' || continue
-
-  # shellcheck disable=SC2086 # deliberate: re-split the segment into tokens
-  set -- $seg
-  repo=""
-  while [ "${1:-}" != "push" ] && [ $# -gt 0 ]; do
-    [ "${1:-}" = "-C" ] && repo="${2:-}"
-    shift
-  done
-  shift 2>/dev/null || true
+# Every simple command is examined, so a push after a newline, && or ; is too;
+# a `cd` before it moves the repo it acts on.
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=command-words.sh
+source "$here/command-words.sh"
+CMD_DIR=$cwd
+while read_command; do
+  # Not a push: nothing here can overwrite a branch.
+  git_command "$CMD_DIR" && [ "$GIT_SUB" = push ] || continue
+  repo=$GIT_AT
+  set -- ${GIT_ARGS[@]+"${GIT_ARGS[@]}"}
 
   force=""; targets=(); deleting=""; wildcard=""; dry=""
   for tok in "$@"; do
@@ -96,9 +93,10 @@ for seg in "${segs[@]}"; do
   if [ ${#refs[@]} -eq 0 ]; then
     # No refspec: git sends the CURRENT branch. This is the case a permission
     # pattern is blind to.
-    cur="$(git -C "${repo:-$cwd}" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+    cur=""
+    [ -z "$repo" ] || cur="$(git -C "$repo" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
     if [ -z "$cur" ]; then
-      deny "This push has no refspec and the current branch can't be read here (not a git repo, or a detached HEAD), so there's no telling whether it hits \`main\`. Name the branch: \`git push --force origin <branch>\`."
+      deny "This push has no refspec and the current branch can't be read here (not a git repo, a detached HEAD, or a directory held in a variable), so there's no telling whether it hits \`main\`. Name the branch: \`git push --force origin <branch>\`."
     fi
     printf '%s' "$cur" | grep -qE "$PROTECTED" && deny \
 "This would force-push over \`$cur\`.
@@ -120,6 +118,6 @@ Write the branch name out and run it again. Letting a push through unchecked wou
     [ -n "$deleting" ] && deny "This would **delete** \`$dst\` on the remote. Deleting a feature branch is fine; deleting \`$dst\` is not."
     deny "This would force-push over \`$dst\`. Force-pushing another branch is fine; force-pushing \`$dst\` is not."
   done
-done
+done < <(command_words "$cmd")
 
 exit 0

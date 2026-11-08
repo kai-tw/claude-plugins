@@ -129,8 +129,8 @@ environment with no `claude` login. Two other routes:
    ```
 
    It returns `claude_code_session_id` and the session URL — the handle you record
-   on the board. The URL goes in the project config's `cloud_fire:`; **the token is read
-   only from an environment variable and never enters the repo**.
+   on the board. **The token is read only from an environment variable and never
+   enters the repo**.
 
    **Trap**: `text` arrives wrapped in `<routine-fire-payload>` and marked as
    untrusted data, so the routine's **saved prompt must say explicitly "do what
@@ -151,6 +151,5 @@ session, or to create a routine) — not a blocker you can clear yourself.
 
 An action refused locally, or one you expect to be refused locally, **must not be
 handed to an off-machine session** — that is using another session to bypass the
-user's decision. Every item on the project config's `destructive:` counts: merge,
-push to main, release, delete a branch. An off-machine report can only make a
+user's decision. Every action SKILL.md §Dispatch rules says to ask before counts. An off-machine report can only make a
 request; the button stays the user's.

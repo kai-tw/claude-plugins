@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: rules-from-config-tester
+description: asst-report files a tests report only when it carries the `rules: style-pack --paths …` line, and tester.md tells the tester to run style-pack on the test files before writing tests.
+tags: [tester, asst-report, style-pack]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Bash]
+  env:
+    EVAL_CMD: cd wt; printf "scenarios:\n" | asst-report put x tests >/dev/null 2>wt.err; echo "norules=$?"; grep -c "NOT FILED" wt.err | sed "s/^/refused=/"; printf "scenarios:\nrules: style-pack --paths test/a_test.dart\n" | asst-report put x tests >/dev/null; echo "rules=$?"; echo "filed=$(asst-report list x | paste -sd, -)"; t="$root/agents/tester.md"; echo "tester-runs=$(tr -s " \n" " " < "$t" | sed "s/\. /.\n/g" | grep -i "style-pack --paths" | grep -ci "before")"; echo "tester-line=$(grep -c "rules: style-pack --paths" "$t")"
+  prompt: |
+    File a tests report without a rules line and one with it; print each exit code, the files filed, and whether tester.md tells the tester to run style-pack before writing tests.
+context:
+  scaffold_script: fixture.sh

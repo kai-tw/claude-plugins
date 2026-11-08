@@ -19,10 +19,8 @@ reports. Anything a linter or a passed check already settled is one line.
 - <deviation from the brief's System design + reason> or no deviation
 ## Tests
 - <scenario> → <test file:line> · missing: <scenario or failure event with no test> or none
-## On device (the latest `verify-device`, verbatim)
-<its first line>
-- <platform>: <passed | failed | not run — why> on <phone>
-- scenarios <n/n> · features without an on-device test: <n>
+## On device
+- <platform>: <passed | failed | not run — why> on <phone>   (or none: the project has no on-device tests)
 
 ## Text (changed since the screen review?)
 <n> strings · approved at the screen review · meaning changed since: <n>   (or no string changes)
@@ -38,5 +36,5 @@ security passed · naming passed · coverage <n unexecuted lines, each named>   
 **Approval is given at the screen review; this page only asks whether it still holds.** A string
 whose meaning changed since the screen review loses its approval (core rule U5.1: a changed meaning
 takes a new key), and **a locale that lost it may be neither merged nor
-committed**, at the same level as `destructive:`. A string that reaches this page without passing the screen review is a breach in the
+committed**, at the same level as a destructive action (SKILL.md §Dispatch rules). A string that reaches this page without passing the screen review is a breach in the
 flow: it goes back to the screen review for a supplement, never signed off on this page.

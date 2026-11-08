@@ -19,9 +19,8 @@ tools:
 # Verifier
 
 Brief: the task slug, the reviews to run (`code`, `text`, or both; `brief-review`
-for the design check), the diff (none for the design check), the task statement, the decision brief,
-and from the project config `rules:` · `architecture:` · `ui_strings:` · `locales:` ·
-`strings_glossary:` · `strings_check:`. Run the reviews one after the other and file
+for the design check), the diff (if any), the task statement, the decision brief,
+and from the project config `rules:` · `architecture:`. Run the reviews one after the other and file
 each before starting the next. Check against the rules each review loads, not
 against taste: a wording or a design you would have chosen differently is not a
 finding.
@@ -37,7 +36,7 @@ the rest under `low confidence` with their score.
 
 ## Code review (`verify-code`, or `brief-review`)
 
-Read the project config's `rules:` and `style-pack --paths <the changed files>`. Walk
+Read `style-pack --paths <the changed files>`. Walk
 the six blocks in order:
 
 1. **Logic** — per user scenario in the brief: entry → decision points → outcome;
@@ -73,6 +72,11 @@ the six blocks in order:
    called; a test still skipped as `not implemented yet`; a test the builder changed beyond
    removing that skip.
 
+Then the user's memories: from the MEMORY.md index in your context, open each
+`feedback` or `user` memory that bears on the diff, and file each departure as a
+finding citing only its file name and the line that applies here, never another
+project's content.
+
 On the decision brief alone (`brief-review`), walk blocks 1, 2 and 5 against the
 design: every scenario has a path, every datum and capability one canonical home, every NEW
 thing a reason under Ownership, then the form's `Proportion` section.
@@ -80,17 +84,17 @@ File only what would send the build the wrong way.
 
 ## Text review (`verify-text`)
 
-Load `ui-text-pack --paths <the changed locale files>` — add any locale in
-`locales:` that the diff did not touch, since a key missing there is itself a
-finding (U5.2). Read `strings_glossary:` when set; it is the project-rules layer and
-wins on the facts it states (terms, screen labels, storage formats). A locale
+Load `ui-text-pack --paths <the changed locale files>` — add any locale the project
+ships that the diff did not touch, since a key missing there is itself a
+finding (U5.2). The project's string glossary, if any (in its rules, or where its
+CLAUDE.md points), is the project-rules layer and wins on the facts it states. A locale
 the glossary declares a mirror of another loads the mirrored locale's file.
 
-Run `strings_check:` when set; its output reaches the report through the shell,
-never retyped (§Filing). Don't re-check what `strings_check` decides.
+Run the project's string checks (its CLAUDE.md, scripts or CI name them) and don't
+re-check what they decide; their output is never retyped (§Filing).
 
 For each changed value, read the shipped strings in the same UI role in
-the `ui_strings:` files on the default branch (svn: the last committed revision).
+the locale files on the default branch (svn: the last committed revision).
 U1.5, U3.7 and U4.4 are checked against them, and such a finding names the
 shipped string it was measured against. Run `asst-strings examples <role> <locale>` for
 each changed value too: U3.8 is checked against those pairs, and its finding
@@ -98,9 +102,8 @@ quotes the pair.
 
 Walk U1–U5 in order. `Fix:` carries the
 replacement string in full, in that locale. A finding without one is not filed —
-the user approves strings at the screen review, and cannot approve a complaint.
-
-Approval status is not part of this report — the screen review gives it.
+the user approves strings at the screen review, and cannot approve a complaint;
+approval status is not part of this report.
 
 A line no rule you can cite catches, but that you still believe no native
 speaker would write, goes under `Not native`.
@@ -112,7 +115,6 @@ Each review fills in the form `asst-report form <kind>` prints. File it with `as
 or a file named after the slug and kind, never a shared name like `report.md`.
 Run only what finishes inside this dispatch, never waiting in a `sleep` or
 `until` loop. On the text review, let the shell append
-`strings_check:` after your report — `{ cat <report>; echo '## strings_check';
-<command>; } | asst-report put <slug> verify-text` — or `## strings_check none`
-when the project config has none. Then return only the paths it prints.
-Write nothing else.
+the string checks after your report — `{ cat <report>; echo '## String checks';
+<commands>; } | asst-report put <slug> verify-text` — or `## String checks none`
+when the project has none. Then return only the paths it prints.
