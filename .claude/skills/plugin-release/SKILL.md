@@ -45,7 +45,8 @@ node .claude/skills/plugin-release/scripts/release.mjs <plugin> <major|minor|pat
 Dry run by default: it prints the version transition, the tag it would create,
 and every file changed since that plugin's last tag. **Read that file list back
 to the user and confirm the level fits it** before releasing. An empty list
-means there is nothing to release — say so rather than cutting a version.
+means there is nothing to release — say so rather than cutting a version;
+`--commit` refuses a tagged plugin with no changes since its tag.
 
 Then, once agreed:
 
