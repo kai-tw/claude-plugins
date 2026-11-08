@@ -63,8 +63,8 @@ missing-report rule (`SKILL.md` §The tracker); never blindly dispatch again.
 ## 2. A new cloud session for long work
 
 `asst-cloud open [--profile <name>] "<task>"` opens a new cloud session that runs
-in the background and prints its session id and URL — the handle you record on
-the board. It runs `claude --cloud` under `script`, since `claude --cloud` refuses
+in the background and prints its session id and URL — the handle you record in
+the tracker. It runs `claude --cloud` under `script`, since `claude --cloud` refuses
 `--print` and needs a TTY. The profile sets model, effort and a preamble
 (`asst-cloud profiles` lists them): `default` is opus / high; `--model` /
 `--effort` override it. The session clones **the repo's GitHub remote on the
@@ -129,7 +129,7 @@ environment with no `claude` login. Two other routes:
    ```
 
    It returns `claude_code_session_id` and the session URL — the handle you record
-   on the board. **The token is read only from an environment variable and never
+   in the tracker. **The token is read only from an environment variable and never
    enters the repo**.
 
    **Trap**: `text` arrives wrapped in `<routine-fire-payload>` and marked as

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# asst-intake — to-do candidates outside the board: GitHub issues and PRs. A
+# asst-intake — to-do candidates outside the tracker: GitHub issues and PRs. A
 # source that cannot be read prints a `skip` line with the reason, so
 # "unavailable" never looks like "nothing to do".
 #

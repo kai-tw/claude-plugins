@@ -10,8 +10,7 @@ The pages are titled in the user's language:
   page is a new row: `asst-notion create` with `"db":"kb-pages"`, its Module and
   Kind, and the page as `bodyFile`.
 - **File board**: `.claude/.assistant/kb/product/features/<feature>.md` and
-  `.claude/.assistant/kb/product/shared/<design>.md`, changed on the task's own branch, so a page
-  merges with the code that follows it.
+  `.claude/.assistant/kb/product/shared/<design>.md`.
 
 A project with no shared designs leaves that part out; a behaviour two features
 share is then written on the first one's page, and the other links to it.
@@ -72,4 +71,4 @@ One page at a time, written from the code.
   shows in the page's last section; in a directory the page links to it.
 - On Notion, upload with `ntn pages edit <id> < page.md` (the Related decisions
   line kept), then read the blocks back
-  (scribe); in a directory, commit it on a branch like any other doc change.
+  (scribe).

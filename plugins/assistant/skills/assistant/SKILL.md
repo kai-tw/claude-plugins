@@ -149,9 +149,9 @@ before its first task that adds a string, read `references/house-style.md`.
 ## The tracker
 
 Where tasks live follows the project's convention, read from its CLAUDE.md: Notion
-through `asst-notion` (scribe), with the root id CLAUDE.md gives as `--root`; GitHub
+through `asst-notion` (scribe); GitHub
 through `gh`; any other through its own CLI or MCP; a file board by editing
-`.claude/.assistant/board.md` (same columns) and
+`.claude/.assistant/board.md` (columns Slug, Name, Status, Stage, Blocked by, Parent item) and
 `tasks/<slug>/brief.md`. None found: ask the user once and write the answer into
 its CLAUDE.md.
 
@@ -163,8 +163,8 @@ tracker lacking these fields uses labels or lists.
 waits on something outside the tracker is `Deferred`, its condition in the body.
 When a row closes, a `Next` row whose last blocker it was turns `In Progress` and
 starts at the investigation, and a parent whose last sub-item it was closes too.
-A decision goes to the tracker's decision log, one entry per question naming the KB
-pages it governs; on a file board, `.claude/.assistant/kb/decisions/<slug>.md`.
+A decision goes, one entry per question naming the KB pages it governs, to Notion's
+`decision-log`; with any other tracker, to `.claude/.assistant/kb/decisions/<slug>.md`.
 Every turn you take is a scheduler pass: the live rows and
 `asst-intake <project-dir>` → file new candidates → advance or
 dispatch each live row → surface new `Needs you` lines together.
