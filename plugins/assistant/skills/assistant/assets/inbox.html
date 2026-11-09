@@ -1,0 +1,173 @@
+<title>Assistant Inbox</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow column of question cards; status strip on top. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --fg: #1d2420; --muted: #5d6a63;
+  --line: #d9dfd9; --accent: #2f6f5e; --accent-fg: #ffffff;
+  --ok: #2f7d4f; --warn: #a86a14; --bad: #b3423a;
+  --display: "Noto Serif TC", Georgia, serif;
+  --body: "Noto Sans TC", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141917; --surface: #1c2320; --fg: #e4ebe6; --muted: #9aa9a1;
+  --line: #2f3a35; --accent: #6fbfa5; --accent-fg: #0e1412;
+  --ok: #6cc28e; --warn: #e0a64a; --bad: #e57a70; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141917; --surface: #1c2320; --fg: #e4ebe6; --muted: #9aa9a1;
+  --line: #2f3a35; --accent: #6fbfa5; --accent-fg: #0e1412;
+  --ok: #6cc28e; --warn: #e0a64a; --bad: #e57a70; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+main { max-width: 640px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 4px 0 0; }
+.strip { display: flex; flex-wrap: wrap; gap: 8px; font-size: .85rem; }
+.pill { border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; color: var(--muted); background: var(--surface); }
+.pill[data-state="ok"] { color: var(--ok); border-color: var(--ok); }
+.pill[data-state="warn"] { color: var(--warn); border-color: var(--warn); }
+.pill[data-state="bad"] { color: var(--bad); border-color: var(--bad); }
+.list { display: grid; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.card[data-kind="notice"] { border-left: 4px solid var(--warn); }
+.meta { font-family: var(--mono); font-size: .75rem; color: var(--muted); letter-spacing: .02em; }
+.q { font-weight: 600; margin: 0; }
+.ctx { color: var(--muted); margin: 0; font-size: .92rem; }
+.opts { display: grid; gap: 8px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--accent); }
+.opt input { margin-top: 4px; accent-color: var(--accent); }
+.opt b { display: block; }
+.opt span { color: var(--muted); font-size: .88rem; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+button { font: inherit; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, .opt:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note { font-size: .85rem; color: var(--muted); }
+.answered { color: var(--ok); font-weight: 600; }
+.empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 20px; text-align: center; }
+</style>
+
+<main>
+  <header>
+    <h1>Assistant Inbox</h1>
+    <p class="lede">What the assistant is waiting on you for. Pick an option and press Send: the answer is saved and the waiting session is woken.</p>
+  </header>
+  <div class="strip" aria-live="polite">
+    <span class="pill" id="st-db">Data: connecting…</span>
+    <span class="pill" id="st-claude">Claude: checking…</span>
+  </div>
+  <section class="list" id="list">
+    <div class="empty" id="empty">Nothing is waiting on you.</div>
+  </section>
+</main>
+
+<script>
+(async () => {
+  const $ = (s) => document.querySelector(s);
+  const setPill = (id, text, state) => { const p = $(id); p.textContent = text; if (state) p.dataset.state = state; else delete p.dataset.state; };
+  const claudeApi = window.claude;
+  if (!claudeApi || !claudeApi.use) { setPill('#st-db', 'Data: not available in this view', 'bad'); setPill('#st-claude', 'Claude: not available', 'bad'); return; }
+
+  let db = null, comments = null;
+  const timer = setTimeout(() => { if (!db) setPill('#st-db', 'Data: connection timed out', 'bad'); }, 10000);
+  [db, comments] = await Promise.all([claudeApi.use('db'), claudeApi.use('comments')]);
+  clearTimeout(timer);
+  if (!db) { setPill('#st-db', 'Data: can’t connect (sign in)', 'bad'); }
+  else setPill('#st-db', 'Data: connected', 'ok');
+
+  async function refreshClaude() {
+    if (!comments) { setPill('#st-claude', 'Claude: comments not available', 'bad'); return 'off'; }
+    let s = 'off';
+    try { s = await comments.canSendToClaude(); } catch (e) { s = (e && e.code) || 'off'; }
+    const label = { available: ['Claude: a session is listening', 'ok'], no_session: ['Claude: no session is listening', 'warn'],
+      writers_only: ['Claude: only editors can send', 'warn'], off: ['Claude: not available here', 'bad'] }[s] || ['Claude: ' + s, 'bad'];
+    setPill('#st-claude', label[0], label[1]);
+    return s;
+  }
+  await refreshClaude();
+  if (!db) return;
+
+  const answers = {};
+  let questions = [];
+  db.collection('answers').onSnapshot((snap) => {
+    snap.docs.forEach((d) => { answers[d.id] = d.data(); });
+    render();
+  }, () => {});
+  db.collection('questions').onSnapshot((snap) => {
+    questions = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.asked || '').localeCompare(String(b.asked || '')));
+    render();
+  }, () => setPill('#st-db', 'Data: couldn’t read', 'bad'));
+
+  function render() {
+    const list = $('#list');
+    list.querySelectorAll('.card').forEach((c) => c.remove());
+    $('#empty').hidden = questions.length > 0;
+    for (const q of questions) {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.id = 'card-' + q.id;
+      card.dataset.kind = q.kind || 'question';
+      const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = [q.project, q.task, q.id].filter(Boolean).join(' · ');
+      const h = document.createElement('p'); h.className = 'q'; h.textContent = q.question || '';
+      card.append(meta, h);
+      if (q.context) { const c = document.createElement('p'); c.className = 'ctx'; c.textContent = q.context; card.append(c); }
+      const done = answers[q.id];
+      if (q.kind === 'notice') {
+        // An irreversible action is approved only in chat, so its card has no button to press.
+        const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Approve this in the chat.';
+        card.append(n);
+      } else if (done) {
+        const a = document.createElement('p'); a.className = 'answered';
+        const opt = (q.options || []).find((o) => o.key === done.choice);
+        a.textContent = 'Answered: ' + (opt ? opt.label : done.choice);
+        card.append(a);
+      } else {
+        const opts = document.createElement('div'); opts.className = 'opts'; opts.setAttribute('role', 'radiogroup');
+        (q.options || []).forEach((o, i) => {
+          const lab = document.createElement('label'); lab.className = 'opt';
+          const inp = document.createElement('input'); inp.type = 'radio'; inp.name = 'q-' + q.id; inp.value = o.key; inp.id = 'q-' + q.id + '-' + i;
+          const box = document.createElement('div');
+          const b = document.createElement('b'); b.textContent = o.label; box.append(b);
+          if (o.detail) { const s = document.createElement('span'); s.textContent = o.detail; box.append(s); }
+          lab.append(inp, box); opts.append(lab);
+        });
+        const row = document.createElement('div'); row.className = 'row';
+        const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Send'; btn.id = 'send-' + q.id;
+        const note = document.createElement('span'); note.className = 'note';
+        btn.addEventListener('click', () => submit(q, card, btn, note));
+        row.append(btn, note);
+        card.append(opts, row);
+      }
+      list.append(card);
+    }
+  }
+
+  // The send must ride on this click, so it starts here, before anything else is awaited.
+  function submit(q, card, btn, note) {
+    const picked = card.querySelector('input[name="q-' + q.id + '"]:checked');
+    const opt = picked && (q.options || []).find((o) => o.key === picked.value);
+    const text = picked && ('Answer ' + q.id + ': ' + picked.value + (opt ? ' (' + opt.label + ')' : ''));
+    const sent = picked && comments ? comments.anchorFor(card).then((anchor) => comments.sendToClaude({ anchor, text })) : null;
+    if (!picked) { note.textContent = 'Pick an option first.'; return; }
+    btn.disabled = true; note.textContent = 'Sending…';
+    save(q, picked.value, sent, btn, note); // save shows its own failures in the card's note.
+  }
+
+  async function save(q, choice, sent, btn, note) {
+    let notified = false, why = 'off';
+    if (sent) {
+      try { await sent; notified = true; } catch (e) { why = (e && e.code) || 'error'; }
+    }
+    try {
+      await db.collection('answers').doc(q.id).set({ choice, at: new Date().toISOString(), notified });
+      note.textContent = notified ? 'Sent. Claude was woken.' : 'Answer saved, but waking Claude failed (' + why + ').';
+    } catch (e) {
+      btn.disabled = false;
+      note.textContent = 'Saving failed (' + ((e && e.code) || 'error') + '). Press Send again.';
+    }
+    refreshClaude();
+  }
+})();
+</script>

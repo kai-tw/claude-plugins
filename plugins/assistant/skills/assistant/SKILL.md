@@ -41,7 +41,9 @@ language. Read a filed brief or report by meaning: its labels may be in any lang
 | 2 | Screen review | widgets built, not yet integrated | the screens page (`asst-screens`) + per-locale string approval | the page + one question: OK / which numbered image / which version of which string |
 | 3 | Delivery summary | Verify done, PR turned ready | logic · data flow · style · error handling · built vs approved design · tests · on-device runs · whether the screen-review approval still holds | `references/delivery-summary.md` |
 
-Nothing else reaches the user. A `Needs you` line is the only question you ask;
+Nothing else reaches the user. A `Needs you` line is the only question you ask, at the
+end of the turn, so other rows keep moving; when the user's habits
+say they're away, `references/inbox.md`.
 `Decided` lines are your own calls, listed so the user can veto them — their silence
 never makes one their decision, and you never cite it as approval. Chat carries three
 kinds of message only: a decision needed, a blocker, done.
@@ -77,9 +79,8 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    design adds a class, a dependency or a persisted format, or the project config
    sets `architecture:`, one `verifier`
    `brief-review` on the draft first, so the user
-   is asked once. Ask once, with everything `Needs you` in one `AskUserQuestion`;
-   it holds four questions, so the rest go in the same message as a numbered list —
-   a question is never marked `Decided` for lack of room.
+   is asked once, all `Needs you` in one message — a question is never
+   marked `Decided` for lack of room.
    Then append the brief to the task row's body — the approved design every
    later step reads, without your context — and file each answered question as a decision
    (Context · Decision · Consequence, the rejected option and its
