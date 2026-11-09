@@ -19,7 +19,7 @@ else if (a.startsWith(`pages edit ${id}`)) fs.writeFileSync('page.md', fs.readFi
 else if (a.startsWith(`api v1/blocks/${id}/children`))
   out({ results: body().split('\n').filter((l) => l.trim()).map((l) => ({ type: 'paragraph', paragraph: { rich_text: [{ plain_text: l }] } })), has_more: false });
 else if (a.startsWith(`pages get ${id}`)) out(body());
-else if (a.startsWith(`api v1/pages/${id}`)) out({ id });
+else if (a.startsWith(`api v1/pages/${id}`)) out({ id, parent: { type: "data_source_id", data_source_id: "ds1" } });
 else { console.error(`fake ntn: unhandled "${a}"`); process.exit(9); }
 JS
 chmod +x ntn
