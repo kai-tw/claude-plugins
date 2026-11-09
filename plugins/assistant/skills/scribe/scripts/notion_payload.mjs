@@ -1226,6 +1226,7 @@ function refuseSpecPage(pageId) {
   // not a spec page: the write goes ahead.
   if (parent.type === 'page_id' || parent.type === 'workspace') return;
   if (parent.type !== 'data_source_id' && parent.type !== 'database_id') unsure(`its parent is ${parent.type ?? 'missing'}`);
+  if (!parent[parent.type]) unsure(`its parent is a ${parent.type} with no id`);
   const spec = DB['kb-pages'];
   if (sameNotionId(parent.data_source_id, spec?.ds) || sameNotionId(parent.database_id, spec?.db)) fail(SPEC_READ_ONLY);
 
