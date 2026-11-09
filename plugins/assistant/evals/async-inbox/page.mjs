@@ -314,7 +314,7 @@ const out = {};
 const say = (k, v) => { out[k] = v ? 1 : 0; };
 const KEYS = ['s18-db', 's18-notice-no-button', 's18-notice-no-input', 's18-save-fail-note', 's18-save-fail-resend', 's18-answers-fail-no-send',
   's18-link-https', 's18-link-not-https', 's19-textarea-every-card', 's19-text-only-answer', 's20-one-send', 's20-send-at-bottom',
-  's20-one-wake-both-ids', 's20-note-not-in-comment', 's21-wake-fail-bar', 's21-wake-fail-after-render', 's22-proto-id-unanswered', 's22-proto-id-note-saved',
+  's20-one-wake-both-ids', 's20-note-not-in-comment', 's21-wake-fail-bar', 's21-wake-fail-after-render', 's21-wake-fail-kept-after-save-fail', 's21-wake-fail-cleared-after-send','s22-proto-id-unanswered', 's22-proto-id-note-saved',
   's23-draft-kept-rerender', 's23-draft-kept-save-fail', 's24-not-owner-no-send', 's24-no-db-pill', 's24-no-db-no-card',
   's24-bad-id-not-sent', 's24-bad-id-says-so'];
 const errors = [];
@@ -372,7 +372,8 @@ async function main() {
 
   // The answer is saved, but no session is woken: the reason stays in the bottom bar.
   {
-    const { doc, emit } = await load(html, script, QUESTIONS, { wake: true });
+    const fail = { wake: true };
+    const { doc, emit } = await load(html, script, QUESTIONS, fail);
     const reason = /no_session|no session/i;
     const cardsNow = () => QUESTIONS.map((q) => cardOf(doc, q, QUESTIONS)).filter(Boolean);
     const c1 = cardOf(doc, QUESTIONS[0], QUESTIONS);
@@ -385,6 +386,21 @@ async function main() {
     emit('answers'); emit('questions');
     await settle();
     say('s21-wake-fail-after-render', !before && reason.test(bottomText(doc, cardsNow())));
+    // A later send whose save fails keeps the line; a later send that fully succeeds clears it.
+    const saidSave = /permission_denied|sav(e|ing)[^.]{0,40}fail|fail[^.]{0,40}sav/i;
+    const c2 = cardOf(doc, QUESTIONS[1], QUESTIONS);
+    if (c2) type(c2, NOTE);
+    await settle();
+    Object.assign(fail, { save: true, wake: false });
+    sendButtons(doc)[0]?.click();
+    await settle();
+    const barFailed = bottomText(doc, cardsNow());
+    say('s21-wake-fail-kept-after-save-fail', !before && saidSave.test(barFailed) && reason.test(barFailed));
+    Object.assign(fail, { save: false, wake: false });
+    sendButtons(doc)[0]?.click();
+    await settle();
+    const barOk = bottomText(doc, cardsNow());
+    say('s21-wake-fail-cleared-after-send', !before && reason.test(barFailed) && !reason.test(barOk) && !saidSave.test(barOk));
   }
 
   // Saving fails: the user is told, and can press send again.
@@ -394,12 +410,11 @@ async function main() {
     if (c1) choose(c1, 'yes', 'Ship it');
     if (c2) type(c2, NOTE);
     await settle();
-    const text = () => order(doc).filter(visible).flatMap((e) => e.childNodes.filter((n) => n.nodeType === 3).map((n) => n.data)).join(' ');
     const said = /permission_denied|sav(e|ing)[^.]{0,40}fail|fail[^.]{0,40}sav/i;
-    const before = said.test(text());
+    const before = said.test(pageText(doc));
     sendButtons(doc)[0]?.click();
     await settle();
-    say('s18-save-fail-note', !before && said.test(text()));
+    say('s18-save-fail-note', !before && said.test(pageText(doc)));
     const again = sendButtons(doc);
     say('s18-save-fail-resend', again.length > 0 && again.every((b) => !b.disabled));
     const kept = () => { const n1 = cardOf(doc, qs[0], qs), n2 = cardOf(doc, qs[1], qs); return !!(n1 && n2 && keeps(n1, 'yes') && keeps(n2, '', NOTE)); };
