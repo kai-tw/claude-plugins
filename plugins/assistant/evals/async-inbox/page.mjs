@@ -192,7 +192,8 @@ function makeDocument(html) {
   return doc;
 }
 
-// The fake `window.claude`: owner signed in, a session listening; `fail` picks which call rejects.
+// The fake `window.claude`: owner signed in, a session listening; `fail` picks which call rejects,
+// `notOwner` makes the viewer someone else and `noDb` withholds the database.
 function makeClaude(questions, fail) {
   const store = { questions: new Map(questions.map((q) => [q.id, q])), answers: new Map() };
   const subs = { questions: [], answers: [] };
@@ -229,8 +230,9 @@ function makeClaude(questions, fail) {
     },
     list: () => Promise.resolve([]), onChange: () => () => {},
   };
-  const user = { isOwner: () => Promise.resolve(true), me: () => Promise.resolve({ isOwner: true }), isAnonymous: false };
-  const api = { use: (k) => Promise.resolve({ db, comments, user }[k] ?? null) };
+  const owner = !fail.notOwner;
+  const user = { isOwner: () => Promise.resolve(owner), me: () => Promise.resolve({ isOwner: owner }), isAnonymous: false };
+  const api = { use: (k) => Promise.resolve({ db: fail.noDb ? null : db, comments, user }[k] ?? null) };
   return { api, store, emit, wakes, writes };
 }
 
@@ -300,11 +302,21 @@ const QUESTIONS = [
 ];
 const NOTE = 'Say there is nothing here yet';
 
+// A card still holds what the user filled in: the chosen option checked, the typed note in its field.
+const keeps = (card, key, note) => {
+  const radio = key && inputs(card).find((i) => i.tagName === 'INPUT' && i.value === key);
+  const ta = note && card.descendants().find((e) => e.tagName === 'TEXTAREA');
+  return (!key || (radio && radio.checked)) && (!note || (ta && ta.value === note));
+};
+const pageText = (doc) => order(doc).filter(visible).flatMap((e) => e.childNodes.filter((n) => n.nodeType === 3).map((n) => n.data)).join(' ');
+
 const out = {};
 const say = (k, v) => { out[k] = v ? 1 : 0; };
 const KEYS = ['s18-db', 's18-notice-no-button', 's18-notice-no-input', 's18-save-fail-note', 's18-save-fail-resend', 's18-answers-fail-no-send',
   's18-link-https', 's18-link-not-https', 's19-textarea-every-card', 's19-text-only-answer', 's20-one-send', 's20-send-at-bottom',
-  's20-one-wake-both-ids', 's20-note-not-in-comment', 's21-wake-fail-bar', 's21-wake-fail-after-render', 's22-proto-id-unanswered', 's22-proto-id-note-saved'];
+  's20-one-wake-both-ids', 's20-note-not-in-comment', 's21-wake-fail-bar', 's21-wake-fail-after-render', 's22-proto-id-unanswered', 's22-proto-id-note-saved',
+  's23-draft-kept-rerender', 's23-draft-kept-save-fail', 's24-not-owner-no-send', 's24-no-db-pill', 's24-no-db-no-card',
+  's24-bad-id-not-sent', 's24-bad-id-says-so'];
 const errors = [];
 process.on('unhandledRejection', (e) => errors.push(String(e?.message ?? e)));
 
@@ -343,6 +355,21 @@ async function main() {
     })()));
   }
 
+  // A new question arrives while answers are half filled in: the rebuilt cards keep them.
+  {
+    const extra = { id: 'q5', project: 'demo', task: 'epsilon', question: 'Rename the project?', asked: '2026-11-01T09:04:00Z', options: [] };
+    const { doc, store, emit } = await load(html, script, qs);
+    const c1 = cardOf(doc, qs[0], qs), c2 = cardOf(doc, qs[1], qs);
+    if (c1 && c2) { choose(c1, 'yes', 'Ship it'); type(c2, NOTE); }
+    await settle();
+    store.questions.set(extra.id, extra);
+    emit('questions');
+    await settle();
+    const all = [...qs, extra];
+    const n1 = cardOf(doc, qs[0], all), n2 = cardOf(doc, qs[1], all);
+    say('s23-draft-kept-rerender', !!(c1 && c2 && n1 && n2 && keeps(n1, 'yes') && keeps(n2, '', NOTE) && cardOf(doc, extra, all)));
+  }
+
   // The answer is saved, but no session is woken: the reason stays in the bottom bar.
   {
     const { doc, emit } = await load(html, script, QUESTIONS, { wake: true });
@@ -362,9 +389,10 @@ async function main() {
 
   // Saving fails: the user is told, and can press send again.
   {
-    const { doc } = await load(html, script, qs, { save: true });
-    const c1 = cardOf(doc, qs[0], qs);
+    const { doc, emit } = await load(html, script, qs, { save: true });
+    const c1 = cardOf(doc, qs[0], qs), c2 = cardOf(doc, qs[1], qs);
     if (c1) choose(c1, 'yes', 'Ship it');
+    if (c2) type(c2, NOTE);
     await settle();
     const text = () => order(doc).filter(visible).flatMap((e) => e.childNodes.filter((n) => n.nodeType === 3).map((n) => n.data)).join(' ');
     const said = /permission_denied|sav(e|ing)[^.]{0,40}fail|fail[^.]{0,40}sav/i;
@@ -374,6 +402,11 @@ async function main() {
     say('s18-save-fail-note', !before && said.test(text()));
     const again = sendButtons(doc);
     say('s18-save-fail-resend', again.length > 0 && again.every((b) => !b.disabled));
+    const kept = () => { const n1 = cardOf(doc, qs[0], qs), n2 = cardOf(doc, qs[1], qs); return !!(n1 && n2 && keeps(n1, 'yes') && keeps(n2, '', NOTE)); };
+    const keptNow = kept();
+    emit('answers'); emit('questions');
+    await settle();
+    say('s23-draft-kept-save-fail', keptNow && kept());
   }
 
   // Ids that name Object.prototype members are ordinary ids: unanswered, and their typed note is saved.
@@ -387,6 +420,36 @@ async function main() {
     sendButtons(doc)[0]?.click();
     await settle();
     say('s22-proto-id-note-saved', protoQs.every((q) => store.answers.get(q.id)?.note === 'note ' + q.id) && wakes.length === 1);
+  }
+
+  // A viewer who isn't the owner can't answer: no Send button, every field disabled.
+  {
+    const { doc } = await load(html, script, qs, { notOwner: true });
+    const cards = qs.map((q) => cardOf(doc, q, qs));
+    const fields = cards.flatMap((c) => (c ? inputs(c) : []));
+    say('s24-not-owner-no-send', cards.every(Boolean) && fields.length > 0 && fields.every((i) => i.disabled) && sendButtons(doc).length === 0);
+  }
+
+  // No database: the page says it can't connect, and shows no question to answer.
+  {
+    const { doc } = await load(html, script, qs, { noDb: true });
+    const text = pageText(doc);
+    say('s24-no-db-pill', /can.?t connect/i.test(text));
+    say('s24-no-db-no-card', qs.every((q) => !text.includes(q.question)) && sendButtons(doc).length === 0);
+  }
+
+  // An id outside [A-Za-z0-9_-]{1,64} can't be answered: nothing is written or sent, and the bar says so.
+  {
+    const odd = { id: 'a.b', project: 'demo', task: 'odd', question: 'Question filed under a dot?', asked: '2026-11-02T09:00:00Z', options: [] };
+    const { doc, store, wakes, writes } = await load(html, script, [odd]);
+    const c = cardOf(doc, odd, [odd]);
+    if (c) type(c, 'note for a dot');
+    await settle();
+    const btn = sendButtons(doc)[0];
+    if (btn && !btn.disabled) btn.click();
+    await settle();
+    say('s24-bad-id-not-sent', !!c && wakes.length === 0 && writes.every((w) => w.id !== odd.id) && !store.answers.has(odd.id));
+    say('s24-bad-id-says-so', /nothing was sent/i.test(pageText(doc)));
   }
 }
 
