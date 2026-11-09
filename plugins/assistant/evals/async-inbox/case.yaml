@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: async-inbox
+description: SKILL.md never tells the assistant to use AskUserQuestion and says the questions go at the end of the turn. references/inbox.md covers when to use the Inbox (judged from the user's habits), finding the existing Inbox by title or publishing one, republishing it at the same URL to watch it, writing questions to its db with project and task, reading the answer after the wake, and irreversible actions as notice-only cards with no button. The plugin ships the Inbox page, whose script calls comments.sendToClaude from the submit click, saves the answer to the db, and renders a notice as a card with no button.
+tags: [assistant, inbox]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Say how the assistant asks the user a question that needs them, what the Inbox reference covers, and what the Inbox page the plugin ships does when a question is submitted and when a card is only a notice.
+context:
+  scaffold_script: fixture.sh
