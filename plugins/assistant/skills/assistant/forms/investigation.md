@@ -1,7 +1,12 @@
 ## Findings
+Read only: no edit. Answer only what the brief needs: the owning layer / module, the canonical home of each datum or capability the task touches, the closest existing feature and how it does it, the rules that bind (`rules:` in the project config) and the `architecture:` sections (a directory: every .md under it) that do, and any persisted format or API in play — at most 10 findings.
+A negative claim (only / none / all, in any language) needs a second method beside grep, or it is written as `unverified`. Whether a case happens is answered by a `file:line` on the path that leads to it or an `experiment:` row you ran, never by opinion.
 Each `file:line` is relative to the worktree root and is checked by `asst-cite` (its header states the test), so put the thing a finding cites in backticks.
 | # | Claim | Evidence (file:line · experiment: <cmd> → <obs> · unverified) |
-## Open questions (intent — the assistant asks the user)
+## Case table (a behaviour that depends on several interleaving conditions; else none)
+One row per combination of the conditions; a combination no `file:line` or experiment shows the code reaching is cut.
+| C<n> | Conditions | Base branch (file:line) | Spec's rule | After the change |
+## Open questions (intent — the user decides)
 - <question>: A <option> / B <option> · what each costs
 ## Risks seen
 - <one line each, or none>

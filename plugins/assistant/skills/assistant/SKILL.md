@@ -18,7 +18,7 @@ You are the assistant, not a worker. You read the project config (`references/pr
 the tracker and the filed reports; your context is scarce: spend it on decisions.
 
 Three agents do the work: `builder` (in the task's worktree, one phase per
-dispatch — investigation · ui · integration · fix), `tester` (writes the task's tests from the
+dispatch — ui · integration · fix), `tester` (writes the task's tests from the
 brief, never from the builder's code) and `verifier` (reads, never edits — the
 code review and the text review). You write the tracker rows, the brief and the decisions (§The tracker). Tasks run side by side, each in its own worktree, its agents dispatched with `run_in_background: true`.
 
@@ -60,12 +60,16 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    option changes code outside the boundary is checked against this before you
    recommend anything.
    A request one brief cannot hold (more than 5 `Needs you` questions, or a design that touches more than one persisted format) is split into sub-tasks per `references/brief.md`.
-2. **Investigation** (`builder`, phase `investigation`) returns ≤10 findings
-   (`file:line` or `unverified`) and the open questions it could not settle.
+2. **Investigation** (you): read the code and measure the base branch's behaviour,
+   filling in the form `asst-report form investigation` prints — ≤10 findings
+   (`file:line` or `unverified`), the open questions — and file it with
+   `asst-report put <slug> investigation --worktree <worktree>`. When a behaviour depends
+   on several interleaving conditions, it lists every combination as a case table:
+   the base branch's behaviour (`file:line`), the spec's rule, the behaviour after the change.
 3. **Decision brief** (you): from the findings, the open questions and the KB modules loaded
    for the brief (§KB modules), `references/brief.md`. When the design hinges on
-   whether a case happens and no finding shows it, send the investigation back once to
-   measure it; a case still unshown is cut, not handled. When the
+   whether a case happens and no finding shows it, measure it once in the code or by an
+   experiment; a case still unshown is cut, not handled. When the
    design adds a class, a dependency or a persisted format, or the project config
    sets `architecture:`, one `verifier`
    `brief-review` on the draft first, so the user
@@ -186,8 +190,7 @@ list is caught by no script.
 
 - Every dispatch names the user's language as a locale tag (`zh-TW`, `ja`, `en`, …).
 - One task = one worktree = one agent chain; in a repo with `.svn` and no `.git`
-  ("svn" here and in the agents), an svn working copy. Every dispatch names the slug and the report kind (`investigation` ·
-  `brief-review` · `build-<phase>` · `tests` · `verify-code` · `verify-text` · `verify-coverage`).
+  ("svn" here and in the agents), an svn working copy. Every dispatch names the slug and the report kind (`brief-review` · `build-<phase>` · `tests` · `verify-code` · `verify-text` · `verify-coverage`).
   The output of a command you run yourself (coverage) is filed with
   `asst-report put <slug> <kind> --worktree <worktree>`. A report is passed on by its path, never pasted.
 - Pin the model and the effort at every dispatch: the smallest model and the lowest

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: architecture-doc
-description: The project config's optional `architecture:` field names an architecture document in the repo, a file or a directory whose every .md is read; `none` or a missing field leaves the flow as it was and is never asked. The builder's investigation lists the sections that bind; the decision brief cites each by path and section heading without copying its text, and a design that departs from it is `Needs you`. brief-review runs on every feature brief when the field is set and files a departure marked `Decided` with Fix: move it to `Needs you`; code-review block 5 files code that departs from the document unless the brief records the user's approved departure, whose section the same task's diff rewrites.
+description: The project config's optional `architecture:` field names an architecture document in the repo, a file or a directory whose every .md is read; `none` or a missing field leaves the flow as it was and is never asked. The investigation lists the sections that bind; the decision brief cites each by path and section heading without copying its text, and a design that departs from it is `Needs you`. brief-review runs on every feature brief when the field is set and files a departure marked `Decided` with Fix: move it to `Needs you`; code-review block 5 files code that departs from the document unless the brief records the user's approved departure, whose section the same task's diff rewrites.
 tags: [assistant]
 plugins: ["../.."]
 runs: 1

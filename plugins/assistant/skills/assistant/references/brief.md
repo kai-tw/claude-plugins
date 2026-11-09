@@ -1,9 +1,9 @@
 # Decision brief — the one page the user approves
 
-Before writing it, run `asst-cite <worktree> <investigation report path>`: a FAIL row goes
-back to the investigation once; still failing, it enters the brief as `unverified`.
+Before writing it, run `asst-cite <worktree> <investigation report path>`: re-check a FAIL row
+in the code once; still failing, it enters the brief as `unverified`.
 
-Under 40 lines. Every line is a decision, never a description. Two marks:
+Under 40 lines, the case table aside. Every line is a decision, never a description. Two marks:
 `Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
 engineering call, listed for veto; the user's silence never makes it theirs).
 Every product behaviour the task adds or changes — what the user sees, or how a
@@ -42,6 +42,9 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 - S<n> <what the user does> → <what they see or keep>
 - F<n> <a failure event> → <what the user sees, and the state left behind>
 - B<n> <a boundary from Boundaries: empty · old format · order · limit> → <the expected result>
+
+## Case table (the investigation's, every combination of the interleaving conditions; else omitted)
+| C<n> | Conditions | Base branch (file:line) | Spec's rule | After the change |
 
 ## Screens (UI in scope only)
 - <screens × states the screens page will show>

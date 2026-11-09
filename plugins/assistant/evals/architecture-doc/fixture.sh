@@ -7,7 +7,7 @@ set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; a="$root/skills/assistant"
 P="$a/references/project.md"; K="$a/SKILL.md"; BR="$a/references/brief.md"
-V="$root/agents/verifier.md"; BU="$root/agents/builder.md"; FBR="$a/forms/brief-review.md"
+V="$root/agents/verifier.md"; BU="$root/agents/builder.md"; FBR="$a/forms/brief-review.md"; FI="$a/forms/investigation.md"
 # One sentence per line: split at blank lines, list items, config lines and `. `.
 sent() {
   perl -0777 -ne 's/\r//g; for (split /\n\s*\n|\n(?=\s*(?:- |\d+\. |#|[a-z_]+:\s))|(?<=\.)\s+(?=[A-Z`*])/) { s/\s+/ /g; print "$_\n" if /\S/ }' "$@"
@@ -28,9 +28,9 @@ vbrief=$(awk '/^Brief:/ { on = 1 } on && /^$/ { exit } on' "$V" | tr -s ' \n' ' 
 
 grep -qE '^architecture:[[:space:]].*none' "$P" && echo b1-field=1 || echo b1-field=0
 has b1-missing-none "$P" -- "$ARCH" 'missing|absent|omitted|unset|no entry|left out|without' 'none'
-has b2-directory "$P" "$K" "$BR" "$V" "$BU" -- "$ARCH" 'director|folder' '\.md'
+has b2-directory "$P" "$K" "$BR" "$V" "$BU" "$FI" -- "$ARCH" 'director|folder' '\.md'
 has s1-brief-step "$K" -- "$ARCH"
-has s1-investigation "$BU" -- "$ARCH"
+has s1-investigation "$FI" -- "$ARCH"
 grep -E '^- Ownership:' "$BR" | grep -qiE "$ARCH|heading" && echo s1-ownership-cites=1 || echo s1-ownership-cites=0
 has s1-path-and-heading "$BR" -- 'path' 'heading'
 has s1-no-copy "$BR" -- 'heading' '(never|not|no|without)[^.]*(cop|quot|restat|reproduc|paste)'

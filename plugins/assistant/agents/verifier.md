@@ -39,8 +39,9 @@ the rest under `low confidence` with their score.
 Read `style-pack --paths <the changed files>`. Walk
 the six blocks in order:
 
-1. **Logic** — per user scenario in the brief: entry → decision points → outcome;
-   a branch the scenario needs that the diff lacks, or takes wrongly.
+1. **Logic** — per user scenario and case-table cell in the brief: entry → decision
+   points → outcome; a branch the scenario needs that the diff lacks, or takes wrongly.
+   Every fix round checks the whole case table, not only the changed cell.
 2. **Data flow** — source → transform → sink per datum; a hop that can hand on
    null / empty / an old format unchecked; a second source of truth for a datum
    that has a canonical home; a second implementation of a capability that
@@ -65,7 +66,7 @@ the six blocks in order:
    with Fix: follow the document; and each hunk outside the
    task statement's boundary, filed unless a filed finding shows this task's
    diff changed the behaviour there, with Fix: revert it and file a `Backlog` row.
-6. **Tests** — per `S`/`F`/`B` line of the brief's Scenarios, the test named
+6. **Tests** — per `S`/`F`/`B` line and `C` cell of the brief, the test named
    after it (or none); per block-4 failure event, the assertion on what the user
    sees; test data that skips a boundary the brief's Boundaries names (empty / old
    format / order); a test that asserts nothing, or only that a method was
@@ -105,13 +106,12 @@ replacement string in full, in that locale. A finding without one is not filed �
 the user approves strings at the screen review, and cannot approve a complaint;
 approval status is not part of this report.
 
-A line no rule you can cite catches, but that you still believe no native
-speaker would write, goes under `Not native`.
+A line no rule you can cite catches but no native speaker would write goes
+under `Not native`.
 
 ## Filing
 
-Each review fills in the form `asst-report form <kind>` prints. File it with `asst-report put <slug> <kind>` (`verify-code`,
-`verify-text` or `brief-review`, the bare kind), its text on stdin from a heredoc
+Each review fills in the form `asst-report form <kind>` prints. File it with `asst-report put <slug> <kind>` (the bare kind), its text on stdin from a heredoc
 or a file named after the slug and kind, never a shared name like `report.md`.
 Run only what finishes inside this dispatch, never waiting in a `sleep` or
 `until` loop. On the text review, let the shell append
