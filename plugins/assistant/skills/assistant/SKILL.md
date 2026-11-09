@@ -20,7 +20,7 @@ the tracker and the filed reports; your context is scarce: spend it on decisions
 Three agents do the work: `builder` (in the task's worktree, one phase per
 dispatch — investigation · ui · integration · fix), `tester` (writes the task's tests from the
 brief, never from the builder's code) and `verifier` (reads, never edits — the
-code review and the text review). You write the tracker rows, the brief and the decisions (§The tracker). Tasks run side by side, each in its own worktree (`run_in_background: true`).
+code review and the text review). You write the tracker rows, the brief and the decisions (§The tracker). Tasks run side by side, each in its own worktree, its agents dispatched with `run_in_background: true`.
 
 ## Language
 
@@ -55,15 +55,13 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    words when they gave any, and every dispatch quotes it. Code outside it changes
    only where this task's own diff changed the behaviour there, shown by a finding
    (`file:line`) that the base branch behaves differently. Whatever the base branch already does —
-   a defect, a gap, a better UX — is not this task's: it becomes a
+   a defect, a gap, a better UX — is not this task's, however small: it becomes a
    `Backlog` row (step 6), never a ruling, a fix round or a dispatch. An open question whose
    option changes code outside the boundary is checked against this before you
    recommend anything.
    A request one brief cannot hold (more than 5 `Needs you` questions, or a design that touches more than one persisted format) is split into sub-tasks per `references/brief.md`.
 2. **Investigation** (`builder`, phase `investigation`) returns ≤10 findings
    (`file:line` or `unverified`) and the open questions it could not settle.
-   `asst-cite <worktree> <report path>` runs on it before the brief: a FAIL row
-   goes back to the investigation once; still failing, it enters the brief as `unverified`.
 3. **Decision brief** (you): from the findings, the open questions and the KB modules loaded
    for the brief (§KB modules), `references/brief.md`. When the design hinges on
    whether a case happens and no finding shows it, send the investigation back once to
@@ -74,7 +72,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    is asked once, all `Needs you` in one message — a question is never
    marked `Decided` for lack of room.
    Then append the brief to the task row's body — the approved design every
-   later step reads — and file each answered question as a decision
+   later step reads without your context — and file each answered question as a decision
    (Context · Decision · Consequence, the rejected option and its
    cost in Consequence), then run each loaded module's decision-brief step.
    Build, integration and fix rounds never change a decided product behaviour: a change one needs
@@ -88,7 +86,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 6. **Verify** (in parallel on the diff): one `verifier` running the code review
    (the six blocks) and the text review — the latter only when the diff touches the
    project's user-visible strings; the security
-   checks (`security-guidance` hooks; the project's own sink rules); and line coverage on the diff
+   checks (`security-guidance` hooks, which run unattended; the project's own sink rules, when it has them); and line coverage on the diff
    (every changed line executed, with no coverage-ignore comments): find the project's coverage
    command (CLAUDE.md, CI config, package scripts) and run it in the background. When the
    PR's CI measures it, run nothing, and read its log before the delivery summary. On-device tests, when the project has them, you run
@@ -164,7 +162,7 @@ what you remember: `asst-report summary` shows every task's newest report of eac
 kind; a row whose awaited report isn't there and has no agent of yours on it in
 `ListAgents` → dispatch it again. `digest` is one line per row.
 
-Candidates are the work waiting on the user in the project's task sources, read from its CLAUDE.md like the tracker (on GitHub: issues assigned to the user, PRs awaiting their review), listed with its own CLI or MCP, and not yet in the tracker. A row ends its `Name` with the source
+Candidates are untracked work waiting on the user in task sources named in the project's CLAUDE.md like the tracker (on GitHub: assigned issues, review requests, own PRs with changes requested or red checks), listed with that source's CLI or MCP. A row ends its `Name` with the source
 ref (`… (pr#42)`); a candidate whose ref already ends a row `Name`, any status, is not
 new. Each new candidate is one
 `Needs you` line — take it (task statement, row `Status=In Progress`) or pass (row

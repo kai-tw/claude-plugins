@@ -1,5 +1,8 @@
 # Decision brief — the one page the user approves
 
+Before writing it, run `asst-cite <worktree> <investigation report path>`: a FAIL row goes
+back to the investigation once; still failing, it enters the brief as `unverified`.
+
 Under 40 lines. Every line is a decision, never a description. Two marks:
 `Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
 engineering call, listed for veto; the user's silence never makes it theirs).
