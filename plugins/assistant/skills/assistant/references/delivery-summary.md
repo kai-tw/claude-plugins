@@ -18,7 +18,7 @@ reports. Anything a linter or a passed check already settled is one line.
 ## Built vs approved design
 - <deviation from the brief's System design + reason> or no deviation
 ## Tests
-- <scenario> → <test file:line> · missing: <scenario or failure event with no test> or none
+- <scenario> → <test file:line> · missing: <scenario, failure event or case-table cell with no test> or none
 ## On device
 - <platform>: <passed | failed | not run — why> on <phone>   (or none: the project has no on-device tests)
 

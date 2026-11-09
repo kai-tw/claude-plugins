@@ -3,7 +3,7 @@
 Before writing it, run `asst-cite <worktree> <investigation report path>`: re-check a FAIL row
 in the code once; still failing, it enters the brief as `unverified`.
 
-Under 40 lines, the case table aside. Every line is a decision, never a description. Two marks:
+Under 40 lines, the case table aside. Every other line is a decision, never a description. Two marks:
 `Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
 engineering call, listed for veto; the user's silence never makes it theirs).
 Every product behaviour the task adds or changes — what the user sees, or how a

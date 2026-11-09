@@ -106,9 +106,6 @@ replacement string in full, in that locale. A finding without one is not filed â
 the user approves strings at the screen review, and cannot approve a complaint;
 approval status is not part of this report.
 
-A line no rule you can cite catches but no native speaker would write goes
-under `Not native`.
-
 ## Filing
 
 Each review fills in the form `asst-report form <kind>` prints. File it with `asst-report put <slug> <kind>` (the bare kind), its text on stdin from a heredoc

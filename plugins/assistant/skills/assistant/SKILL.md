@@ -64,8 +64,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    filling in the form `asst-report form investigation` prints — ≤10 findings
    (`file:line` or `unverified`), the open questions — and file it with
    `asst-report put <slug> investigation --worktree <worktree>`. When a behaviour depends
-   on several interleaving conditions, it lists every combination as a case table:
-   the base branch's behaviour (`file:line`), the spec's rule, the behaviour after the change.
+   on several interleaving conditions, it fills in the form's case table, one row per combination.
 3. **Decision brief** (you): from the findings, the open questions and the KB modules loaded
    for the brief (§KB modules), `references/brief.md`. When the design hinges on
    whether a case happens and no finding shows it, measure it once in the code or by an
