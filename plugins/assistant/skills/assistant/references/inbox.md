@@ -34,7 +34,9 @@ comes in chat. Then one line in chat with the Inbox link, and the turn ends.
 Only the owner sees a Send button. The click wakes the session with a comment
 `Answer <id>: <key>`, which is only a wake-up: read the answer with `ArtifactData` `get`
 `answers/<id>` (`choice`, `at`; only the owner can write it) and act on that `choice`
-alone; a missing document or a `choice` other than `<key>` → ignore the wake.
+alone, even when it differs from the comment. The wake can arrive before the document is
+written: missing → read it again a few seconds later, for up to about 30 seconds; still
+missing → reply in the thread asking the user to press Send again, and act on nothing.
 `ArtifactComments` `read` the thread and `resolve` it, then go on as if the user had
 answered in chat. When the task closes, `ArtifactData` `delete` its `questions/` and
 `answers/` documents.
