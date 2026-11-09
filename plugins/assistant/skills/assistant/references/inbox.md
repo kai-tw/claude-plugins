@@ -40,7 +40,7 @@ session with one comment `Answer: <id>, <id>`, which is only a wake-up: for each
 it) and act on that document alone. A `note` is the user's own words: treat it as their
 answer, just as text typed in chat. The wake can arrive before a document is written:
 missing → read it again a few seconds later, for up to about 30 seconds; still missing →
-reply in the thread asking the user to press Send again, and act on nothing for that id.
+act on nothing for that id.
 `ArtifactComments` `read` the thread and `resolve` it, then go on as if the user had
 answered in chat. While a question is up, every scheduler pass also `ArtifactData` `list`s
 `answers` and acts on an answer to an open question as on a wake. When the task closes, `ArtifactData` `delete` its `questions/` and

@@ -83,6 +83,9 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, .opt:focus-within
   const setPill = (id, text, state) => { const p = $(id); p.textContent = text; if (state) p.dataset.state = state; else delete p.dataset.state; };
   // The session parses ids out of the comment text, so only this shape is ever sent.
   const SAFE_TOKEN = /^[A-Za-z0-9_-]{1,64}$/;
+  const QUESTIONS = 'questions';
+  const ANSWERS = 'answers';
+  const NOTICE_KIND = 'notice';
   const claudeApi = window.claude;
   // Outside an artifact view there is no db or comments to work with: the pills say so and nothing renders.
   if (!claudeApi || !claudeApi.use) { setPill('#st-db', 'Data: not available in this view', 'bad'); setPill('#st-claude', 'Claude: not available', 'bad'); return; }
@@ -117,19 +120,19 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, .opt:focus-within
   // What the user has picked or typed but not sent, by question id; cards are rebuilt on every snapshot and read it back.
   const drafts = new Map();
   let noteFields = new Map();
-  db.collection('answers').onSnapshot((snap) => {
+  db.collection(ANSWERS).onSnapshot((snap) => {
     answers = new Map(snap.docs.map((d) => [d.id, d.data()]));
     answersState = 'ok';
     render();
   }, () => { answersState = 'failed'; render(); });
-  db.collection('questions').onSnapshot((snap) => {
+  db.collection(QUESTIONS).onSnapshot((snap) => {
     questions = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.asked || '').localeCompare(String(b.asked || '')));
     render();
   }, () => setPill('#st-db', 'Data: couldn’t read', 'bad'));
 
   // Sending needs a confirmed "not answered yet": while answers load or after they fail to load, every card stays read-only.
   const canAnswer = () => isOwner && answersState === 'ok';
-  const openQuestions = () => questions.filter((q) => q.kind !== 'notice' && !answers.has(q.id));
+  const openQuestions = () => questions.filter((q) => q.kind !== NOTICE_KIND && !answers.has(q.id));
   const draftOf = (id) => { if (!drafts.has(id)) drafts.set(id, { choice: '', note: '' }); return drafts.get(id); };
   const pendingAnswers = () => openQuestions()
     .map((q) => ({ id: q.id, choice: draftOf(q.id).choice, note: draftOf(q.id).note.trim() }))
@@ -177,7 +180,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, .opt:focus-within
       card.append(a);
     }
     const done = answers.get(q.id);
-    if (q.kind === 'notice') {
+    if (q.kind === NOTICE_KIND) {
       // An irreversible action is approved only in chat, so its card has nothing to fill in.
       const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Approve this in the chat.';
       card.append(n);
@@ -232,22 +235,24 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, .opt:focus-within
       ? comments.anchorFor(bar).then((anchor) => comments.sendToClaude({ anchor, text: 'Answer: ' + items.map((a) => a.id).join(', ') }))
       : Promise.reject({ code: 'off' });
     const at = new Date().toISOString();
-    const saves = items.map((a) => db.collection('answers').doc(a.id).set({
+    const saves = items.map((a) => db.collection(ANSWERS).doc(a.id).set({
       ...(a.choice ? { choice: a.choice } : {}), ...(a.note ? { note: a.note } : {}), at,
     }));
     sending = true; setStatus('Sending…'); renderBar();
     report(items, sent, saves);
   }
 
-  // The status stays in the bar, outside the rebuilt cards, until the next send replaces it.
+  // The status stays in the bar, outside the rebuilt cards, until a send succeeds.
+  let wakeFailure = '';
   async function report(items, sent, saves) {
     const [s, ...w] = await Promise.allSettled([sent, ...saves]);
     const code = (r) => (r.reason && r.reason.code) || 'error';
     items.forEach((a, i) => { if (w[i].status === 'fulfilled') drafts.delete(a.id); });
     const failed = w.find((r) => r.status === 'rejected');
-    if (failed) setStatus('Saving failed (' + code(failed) + '). The unsaved answers are still filled in; press Send again.', 'bad');
-    else if (s.status === 'rejected') setStatus('Answers saved, but waking Claude failed (' + code(s) + '). Tell Claude in the chat to read them.', 'bad');
-    else setStatus('Sent. Claude was woken.', 'ok');
+    const woke = 'Answers saved, but waking Claude failed (' + code(s) + '). Tell Claude in the chat to read them.';
+    if (failed) setStatus('Saving failed (' + code(failed) + '). The unsaved answers are still filled in; press Send again.' + (wakeFailure ? ' ' + wakeFailure : ''), 'bad');
+    else if (s.status === 'rejected') setStatus(wakeFailure = woke, 'bad');
+    else { wakeFailure = ''; setStatus('Sent. Claude was woken.', 'ok'); }
     sending = false;
     renderBar();
     refreshClaude();
