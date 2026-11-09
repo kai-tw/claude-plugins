@@ -88,7 +88,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    Build, integration and fix rounds never change a decided product behaviour: a change one needs
    is a `Needs you` first, and the answer is recorded where the decided one was,
    and filed as a decision, before the code changes.
-4. **Build** (`builder`, phase `ui`) → **stop for the screen review**, `references/screen-review.md`.
+4. **Build** (`builder`, phase `ui`; it finds the screenshot command) → **stop for the screen review**, `references/screen-review.md`.
    Integration waits for OK.
 5. **Tests, then integration.** First the `tester`, one dispatch; then the `builder`
    integrates, one commit per slice (§Dispatch rules). A test the builder thinks wrong comes
@@ -97,9 +97,10 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    (the six blocks) and the text review — the latter only when the diff touches the
    project's user-visible strings; the security
    checks (`security-guidance` hooks run unattended; the project's own sink rules
-   when it has them); and the project config's `coverage:` command when set, which you
-   run yourself in the background. `coverage: ci` means the PR's CI measures it: run nothing, and read
-   its log before the delivery summary. On-device tests, when the project has them, you run
+   when it has them); and line coverage on the diff
+   (every changed line executed, with no coverage-ignore comments): find the project's coverage
+   command (CLAUDE.md, CI config, package scripts) and run it in the background. When the
+   PR's CI measures it, run nothing, and read its log before the delivery summary. On-device tests, when the project has them, you run
    yourself the project's way; a platform whose phone is not connected waits for it, named. An `exempt` diff skips the code review: check it yourself — it changes
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line, starting `exempt:`, into `asst-report put <slug> verify-code --worktree <worktree>`; past that
@@ -130,17 +131,16 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 
 ## KB modules
 
-The project's knowledge base has five modules: `frontend` · `backend` ·
-`product` · `marketing` · `design`. A module with rules has a
+A KB module with rules has a
 file under `references/kb/`, whose first line names the steps it is loaded at:
 read it before those steps when the project keeps that module's pages (Notion KB
-Pages rows, or `.claude/.assistant/kb/<module>/` on a file board). Only `product` has rules so far.
+Pages rows, or `.claude/.assistant/kb/<module>/` on a file board).
 
 ## Usage data
 
-A project with `analytics:` in its project config has its analytics events in BigQuery:
-when the user asks what users do, or a design hinges on how often a case
-happens and the investigation can't show it, read `references/analytics.md`.
+When the user asks what users do, or a design hinges on how often a case happens and the
+investigation can't show it, read `references/analytics.md` if the project's CLAUDE.md names
+its BigQuery project.
 
 ## House style for strings
 
@@ -167,7 +167,7 @@ starts at the investigation, and a parent whose last sub-item it was closes too.
 A decision goes, one entry per question naming the KB pages it governs, to Notion's
 `decision-log`; with any other tracker, to `.claude/.assistant/kb/decisions/<slug>.md`.
 Every turn you take is a scheduler pass: the live rows and
-`asst-intake <project-dir>` → file new candidates → advance or
+new candidates → file them → advance or
 dispatch each live row → surface new `Needs you` lines together.
 Live = `In Progress`, apart from a parent, whose sub-items are the work.
 A Close changes the tracker, so the pass runs
@@ -177,7 +177,8 @@ what you remember: `asst-report summary` shows every task's newest report of eac
 kind; a row whose awaited report isn't there and has no agent of yours on it in
 `ListAgents` → dispatch it again. `digest` is one line per row.
 
-`asst-intake` lists work not yet in the tracker. A row ends its `Name` with the source
+Candidates are issues and PRs waiting on the user and not yet in the tracker, listed with
+its own tool. A row ends its `Name` with the source
 ref (`… (pr#42)`); a candidate whose ref already ends a row `Name`, any status, is not
 new. Each new candidate is one
 `Needs you` line — take it (task statement, row `Status=In Progress`) or pass (row
@@ -203,7 +204,7 @@ list is caught by no script.
 - One task = one worktree = one agent chain; in a repo with `.svn` and no `.git`
   ("svn" here and in the agents), an svn working copy. Every dispatch names the slug and the report kind (`investigation` ·
   `brief-review` · `build-<phase>` · `tests` · `verify-code` · `verify-text` · `verify-coverage`).
-  The output of a command you run yourself (`coverage:`) is filed with
+  The output of a command you run yourself (coverage) is filed with
   `asst-report put <slug> <kind> --worktree <worktree>`. A report is passed on by its path, never pasted.
 - Pin the model and the effort at every dispatch: the smallest model and the lowest
   effort the work in hand allows (code.claude.com/docs/en/model-config), starting

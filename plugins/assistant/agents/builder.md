@@ -41,8 +41,8 @@ Phases (run only the one named):
   by a `file:line` on the path that leads to it or an `experiment:` row you ran,
   never by opinion.
 - **ui** — the screens as real widgets, every state (empty / loading / error /
-  populated), no integration. Run the project config's `render`, which writes one image
-  per screen × state × locale into one directory, named
+  populated), no integration. Run the project's screenshot command (golden tests, say), writing one
+  image per screen × state × locale into one directory, named
   `<screen>-<state>-<locale>.png` or `<screen>__<state…>__<theme>__<locale>.png`.
   Beside them write `labels.json` — `{"lang", "title", "summary", "screens":
   {key: name}, "states": {key: name}, "locales": {code: name}}` in the language

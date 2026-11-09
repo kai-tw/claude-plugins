@@ -1,24 +1,22 @@
 #!/usr/bin/env node
 // asst-analytics — the project's analytics events in BigQuery, read-only.
 //
-// Usage: asst-analytics events [--days N]           every event: events, users, first and last day
-//        asst-analytics params <event> [--days N]   its parameters: types, distinct values, events, top 5 values
-//        asst-analytics sql "<query>"               any SELECT; {events} stands for the export's events_* tables
+// Usage: asst-analytics events --project P [--days N]           every event: events, users, first and last day
+//        asst-analytics params <event> --project P [--days N]   its parameters: types, distinct values, events, top 5 values
+//        asst-analytics sql "<query>" --project P               any SELECT; {events} stands for the export's events_* tables
 //        asst-analytics --help
 //
-// The project config's `analytics: <gcp-project>` names the project the Firebase / GA4
-// daily export lands in; the dataset is its one analytics_<property> dataset.
+// --project names the GCP project the Firebase / GA4 daily export lands in (the
+// project's CLAUDE.md says which); the dataset is its one analytics_<property> dataset.
 // Days count back from yesterday (N days, default 28), since a day's table lands
 // the day after. Every query caps bytes billed at 1 GB (ASST_ANALYTICS_MAX_BYTES
 // overrides), so a query that would cost money fails instead.
 // Output: a {op, project, dataset, count} line, then one JSON row per line.
-// Exit 2 = no project config entry, no dataset or bad arguments; bq failures pass through.
-import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+// Exit 2 = no --project, no dataset or bad arguments; bq failures pass through.
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const here = dirname(fileURLToPath(import.meta.url));
 const fail = (m) => { console.error(`asst-analytics: ${m}`); process.exit(2); };
 const args = process.argv.slice(2);
 const [op] = args;
@@ -28,17 +26,17 @@ if (!op || op === '--help' || op === '-h') {
   process.exit(0);
 }
 
-const root = execFileSync('bash', [join(here, 'root.sh')], { encoding: 'utf8' }).trim();
-const configPath = join(root, '.claude/assistant.md');
-const config = existsSync(configPath) ? readFileSync(configPath, 'utf8') : '';
-const project = config.match(/^analytics:[ \t]*([^#\n]*[^#\s])/m)?.[1] ?? '';
-if (!project || project === 'none')
-  fail(`the project config has no analytics: <gcp-project> (${configPath}) — the project whose Firebase / GA4 BigQuery export holds the events.`);
-
-const daysAt = args.indexOf('--days');
-const days = daysAt < 0 ? 28 : Number(args[daysAt + 1]);
+const options = {};
+const rest = [];
+for (let i = 1; i < args.length; i++) {
+  if (args[i] === '--days' || args[i] === '--project') options[args[i]] = args[++i];
+  else rest.push(args[i]);
+}
+const project = options['--project'];
+if (!project)
+  fail('no --project <gcp-project>: the GCP project whose Firebase / GA4 BigQuery export holds the events; the project\'s CLAUDE.md names it.');
+const days = options['--days'] === undefined ? 28 : Number(options['--days']);
 if (!Number.isInteger(days) || days < 1) fail('--days takes a whole number of days, 1 or more');
-const rest = args.slice(1).filter((_, i) => i + 1 !== daysAt && i + 1 !== daysAt + 1);
 const maxBytes = process.env.ASST_ANALYTICS_MAX_BYTES ?? String(1e9);
 
 function bq(bqArgs) {

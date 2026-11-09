@@ -4,8 +4,6 @@
 # an unrelated dataset) until ./nodataset exists. Each call is logged to bq.log on
 # one line.
 set -euo pipefail
-mkdir -p .claude
-printf 'vcs: git\nboard: file\nkb: docs/kb\ngate: dart test\nanalytics: novelglide\n' > .claude/assistant.md
 cat > bq <<'JS'
 #!/usr/bin/env node
 const fs = require('fs');

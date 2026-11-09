@@ -4,9 +4,9 @@ Load when the user asks what users do (which feature is used, adoption,
 retention), or when a design hinges on how often a case happens and neither the
 code nor the investigation can show it.
 
-The project config's `analytics:` names the GCP project the Firebase / GA4 daily export
-lands in (Firebase → Project settings → Integrations → BigQuery). `asst-analytics`
-reads it: `events` for every event's counts, `params <event>` for its parameter
+The project's CLAUDE.md names the GCP project the Firebase / GA4 daily export
+lands in (Firebase → Project settings → Integrations → BigQuery); pass it to
+`asst-analytics --project <gcp-project>`: `events` for every event's counts, `params <event>` for its parameter
 values, `sql` for anything else. Every query is capped at 1 GB billed.
 
 - What the app sends is in the code: the event names and parameters its analytics

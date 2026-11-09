@@ -30,7 +30,7 @@ accepted as drafted: <this task's line and the `all` line from `asst-strings rat
 - value approved at the screen review: <value> → change: <one sentence> · awaiting re-approval
 
 ## Other (automated checks)
-security passed · naming passed · coverage <n unexecuted lines, each named>   (or `no coverage tool` from the project config)
+security passed · naming passed · coverage <n unexecuted lines, each named>   (or `no coverage tool found`)
 ```
 
 **Approval is given at the screen review; this page only asks whether it still holds.** A string
