@@ -22,5 +22,5 @@ values, `sql` for anything else. Every query is capped at 1 GB billed.
   code can't produce.
 - Numbers point a direction and never decide: each finding the user should act
   on becomes one row in the project's tracker, `Status=Backlog`
-  `Stage=Product Plan` (on Notion with `Pages=<page>,…`), its body
+  `Stage=Product Plan`, its body
   holding the numbers, the window, the query and the open question it raises.

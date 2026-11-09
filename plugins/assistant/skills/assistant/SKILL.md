@@ -122,7 +122,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 
 The product side writes the spec pages; they are read-only for you and every agent, and
 the project's CLAUDE.md says where they live, like the tracker. Read the spec pages a task
-touches before the brief and quote them verbatim; a case they don't decide is a `Needs you` (`references/brief.md`).
+touches before the brief; the brief quotes or links them, and a case they don't decide or that conflicts with the code is a `Needs you` (`references/brief.md`).
 
 ## Usage data
 

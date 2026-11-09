@@ -1155,6 +1155,7 @@ function resolveRegistry(rootId) {
     const dsId = res.data_sources?.[0]?.id;
     if (!dsId) fail(`"${DB_TITLE[key]}" resolved to no data source (db ${dbId}).`);
     DB[key].ds = dsId;
+    DB[key].db = dbId;
     resolvedDs[key] = dsId;
   }
 
@@ -1191,23 +1192,60 @@ function resolveRegistry(rootId) {
 }
 
 // ── spec pages are read-only ──────────────────────────────────────────────────
-// Every write aimed at a kb-pages row is refused: creating one, or updating /
-// appending to / checking a page whose parent is the kb-pages data source.
+// Every write aimed at a kb-pages row is refused: creating one, or updating,
+// setting, appending to, checking, trashing or commenting on a page in it. A
+// lookup that can't tell whether a page is one refuses too.
 const SPEC_READ_ONLY = 'spec pages are read-only; they are edited on the product side';
 
+// Notion writes the same id with and without dashes.
+const sameNotionId = (a, b) => typeof a === 'string' && typeof b === 'string'
+  && a.replace(/-/g, '').toLowerCase() === b.replace(/-/g, '').toLowerCase();
+
+// Two keys mapped to one database in .claude/kb-databases.txt resolve to one ds.
 function refuseSpecDb(dbKey) {
-  if (dbKey === 'kb-pages') fail(SPEC_READ_ONLY);
+  if (dbKey === 'kb-pages' || sameNotionId(DB[dbKey]?.ds, DB['kb-pages']?.ds)) fail(SPEC_READ_ONLY);
 }
 
+// `ntn api` exits 0 when Notion answers with an error object (rate limited, no
+// access), so every lookup checks for one.
+function readSpecLookup(path, unsure) {
+  const raw = ntn(['api', path]);
+  let obj;
+  try { obj = JSON.parse(raw); } catch { unsure(`${path} did not answer with JSON`); }
+  if (obj?.object === 'error') unsure(`${path}: ${obj.code} — ${obj.message}`);
+  return obj;
+}
+
+// The ids come from --root (resolveRegistry). The titles of the parent data
+// source and of its database (the one resolveRegistry matches) are read either
+// way, so a spec page is still caught without --root.
 function refuseSpecPage(pageId) {
-  loadTitleOverrides();
-  const page = JSON.parse(ntn(['api', `v1/pages/${pageId}`]));
-  const ds = page?.parent?.data_source_id;
-  if (!ds) return;
-  if (DB['kb-pages']?.ds) { if (ds === DB['kb-pages'].ds) fail(SPEC_READ_ONLY); return; }
-  const live = JSON.parse(ntn(['api', `v1/data_sources/${ds}`]));
-  const title = (live?.title || []).map((t) => t.plain_text ?? '').join('').trim();
-  if (title === DB_TITLE['kb-pages']) fail(SPEC_READ_ONLY);
+  const unsure = (why) => fail(`could not tell whether ${pageId} is a spec page (${why}), so nothing was written — ${SPEC_READ_ONLY}.`);
+  const parent = readSpecLookup(`v1/pages/${pageId}`, unsure).parent ?? {};
+  // A page under a plain page or the workspace is not a database row, so it is
+  // not a spec page: the write goes ahead.
+  if (parent.type === 'page_id' || parent.type === 'workspace') return;
+  if (parent.type !== 'data_source_id' && parent.type !== 'database_id') unsure(`its parent is ${parent.type ?? 'missing'}`);
+  const spec = DB['kb-pages'];
+  if (sameNotionId(parent.data_source_id, spec?.ds) || sameNotionId(parent.database_id, spec?.db)) fail(SPEC_READ_ONLY);
+
+  // resolveRegistry ran: it either set the kb-pages ids or found no KB Pages under the root.
+  const idsKnown = spec?.ds !== undefined || MISSING_DB.has('kb-pages');
+  if (!idsKnown) loadTitleOverrides();
+  const plainTitle = (richText) => richText.map((t) => t.plain_text ?? '').join('').trim();
+  const titles = [];
+  let dbId = parent.database_id;
+  if (parent.data_source_id) {
+    const ds = readSpecLookup(`v1/data_sources/${parent.data_source_id}`, unsure);
+    if (Array.isArray(ds.title)) titles.push(plainTitle(ds.title));
+    dbId ??= ds.parent?.database_id;
+  }
+  if (dbId) {
+    const db = readSpecLookup(`v1/databases/${dbId}`, unsure);
+    if (Array.isArray(db.title)) titles.push(plainTitle(db.title));
+  }
+  if (titles.includes(DB_TITLE['kb-pages'])) fail(SPEC_READ_ONLY);
+  if (!idsKnown && titles.length === 0) unsure('no --root to compare ids with, and no title to compare');
 }
 
 // ── CLI ─────────────────────────────────────────────────────────────────────────
@@ -1233,12 +1271,13 @@ function main() {
   // Resolve the project's KB only for the commands that actually need a data
   // source id or the project-owned vocabulary. Resolution costs one API call
   // plus one per database — several seconds, and it needs the network.
-  // The page-id commands (`trash` / `check` / `append` / `comment`) address a
-  // page directly and never consult the registry at all.
   const NEEDS_KB = new Set(['create', 'update', 'set', 'filter', 'query']);
+  // The page-id commands address a page directly; given a root, they resolve it
+  // too, so refuseSpecPage compares the page's parent with the kb-pages ids.
+  const PAGE_WRITES = new Set(['trash', 'check', 'append', 'comment']);
   // `schema` is the discovery command: keep it usable offline, but resolve when
   // the caller supplied a root (then it reports real ds ids + live vocabulary).
-  if (NEEDS_KB.has(cmd) || cmd === 'schema') {
+  if (NEEDS_KB.has(cmd) || cmd === 'schema' || (PAGE_WRITES.has(cmd) && rootId)) {
     try {
       // Offline, `schema` still shows the project's own names.
       if (cmd === 'schema' && !flags.has('--live') && !rootId) loadTitleOverrides();
@@ -1275,7 +1314,7 @@ function main() {
   }
   if (cmd === 'trash') {
     if (!pos[0]) { console.error('trash requires a <page-id>'); process.exitCode = 1; return; }
-    try { trashPage(pos[0], flags.has('--commit')); }
+    try { refuseSpecPage(pos[0]); trashPage(pos[0], flags.has('--commit')); }
     catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
     return;
   }
@@ -1294,7 +1333,7 @@ function main() {
   if (cmd === 'comment') {
     if (!pos[0]) { console.error('comment requires <page-id> and text (inline, or "-" for stdin)'); process.exitCode = 1; return; }
     const text = (pos[1] === '-' || pos[1] === undefined) ? readInput('-') : pos.slice(1).join(' ');
-    try { postComment(pos[0], text, flags.has('--commit')); }
+    try { refuseSpecPage(pos[0]); postComment(pos[0], text, flags.has('--commit')); }
     catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
     return;
   }
@@ -1344,8 +1383,12 @@ function main() {
 
   try {
     refuseSpecDb(manifest.db);
+    // Checked before build, so a spec page is refused even when the manifest
+    // names a database this root lacks; build rejects a row with no page_id.
+    if (cmd === 'update' && Array.isArray(manifest.rows)) {
+      for (const r of manifest.rows) if (r?.page_id) refuseSpecPage(r.page_id);
+    }
     const { dbKey, rows } = build(manifest, cmd);
-    if (cmd === 'update') for (const r of rows) refuseSpecPage(r.page_id);
     if (!commit) { console.log(JSON.stringify(rows, null, 2)); return; }
     if (cmd === 'create') commitCreate(dbKey, rows);
     else commitUpdate(dbKey, rows);

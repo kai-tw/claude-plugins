@@ -15,7 +15,8 @@ description: >-
   `--commit`. A project that names its databases or properties in its own
   language maps them in `.claude/kb-databases.txt`, one per line:
   `decision-log = <title>`; `asst-notion schema <db>` shows the names in use.
-  Spec pages (`kb-pages`) are read-only: any write aimed at one exits non-zero.
+  Spec pages (`kb-pages`) are read-only: any write aimed at one, or at a page it can't
+  tell apart from one, exits non-zero.
 - A Notion tracker: a task is a `tasklist` row (`asst-notion create`, its page id kept
   in `.claude/.assistant/tasks/<slug>/page`), `Blocked by` and `Parent item` taking
   page ids; the brief goes in with `append`; each decision is one `decision-log` row
