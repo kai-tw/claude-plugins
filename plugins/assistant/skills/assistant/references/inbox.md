@@ -15,28 +15,33 @@ by the title `Assistant Inbox`; none → publish `assets/inbox.html` (beside thi
 ```
 
 A session is woken only by a page it published or whose link the user gave, so in every
-session republish that same file, with the same capabilities, at the same URL (`Artifact`
-with `url`) before the first question, then `ArtifactComments` `watch` to confirm it's armed.
+session `Artifact` `action: "read"` it once, then republish that same file, with the same
+capabilities, at the same URL (`Artifact` with `url`) before the first question, then
+`ArtifactComments` `watch` to confirm it's armed.
 
 ## Asking
 
 Each question is one db document, written with `ArtifactData` `set` at `questions/<id>`,
 the id unique across projects and matching `[A-Za-z0-9_-]{1,64}`: `project`, `task` (the
-slug), `question` and `context` in the user's language, `options` (`key` matching the same
-pattern, `label`, `detail`), `asked` (ISO time). A brief's questions, a screen review and
-a delivery summary go up the same way, the page or summary linked in `context`.
+slug), `question` and `context` in the user's language, optional `options` (`key` matching
+the same pattern, `label`, `detail`), optional `link` (an https URL, shown as `Open`),
+`asked` (ISO time). Every card also has a note field, so a question with no `options` is
+answered in words. A brief's questions, a screen review and a delivery summary go up the
+same way, the page or summary's URL in `link`.
 An action SKILL.md says to ask before (a merge, a deletion, a deploy…) goes up with
-`kind: "notice"` and no `options`: the card has no button, and the approval still
+`kind: "notice"` and no `options`: the card has no button or note field, and the approval still
 comes in chat. Then one line in chat with the Inbox link, and the turn ends.
 
 ## The answer
 
-Only the owner sees a Send button. The click wakes the session with a comment
-`Answer <id>: <key>`, which is only a wake-up: read the answer with `ArtifactData` `get`
-`answers/<id>` (`choice`, `at`; only the owner can write it) and act on that `choice`
-alone, even when it differs from the comment. The wake can arrive before the document is
-written: missing → read it again a few seconds later, for up to about 30 seconds; still
-missing → reply in the thread asking the user to press Send again, and act on nothing.
+Only the owner can answer. One Send at the bottom saves every answered card and wakes the
+session with one comment `Answer: <id>, <id>`, which is only a wake-up: for each id read
+`answers/<id>` with `ArtifactData` `get` (`choice`, `note`, `at`; only the owner can write
+it) and act on that document alone. A `note` is the user's own words: treat it as their
+answer, just as text typed in chat. The wake can arrive before a document is written:
+missing → read it again a few seconds later, for up to about 30 seconds; still missing →
+reply in the thread asking the user to press Send again, and act on nothing for that id.
 `ArtifactComments` `read` the thread and `resolve` it, then go on as if the user had
-answered in chat. When the task closes, `ArtifactData` `delete` its `questions/` and
+answered in chat. While a question is up, every scheduler pass also `ArtifactData` `list`s
+`answers` and acts on an answer to an open question as on a wake. When the task closes, `ArtifactData` `delete` its `questions/` and
 `answers/` documents.
