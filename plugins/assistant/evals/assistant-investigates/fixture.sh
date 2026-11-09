@@ -14,7 +14,7 @@ v=$(n "$root/agents/verifier.md")
 # S27: no builder investigation phase; SKILL.md has the assistant run and file it itself.
 echo "s27-builder-phase=$(grep -ciE '^- \*\*investigation\*\*|phases?[^.]{0,80}investigation|investigation[^.]{0,40}phase|investigation before' "$root/agents/builder.md")"
 echo "s27-skill-dispatch=$(grep -ciE 'investigation ·|builder[^.]{0,40}phase `?investigation|phase `?investigation' <<<"$s")"
-echo "s27-skill-itself=$(grep -ciE 'investigat[^.]{0,120}(you|assistant)[^.]{0,60}(run|do|file|write)[^.]{0,60}(yourself|itself|directly)|(you|assistant) (run|do|file|write)s?[^.]{0,60}investigation[^.]{0,60}(yourself|itself)|asst-report put <slug> investigation' <<<"$s")"
+echo "s27-skill-itself=$(grep -ciE '\*\*Investigation\*\* \((you|the assistant)\)' <<<"$s")"
 echo "s27-skill-put=$(grep -ciE 'asst-report put[^.]{0,40}investigation' <<<"$s")"
 # S28: case table in SKILL.md and references/brief.md.
 echo "s28-skill=$(grep -ciE 'case table[^.]{0,250}(combination|interleav)|(combination|interleav)[^.]{0,250}case table' <<<"$s")"
