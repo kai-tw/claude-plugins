@@ -1190,6 +1190,26 @@ function resolveRegistry(rootId) {
   }
 }
 
+// ── spec pages are read-only ──────────────────────────────────────────────────
+// Every write aimed at a kb-pages row is refused: creating one, or updating /
+// appending to / checking a page whose parent is the kb-pages data source.
+const SPEC_READ_ONLY = 'spec pages are read-only; they are edited on the product side';
+
+function refuseSpecDb(dbKey) {
+  if (dbKey === 'kb-pages') fail(SPEC_READ_ONLY);
+}
+
+function refuseSpecPage(pageId) {
+  loadTitleOverrides();
+  const page = JSON.parse(ntn(['api', `v1/pages/${pageId}`]));
+  const ds = page?.parent?.data_source_id;
+  if (!ds) return;
+  if (DB['kb-pages']?.ds) { if (ds === DB['kb-pages'].ds) fail(SPEC_READ_ONLY); return; }
+  const live = JSON.parse(ntn(['api', `v1/data_sources/${ds}`]));
+  const title = (live?.title || []).map((t) => t.plain_text ?? '').join('').trim();
+  if (title === DB_TITLE['kb-pages']) fail(SPEC_READ_ONLY);
+}
+
 // ── CLI ─────────────────────────────────────────────────────────────────────────
 function readInput(arg) {
   if (arg === '-' || arg === undefined) return readFileSync(0, 'utf8');
@@ -1261,13 +1281,13 @@ function main() {
   }
   if (cmd === 'check') {
     if (!pos[0] || !pos[1]) { console.error('check requires <page-id> <match-text>'); process.exitCode = 1; return; }
-    try { checkBox(pos[0], pos.slice(1).join(' '), flags.has('--uncheck'), flags.has('--commit')); }
+    try { refuseSpecPage(pos[0]); checkBox(pos[0], pos.slice(1).join(' '), flags.has('--uncheck'), flags.has('--commit')); }
     catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
     return;
   }
   if (cmd === 'append') {
     if (!pos[0]) { console.error('append requires <page-id> [md-file|-]'); process.exitCode = 1; return; }
-    try { appendBlocks(pos[0], mdToBlocks(readInput(pos[1])), flags.has('--commit')); }
+    try { refuseSpecPage(pos[0]); appendBlocks(pos[0], mdToBlocks(readInput(pos[1])), flags.has('--commit')); }
     catch (e) { if (e instanceof BuildError) { console.error(`✗ ${e.message}`); process.exitCode = 1; } else throw e; }
     return;
   }
@@ -1284,6 +1304,8 @@ function main() {
     // vocabulary validation is byte-identical to `update`.
     if (pos.length < 3) { console.error('set requires <db> <page-id> Prop=Val […]'); process.exitCode = 1; return; }
     try {
+      refuseSpecDb(pos[0]);
+      refuseSpecPage(pos[1]);
       const def = DB[pos[0]];
       if (!def) fail(unknownDb(pos[0]));
       const row = { page_id: pos[1] };
@@ -1321,7 +1343,9 @@ function main() {
   catch (e) { console.error(`could not parse manifest JSON: ${e.message}`); process.exitCode = 1; return; }
 
   try {
+    refuseSpecDb(manifest.db);
     const { dbKey, rows } = build(manifest, cmd);
+    if (cmd === 'update') for (const r of rows) refuseSpecPage(r.page_id);
     if (!commit) { console.log(JSON.stringify(rows, null, 2)); return; }
     if (cmd === 'create') commitCreate(dbKey, rows);
     else commitUpdate(dbKey, rows);
