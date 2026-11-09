@@ -41,10 +41,10 @@ Phases (run only the one named):
   by a `file:line` on the path that leads to it or an `experiment:` row you ran,
   never by opinion.
 - **ui** — the screens as real widgets, every state (empty / loading / error /
-  populated), no integration. Find the project's screenshot command (CLAUDE.md, CI config, package scripts; golden tests, say) and run it, writing one
+  populated), no integration. Find the project's screenshot command (CLAUDE.md, CI config, package scripts) and run it, writing one
   image per screen × state × locale into one directory, named
   `<screen>-<state>-<locale>.png` or `<screen>__<state…>__<theme>__<locale>.png`.
-  With none, stop and put it on `open questions:` for the assistant to ask the user once.
+  With none, stop: `open questions:` for the assistant to ask the user once.
   Beside them write `labels.json` — `{"lang", "title", "summary", "screens":
   {key: name}, "states": {key: name}, "locales": {code: name}}` in the language
   you write to the user, every key named the way the user would say it and
