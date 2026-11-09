@@ -58,8 +58,9 @@ button:focus-visible, .opt:focus-within { outline: 2px solid var(--accent); outl
     <span class="pill" id="st-db">Data: connecting…</span>
     <span class="pill" id="st-claude">Claude: checking…</span>
   </div>
+  <p class="note" id="answers-note" hidden>Can’t confirm which questions are already answered, so Send is hidden.</p>
   <section class="list" id="list">
-    <div class="empty" id="empty">Nothing is waiting on you.</div>
+    <div class="empty" id="empty">No open questions. New ones from the assistant show up here.</div>
   </section>
 </main>
 
@@ -67,15 +68,20 @@ button:focus-visible, .opt:focus-within { outline: 2px solid var(--accent); outl
 (async () => {
   const $ = (s) => document.querySelector(s);
   const setPill = (id, text, state) => { const p = $(id); p.textContent = text; if (state) p.dataset.state = state; else delete p.dataset.state; };
+  // The session parses ids and keys out of the comment text, so only this shape is ever sent.
+  const SAFE_TOKEN = /^[A-Za-z0-9_-]{1,64}$/;
   const claudeApi = window.claude;
+  // Outside an artifact view there is no db or comments to work with: the pills say so and nothing renders.
   if (!claudeApi || !claudeApi.use) { setPill('#st-db', 'Data: not available in this view', 'bad'); setPill('#st-claude', 'Claude: not available', 'bad'); return; }
 
-  let db = null, comments = null;
+  let db = null, comments = null, user = null;
   const timer = setTimeout(() => { if (!db) setPill('#st-db', 'Data: connection timed out', 'bad'); }, 10000);
-  [db, comments] = await Promise.all([claudeApi.use('db'), claudeApi.use('comments')]);
+  [db, comments, user] = await Promise.all([claudeApi.use('db'), claudeApi.use('comments'), claudeApi.use('user')]);
   clearTimeout(timer);
   if (!db) { setPill('#st-db', 'Data: can’t connect (sign in)', 'bad'); }
   else setPill('#st-db', 'Data: connected', 'ok');
+  // Answers are written by the owner only (db rules), so only the owner gets a Send button.
+  const isOwner = !!(user && await user.isOwner());
 
   async function refreshClaude() {
     if (!comments) { setPill('#st-claude', 'Claude: comments not available', 'bad'); return 'off'; }
@@ -87,14 +93,17 @@ button:focus-visible, .opt:focus-within { outline: 2px solid var(--accent); outl
     return s;
   }
   await refreshClaude();
+  // Without a db there are no questions to list; the Data pill already shows why.
   if (!db) return;
 
-  const answers = {};
+  let answers = {};
+  let answersState = 'loading'; // 'loading' | 'ok' | 'failed'
   let questions = [];
   db.collection('answers').onSnapshot((snap) => {
-    snap.docs.forEach((d) => { answers[d.id] = d.data(); });
+    answers = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
+    answersState = 'ok';
     render();
-  }, () => {});
+  }, () => { answersState = 'failed'; render(); });
   db.collection('questions').onSnapshot((snap) => {
     questions = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.asked || '').localeCompare(String(b.asked || '')));
     render();
@@ -104,68 +113,77 @@ button:focus-visible, .opt:focus-within { outline: 2px solid var(--accent); outl
     const list = $('#list');
     list.querySelectorAll('.card').forEach((c) => c.remove());
     $('#empty').hidden = questions.length > 0;
-    for (const q of questions) {
-      const card = document.createElement('article');
-      card.className = 'card';
-      card.id = 'card-' + q.id;
-      card.dataset.kind = q.kind || 'question';
-      const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = [q.project, q.task, q.id].filter(Boolean).join(' · ');
-      const h = document.createElement('p'); h.className = 'q'; h.textContent = q.question || '';
-      card.append(meta, h);
-      if (q.context) { const c = document.createElement('p'); c.className = 'ctx'; c.textContent = q.context; card.append(c); }
-      const done = answers[q.id];
-      if (q.kind === 'notice') {
-        // An irreversible action is approved only in chat, so its card has no button to press.
-        const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Approve this in the chat.';
-        card.append(n);
-      } else if (done) {
-        const a = document.createElement('p'); a.className = 'answered';
-        const opt = (q.options || []).find((o) => o.key === done.choice);
-        a.textContent = 'Answered: ' + (opt ? opt.label : done.choice);
-        card.append(a);
-      } else {
-        const opts = document.createElement('div'); opts.className = 'opts'; opts.setAttribute('role', 'radiogroup');
-        (q.options || []).forEach((o, i) => {
-          const lab = document.createElement('label'); lab.className = 'opt';
-          const inp = document.createElement('input'); inp.type = 'radio'; inp.name = 'q-' + q.id; inp.value = o.key; inp.id = 'q-' + q.id + '-' + i;
-          const box = document.createElement('div');
-          const b = document.createElement('b'); b.textContent = o.label; box.append(b);
-          if (o.detail) { const s = document.createElement('span'); s.textContent = o.detail; box.append(s); }
-          lab.append(inp, box); opts.append(lab);
-        });
-        const row = document.createElement('div'); row.className = 'row';
-        const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Send'; btn.id = 'send-' + q.id;
-        const note = document.createElement('span'); note.className = 'note';
-        btn.addEventListener('click', () => submit(q, card, btn, note));
-        row.append(btn, note);
-        card.append(opts, row);
-      }
-      list.append(card);
-    }
+    $('#answers-note').hidden = answersState !== 'failed';
+    for (const q of questions) list.append(renderCard(q));
   }
 
-  // The send must ride on this click, so it starts here, before anything else is awaited.
-  function submit(q, card, btn, note) {
-    const picked = card.querySelector('input[name="q-' + q.id + '"]:checked');
-    const opt = picked && (q.options || []).find((o) => o.key === picked.value);
-    const text = picked && ('Answer ' + q.id + ': ' + picked.value + (opt ? ' (' + opt.label + ')' : ''));
-    const sent = picked && comments ? comments.anchorFor(card).then((anchor) => comments.sendToClaude({ anchor, text })) : null;
+  function renderCard(q) {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.dataset.kind = q.kind || 'question';
+    const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = [q.project, q.task, q.id].filter(Boolean).join(' · ');
+    const h = document.createElement('p'); h.className = 'q'; h.textContent = q.question || '';
+    card.append(meta, h);
+    if (q.context) { const c = document.createElement('p'); c.className = 'ctx'; c.textContent = q.context; card.append(c); }
+    const done = answers[q.id];
+    if (q.kind === 'notice') {
+      // An irreversible action is approved only in chat, so its card has no button to press.
+      const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Approve this in the chat.';
+      card.append(n);
+      return card;
+    }
+    if (done) {
+      const a = document.createElement('p'); a.className = 'answered';
+      const opt = (q.options || []).find((o) => o.key === done.choice);
+      a.textContent = 'Answered: ' + (opt ? opt.label : done.choice);
+      card.append(a);
+      return card;
+    }
+    // Send needs a confirmed "not answered yet": while answers load or after they fail to load, the card stays read-only.
+    const canAnswer = isOwner && answersState === 'ok';
+    const opts = document.createElement('div'); opts.className = 'opts'; opts.setAttribute('role', 'radiogroup');
+    const inputs = (q.options || []).map((o) => {
+      const lab = document.createElement('label'); lab.className = 'opt';
+      const inp = document.createElement('input'); inp.type = 'radio'; inp.name = 'q-' + q.id; inp.value = o.key; inp.disabled = !canAnswer;
+      const box = document.createElement('div');
+      const b = document.createElement('b'); b.textContent = o.label; box.append(b);
+      if (o.detail) { const s = document.createElement('span'); s.textContent = o.detail; box.append(s); }
+      lab.append(inp, box); opts.append(lab);
+      return inp;
+    });
+    card.append(opts);
+    if (canAnswer) {
+      const row = document.createElement('div'); row.className = 'row';
+      const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Send';
+      const note = document.createElement('span'); note.className = 'note';
+      btn.addEventListener('click', () => submit(q, inputs, card, btn, note));
+      row.append(btn, note);
+      card.append(row);
+    }
+    return card;
+  }
+
+  // sendToClaude must ride on this click, so it starts here before anything is awaited; the db write starts right after.
+  function submit(q, inputs, card, btn, note) {
+    const picked = inputs.find((i) => i.checked);
     if (!picked) { note.textContent = 'Pick an option first.'; return; }
+    const safe = SAFE_TOKEN.test(q.id) && SAFE_TOKEN.test(picked.value);
+    const sent = !safe ? Promise.reject({ code: 'invalid_id' })
+      : comments ? comments.anchorFor(card).then((anchor) => comments.sendToClaude({ anchor, text: 'Answer ' + q.id + ': ' + picked.value }))
+      : Promise.reject({ code: 'off' });
+    const saved = db.collection('answers').doc(q.id).set({ choice: picked.value, at: new Date().toISOString() });
     btn.disabled = true; note.textContent = 'Sending…';
-    save(q, picked.value, sent, btn, note); // save shows its own failures in the card's note.
+    report(sent, saved, btn, note); // report shows every failure in the card's note.
   }
 
-  async function save(q, choice, sent, btn, note) {
-    let notified = false, why = 'off';
-    if (sent) {
-      try { await sent; notified = true; } catch (e) { why = (e && e.code) || 'error'; }
-    }
-    try {
-      await db.collection('answers').doc(q.id).set({ choice, at: new Date().toISOString(), notified });
-      note.textContent = notified ? 'Sent. Claude was woken.' : 'Answer saved, but waking Claude failed (' + why + ').';
-    } catch (e) {
+  async function report(sent, saved, btn, note) {
+    const [s, w] = await Promise.allSettled([sent, saved]);
+    const code = (r) => (r.reason && r.reason.code) || 'error';
+    if (w.status === 'rejected') {
       btn.disabled = false;
-      note.textContent = 'Saving failed (' + ((e && e.code) || 'error') + '). Press Send again.';
+      note.textContent = 'Saving failed (' + code(w) + '). Press Send again.';
+    } else {
+      note.textContent = s.status === 'fulfilled' ? 'Sent. Claude was woken.' : 'Answer saved, but waking Claude failed (' + code(s) + ').';
     }
     refreshClaude();
   }
