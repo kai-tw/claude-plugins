@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: settings-by-judgment
+description: The project config reference documents only rules and architecture; nothing the plugin ships outside evals/ names the config fields coverage, render or analytics, asst-intake or intake.sh. SKILL.md no longer lists five fixed KB modules, says the model finds the coverage and screenshot commands itself, and reads the analytics project from the project's CLAUDE.md.
+tags: [config, assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    List the fields the assistant's project config reference documents, say whether the plugin still names the coverage, render or analytics config fields or asst-intake, and quote how the assistant finds the coverage command, the screenshot command and the BigQuery project, and which knowledge-base modules it works with.
+context:
+  scaffold_script: fixture.sh
