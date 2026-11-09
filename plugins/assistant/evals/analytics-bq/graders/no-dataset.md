@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'novelglide has no analytics_<property> dataset yet\. Link it in Firebase'
+pattern: 'demo-project has no analytics_<property> dataset yet\. Link it in Firebase'
 flags: m
 arm: with-only
 ---

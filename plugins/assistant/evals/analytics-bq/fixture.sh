@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
-# ./bq stands in for the BigQuery CLI: project novelglide holds analytics_123 (and
+# ./bq stands in for the BigQuery CLI: project demo-project holds analytics_123 (and
 # an unrelated dataset) until ./nodataset exists. Each call is logged to bq.log on
 # one line.
 set -euo pipefail

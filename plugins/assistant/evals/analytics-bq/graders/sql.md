@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^query .*SELECT COUNT\(\*\) AS n FROM `novelglide\.analytics_123\.events_\*`$'
+pattern: '^query .*SELECT COUNT\(\*\) AS n FROM `demo-project\.analytics_123\.events_\*`$'
 flags: m
 arm: with-only
 ---
