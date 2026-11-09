@@ -20,6 +20,7 @@ tag=s25; hits 'asst-intake' 'intake\.sh'; echo "s25-hits=$h"
 [ -e "$root/bin/asst-intake" ]; echo "s25-bin=$?"
 s=$(n "$root/skills/assistant/SKILL.md")
 echo "s25-unreadable=$(grep -ciE '(source|sources)[^.]{0,120}(can.t|cannot|not) be read[^.]{0,160}reason|reason[^.]{0,120}(source|sources)[^.]{0,80}(can.t|cannot|not) be read' <<<"$s")"
+echo "s25-claude-md=$(grep -ciE 'task sources[^.]{0,200}CLAUDE\.md|CLAUDE\.md[^.]{0,200}task sources' <<<"$s")"
 # S26: SKILL.md — no fixed module list, the model finds the commands, analytics from CLAUDE.md;
 # with no screenshot command the builder says so and the assistant asks once.
 echo "s26-modules=$(grep -ciE 'frontend[^.]{0,20}backend[^.]{0,20}product|five modules' <<<"$s")"
