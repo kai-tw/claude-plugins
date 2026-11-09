@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: notion-spec-pages-read-only
+description: asst-notion refuses to create a row in kb-pages (spec pages are read-only), sends nothing to Notion, and still queries kb-pages.
+tags: [asst-notion]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: export EVAL_WS="$PWD" NTN_BIN="$PWD/stub/ntn"; asst-notion create manifest.json --commit --root 11111111111111111111111111111111; echo "create-exit=$?"; echo "writes=$(grep -c "^write" ntn.log)"; asst-notion query kb-pages --root 11111111111111111111111111111111 | jq -sc "{count: .[0].count, names: [.[1:][].Name]}"; echo "query-exit=$?"
+  prompt: |
+    On a fake Notion, try to create a kb-pages row named "Billing rules" with asst-notion create --commit, then read kb-pages with asst-notion query. Print the output and exit codes.
+context:
+  scaffold_script: fixture.sh
