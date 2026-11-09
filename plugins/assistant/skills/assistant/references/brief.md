@@ -7,9 +7,12 @@ Under 40 lines, the case table aside. Every other line is a decision, never a de
 `Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
 engineering call, listed for veto; the user's silence never makes it theirs).
 Every product behaviour the task adds or changes — what the user sees, or how a
-feature behaves — is `Needs you`, quoting the product page's current text (or,
-where no page covers it, how the app behaves now); one the task keeps as is gets
-a link to its page section, never a restatement. Once answered, each `Needs you` line ends with `Picked A`
+feature behaves — quotes its spec page verbatim; one the task keeps as is gets
+a link to its page section, never a restatement. A behaviour or a case-table cell the
+spec doesn't decide, or a spec that conflicts with what the code shows, is `Needs you`
+for the user to settle with the product side, with a concrete example from the code
+(`file:line`: what the app does in that case); once the page is updated, re-read it
+and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
 When the project config sets `architecture:`, read that document in the task's worktree
 and cite it by path and section heading, never copying its text. A design that

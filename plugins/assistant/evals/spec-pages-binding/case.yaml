@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: spec-pages-binding
+description: The spec page sections the brief quotes or links bind the build — the builder's code follows the page, and the verifier files code that differs from one with Fix: change the code to match the page; the project config carries no per-module page locations.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; c() { echo "$1=$(f $2 | grep -cF "$3")"; }; c builder-follows agents/builder.md "the code follows the page"; c verifier-fix agents/verifier.md "Fix: change the code to match the page"; c old-sibling skills/assistant/SKILL.md "against the sibling implementation"; c old-where skills/assistant/references/project.md "<module> = <where>"; c no-subpages skills/assistant/references/project.md "共用設計"
+  prompt: |
+    Say what binds the builder's code to the spec pages, and what the verifier files when the code differs from one.
+context:
+  scaffold_script: fixture.sh

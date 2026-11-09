@@ -56,8 +56,9 @@ const SEL = (...o) => ({ type: 'select', options: o });
 const MULTI = (...o) => ({ type: 'multi_select', options: o });
 
 const DB = {
-  // Every KB module's pages (SKILL.md §KB modules), one row each, so a decision can
-  // relate to the page it governs. The body is the page itself.
+  // The product's spec pages, one row each, when a project keeps them here (its
+  // CLAUDE.md says so; assistant SKILL.md §Spec pages). The assistant only reads them;
+  // other rows relate to them. The body is the page itself.
   'kb-pages': {
     title: 'Name',
     props: {
@@ -66,7 +67,7 @@ const DB = {
       // PROJECT_VOCAB). Empty is deliberate: if that fetch fails, every value is
       // rejected rather than silently validated against some other project's.
       Module: SEL(),
-      Kind: { ...SEL(), enable: 'add a select property to KB Pages for the kind of page within its module, e.g. feature or shared design (or map an existing one in .claude/kb-databases.txt: kb-pages.Kind = <name>)' },
+      Kind: { ...SEL(), enable: 'add a select property to KB Pages for the kind of page within its module (or map an existing one in .claude/kb-databases.txt: kb-pages.Kind = <name>)' },
     },
   },
 

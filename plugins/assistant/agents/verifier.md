@@ -60,7 +60,7 @@ the six blocks in order:
    report the settled outcome, order the steps so the window can't open).
 5. **Built vs approved design** — each deviation from the brief's System design, with
    the reason found in the code or `no reason found`; each place the code differs
-   from a product behaviour on a product page the brief links or wrote, with Fix: change
+   from a product behaviour on a spec page the brief quotes or links, with Fix: change
    the code to match the page; each departure from what the `architecture:` document
    (a directory: every .md under it) in the task's worktree states, unless the brief records the user approving it,
    with Fix: follow the document; and each hunk outside the

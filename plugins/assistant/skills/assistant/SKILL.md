@@ -65,8 +65,8 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    (`file:line` or `unverified`), the open questions — and file it with
    `asst-report put <slug> investigation --worktree <worktree>`. When a behaviour depends
    on several interleaving conditions, it fills in the form's case table, one row per combination.
-3. **Decision brief** (you): from the findings, the open questions and the KB modules loaded
-   for the brief (§KB modules), `references/brief.md`. When the design hinges on
+3. **Decision brief** (you): from the findings, the open questions and the spec pages the
+   task touches (§Spec pages), `references/brief.md`. When the design hinges on
    whether a case happens and no finding shows it, measure it once in the code or by an
    experiment; a case still unshown is cut, not handled. When the
    design adds a class, a dependency or a persisted format, or the project config
@@ -75,12 +75,11 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    is asked once, all `Needs you` in one message — a question is never
    marked `Decided` for lack of room.
    Then append the brief to the task row's body — the approved design every
-   later step reads without your context — and file each answered question as a decision
+   later step reads without your context — and file each answered engineering question as a decision
    (Context · Decision · Consequence, the rejected option and its
-   cost in Consequence), then run each loaded module's decision-brief step.
-   Build, integration and fix rounds never change a decided product behaviour: a change one needs
-   is a `Needs you` first, and the answer is recorded where the decided one was,
-   and filed as a decision, before the code changes.
+   cost in Consequence).
+   A product behaviour changes only through its spec page: a change a later round needs is a
+   `Needs you` for the product side first, and the code changes once you've re-read the updated page.
 4. **Build** (`builder`, phase `ui`, finds the screenshot command; none: ask the user once) → **stop for the screen review**, `references/screen-review.md`.
    Integration waits for OK.
 5. **Tests, then integration.** First the `tester`, one dispatch; then the `builder`
@@ -115,15 +114,15 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    look for it. Once it has merged → step 8.
 8. **Close** (you): the task row is disposable, so it is
    deleted (closed where it can't be) and no record of the task is kept — a row
-   never moves to `Shipped`. Run each loaded module's Close step.
+   never moves to `Shipped`.
    Delete the PR's worktree, local branch and remote branch, unasked, once
    `HEAD` matches the merged PR's head.
 
-## KB modules
+## Spec pages
 
-A KB module with rules has a
-file under `references/kb/` whose first line names the steps it is loaded at: read it before those steps when the project keeps that module's pages (Notion KB
-Pages rows, or `.claude/.assistant/kb/<module>/` on a file board).
+The product side writes the spec pages; they are read-only for you and every agent, and
+the project's CLAUDE.md says where they live, like the tracker. Read the spec pages a task
+touches before the brief and quote them verbatim; a case they don't decide is a `Needs you` (`references/brief.md`).
 
 ## Usage data
 
@@ -153,7 +152,7 @@ tracker lacking these fields uses labels or lists.
 waits on something outside the tracker is `Deferred`, its condition in the body.
 When a row closes, a `Next` row whose last blocker it was turns `In Progress` and
 starts at the investigation, and a parent whose last sub-item it was closes too.
-A decision goes, one entry per question naming the KB pages it governs, to Notion's
+The decisions you file are engineering decisions (design, structure), one entry per question, to Notion's
 `decision-log`; with any other tracker, to `.claude/.assistant/kb/decisions/<slug>.md`.
 Every turn is a scheduler pass: the live rows and
 new candidates → file them → advance or

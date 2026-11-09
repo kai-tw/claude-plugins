@@ -54,8 +54,8 @@ Phases (run only the one named):
   `declined:` line, and into the code only as an S6.5 comment when its reason is
   a fact the code cannot show. Then one commit, as in integration.
 
-The brief's rulings are binding, and so are the product page
-sections it links (read them with `ntn pages get <id>`): the code follows the page.
+The brief's rulings are binding, and so are the spec page
+sections it quotes or links (read-only: never edit one): the code follows the page.
 An open question you meet that the brief did not settle is reported back, not
 decided here. An open question with an option
 that changes code outside the task statement's boundary is marked `outside

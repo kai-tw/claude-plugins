@@ -4,7 +4,7 @@ A negative claim (only / none / all, in any language) needs a second method besi
 Each `file:line` is relative to the worktree root and is checked by `asst-cite` (its header states the test), so put the thing a finding cites in backticks.
 | # | Claim | Evidence (file:line · experiment: <cmd> → <obs> · unverified) |
 ## Case table (a behaviour that depends on several interleaving conditions; else none)
-One row per combination of the conditions, none dropped: one that cannot occur (the conditions exclude each other) says so, with its evidence, in After the change; one only the change creates says in Base branch that the base branch never reaches it.
+One row per combination of the conditions, none dropped: one that cannot occur (the conditions exclude each other) says so, with its evidence, in After the change; one only the change creates says in Base branch that the base branch never reaches it. Spec's rule quotes the spec page, or says `undecided` or `conflicts with the code`; the brief makes that cell a `Needs you` (`references/brief.md`).
 | C<n> | Conditions | Base branch (file:line) | Spec's rule | After the change |
 ## Open questions (intent — the user decides)
 - <question>: A <option> / B <option> · what each costs

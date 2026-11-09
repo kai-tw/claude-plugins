@@ -19,8 +19,7 @@ description: >-
 - A Notion tracker: a task is a `tasklist` row (`asst-notion create`, its page id kept
   in `.claude/.assistant/tasks/<slug>/page`), `Blocked by` and `Parent item` taking
   page ids; the brief goes in with `append`; each decision is one `decision-log` row
-  (Name = the question, Context · Decision · Consequence, `Pages` = KB page titles,
-  `Task` = the task row, `Status=Active`, `Decided` = today); Close is `trash`.
+  (Name = the question, Context · Decision · Consequence, `Task` = the task row, `Status=Active`, `Decided` = today); Close is `trash`.
   Read rows with `query tasklist`, one row with `get <page-id> [--body]`.
 - `asst-section replace|append|get <file> <heading> [md|-]` — edit one section of
   a body file; upload afterwards with `asst-notion update`.
