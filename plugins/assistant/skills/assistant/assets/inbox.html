@@ -109,15 +109,16 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, .opt:focus-within
   // Without a db there are no questions to list; the Data pill already shows why.
   if (!db) return;
 
-  let answers = {};
+  let answers = new Map();
   let answersState = 'loading'; // 'loading' | 'ok' | 'failed'
   let questions = [];
   let sending = false;
+  // Stores keyed by question id are Maps, so an id like `constructor` never reaches Object.prototype.
   // What the user has picked or typed but not sent, by question id; cards are rebuilt on every snapshot and read it back.
-  const drafts = {};
+  const drafts = new Map();
   let noteFields = new Map();
   db.collection('answers').onSnapshot((snap) => {
-    answers = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
+    answers = new Map(snap.docs.map((d) => [d.id, d.data()]));
     answersState = 'ok';
     render();
   }, () => { answersState = 'failed'; render(); });
@@ -128,8 +129,8 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, .opt:focus-within
 
   // Sending needs a confirmed "not answered yet": while answers load or after they fail to load, every card stays read-only.
   const canAnswer = () => isOwner && answersState === 'ok';
-  const openQuestions = () => questions.filter((q) => q.kind !== 'notice' && !answers[q.id]);
-  const draftOf = (id) => drafts[id] || (drafts[id] = { choice: '', note: '' });
+  const openQuestions = () => questions.filter((q) => q.kind !== 'notice' && !answers.has(q.id));
+  const draftOf = (id) => { if (!drafts.has(id)) drafts.set(id, { choice: '', note: '' }); return drafts.get(id); };
   const pendingAnswers = () => openQuestions()
     .map((q) => ({ id: q.id, choice: draftOf(q.id).choice, note: draftOf(q.id).note.trim() }))
     .filter((a) => a.choice || a.note);
@@ -175,7 +176,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, .opt:focus-within
       const a = document.createElement('a'); a.className = 'ctx'; a.href = q.link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open';
       card.append(a);
     }
-    const done = answers[q.id];
+    const done = answers.get(q.id);
     if (q.kind === 'notice') {
       // An irreversible action is approved only in chat, so its card has nothing to fill in.
       const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Approve this in the chat.';
@@ -242,7 +243,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, .opt:focus-within
   async function report(items, sent, saves) {
     const [s, ...w] = await Promise.allSettled([sent, ...saves]);
     const code = (r) => (r.reason && r.reason.code) || 'error';
-    items.forEach((a, i) => { if (w[i].status === 'fulfilled') delete drafts[a.id]; });
+    items.forEach((a, i) => { if (w[i].status === 'fulfilled') drafts.delete(a.id); });
     const failed = w.find((r) => r.status === 'rejected');
     if (failed) setStatus('Saving failed (' + code(failed) + '). The unsaved answers are still filled in; press Send again.', 'bad');
     else if (s.status === 'rejected') setStatus('Answers saved, but waking Claude failed (' + code(s) + '). Tell Claude in the chat to read them.', 'bad');

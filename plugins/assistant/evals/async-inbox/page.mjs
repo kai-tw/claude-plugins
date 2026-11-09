@@ -304,7 +304,7 @@ const out = {};
 const say = (k, v) => { out[k] = v ? 1 : 0; };
 const KEYS = ['s18-db', 's18-notice-no-button', 's18-notice-no-input', 's18-save-fail-note', 's18-save-fail-resend', 's18-answers-fail-no-send',
   's18-link-https', 's18-link-not-https', 's19-textarea-every-card', 's19-text-only-answer', 's20-one-send', 's20-send-at-bottom',
-  's20-one-wake-both-ids', 's20-note-not-in-comment', 's21-wake-fail-bar', 's21-wake-fail-after-render'];
+  's20-one-wake-both-ids', 's20-note-not-in-comment', 's21-wake-fail-bar', 's21-wake-fail-after-render', 's22-proto-id-unanswered', 's22-proto-id-note-saved'];
 const errors = [];
 process.on('unhandledRejection', (e) => errors.push(String(e?.message ?? e)));
 
@@ -374,6 +374,19 @@ async function main() {
     say('s18-save-fail-note', !before && said.test(text()));
     const again = sendButtons(doc);
     say('s18-save-fail-resend', again.length > 0 && again.every((b) => !b.disabled));
+  }
+
+  // Ids that name Object.prototype members are ordinary ids: unanswered, and their typed note is saved.
+  {
+    const protoQs = ['constructor', 'toString'].map((id, i) => ({ id, project: 'demo', task: 'proto', question: 'Question filed under ' + id + '?', asked: '2026-11-02T09:0' + i + ':00Z', options: [] }));
+    const { doc, store, wakes } = await load(html, script, protoQs);
+    const cards = protoQs.map((q) => cardOf(doc, q, protoQs));
+    say('s22-proto-id-unanswered', cards.every((c) => c && !/answered/i.test(c.textContent) && c.descendants().filter((e) => e.tagName === 'TEXTAREA').length === 1));
+    cards.forEach((c, i) => c && type(c, 'note ' + protoQs[i].id));
+    await settle();
+    sendButtons(doc)[0]?.click();
+    await settle();
+    say('s22-proto-id-note-saved', protoQs.every((q) => store.answers.get(q.id)?.note === 'note ' + q.id) && wakes.length === 1);
   }
 }
 
