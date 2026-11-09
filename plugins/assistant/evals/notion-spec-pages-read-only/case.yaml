@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: notion-spec-pages-read-only
-description: asst-notion refuses to create a row in kb-pages (spec pages are read-only), sends nothing to Notion, still queries kb-pages, and still writes to a row of another data source without --root.
+description: asst-notion refuses to create a row in kb-pages (spec pages are read-only), sends nothing to Notion, still queries kb-pages, still writes to a row of another data source without --root, and refuses a page whose parent has no id even with --root.
 tags: [asst-notion]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export EVAL_WS="$PWD" NTN_BIN="$PWD/stub/ntn"; asst-notion create manifest.json --commit --root 11111111111111111111111111111111; echo "create-exit=$?"; echo "writes=$(grep -c "^write" ntn.log)"; asst-notion query kb-pages --root 11111111111111111111111111111111 | jq -sc "{count: .[0].count, names: [.[1:][].Name]}"; echo "query-exit=$?"; printf "a line\n" > note.md; asst-notion append task1 note.md --commit >/dev/null; echo "append-exit=$?"; echo "writes-after-append=$(grep -c "^write" ntn.log)"; asst-notion comment task1 "looks fine" --commit >/dev/null; echo "comment-exit=$?"; echo "writes-after-comment=$(grep -c "^write" ntn.log)"
+    EVAL_CMD: export EVAL_WS="$PWD" NTN_BIN="$PWD/stub/ntn"; asst-notion create manifest.json --commit --root 11111111111111111111111111111111; echo "create-exit=$?"; echo "writes=$(grep -c "^write" ntn.log)"; asst-notion query kb-pages --root 11111111111111111111111111111111 | jq -sc "{count: .[0].count, names: [.[1:][].Name]}"; echo "query-exit=$?"; printf "a line\n" > note.md; asst-notion append task1 note.md --commit >/dev/null; echo "append-exit=$?"; echo "writes-after-append=$(grep -c "^write" ntn.log)"; asst-notion comment task1 "looks fine" --commit >/dev/null; echo "comment-exit=$?"; echo "writes-after-comment=$(grep -c "^write" ntn.log)"; for p in idless1 idless2; do asst-notion append $p note.md --commit --root 11111111111111111111111111111111 >out-$p.txt 2>&1; echo "$p-exit=$?"; grep -q "could not tell whether" out-$p.txt && echo "$p-msg=could-not-tell"; done; echo "writes-after-idless=$(grep -c "^write" ntn.log)"
   prompt: |
-    On a fake Notion, try to create a kb-pages row named "Billing rules" with asst-notion create --commit, then read kb-pages with asst-notion query, then append to and comment on page task1 (no --root). Print the output and exit codes.
+    On a fake Notion, try to create a kb-pages row named "Billing rules" with asst-notion create --commit, then read kb-pages with asst-notion query, then append to and comment on page task1 (no --root), then append to pages idless1 and idless2 with --root 11111111111111111111111111111111. Print the output and exit codes.
 context:
   scaffold_script: fixture.sh
