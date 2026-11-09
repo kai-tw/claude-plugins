@@ -34,8 +34,8 @@ for (let i = 1; i < args.length; i++) {
 }
 const project = options['--project'];
 if (!project)
-  fail('no --project <gcp-project>: the GCP project whose Firebase / GA4 BigQuery export holds the events; the project\'s CLAUDE.md names it.');
-const days = options['--days'] === undefined ? 28 : Number(options['--days']);
+  fail('no --project <gcp-project> after the op: the GCP project whose Firebase / GA4 BigQuery export holds the events; the project\'s CLAUDE.md names it.');
+const days = '--days' in options ? Number(options['--days']) : 28;
 if (!Number.isInteger(days) || days < 1) fail('--days takes a whole number of days, 1 or more');
 const maxBytes = process.env.ASST_ANALYTICS_MAX_BYTES ?? String(1e9);
 

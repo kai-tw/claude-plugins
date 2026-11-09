@@ -65,7 +65,7 @@ const DB = {
       // Option lists are the project's own, in its language, populated live (see
       // PROJECT_VOCAB). Empty is deliberate: if that fetch fails, every value is
       // rejected rather than silently validated against some other project's.
-      Module: SEL(), // frontend · backend · product · marketing · design
+      Module: SEL(),
       Kind: { ...SEL(), enable: 'add a select property to KB Pages for the kind of page within its module, e.g. feature or shared design (or map an existing one in .claude/kb-databases.txt: kb-pages.Kind = <name>)' },
     },
   },
