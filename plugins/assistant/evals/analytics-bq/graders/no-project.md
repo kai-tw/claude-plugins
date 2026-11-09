@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^asst-analytics: no --project <gcp-project>: .*CLAUDE\.md names it\.$'
+pattern: '^asst-analytics: no --project <gcp-project> after the op: .*CLAUDE\.md names it\.$'
 flags: m
 arm: with-only
 ---
