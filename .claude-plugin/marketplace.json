@@ -33,17 +33,6 @@
       "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/flutter-toolkit"
     },
     {
-      "name": "google-reporting",
-      "description": "Google Analytics 4 and Search Console readers — usage, indexing status, search performance, and sitemap health, via keyless service-account impersonation",
-      "source": "./plugins/google-reporting",
-      "category": "productivity",
-      "author": {
-        "name": "Kai",
-        "url": "https://github.com/kai-tw"
-      },
-      "homepage": "https://github.com/kai-tw/claude-plugins/tree/main/plugins/google-reporting"
-    },
-    {
       "name": "reclaim-space",
       "description": "Developer-disk reclamation on macOS — regenerable build output and toolchain caches, measured by the real free-space delta, plus a free-space floor on new git worktrees",
       "source": "./plugins/reclaim-space",
@@ -57,7 +46,7 @@
     {
       "name": "assistant",
       "source": "./plugins/assistant",
-      "description": "An assistant for your projects — request → decision brief → screen review → PR, with the style-pack and ui-text-pack rulebooks its reviewers check against."
+      "description": "An assistant for your projects — request → decision brief → screen review → PR, with the style-pack rulebook its reviewers check against."
     },
     {
       "name": "mother-tongue",

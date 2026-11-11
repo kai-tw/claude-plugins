@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "Cut \`integration\` and \`fix\` into slices.*a dead end the last run hit" | sed "s/^/slices=/"; tr -s " \n" " " < "$root/agents/builder.md" | grep -o "and from \`ui\` on the approved decision brief.*\`git status\`" | sed "s/^/builder=/"
+    EVAL_CMD: tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "Cut \`integration\` and \`fix\` into slices.*a dead end the last run hit" | sed "s/^/slices=/"; tr -s " \n" " " < "$root/agents/builder.md" | grep -o "the approved decision brief.*\`git status\`" | sed "s/^/builder=/"
   prompt: |
     Say how the assistant dispatches wire and fix work to builders, what it puts in the next brief, and where a builder that continues earlier work starts.
 context:

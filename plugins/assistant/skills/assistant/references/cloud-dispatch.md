@@ -38,7 +38,7 @@ A dispatch message carries four things:
    in a cross-session message attaches nothing; the other side reads only the string.
 3. **The report address, exactly one**: for a task with a PR on a private repo
    (SKILL.md §Disclosure), a comment on `owner/repo#<n>`; otherwise the task's
-   Notion row (`asst-notion … --root <notion_root>`); neither → a `Needs you` line
+   Notion row (`asst-notion … --root <the root id CLAUDE.md gives>`); neither → a `Needs you` line
    for a private address. Giving both means polling both, and the report lands on
    the side you are not watching.
 4. **The report format**: first line `assistant-report <slug>#<n> <ack|done|blocked>`,
@@ -57,14 +57,14 @@ report but its source, and one already on the PR is not posted again.
 
 **Cadence.** Polling folds into the existing scheduler pass: read the task's
 report address once per pass, nothing separate. One cloud session per slug
-at a time. Report address empty for a whole pass → re-dispatch under the board's
-missing-report rule (`SKILL.md` §The board); never blindly dispatch again.
+at a time. Report address empty for a whole pass → re-dispatch under the tracker's
+missing-report rule (`SKILL.md` §The tracker); never blindly dispatch again.
 
 ## 2. A new cloud session for long work
 
 `asst-cloud open [--profile <name>] "<task>"` opens a new cloud session that runs
-in the background and prints its session id and URL — the handle you record on
-the board. It runs `claude --cloud` under `script`, since `claude --cloud` refuses
+in the background and prints its session id and URL — the handle you record in
+the tracker. It runs `claude --cloud` under `script`, since `claude --cloud` refuses
 `--print` and needs a TTY. The profile sets model, effort and a preamble
 (`asst-cloud profiles` lists them): `default` is opus / high; `--model` /
 `--effort` override it. The session clones **the repo's GitHub remote on the
@@ -129,7 +129,7 @@ environment with no `claude` login. Two other routes:
    ```
 
    It returns `claude_code_session_id` and the session URL — the handle you record
-   on the board. **The token is read only from an environment variable and never
+   in the tracker. **The token is read only from an environment variable and never
    enters the repo**.
 
    **Trap**: `text` arrives wrapped in `<routine-fire-payload>` and marked as

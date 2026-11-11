@@ -1,16 +1,16 @@
 schema_version: "1.1"
 name: terms-packs-plain
-description: style-pack and ui-text-pack speak plain rule wording — what their commands print, their --help, SKILL.md, CONVENTIONS.md, evidence.md and examples name core / language / locale / project rules, and carry no legal metaphor (charter, statute, regulation, legislate, amend) and no coined term (consumption point, kind word, stand-in, undeterminable, transcription, string canon, the founder).
-tags: [style-pack, ui-text-pack]
+description: style-pack speaks plain rule wording — what its command prints, its --help, SKILL.md, CONVENTIONS.md and evidence.md name core / language / locale / project rules, and carry no legal metaphor (charter, statute, regulation, legislate, amend) and no coined term (consumption point, kind word, stand-in, undeterminable, transcription, the founder).
+tags: [style-pack]
 plugins: ["../.."]
 runs: 1
 execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: style-pack dart csharp js; style-pack --help; ui-text-pack zh-Hant ja en xx 2>&1; ui-text-pack --help; cat "$root/skills/style-pack/SKILL.md" "$root/skills/style-pack/rules/CONVENTIONS.md" "$root/skills/style-pack/references/evidence.md" "$root/skills/ui-text-pack/SKILL.md" "$root/skills/ui-text-pack/rules/CONVENTIONS.md" "$root"/skills/ui-text-pack/examples/*.tsv
+    EVAL_CMD: style-pack dart csharp js; style-pack --help; cat "$root/skills/style-pack/SKILL.md" "$root/skills/style-pack/rules/CONVENTIONS.md" "$root/skills/style-pack/references/evidence.md"
   prompt: |
-    Print every rule style-pack and ui-text-pack carry, both commands' --help, both skills,
-    both CONVENTIONS.md files, the evidence rules and the rewrite examples.
+    Print every rule style-pack carries, its --help, its skill,
+    its CONVENTIONS.md and the evidence rules.
 context:
   scaffold_script: fixture.sh

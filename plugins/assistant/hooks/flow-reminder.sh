@@ -16,7 +16,7 @@ root=$(asst_root)
 
 text="This project runs the assistant flow (its project config is ${root}/.claude/assistant.md). \
 When the user asks for something to be built, fixed or changed here, load the \`assistant\` skill if it isn't loaded, \
-then follow its flow: write the task statement with its tier, put the row on the board with \`asst-board\`, \
+then follow its flow: write the task statement with its tier, put the row in the project's tracker, \
 and dispatch \`builder\`, \`tester\` and \`verifier\` agents. Don't edit the project's code yourself, whatever the tier. \
-A question, a progress check or a decision the user hands back is answered from the board and the filed reports."
+A question, a progress check or a decision the user hands back is answered from the tracker and the filed reports."
 jq -n --arg t "$text" '{hookSpecificOutput:{hookEventName:"UserPromptSubmit",additionalContext:$t}}'

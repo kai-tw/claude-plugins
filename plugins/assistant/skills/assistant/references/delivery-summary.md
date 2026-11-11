@@ -1,8 +1,8 @@
 # Delivery summary — one screen, eight blocks, every line clickable
 
-Built from the verifier reports, with string values from the builder's `strings:`
-blocks unless a text finding changed them; the user reads this, not the diff and not the
-reports. Anything a linter or a passed check already settled is one line.
+Built from the verifier reports and the builder reports (`debt:`, `declined:` lines);
+the user reads this, not the diff and not the reports. Anything a linter or a passed
+check already settled is one line.
 
 ```
 # <Task> — <PR #n ready | r<rev> pending>   <project> · <sha | working copy>
@@ -18,23 +18,12 @@ reports. Anything a linter or a passed check already settled is one line.
 ## Built vs approved design
 - <deviation from the brief's System design + reason> or no deviation
 ## Tests
-- <scenario> → <test file:line> · missing: <scenario or failure event with no test> or none
+- <scenario> → <test file:line> · missing: <scenario, failure event or case-table cell with no test> or none
 ## On device
 - <platform>: <passed | failed | not run — why> on <phone>   (or none: the project has no on-device tests)
-
-## Text (changed since the screen review?)
-<n> strings · approved at the screen review · meaning changed since: <n>   (or no string changes)
-accepted as drafted: <this task's line and the `all` line from `asst-strings rate`>
-### <key> · <where it renders> · <available width>       (only those changed since)
-- <locale> <value>          (one line per locale, source first)
-- value approved at the screen review: <value> → change: <one sentence> · awaiting re-approval
+## Listed, not fixed
+- <file:line> — <the `list` finding or the builder's `debt:` line in one line>   (or none)
 
 ## Other (automated checks)
-security passed · naming passed · coverage <n unexecuted lines, each named>   (or `no coverage tool` from the project config)
+security passed · naming passed · coverage <n unexecuted lines, each named>   (or `no coverage tool found`)
 ```
-
-**Approval is given at the screen review; this page only asks whether it still holds.** A string
-whose meaning changed since the screen review loses its approval (core rule U5.1: a changed meaning
-takes a new key), and **a locale that lost it may be neither merged nor
-committed**, at the same level as a destructive action (SKILL.md §Dispatch rules). A string that reaches this page without passing the screen review is a breach in the
-flow: it goes back to the screen review for a supplement, never signed off on this page.

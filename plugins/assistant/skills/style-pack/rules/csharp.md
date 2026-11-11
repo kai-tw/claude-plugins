@@ -72,11 +72,3 @@
 - **S15.1-csharp `?.` is an unnamed guard** — Check: a `?.` or `??` whose guarded `null` has
   no nameable source path violates core rule S15.1: the whole expression silently evaluates to
   `null` or does not run at all, and that unexplained `null` is the defect.
-
-## S16
-
-- **S16.1-csharp An exposed read-only collection must really be read-only** — Check: an
-  object behind a return value declared `IReadOnlyList<T>` that is the owner's own `List<T>`
-  violates core rule S16.4: the interface is only a view, and a single `as List<T>` gives the
-  caller the owner's internal collection. `AsReadOnly()` blocks that cast; if the caller needs
-  a snapshot of the current state, return a copy.

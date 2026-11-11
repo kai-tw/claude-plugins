@@ -4,7 +4,7 @@
 # hook a prompt from each, and from a subdirectory of `proj`.
 set -euo pipefail
 mkdir -p proj/.claude proj/lib other
-echo 'vcs: git' > proj/.claude/assistant.md
+echo 'rules: none' > proj/.claude/assistant.md
 cat > check.sh <<'SH'
 run() { printf '{"session_id":"s","cwd":"%s","prompt":"fix the login bug"}' "$2" \
   | bash "$1/hooks/flow-reminder.sh"; }

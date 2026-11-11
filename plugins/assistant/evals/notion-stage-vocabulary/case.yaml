@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: notion-stage-vocabulary
-description: All 7 labels of SKILL.md's board Stage mapping are among the Stage options of the embedded tasklist schema.
+description: All 7 labels of SKILL.md's Stage vocabulary are among the Stage options of the embedded tasklist schema.
 tags: [asst-notion]
 plugins: ["../.."]
 runs: 1

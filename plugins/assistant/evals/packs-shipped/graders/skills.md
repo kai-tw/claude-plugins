@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills=skills/style-pack skills/ui-text-pack$'
+pattern: '^skills=skills/style-pack$'
 flags: m
 ---
 Both pack skills are listed in assistant's manifest.

@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'verify-text-1 posted to #9 \(first line only — repo not known private\)'
+pattern: 'verify-code-2 posted to #9 \(first line only — repo not known private\)'
 flags: m
 arm: with-only
 ---

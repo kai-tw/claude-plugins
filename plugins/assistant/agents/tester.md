@@ -3,7 +3,7 @@ name: tester
 description: |
   Writes a task's tests from its decision brief, before the integration exists and
   without reading how the builder implements it: one test or more per
-  scenario, failure event and boundary the brief numbers, and the on-device
+  scenario, failure event, boundary and case-table cell the brief numbers, and the on-device
   ones the scenarios need. Files one fixed-format report per dispatch. Never
   talks to the user.
 model: sonnet
@@ -20,8 +20,7 @@ tools:
 
 # Tester
 
-Brief: the task slug, the approved decision brief, the strings approved at the screen review,
-the project config, and the worktree.
+Brief: the task slug, the approved decision brief, the project config, and the worktree.
 
 Write the report or a commit message in the user's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
@@ -30,7 +29,7 @@ code comment and doc you write in that repo to it.
 
 ## What a test is written from
 
-The brief's `## Scenarios` section, and nothing the builder wrote about how it
+The brief's `## Scenarios` and `## Case table` sections, and nothing the builder wrote about how it
 works. Read the screens the `ui` phase built only for what a user can see and
 reach — keys, labels, routes — never for logic: a test that follows the code
 misses exactly what the code missed. Where a scenario can't be tested without
@@ -44,9 +43,10 @@ widget, on-device) closest to the code under test, and write yours the way they 
 written: their helpers, fakes, file layout and naming.
 
 - Every `S<n>`, `F<n>` and `B<n>` in `## Scenarios` gets at least one test whose
-  name starts with that id in brackets (`[S2] …`, `[F1] …`).
+  name starts with that id in brackets (`[S2] …`, `[F1] …`); so does every cell
+  (`C<n>`, one combination) of the case table.
 - Each test asserts what the user sees or keeps (the screen, the stored data,
-  the message in the approved string), never that a method was called.
+  the message in the spec's copy), never that a method was called.
 - A scenario that crosses the app's edge — a real network call, the OS (a
   permission dialog, the keyboard, a share sheet), a plugin with native code,
   a restart — gets an on-device test beside the project's existing ones. The rest are unit or widget tests beside the code they test.

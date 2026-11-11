@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^filed=LEAK-public,kept-internal,LEAK-unknown$'
+pattern: '^filed=LEAK-public,LEAK-unknown,kept-internal$'
 flags: m
 arm: with-only
 ---

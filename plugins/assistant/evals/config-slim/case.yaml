@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: config-slim
-description: The project config keeps only vcs, board, notion_root, kb, coverage, render, analytics, rules and architecture; nothing in the plugin outside evals/ reads or documents a removed field, asst-pr or asst-device; a file board files a decision with no **Pages** line even when the config still carries old fields; SKILL.md asks before every destructive or outward action and leaves project-specific ones to the project's CLAUDE.md.
+description: Nothing in the plugin outside evals/ reads or documents a removed config field, asst-pr or asst-device; SKILL.md asks before every destructive or outward action and leaves project-specific ones to the project's CLAUDE.md.
 tags: [config, assistant]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh "$root"
   prompt: |
-    List the fields the assistant's project config reference documents, say whether anything in the plugin still mentions a removed field or tool, file a decision without a **Pages** line on a file board whose config still has old fields, and quote the rule on destructive actions.
+    Say whether anything in the plugin still mentions a removed config field or tool, and quote the rule on destructive actions.
 context:
   scaffold_script: fixture.sh

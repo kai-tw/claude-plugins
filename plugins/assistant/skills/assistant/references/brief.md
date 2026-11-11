@@ -1,12 +1,18 @@
 # Decision brief — the one page the user approves
 
-Under 40 lines. Every line is a decision, never a description. Two marks:
+Before writing it, run `asst-cite <worktree> <investigation report path>`: re-check a FAIL row
+in the code once; still failing, it enters the brief as `unverified`.
+
+Under 40 lines, the case table aside. Every other line is a decision, never a description. Two marks:
 `Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
 engineering call, listed for veto; the user's silence never makes it theirs).
 Every product behaviour the task adds or changes — what the user sees, or how a
-feature behaves — is `Needs you`, quoting the product page's current text (or,
-where no page covers it, how the app behaves now); one the task keeps as is gets
-a link to its page section, never a restatement. Once answered, each `Needs you` line ends with `Picked A`
+feature behaves — quotes its spec page verbatim; one the task keeps as is gets
+a link to its page section, never a restatement. A behaviour or a case-table cell the
+spec doesn't decide, or a spec that conflicts with what the code shows, is `Needs you`
+for the user to settle with the product side, with a concrete example from the code
+(`file:line`: what the app does in that case); once the page is updated, re-read it
+and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
 When the project config sets `architecture:`, read that document in the task's worktree
 and cite it by path and section heading, never copying its text. A design that
@@ -40,6 +46,9 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 - F<n> <a failure event> → <what the user sees, and the state left behind>
 - B<n> <a boundary from Boundaries: empty · old format · order · limit> → <the expected result>
 
+## Case table (the investigation's, every combination of the interleaving conditions; else omitted)
+| C<n> | Conditions | Base branch (file:line) | Spec's rule | After the change |
+
 ## Screens (UI in scope only)
 - <screens × states the screens page will show>
 
@@ -50,7 +59,7 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 ## A request split into sub-tasks
 
 A request one brief cannot hold (SKILL.md step 1) becomes a parent row holding the request
-in its body, and under it one sub-item per task statement, in order (`asst-board create
-<slug> … "Parent item=<parent>"`): each its own row and worktree, each later one
+in its body, and under it one sub-item per task statement, in order (`Parent item` the
+parent): each its own row and worktree, each later one
 `Status=Next`, `Blocked by` the sub-item it waits for. The parent is never dispatched. The split itself is a `Decided` in the
 first brief.

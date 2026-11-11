@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: packs-shipped
-description: assistant ships style-pack and ui-text-pack itself — both commands are in its bin/ and both skills in its manifest — and no longer depends on them as separate plugins.
+description: assistant ships style-pack itself — the command is in its bin/ and the skill in its manifest — and no longer depends on it as a separate plugin.
 tags: [packaging]
 plugins: ["../.."]
 runs: 1

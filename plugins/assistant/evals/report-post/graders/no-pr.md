@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'verify-text-1 NOT posted to a PR — no PR for task/r'
+pattern: 'verify-code-3 NOT posted to a PR — no PR for task/r'
 flags: m
 arm: with-only
 ---

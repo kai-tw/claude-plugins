@@ -9,20 +9,16 @@
 cannot check — a reviewer must pass any such judgment that has no rule here under "no rule to
 cite, no finding", so **adding a rule is the only way in**.
 
-**Precedence and conflict.** The only version lives in `index.md §Precedence`. This file restates
-one thing: **no exemption clauses**. A conflict has only three outcomes (narrow the core rule
-/ delete the core rule / change the project's code).
+**Precedence and conflict.** How rules rank lives only in `index.md §Precedence`.
 
 **The core rules are self-contained.** `index.md` **must name nothing but its own rule
 numbers** — no other files (`dart.md` / `csharp.md` / `js.md` / project file names), no
 reviewers, no lint rules, no commands or paths. It defines only **precedence** (the three
-levels core rules / language rules / project rules and what each may do), not which file
+levels core rules / language rules / project rules), not which file
 holds each level: once a file is named, renaming or deleting it breaks the core rules.
 
 Which files hold which level is stated here: the language rules are `dart.md` / `csharp.md` /
 `js.md`, the project rules are what each project's config names in `rules:`.
-How to report a conflict is stated here too — when a conflict is reported as `inconclusive`,
-its evidence format is in this pack's `references/evidence.md`.
 
 Likewise, when a rule's scope is narrowed because lint already covers part of it, the rule
 text states only **what it covers itself**, not "who checks the other half" — that follows
@@ -93,6 +89,5 @@ belong in the core rules — move it down to a language file.
    item's `Check:` without adding an item).
 3. If not → first add the core rule to `index.md` (it must hold in every language), then
    file the sub-check under it.
-4. On conflict → change the rule per the three outcomes in `index.md §Precedence`; do not add
-   exception clauses.
+4. On conflict → rank the rules per `index.md §Precedence`.
 5. Delete stale entries outright, leaving no "retired" note (history is in git).
