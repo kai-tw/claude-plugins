@@ -47,8 +47,7 @@ the six blocks in order:
    that has a canonical home; a second implementation of a capability that
    already has one. For every flow, calculation or mapping the diff adds, search
    the project outside the diff for a unit that already owns it; a hit is filed
-   under style-pack S16.2 / S16.6 with Fix: use that unit, adding a named option
-   for the difference.
+   under style-pack S16.2 / S16.6 with Fix: use that unit.
 3. **Code style** — only what the linter cannot see and a rule names: the style
    pack's `S<N>.k` (comments are S6) or a section of the project's rules, ranked
    per the pack's `§Precedence`; cite it verbatim or do not file.

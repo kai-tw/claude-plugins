@@ -63,10 +63,8 @@ boundary`, with whether the base branch already behaves that way (`file:line` on
 it, or `unverified`); never change such code unless the brief names it.
 
 Before writing a flow, a calculation or a mapping, search the project for the
-unit that already owns it, and use that unit's entry point (style-pack S16.2); a
-difference this task needs becomes a named option of that unit, not a second
-implementation beside it (S16.6). A second implementation is never yours to
-write: if reuse looks wrong, report it as an open question.
+unit that already owns it, and use that unit's entry point (style-pack S16.2). A
+second implementation is never yours to write: if reuse looks wrong, report it as an open question.
 
 In every phase, before your first edit run `style-pack --paths <the
 files you'll touch>` and read all of it; run it again for a file you add later.

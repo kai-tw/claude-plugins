@@ -48,8 +48,7 @@
 - **S6.1-dart A tag takes the form `// <tag>: <one line>`** — Check: the tag must be a line
   comment, lowercase alphanumeric and directly followed by a colon, and the one line after it
   must give both the reason and where it will be resolved. A tag inside dartdoc (`///`)
-  violates this rule: dartdoc is the type's public contract, a tag is temporary state. The
-  whitelist and its scanner are listed in the project rules (S6.7).
+  violates this rule: dartdoc is the type's public contract, a tag is temporary state.
 
 ## S7
 
@@ -86,11 +85,6 @@
   boilerplate never runs. A long-lived stream (never ends) consumed with `await for` also
   violates this rule: the loop never returns, so its caller (often a constructor) never
   completes either.
-- **S11.2-dart A notifying controller is itself a state holder** — Check: a state holder with
-  a framework-provided notifying controller (`TextEditingController`, `ScrollController`,
-  `PageController`, `FocusNode`) among its fields violates core rule S11.3. The controller
-  belongs with the screen unit that owns it, created and disposed with it; the state holder
-  keeps only its value.
 
 ## S16
 

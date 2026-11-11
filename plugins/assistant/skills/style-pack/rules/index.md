@@ -5,28 +5,14 @@ in its `Check:`.
 
 ## Precedence
 
-Three levels; the higher prevails.
+Three levels: core rules (the `S<N>` in this file), language rules, project rules. When two
+rules cannot both hold, the more specific one wins — project over language over core — and
+nothing is filed for the losing rule. Report a conflict as **`inconclusive`** and name which
+rule should change.
 
-| Level | Contains | May |
-|---|---|---|
-| Core rules | the `S<N>` in this file: principles that hold in every language and every project | the only place a core rule may be added |
-| Language rules | that language's concrete tests, each under one `S<N>` | only **make a core rule concrete** |
-| Project rules | that project's facts (its own helper names, canonical entry point, paths) | only **tighten** or **supply facts** |
-
-**Conflict test.** Two rules conflict when they **cannot be satisfied at the same time**;
-otherwise both apply.
-
-**No exemption clauses.** A conflict has exactly three outcomes: narrow the core rule (add a
-condition, or move it down to the language rules) · delete the core rule · change the
-project's code.
-
-**Conflict during review.** Report that rule as **`inconclusive`**, name who must change
-which level's rule, and propose the rule change separately. It is not `passed`, nor a
-`critical` that punishes the author.
-
-**Burden of proof.** Whoever claims a conflict must **quote both rules and explain why they
-cannot both be satisfied**. "This rule is awkward here" is inconvenience, not conflict — apply
-the higher rule this time and propose the rule change separately.
+S16.1 outranks every rule that asks for structure: when following a rule would add a layer,
+wrapper, type, file, callback or parameter the code does not need today, do not follow it
+and do not file it.
 
 ## Core rules
 
@@ -42,10 +28,6 @@ on, not by the directory it sits in.
   content depends on knowledge outside its layer (wire formats, HTTP status codes, DB column
   names or UI vocabulary inside `domain/`) violates this rule; move it or rewrite it. Example:
   a use case in `domain/` translating HTTP status codes.
-- **S1.3 Orchestration only at the composition root** — Check: cross-repository ordering,
-  retries and fallbacks anywhere but the composition root the project declares violate this
-  rule. A use case may contain only one domain decision. Example: a use case calls two
-  repositories in order and switches to the other path on failure.
 - **S1.4 Declarations must not execute** — Check: a line in a wiring file (registration,
   configuration, route table) that actually starts something — an initial scan, a warm-up,
   opening a subscription — violates this rule: execution belongs to the startup flow or to the
@@ -60,7 +42,7 @@ on, not by the directory it sits in.
 results and stack traces have no context and no type to go by. A type name consists of
 owner, concept and type suffix: the owner answers "whose", the concept "which one", the
 suffix "what sort of thing"; a type that belongs under a category must carry that category
-in its name. **Violations of this rule are always proposed CRITICAL.**
+in its name.
 
 - **S2.1 A name that fits anywhere is as good as unnamed** — Check: a name whose referent
   would not change if it moved under another module, screen or feature identifies nothing
@@ -176,14 +158,11 @@ data just comes to mean something else.
   types or routes through a shared helper violates this rule: its job is to turn an old
   format into **that year's** next version, and today's types and helpers change under it.
 
-## S5 — Silently aborting a flow must state the trigger and the flow skipped
+## S5 — A failure must not be dropped silently
 
-**Principle:** Code that silently aborts the normal flow looks exactly like "nothing to do
-here"; readers cannot tell a decision from an omission.
+**Principle:** Code that silently drops a failure looks exactly like "nothing went wrong";
+readers cannot tell a decision from an omission.
 
-- **S5.1 A non-terminal `return` / `break` / `continue` must state the condition and the flow
-  it skips** — Check: an early exit with no line above it stating what triggers it and what
-  it skips violates this rule. A terminal `return value;` is outside this rule.
 - **S5.2 Fire-and-forget must state who observes its failure** — Check: an async call whose
   result is not awaited, where you cannot say who observes its failure and why no one waits,
   violates this rule; await it.
@@ -212,7 +191,7 @@ leads to a wrong change**.
   with references like "used by X" / "fixes #123", or archaeology like "was A, now B" /
   "removed after v2" / "added this workaround for C back then", violates this rule. A
   constraint that still holds today must be stated in the present tense as the constraint
-  itself, without its origin. Tags whitelisted under S6.7 are outside this rule.
+  itself, without its origin.
 - **S6.3 One comment answers one question and attaches to the nearest declaration** — Check:
   a comment that says something other than about the declaration it sits on violates this
   rule. Contracts attach to types, behavior to methods, reasons to fields. Length is a
@@ -229,11 +208,6 @@ leads to a wrong change**.
   such a comment must sit directly before the block it describes and answer what readers
   cannot get from that block's identifiers (which stage of the flow this is, what it
   deliberately does not do); one whose content readers can get is deleted per S6.1.
-- **S6.7 Tags must be whitelisted, each with a scanner** — Check: a comment tag
-  (`// <tag>:` and the like) missing from a lower layer's whitelist is reported under S6.2; a
-  listed tag whose whitelist names no scanner that pulls every instance of it across the
-  repo in one pass violates this rule.
-
 ## S7 — Failure handling must match the kind of failure
 
 **Principle:** Failures come in three kinds, each handled differently: **predictable** ones
@@ -253,14 +227,9 @@ handling that is silent is checked separately under S5.
   type can resolve to a subtype the recovery does not handle correctly violates this rule;
   narrow the catch and let the rest propagate. This rule covers only concrete parent types
   that can actually be thrown.
-- **S7.4 Exceptions change type at the boundary** — Check: transport- and platform-layer
-  exceptions propagating past the repository boundary without conversion to domain
-  exceptions violate this rule: callers must be able to tell "the network broke" from "this
-  record does not exist" by type.
-- **S7.5 Changing type must not lose the origin** — Check: a translation that loses the
-  original stack trace violates this rule — the top-level handler will point at the
-  translation line, not the frame that actually failed. A domain exception still must not
-  carry the original inner exception; only the stack trace is preserved.
+- **S7.5 Changing type must not lose the origin** — Check: when code translates an exception,
+  a translation that loses the original stack trace violates this rule — the top-level handler will point at the
+  translation line, not the frame that actually failed.
 - **S7.6 Log level is decided by "should this be tracked as its own fault", not by
   recoverability** — Check: a level chosen by whether the failure is recoverable, instead of
   by whether it needs its own category in crash reporting, violates this rule.
@@ -285,11 +254,6 @@ place of a mechanism that **holds by construction**.
   writing, a network call or a large decode running blocking on the thread that drives the
   screen violates this rule. Cheap metadata probes are outside this rule — their synchronous
   form is correct.
-- **S8.4 Serialization granularity must match the granularity of shared state** — Check: a
-  serialization mechanism that queues per **operation kind** instead of per **key** (same key
-  in order, different keys in parallel) violates this rule: it leaves every cross-kind race
-  open. The patch must not go into the queue's catch or into ad-hoc caches in front of each
-  writer.
 - **S8.5 One change, one notification** — Check: a change notification sent per item instead
   of once violates this rule. Notify **after** the write lands, so whoever reads on
   notification sees the new state.
@@ -315,12 +279,9 @@ error.
 - **S9.4 Large data must be streamed or chunked, not held whole** — Check: large data (binary
   content, image buffers, long lists) loaded whole and kept resident in memory violates this
   rule.
-- **S9.5 Whatever reacts to change must declare the fields it reads** — Check: a recompute or
-  redraw trigger that does not list, one by one, the fields it actually reads (or is written
-  as the tautology "recompute on any change") violates this rule.
-- **S9.6 Input with a rate bound must state its bound** — Check: external work (query, write,
-  send) triggered per keystroke or per user action without a bound violates this rule — its
-  rate is otherwise bounded by the user's fingers, not by the program.
+- **S9.6 Per-keystroke external work must be debounced or throttled** — Check: external work
+  (query, write, send) triggered per keystroke with no debounce or throttle violates this
+  rule.
 
 ## S10 — A set recorded at compile time must not be bypassed by runtime lookup
 
@@ -330,9 +291,7 @@ the compiler's exhaustiveness check for a runtime query: a later member then get
 pointer to the sites to update.
 
 - **S10.1 Every member must have its branch** — Check: branching over the finite set must give
-  every member its own branch; a "return unless X" guard in their place violates this rule. A
-  member deliberately left without action must map to a sentinel checked at the side effect,
-  so the decision not to act stays visible in the branch table.
+  every member its own branch; a "return unless X" guard in their place violates this rule.
 - **S10.2 Several branches sharing one body discard the type's distinction** — Check: several
   branches with identical bodies violate this rule; merge those branches or extract a shared
   function, and do not disguise them as distinct by listing them side by side.
@@ -345,12 +304,6 @@ pointer to the sites to update.
   parameter crossing a boundary (route, message, job) as a map instead of a named type
   violates this rule — a shape mismatch is deferred to a runtime cast at the destination,
   while the mistake is at the origin.
-- **S10.6 A variant's entry point must not accept another variant's fields** — Check: a unit
-  whose few forms share one entry point that takes a config object, instead of each having
-  its own entry point that accepts only that form's fields (named constructor, named
-  factory), violates this rule: callers can pass fields the form has no place for, and the
-  type will not stop it.
-
 ## S11 — A piece of state has exactly one write path
 
 **Principle:** When two places can write the same state, each is correct on its own and what
@@ -359,45 +312,19 @@ source, not measured while debugging.
 
 - **S11.1 Subscribe to your own source, not someone else's lifecycle** — Check: a state
   holder that subscribes to "someone started / is doing something" instead of "the data I
-  present changed" violates this rule: a lifecycle subscription opens a second write path. If
-  the screen really must show someone else's in-progress state, model that fact as a field
-  **on your own side**, so there is still only one subscription source.
+  present changed" violates this rule: a lifecycle subscription opens a second write path.
 - **S11.2 No global mutable state** — Check: global variables or static mutable fields
   violate this rule.
-- **S11.3 A state holder must not hold another state holder** — Check: a state holder with
-  another state holder among its fields violates this rule: two lifecycles and two state
-  machines get bound together, and neither can be tested alone. Where both need the same
-  fact, each subscribes to the source that carries it.
 - **S11.4 An optimistic write carries its own rollback** — Check: an optimistic write (the
   expected result written before the write completes) whose failure path does not restore
   the original value (or reread) violates this rule. The rollback must be in the same method
   as the optimistic update.
 
-## S12 — A unit does one thing, and its control must not be passed in by the caller
+## S12 — Optional parameters must not replace the caller's thinking
 
-**Principle:** A unit that does two things will later be called for only half of it; a unit
-that lets a parameter decide "when to stop" has moved the caller's condition into itself. Both
-make "what this unit does" impossible to know from reading the unit alone.
+**Principle:** A default answers for the situation of whoever wrote it, not for the call that
+skips it; a question the caller ought to answer must not have a silent answer.
 
-- **S12.1 A name that needs "and" is two units** — Check: a unit whose description requires
-  "and" violates this rule; split it in two — the name is the test.
-- **S12.2 Control must not be passed as a parameter** — Check: a parameter that is a flag or
-  predicate deciding **when the operation stops** or **which path it takes** violates this
-  rule: that condition belongs to the caller. Two ways out — the unit owns the decision
-  itself, or it exposes a cancellation handle that the caller uses when it decides.
-- **S12.3 An operation's results travel one channel** — Check: progress, completion and
-  failure split across parallel `onSuccess` / `onError` / `onProgress` callbacks instead of
-  one channel violate this rule. Values that must be returned (identifiers and the like) must
-  be embedded in that channel's events.
-- **S12.5 A unit that changes state does not also answer questions** — Check: a
-  state-changing unit whose return value reports what the caller can get through existing
-  queries before and after the operation (success or not, hit or not, already empty or not)
-  violates this rule; the unit returns nothing — failure is thrown as a type per S7, state is
-  read back through queries, and neither may be silenced as a result (S5.3). The test is what
-  the value reports, not its type: a named enum does not make it acceptable. **Outside this
-  rule** are values the caller cannot get otherwise, produced by that operation: a newly
-  created entity's identifier, the element an atomic operation took. Example: `clear…()`
-  returning "whether anything was cleared".
 - **S12.6 Optional parameters must not replace the caller's thinking** — Check: a parameter
   whose default lets callers skip a question they ought to answer violates this rule; make
   the parameter required — the default answers for the situation of whoever wrote it, not for
@@ -488,16 +415,11 @@ capability goes through its interface, never building a second one or reaching a
   unit's internals, violates this rule. So does a shared unit that knows any of its users'
   types, state or entities — it is not shared, it belongs to that user; the data and actions
   it needs must go in and out through parameters.
-- **S16.5 Across a system boundary, each side owns its own concepts** — Check: anything that
-  crosses the boundary in the external system's shapes, codes or errors (fields one-to-one
-  with an external payload, or fields like raw / json / code) instead of your own types
-  violates this rule.
 - **S16.6 A fix lands in the unit that is wrong; a removal takes its guards along** — Check:
   code that would not need to exist if the unit it calls behaved correctly is a fix of that
   unit, and placing it outside that unit violates this rule. When the unit's source is under
   this project's owner, in any repository, the fix lands there; when it is not, it lands
-  once, in the single adapter this project calls the unit through. Consumer-side differences
-  must be encoded as a named option of that unit, not a sibling unit. When a unit is removed,
+  once, in the single adapter this project calls the unit through. When a unit is removed,
   every guard inside it (precondition, idempotency short-circuit, dedup, rate limit) must
   have somewhere to go; if the answer is "nowhere", the removal is not yet valid. Example:
   every caller checks an input's size before handing it to a decoder, because the decoder
