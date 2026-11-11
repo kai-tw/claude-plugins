@@ -14,13 +14,11 @@ cite, no finding", so **adding a rule is the only way in**.
 **The core rules are self-contained.** `index.md` **must name nothing but its own rule
 numbers** — no other files (`dart.md` / `csharp.md` / `js.md` / project file names), no
 reviewers, no lint rules, no commands or paths. It defines only **precedence** (the three
-levels core rules / language rules / project rules and what each may do), not which file
+levels core rules / language rules / project rules), not which file
 holds each level: once a file is named, renaming or deleting it breaks the core rules.
 
 Which files hold which level is stated here: the language rules are `dart.md` / `csharp.md` /
 `js.md`, the project rules are what each project's config names in `rules:`.
-How to report a conflict is stated here too — when a conflict is reported as `inconclusive`,
-its evidence format is in this pack's `references/evidence.md`.
 
 Likewise, when a rule's scope is narrowed because lint already covers part of it, the rule
 text states only **what it covers itself**, not "who checks the other half" — that follows

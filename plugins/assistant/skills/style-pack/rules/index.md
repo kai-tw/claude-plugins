@@ -7,8 +7,7 @@ in its `Check:`.
 
 Three levels: core rules (the `S<N>` in this file), language rules, project rules. When two
 rules cannot both hold, the more specific one wins — project over language over core — and
-nothing is filed for the losing rule. Report a conflict as **`inconclusive`** and name which
-rule should change.
+nothing is filed for the losing rule.
 
 S16.1 outranks every rule that asks for structure: when following a rule would add a layer,
 wrapper, type, file, callback or parameter the code does not need today, do not follow it
@@ -208,6 +207,7 @@ leads to a wrong change**.
   such a comment must sit directly before the block it describes and answer what readers
   cannot get from that block's identifiers (which stage of the flow this is, what it
   deliberately does not do); one whose content readers can get is deleted per S6.1.
+
 ## S7 — Failure handling must match the kind of failure
 
 **Principle:** Failures come in three kinds, each handled differently: **predictable** ones
@@ -304,6 +304,7 @@ pointer to the sites to update.
   parameter crossing a boundary (route, message, job) as a map instead of a named type
   violates this rule — a shape mismatch is deferred to a runtime cast at the destination,
   while the mistake is at the origin.
+
 ## S11 — A piece of state has exactly one write path
 
 **Principle:** When two places can write the same state, each is correct on its own and what
