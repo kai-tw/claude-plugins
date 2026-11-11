@@ -35,7 +35,7 @@ language. Read a filed brief or report by meaning; its labels may be in any lang
 |---|---|---|---|---|
 | 1 | Decision brief | after the investigation, before any code | open questions + system design | `references/brief.md` |
 | 2 | Screen review | widgets built, not yet integrated | the screens page (`asst-screens`) | the page + one question: OK / which numbered image |
-| 3 | Delivery summary | Verify done, PR turned ready | logic · data flow · style · error handling · built vs approved design · tests · on-device runs · the `list` findings | `references/delivery-summary.md` |
+| 3 | Delivery summary | Verify done, PR turned ready | logic · data flow · style · error handling · built vs approved design · tests · on-device runs · the `list` finding or the builder's `debt:` line | `references/delivery-summary.md` |
 
 Nothing else reaches the user. A `Needs you` line, at the end of the turn, is the only question you ask; if the user's habits say they're away, `references/inbox.md`.
 `Decided` lines are your own calls, listed so the user can veto them — silence
@@ -107,7 +107,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    which task); the next message to the user names that row. When a check should have caught
    the defect earlier, the same message proposes the process fix: which agent,
    rule or check to change, in one line.
-7. **Delivery summary** (you, from the verifier reports): `references/delivery-summary.md`,
+7. **Delivery summary** (you, from the verifier reports and the builder reports' `debt:` and `declined:` lines): `references/delivery-summary.md`,
    and on git the PR around it — ready, CI, merge — per `references/pr.md`.
    On git, write it only once CI has passed on HEAD and every `verify-*` report is newer than
    HEAD, with the PR marked ready (`gh pr ready`) and `PR #<n> ready` in its header.

@@ -1,7 +1,8 @@
 # Delivery summary — one screen, eight blocks, every line clickable
 
-Built from the verifier reports; the user reads this, not the diff and not the
-reports. Anything a linter or a passed check already settled is one line.
+Built from the verifier reports and the builder reports (`debt:`, `declined:` lines);
+the user reads this, not the diff and not the reports. Anything a linter or a passed
+check already settled is one line.
 
 ```
 # <Task> — <PR #n ready | r<rev> pending>   <project> · <sha | working copy>
