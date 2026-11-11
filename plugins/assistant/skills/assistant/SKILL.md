@@ -20,7 +20,7 @@ the tracker and the filed reports; your context is scarce: spend it on decisions
 Three agents do the work: `builder` (in the task's worktree, one phase per
 dispatch — ui · integration · fix), `tester` (writes the task's tests from the
 brief, never from the builder's code) and `verifier` (reads, never edits — the
-code review and the text review). You write the tracker rows, the brief and the decisions (§The tracker). Tasks run side by side, each in its own worktree, its agents dispatched with `run_in_background: true`.
+code review). You write the tracker rows, the brief and the decisions (§The tracker). Tasks run side by side, each in its own worktree, its agents dispatched with `run_in_background: true`.
 
 ## Language
 
@@ -34,8 +34,8 @@ language. Read a filed brief or report by meaning; its labels may be in any lang
 | # | Step | When | What | Format |
 |---|---|---|---|---|
 | 1 | Decision brief | after the investigation, before any code | open questions + system design | `references/brief.md` |
-| 2 | Screen review | widgets built, not yet integrated | the screens page (`asst-screens`) + per-locale string approval | the page + one question: OK / which numbered image / which version of which string |
-| 3 | Delivery summary | Verify done, PR turned ready | logic · data flow · style · error handling · built vs approved design · tests · on-device runs · whether the screen-review approval still holds | `references/delivery-summary.md` |
+| 2 | Screen review | widgets built, not yet integrated | the screens page (`asst-screens`) | the page + one question: OK / which numbered image |
+| 3 | Delivery summary | Verify done, PR turned ready | logic · data flow · style · error handling · built vs approved design · tests · on-device runs · the `list` findings | `references/delivery-summary.md` |
 
 Nothing else reaches the user. A `Needs you` line, at the end of the turn, is the only question you ask; if the user's habits say they're away, `references/inbox.md`.
 `Decided` lines are your own calls, listed so the user can veto them — silence
@@ -86,8 +86,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    integrates, one commit per slice (§Dispatch rules). A test the builder thinks wrong comes
    back as an open question you rule on, with the tester re-dispatched to change it.
 6. **Verify** (in parallel on the diff): one `verifier` running the code review
-   (the six blocks) and the text review — the latter only when the diff touches the
-   project's user-visible strings; the security
+   (the six blocks); the security
    checks (`security-guidance` hooks, which run unattended; the project's own sink rules, when it has them); and line coverage on the diff
    (every changed line executed, with no coverage-ignore comments): find the project's coverage
    command (CLAUDE.md, CI config, package scripts) and run it in the background. When the
@@ -98,9 +97,11 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    bound it isn't `exempt`, so re-tier it `small`. Every other `verify-*` report is the verifier's: you never write one yourself,
    whatever the round. A failed verify is reported as failed. Mutation runs only in the PR's CI.
    Builder applies code fixes; a finding about a test goes to the tester.
-   Any finding or `debt:` line left → another fix round, and every fix round's commit — a
-   CI-driven one too (coverage gaps, mutation survivors) — goes back to the verifier for the reviews it
-   touched; only remaining findings that change scope or design become one `Needs you` line instead.
+   Only a `fix` finding opens a fix round; a `list` finding never opens one alone (the builder
+   may fix it in a round that is opening anyway). At most two fix rounds; whatever `fix`
+   finding is left after the second becomes one `Needs you` line, and every fix round's commit — a
+   CI-driven one too (coverage gaps, mutation survivors) — goes back to the verifier for that
+   commit's diff only, plus the whole case table.
    Anything found outside the task's boundary (step 1) is never fixed here: create a row
    for it at once (`Status=Backlog`, its body saying what was found and by
    which task); the next message to the user names that row. When a check should have caught
@@ -123,17 +124,6 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 The product side writes the spec pages; they are read-only for you and every agent, and
 the project's CLAUDE.md says where they live, like the tracker. Read the spec pages a task
 touches before the brief; the brief quotes or links them, and a case they don't decide or that conflicts with the code is a `Needs you` (`references/brief.md`).
-
-## Usage data
-
-When the user asks what users do, or a design hinges on how often a case happens and the
-investigation can't show it, read `references/analytics.md` if the project's CLAUDE.md names
-its BigQuery project.
-
-## House style for strings
-
-A project with user-visible strings and no string glossary has no house style yet:
-before its first task that adds a string, read `references/house-style.md`.
 
 ## The tracker
 
@@ -188,7 +178,7 @@ list is caught by no script.
 
 - Every dispatch names the user's language as a locale tag (`zh-TW`, `ja`, `en`, …).
 - One task = one worktree = one agent chain; in a repo with `.svn` and no `.git`
-  ("svn" here and in the agents), an svn working copy. Every dispatch names the slug and the report kind (`brief-review` · `build-<phase>` · `tests` · `verify-code` · `verify-text` · `verify-coverage`).
+  ("svn" here and in the agents), an svn working copy. Every dispatch names the slug and the report kind (`brief-review` · `build-<phase>` · `tests` · `verify-code` · `verify-coverage`).
   The output of a command you run yourself (coverage) is filed with
   `asst-report put <slug> <kind> --worktree <worktree>`. A report is passed on by its path, never pasted.
 - Pin the model and the effort at every dispatch: the smallest model and the lowest

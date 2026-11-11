@@ -30,8 +30,7 @@ claude plugin install dart-lsp@kai-tw
 | --- | --- |
 | [dart-lsp](plugins/dart-lsp) | Dart/Flutter language server (Dart Analysis Server in LSP mode) for code intelligence |
 | [flutter-toolkit](plugins/flutter-toolkit) | Flutter testing on a shared machine: `plan-test` concurrency limit, line coverage over the diff |
-| [google-reporting](plugins/google-reporting) | GA4 and Search Console readers via keyless service-account impersonation |
-| [assistant](plugins/assistant) | An assistant for your projects: request → decision brief → screen review → PR. Ships the cross-project rulebooks its reviewers check against: `style-pack` (code style, core rules S1–S16 plus Dart, C# and JS) and `ui-text-pack` (user-visible text, core rules U1–U5 plus zh-Hant, ja and en) |
+| [assistant](plugins/assistant) | An assistant for your projects: request → decision brief → screen review → PR. Ships the cross-project rulebook its reviewers check against: `style-pack` (code style, core rules S1–S16 plus Dart, C# and JS) |
 | [reclaim-space](plugins/reclaim-space) | Developer-disk reclamation on macOS: regenerable build output and toolchain caches, with a free-space floor on new git worktrees |
 | [mother-tongue](plugins/mother-tongue) | Per-locale writing rules for the agent's own prose: detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies, commit messages, and comments or docs written to files that use its banned terms |
 

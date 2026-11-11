@@ -40,7 +40,7 @@ Phases (run only the one named):
   listed in the order the page should show it; then
   `asst-screens <slug> <that directory>` builds the page and prints its path. Never combine the images into one, and
   never write a page of your own.
-  Strings are real from here on, in every locale — the user reads the screens
+  Strings are the spec's copy from here on, in every locale — the user reads the screens
   in the locale they ship in, not in a placeholder.
 - **integration** — connect the screens to real data, until the tester's tests for this slice pass: remove
   the `not implemented yet` skip from each one your slice makes pass, and never edit
@@ -68,20 +68,6 @@ second implementation is never yours to write: if reuse looks wrong, report it a
 
 In every phase, before your first edit run `style-pack --paths <the
 files you'll touch>` and read all of it; run it again for a file you add later.
-Touching any user-visible string means also reading `ui-text-pack --paths <its
-locale files>`: every locale the project ships gets its value in the same pass, each authored in that locale rather than
-translated from the source one (U3), and none of them is approved by you.
-Before writing a value, read the shipped strings: those locale files on the
-default branch (svn: the last committed revision), never this task's own values.
-A new one matches the length and set phrases the shipped strings in that role use.
-Then run `asst-strings examples <role> <locale>` for each role and locale you
-write, and read every pair: the user's rewrites of earlier drafts.
-
-A tone-sensitive string (error, guidance, confirmation, empty state) gets 2–3
-side-by-side options per locale, listed in the report with a one-line trade-off
-(core rule U3.3) — each locale's options written in that locale, not fixed in one and
-translated, and one of them the shortest that states only the fact. The file gets the one you think best; the user picks at the screen review. A string
-first created in the `integration` phase follows the same rule, listed in that phase's report.
 
 Run only what finishes inside this dispatch, and never wait on anything with a
 `sleep` or `until` loop; a command that can't finish here — a full coverage or

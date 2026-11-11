@@ -5,6 +5,6 @@ the assistant asks once and writes it; a field not listed here is ignored. `asst
 directory holding this file (`.claude/.assistant/`, personal and unversioned).
 
 ```
-rules:      <path or none>                 # the project's rules, a file or a directory whose every .md is read — the project-rules layer under style-pack and ui-text-pack §Precedence. `style-pack --paths` prints them (a missing entry reads as none), skipping a file whose `paths:` frontmatter matches none of the paths
+rules:      <path or none>                 # the project's rules, a file or a directory whose every .md is read — the project-rules layer under style-pack §Precedence. `style-pack --paths` prints them (a missing entry reads as none), skipping a file whose `paths:` frontmatter matches none of the paths
 architecture: <path or none>               # the repo's architecture document, a file or a directory whose every .md is read; a missing entry is none, never asked. references/brief.md says how it binds
 ```
