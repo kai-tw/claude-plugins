@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: lean-reports
-description: An agent's report is written once — filed, then returned as its path only; strings_check output reaches the text report through the shell, never retyped; the verifier lists only the string values its findings change; the assistant checks an exempt diff itself instead of dispatching the code review.
+description: An agent's report is written once — filed, then returned as its path only; the assistant checks an exempt diff itself instead of dispatching the code review.
 tags: [agents, tokens]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: for a in builder verifier; do grep -c "return only the paths\? it prints" "$root/agents/$a.md" | sed "s/^/$a-path-only=/"; done; grep -c "verbatim output" "$root/agents/verifier.md" | sed "s/^/retyped=/"; grep -c "^## Strings (only keys a finding changes)$" "$root/skills/assistant/forms/verify-text.md" | sed "s/^/strings-changed-only=/"; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "An \`exempt\` diff skips the code review: check it yourself[^.]*" | sed "s/^/exempt=/"
+    EVAL_CMD: for a in builder verifier; do grep -c "return only the paths\? it prints" "$root/agents/$a.md" | sed "s/^/$a-path-only=/"; done; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "An \`exempt\` diff skips the code review: check it yourself[^.]*" | sed "s/^/exempt=/"
   prompt: |
-    Say what each assistant agent returns after filing a report, how strings_check output gets into the text report, which string values the verifier lists, and who verifies an exempt diff.
+    Say what each assistant agent returns after filing a report, and who verifies an exempt diff.
 context:
   scaffold_script: fixture.sh

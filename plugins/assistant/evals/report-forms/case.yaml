@@ -8,7 +8,7 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: for k in investigation build-ui build-fix tests verify-code verify-text brief-review; do echo "$k=$(asst-report form $k 2>/dev/null | head -1)"; done; asst-report form nope 2>&1; echo "unknown=$?"; for a in builder tester verifier; do echo "$a-points=$(grep -c "asst-report form" "$root/agents/$a.md")"; echo "$a-copies=$(grep -cE "^(phase: <name>|scenarios:|## Findings)" "$root/agents/$a.md")"; done
+    EVAL_CMD: for k in investigation build-ui build-fix tests verify-code brief-review; do echo "$k=$(asst-report form $k 2>/dev/null | head -1)"; done; asst-report form nope 2>&1; echo "unknown=$?"; for a in builder tester verifier; do echo "$a-points=$(grep -c "asst-report form" "$root/agents/$a.md")"; echo "$a-copies=$(grep -cE "^(phase: <name>|scenarios:|## Findings)" "$root/agents/$a.md")"; done
   prompt: |
     Print the form each report kind fills in, and say whether any agent still carries its own copy.
 context:

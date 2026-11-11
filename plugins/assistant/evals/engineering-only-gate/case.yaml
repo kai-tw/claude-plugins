@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: engineering-only-gate
+description: Nothing the plugin ships outside evals/ names ui-text-pack, asst-strings, verify-text, house-style, asst-analytics, analytics.md or analytics.mjs, and none of those files exists. The verifier marks each finding as opening a fix round or not (user-visible, data, security, spec behaviour or untested behaviour opens one; code style, test tidiness and wording do not); SKILL.md opens a round only for those, caps fix rounds at two with what is left becoming one `Needs you` line, and sends the verifier only the fix commit's diff plus the whole case table; the delivery summary lists the findings that did not open a round.
+tags: [assistant, verifier, flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Say whether anything the plugin ships still names the text pack, the strings log, the text review, the house style or analytics, and quote how the verifier marks a finding as opening a fix round, when the assistant opens one, how many fix rounds it allows and what the verifier gets back, and where findings that opened no round are listed.
+context:
+  scaffold_script: fixture.sh

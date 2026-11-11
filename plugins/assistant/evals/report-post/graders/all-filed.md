@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^files=.*investigation-1\.md.*verify-code-1\.md.*verify-code-2\.md.*verify-coverage-1\.md.*verify-text-1\.md'
+pattern: '^files=.*investigation-1\.md.*verify-code-1\.md.*verify-code-2\.md.*verify-code-3\.md.*verify-coverage-1\.md'
 flags: m
 arm: with-only
 ---
