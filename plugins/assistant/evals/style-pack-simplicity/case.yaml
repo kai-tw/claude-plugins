@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: style-pack-simplicity
-description: style-pack does not push extra layers — precedence says the more specific rule wins (project over language over core), S16.1 outranks any rule whose fix adds a layer, wrapper, type, file, callback or parameter the code does not need today, there are no exemption clauses or "apply the higher rule" burden of proof, S2 does not blanket-mark violations CRITICAL, no rule or agent file names a deleted id, and the builder and verifier agents never tell a unit to grow a named option.
+description: style-pack does not push extra layers — precedence says the more specific rule wins (project over language over core), S16.1 outranks any rule whose fix adds a layer, wrapper, type, file, callback or parameter the code does not need today, there are no exemption clauses or "apply the higher rule" burden of proof, S2 does not blanket-mark violations CRITICAL (S4.1 and S8.6 still do), no rule or agent file names a deleted id, and the builder and verifier agents never tell a unit to grow a named option.
 tags: [style-pack]
 plugins: ["../.."]
 runs: 1

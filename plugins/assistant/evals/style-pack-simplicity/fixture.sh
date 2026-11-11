@@ -8,11 +8,15 @@ set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; cd "$root" || exit 1
 r=skills/style-pack/rules
-grep -niE 'exemption clause' $r/index.md | sed 's/^/exemption-index=/'
+grep -niE 'exemption' $r/index.md | sed 's/^/exemption-index=/'
 grep -niE 'no exemption clauses?' $r/CONVENTIONS.md | sed 's/^/exemption-conventions=/'
 grep -niE 'apply the higher rule' $r/index.md | sed 's/^/higher-rule=/'
 # S2's section: from its heading to the next one.
 awk '/^## S2 /{f=1; next} /^## /{f=0} f' $r/index.md | grep -n 'always proposed CRITICAL' | sed 's/^/s2-critical=/'
+# S4.1 and S8.6 keep their "always proposed CRITICAL": each rule's block, to the next bullet.
+block() { awk -v id="$1" 'index($0, "- **" id " ")==1 {f=1; print; next} /^- \*\*|^## /{f=0} f' $r/index.md | tr -s ' \n' ' '; }
+grep -qF 'always proposed CRITICAL' <<<"$(block S4.1)" || echo "s4.1-missing=S4.1 lost always proposed CRITICAL"
+grep -qF 'always proposed CRITICAL' <<<"$(block S8.6)" || echo "s8.6-missing=S8.6 lost always proposed CRITICAL"
 # The first section: everything before "## Core rules".
 first=$(awk '/^## Core rules/{exit} {print}' $r/index.md | tr -s ' \n' ' ')
 echo "first-section=$first"
