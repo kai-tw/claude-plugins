@@ -8,8 +8,8 @@ set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; cd "$root" || exit 1
 r=skills/style-pack/rules
-grep -niE 'exemption' $r/index.md | sed 's/^/exemption-index=/'
-grep -niE 'no exemption clauses?' $r/CONVENTIONS.md | sed 's/^/exemption-conventions=/'
+grep -niE 'exempt' $r/index.md | sed 's/^/exemption-index=/'
+grep -niE 'exempt' $r/CONVENTIONS.md | sed 's/^/exemption-conventions=/'
 grep -niE 'apply the higher rule' $r/index.md | sed 's/^/higher-rule=/'
 # S2's section: from its heading to the next one.
 awk '/^## S2 /{f=1; next} /^## /{f=0} f' $r/index.md | grep -n 'always proposed CRITICAL' | sed 's/^/s2-critical=/'
