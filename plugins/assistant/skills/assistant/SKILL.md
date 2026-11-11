@@ -97,7 +97,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    bound it isn't `exempt`, so re-tier it `small`. Every other `verify-*` report is the verifier's: you never write one yourself,
    whatever the round. A failed verify is reported as failed. Mutation runs only in the PR's CI.
    Builder applies code fixes; a finding about a test goes to the tester.
-   Only a `fix` finding opens a fix round; a `list` finding never opens one alone (the builder
+   Only a `fix` finding opens a fix round; a `list` finding, or a builder's `debt:` line, never opens one alone (the builder
    may fix it in a round that is opening anyway). At most two fix rounds; whatever `fix`
    finding is left after the second becomes one `Needs you` line, and every fix round's commit — a
    CI-driven one too (coverage gaps, mutation survivors) — goes back to the verifier for that

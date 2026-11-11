@@ -21,7 +21,7 @@ reports. Anything a linter or a passed check already settled is one line.
 ## On device
 - <platform>: <passed | failed | not run — why> on <phone>   (or none: the project has no on-device tests)
 ## Listed, not fixed
-- <file:line> — <the `list` finding in one line>   (or none)
+- <file:line> — <the `list` finding or the builder's `debt:` line in one line>   (or none)
 
 ## Other (automated checks)
 security passed · naming passed · coverage <n unexecuted lines, each named>   (or `no coverage tool found`)
