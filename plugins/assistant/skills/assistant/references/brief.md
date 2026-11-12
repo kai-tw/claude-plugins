@@ -15,7 +15,7 @@ Decision · Consequence, the rejected option and its cost in Consequence; `refer
 A product behaviour a later round needs changed is a spec question asked as below, and the code
 changes once you've re-read the updated page.
 
-Under 40 lines, the case table aside. Every other line is a decision, never a description. Two marks:
+One page the user reads in one sitting, the case table aside. Every other line is a decision, never a description. Two marks:
 `Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
 engineering call, listed for veto; the user's silence never makes it theirs).
 Every product behaviour the task adds or changes — what the user sees, or how a
