@@ -38,7 +38,7 @@ A dispatch message carries four things:
    in a cross-session message attaches nothing; the other side reads only the string.
 3. **The report address, exactly one**: for a task with a PR on a private repo
    (SKILL.md §Disclosure), a comment on `owner/repo#<n>`; otherwise the task's
-   Notion row (`asst-notion … --root <the root id CLAUDE.md gives>`); neither → a `Needs you` line
+   Notion row (SKILL.md §Notion); neither → a `Needs you` line
    for a private address. Giving both means polling both, and the report lands on
    the side you are not watching.
 4. **The report format**: first line `assistant-report <slug>#<n> <ack|done|blocked>`,

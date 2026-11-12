@@ -121,14 +121,14 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 
 ## Spec pages
 
-The product side writes the spec pages; they are read-only for you and every agent, and
+The product side writes the spec pages; they are read-only for you and every agent (never edit their content), and
 the project's CLAUDE.md says where they live, like the tracker. Read the spec pages a task
 touches before the brief; the brief quotes or links them, and a case they don't decide or that conflicts with the code is a `Needs you` (`references/brief.md`).
 
 ## The tracker
 
 Where tasks live follows the project's convention, read from its CLAUDE.md: Notion
-through `asst-notion` (scribe); GitHub
+(§Notion); GitHub
 through `gh`; any other through its own CLI or MCP; a file board by editing
 `.claude/.assistant/board.md` (columns Slug, Name, Status, Stage, Blocked by, Parent item) and
 `tasks/<slug>/brief.md`. None found: ask the user once and write the answer into
@@ -159,6 +159,22 @@ ref (`… (pr#42)`); a candidate whose ref already ends a row `Name`, any status
 new. Each new candidate is one
 `Needs you` line — take it (task statement, row `Status=In Progress`) or pass (row
 `Status=Backlog`) — so a ref is asked once. A source that can't be read is named, with the reason, in the turn's `Needs you` lines, not taken as no candidates.
+
+## Notion
+
+Use the Notion tool the environment has (a Notion MCP server or a CLI); with no Notion
+tool, report what is missing instead of looking for another path.
+
+- The databases sit under the root page the project's CLAUDE.md gives; it maps names that differ.
+- A task is a `tasklist` row; `Blocked by` and `Parent item` are relations.
+  A decision is a `decision-log` row: Name = the question, Context · Decision ·
+  Consequence, `Task` = the task row, `Status=Active`, `Decided` = today. Close = trash the row.
+- A query reads every page of results (Notion paginates).
+- A `|` inside a table cell is written `\|`.
+- Every comment any agent leaves on a Notion page starts with
+  `〔Claude Code｜<role>｜<category>〕`: role is the writer's department in the user's
+  language (前端, 企劃…); category is one word summing up the comment (提問, 回報…),
+  no fixed list. Page bodies and properties never carry it.
 
 ## Disclosure
 

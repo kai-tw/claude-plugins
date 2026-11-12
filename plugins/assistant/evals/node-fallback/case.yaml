@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Bash]
   env:
-    EVAL_CMD: for b in asst-notion asst-screens; do PATH="$PWD/tools" HOME="$PWD/home" "$root/bin/$b" probe 2>&1; echo "$b=$?"; done
+    EVAL_CMD: PATH="$PWD/tools" HOME="$PWD/home" "$root/bin/asst-screens" probe 2>&1; echo "asst-screens=$?"
   prompt: |
-    With no node on PATH but one installed under ~/.nvm, run asst-notion and asst-screens; print what each prints and its exit code.
+    With no node on PATH but one installed under ~/.nvm, run asst-screens; print what it prints and its exit code.
 context:
   scaffold_script: fixture.sh

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: notion-principles
+description: SKILL.md states the Notion rules no script enforces — spec pages are never edited, a query reads every page of results, a `|` in a table cell is escaped, Blocked by and Parent item are relations, a decision is a decision-log row with Status=Active, and Close trashes the task row.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: s=$(tr -s "[:space:]" " " < "$root/skills/assistant/SKILL.md"); c() { echo "$1=$(grep -ciE -- "$2" <<<"$s")"; }; c read-only "spec pages[^.]*read-only[^.]*never edit"; c all-pages "query reads every page"; c pipe "table cell is written ..[|]"; c relations "Blocked by. and .Parent item. are relations"; c decision "decision-log. row[^.]*Status=Active"; c close "Close = trash the row"
+  prompt: |
+    Say what SKILL.md tells an agent about spec pages, Notion queries, table cells, row relations, decisions and closing a task on Notion.
+context:
+  scaffold_script: fixture.sh

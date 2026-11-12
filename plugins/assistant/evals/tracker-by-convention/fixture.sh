@@ -33,5 +33,5 @@ echo "s13-parent=$(grep -ciE 'last (open |remaining )?(sub-item|sub-task|child)[
 all=$(for f in $(find "$root/skills" "$root/agents" -name '*.md'); do n "$f"; echo; done)
 echo "s14-svn=$(grep -ciE '\.svn`?[^;]{0,60}\b(no|without|not)\b[^;]{0,20}`?\.git\b|\b(no|without)\b[^;]{0,20}`?\.git`?[^;]{0,60}\.svn' <<<"$all")"
 echo "s14-per-config=$(grep -ciE 'svn[^.]{0,60}per the project config' <<<"$all")"
-echo "s15-root=$(grep -cE 'CLAUDE\.md[^.]{0,200}--root|--root[^.]{0,200}CLAUDE\.md' <<<"$all")"
+echo "s15-root=$(grep -cE 'CLAUDE\.md[^.]{0,200}root page|root page[^.]{0,200}CLAUDE\.md' <<<"$all")"
 SH
