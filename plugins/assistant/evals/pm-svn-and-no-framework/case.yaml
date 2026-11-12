@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: pm-svn-and-no-framework
+description: A revert is asked first (on svn, never `svn revert` unasked); Close covers svn and never deletes a working copy; a fix round's re-review on svn covers the `svn diff` saved after it against the one before; the description names the three agents; a question row opens only when the PM can see the tracker; the PM is never called the product side; a project with no test framework gets no tester and no framework, and no missing-test finding.
+tags: [assistant, svn]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: p="$root/skills/assistant"; n() { tr -s " \n" " " < "$1"; }; s=$(n "$p/SKILL.md"); d=$(sed -n "/^description:/,/^  TRIGGER/p" "$p/SKILL.md" | tr -s " \n" " "); echo "revert-asked=$(grep -cE "a revert \(on svn, never run .svn revert. on your own\)" <<<"$s")"; echo "close-svn=$(n "$p/references/tracker.md" | grep -cE "svn: once the user.s .svn commit., asked, has run.*an svn working copy is never deleted")"; echo "fix-round-svn-diff=$(n "$p/references/verify.md" | grep -cE "on svn, the .svn diff. saved after the round against the one saved before it")"; echo "one-builder-one-verifier=$(grep -ci "one Builder and one Verifier" <<<"$d")"; echo "question-row-pm-sees=$(n "$p/references/brief.md" | grep -cE "if the PM can see the tracker, first ask the user whether to open a question row for the PM; if not, or declined, it is a .Needs you.")"; echo "product-side-left=$(grep -rli "product side" "$root/skills" "$root/agents" | wc -l | tr -d " ")"; echo "no-tester=$(grep -cE "no test framework gets no tester and no framework" <<<"$s")"; echo "verifier-no-tests-finding=$(n "$root/agents/verifier.md" | grep -cE "no test framework gets no Tests findings")"; echo "tester-framework=$(grep -ci "framework" "$root/agents/tester.md")"
+  prompt: |
+    Print what the assistant skill and its agents say about a revert, Close on svn, a fix round's diff on svn, a question row, the PM, and a project with no test framework.
+context:
+  scaffold_script: fixture.sh

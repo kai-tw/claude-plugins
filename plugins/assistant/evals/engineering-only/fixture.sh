@@ -19,7 +19,7 @@ echo "s30-quoted=$(grep -ciE 'spec[^.]{0,160}quot|quot[^.]{0,160}spec' <<<"$s")"
 # S31: an undecided cell or a spec that conflicts with the code is a Needs you line with a concrete example; the assistant never writes the rule.
 echo "s31-needs-you=$(grep -ciE '(spec|case table)[^.]{0,250}(conflict|contradict|disagree|doesn.t decide|does not decide|silent|undecided|leaves? [^.]{0,20}open)[^.]{0,250}Needs you|Needs you[^.]{0,250}(spec)' <<<"$sr")"
 echo "s31-example=$(grep -ciE '(spec|conflict|decide)[^.]{0,250}(concrete|example)|(concrete|example)[^.]{0,250}(spec|conflict|decide)' <<<"$sr")"
-echo "s31-product-side=$(grep -ciE 'product (side|team|owner|people)|settled with' <<<"$sr")"
+echo "s31-product-side=$(grep -cE '\bPM\b' <<<"$sr")"
 echo "s31-never-writes=$(grep -ciE '(never|not|n.t)[^.]{0,40}(write|writes|writing|draft|drafts|invent|invents)[^.]{0,40}(the rule|a rule|product rule|the spec)' <<<"$sr")"
 # S32: the decisions the assistant files are engineering decisions; a product behaviour changes only through the spec page.
 echo "s32-engineering=$(grep -ciE 'engineering decisions?' <<<"$s")"
