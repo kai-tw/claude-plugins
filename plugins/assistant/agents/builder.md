@@ -46,8 +46,8 @@ Phases (run only the one named):
   the `not implemented yet` skip from each one your slice makes pass, and never edit
   a test otherwise — one you think wrong goes on `open questions:` with why. One
   commit, ending the slice the brief names (git: commit, the hook
-  runs the checks, then push and, when the branch has no PR yet, open one with
-  `gh pr create --draft`; svn: run them, save `svn diff` under
+  runs the checks, then push and, when the branch has no PR yet, open a draft one
+  with the environment's GitHub tool (none: report it missing); svn: run them, save `svn diff` under
   `.claude/.assistant/tasks/<slug>/`, commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
   a better fix of your own), except those about a test, which are the tester's; a finding you decline goes on the report's

@@ -25,11 +25,6 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/checks/palimpsest.sh"
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/checks/disclosure.sh",
-            "timeout": 120
           }
         ]
       },

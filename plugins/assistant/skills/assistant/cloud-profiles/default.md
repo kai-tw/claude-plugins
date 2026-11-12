@@ -1,4 +1,0 @@
----
-model: opus
-effort: high
----

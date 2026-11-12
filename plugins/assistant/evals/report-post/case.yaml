@@ -1,15 +1,15 @@
 schema_version: "1.1"
 name: report-post
-description: A verify-* report, once filed, is also posted to the task's PR (first line naming slug, kind and sha); investigation and --no-post are not posted; with no PR, or no upstream on the branch, it states why, and the file is filed anyway.
+description: A filed verify-* report is posted to the task's PR by the assistant with its GitHub tool — in full on a private repo, only its first line on any other; asst-report itself files it and calls no GitHub tool.
 tags: [asst-report]
 plugins: ["../.."]
 runs: 1
 execution:
-  max_turns: 6
-  allowed_tools: [Bash]
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; git -C wt switch -q task/r; echo finding-A | asst-report put r verify-code --worktree wt; echo notes | asst-report put r investigation --worktree wt; echo cloud | asst-report put r verify-code --worktree wt --no-post; GH_NOPR=yes asst-report put r verify-code --worktree wt </dev/null; echo t | GH_NOPR=yes asst-report put r verify-code --worktree wt; git -C wt switch -q local-only; echo c | asst-report put r verify-coverage --worktree wt; echo "files=$(asst-report list r 2>/dev/null; ls wt/.claude/.assistant/reports/r | paste -sd, -)"; echo "comments=$(grep -c "^--- comment" comments.log)"; cat comments.log
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; echo finding-A | asst-report put r verify-code --worktree wt >/dev/null; echo "filed=$(ls wt/.claude/.assistant/reports/r | paste -sd, -)"; echo "gh-calls=$(cat gh.log 2>/dev/null | wc -l | tr -d " ")"; s=$(tr -s "[:space:]" " " < "$root/skills/assistant/SKILL.md"); echo "post=$(grep -ciE "verify-\*. report to the task.s PR" <<<"$s")"; echo "split=$(grep -ciE "PR, in full on a private repo [^.]*else its first line" <<<"$s")"
   prompt: |
-    On a task branch with a local remote and a fake gh, file several kinds of report with asst-report, see which are posted to the PR and which are not and why, and list the filed files.
+    File a verify-code report with asst-report on a task branch where gh only logs its calls; say whether asst-report called gh, and what SKILL.md says the assistant does with a filed verify report.
 context:
   scaffold_script: fixture.sh

@@ -22,6 +22,9 @@ dispatch — ui · integration · fix), `tester` (writes the task's tests from t
 brief, never from the builder's code) and `verifier` (reads, never edits — the
 code review). You write the tracker rows, the brief and the decisions (§The tracker). Tasks run side by side, each in its own worktree, its agents dispatched with `run_in_background: true`.
 
+GitHub and Notion work uses the environment's tool for each (an MCP server, or a CLI such as
+`gh`); with no GitHub or Notion tool, report what is missing instead of looking for another path.
+
 ## Language
 
 Everything the user reads (chat, briefs, reports, summaries, PR text, Notion rows) is in the language the user writes to you, unless the project's
@@ -95,7 +98,8 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line, starting `exempt:`, into `asst-report put <slug> verify-code --worktree <worktree>`; past that
    bound it isn't `exempt`, so re-tier it `small`. Every other `verify-*` report is the verifier's: you never write one yourself,
-   whatever the round. A failed verify is reported as failed. Mutation runs only in the PR's CI.
+   whatever the round. Post each filed `verify-*` report to the task's PR, in full on a private
+   repo (§Disclosure), else its first line. A failed verify is reported as failed. Mutation runs only in the PR's CI.
    Builder applies code fixes; a finding about a test goes to the tester.
    Only a `fix` finding opens a fix round; a `list` finding, or a builder's `debt:` line, never opens one alone (the builder
    may fix it in a round that is opening anyway). At most two fix rounds; whatever `fix`
@@ -110,9 +114,8 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 7. **Delivery summary** (you, from the verifier reports and the builder reports' `debt:` and `declined:` lines): `references/delivery-summary.md`,
    and on git the PR around it — ready, CI, merge — per `references/pr.md`.
    On git, write it only once CI has passed on HEAD and every `verify-*` report is newer than
-   HEAD, with the PR marked ready (`gh pr ready`) and `PR #<n> ready` in its header.
-   The merge waits for the user's word that the PR can merge — nothing schedules a
-   look for it. Once it has merged → step 8.
+   HEAD, with the PR marked ready and `PR #<n> ready` in its header.
+   The merge waits for the user's word that the PR can merge. Once it has merged → step 8.
 8. **Close** (you): the task row is disposable, so it is
    deleted (closed where it can't be) and no record of the task is kept — a row
    never moves to `Shipped`.
@@ -128,8 +131,7 @@ touches before the brief; the brief quotes or links them, and a case they don't 
 ## The tracker
 
 Where tasks live follows the project's convention, read from its CLAUDE.md: Notion
-(§Notion); GitHub
-through `gh`; any other through its own CLI or MCP; a file board by editing
+(§Notion); GitHub or any other through its CLI or MCP; a file board by editing
 `.claude/.assistant/board.md` (columns Slug, Name, Status, Stage, Blocked by, Parent item) and
 `tasks/<slug>/brief.md`. None found: ask the user once and write the answer into
 its CLAUDE.md.
@@ -154,16 +156,13 @@ what you remember: `asst-report summary` shows every task's newest report of eac
 kind; a row whose awaited report isn't there and has no agent of yours on it in
 `ListAgents` → dispatch it again. `digest` is one line per row.
 
-Candidates are untracked work waiting on the user in task sources named in the project's CLAUDE.md like the tracker (on GitHub: assigned issues, review requests, own PRs with changes requested or red checks), listed with that source's CLI or MCP. A row ends its `Name` with the source
+Candidates are untracked work waiting on the user in task sources named in the project's CLAUDE.md like the tracker (on GitHub: assigned issues, review requests, own PRs with changes requested or red checks). A row ends its `Name` with the source
 ref (`… (pr#42)`); a candidate whose ref already ends a row `Name`, any status, is not
 new. Each new candidate is one
 `Needs you` line — take it (task statement, row `Status=In Progress`) or pass (row
 `Status=Backlog`) — so a ref is asked once. A source that can't be read is named, with the reason, in the turn's `Needs you` lines, not taken as no candidates.
 
 ## Notion
-
-Use the Notion tool the environment has (a Notion MCP server or a CLI); with no Notion
-tool, report what is missing instead of looking for another path.
 
 - The databases sit under the root page the project's CLAUDE.md gives; it maps names that differ.
 - A task is a `tasklist` row; `Blocked by` and `Parent item` are relations.
@@ -179,16 +178,13 @@ tool, report what is missing instead of looking for another path.
 ## Disclosure
 
 Before a task's first write to a GitHub repo — a file, a commit, a PR body or
-comment, an issue — run `gh repo view <owner/repo> --json visibility`; anything but
+comment, an issue — check its visibility; anything but
 `PRIVATE` or `INTERNAL`, unknown included, is public, and what lands there cannot be
 taken back. A public repo receives only what it already shows: no other repo's
 code, paths, identifiers, issue or PR refs, call sites, copy or rules — write "a
 consumer" in their place — and no reproduction of a flaw in a released version.
 The rest stays in the report files and the task's tracker row. A dispatch into a
-public repo quotes this paragraph verbatim. The `disclosure.sh` hook blocks a push,
-PR, issue, release or gist that names a private repo, this machine's home directory
-or a `#<n>` that is not this repo's, and one it cannot check; anything else on the
-list is caught by no script.
+public repo quotes this paragraph verbatim.
 
 ## Dispatch rules
 
@@ -208,9 +204,7 @@ list is caught by no script.
   every screen. Never resume a builder, whether its slice finished or it came back
   marked partial. Brief the next one with the slice and only what the code and the filed
   reports can't show — a ruling it needs, a dead end the last run hit.
-- Work sent off this machine — a message into a cloud session the user has
-  running, or a new one from `asst-cloud open --profile <name>` — follows
-  `references/cloud-dispatch.md`.
+- Work sent to a cloud session, running or new, follows `references/cloud-dispatch.md`.
 - Ask before every destructive or outward action: a merge, a force-push, deleting
   a branch or a worktree (except step 8's, done unasked), a deploy, deleting user
   data; a project's own extra cases live in its CLAUDE.md. This
