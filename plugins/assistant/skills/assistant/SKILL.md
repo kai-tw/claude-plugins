@@ -82,7 +82,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    (Context · Decision · Consequence, the rejected option and its
    cost in Consequence).
    A product behaviour changes only through its spec page: a change a later round needs is a
-   `Needs you` for the product side first, and the code changes once you've re-read the updated page.
+   spec question asked as `references/brief.md` says, and the code changes once you've re-read the updated page.
 4. **Build** (`builder`, phase `ui`, finds the screenshot command; none: ask the user once) → **stop for the screen review**, `references/screen-review.md`.
    Integration waits for OK.
 5. **Tests, then integration.** First the `tester`, one dispatch; then the `builder`
@@ -98,8 +98,9 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    only what the task statement names, in at most 20 lines — and pipe your verdict
    line, starting `exempt:`, into `asst-report put <slug> verify-code --worktree <worktree>`; past that
    bound it isn't `exempt`, so re-tier it `small`. Every other `verify-*` report is the verifier's: you never write one yourself,
-   whatever the round. Post each filed `verify-*` report to the task's PR, in full on a private
-   repo (§Disclosure), else its first line. A failed verify is reported as failed. Mutation runs only in the PR's CI.
+   whatever the round. Post each filed `verify-*` report to the task's PR as a comment whose first
+   line is `assistant-report <slug> <kind>-<n> @ <short sha>`, then the full report on a private
+   repo (§Disclosure); on any other, only "Filed, not posted: this repo is not known to be private." A failed verify is reported as failed. Mutation runs only in the PR's CI.
    Builder applies code fixes; a finding about a test goes to the tester.
    Only a `fix` finding opens a fix round; a `list` finding, or a builder's `debt:` line, never opens one alone (the builder
    may fix it in a round that is opening anyway). At most two fix rounds; whatever `fix`

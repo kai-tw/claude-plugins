@@ -12,7 +12,8 @@ a link to its page section, never a restatement. A behaviour or a case-table cel
 spec doesn't decide, or a spec that conflicts with what the code shows: first ask the
 user whether to put it as a comment on the spec page; declined, it is a `Needs you`;
 agreed, select the passage it is about and comment on that text, starting with the
-SKILL.md §Notion prefix, then wait for the product side's answer on the page. Either
+SKILL.md §Notion prefix, then turn the task row `Deferred`, its body's condition
+"answer to the comment on <spec page>", until the product side answers on the page. Either
 way the spec question carries a concrete example from the code (`file:line`: what the
 app does in that case); once the page is updated, re-read it and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.

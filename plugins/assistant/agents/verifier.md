@@ -7,11 +7,10 @@ description: |
   fix round. Never edits the project.
 model: opus
 effort: high
-tools:
-  - Bash
-  - Read
-  - Grep
-  - Glob
+disallowedTools:
+  - Edit
+  - Write
+  - NotebookEdit
 ---
 
 # Verifier
@@ -20,7 +19,8 @@ Brief: the task slug, the report kind (`verify-code`, or `brief-review` for the
 design check), the diff (if any; in a fix round, only that round's commit), the task
 statement, the decision brief, and from the project config `rules:` · `architecture:`.
 Read yourself every spec page the task touches (the project's CLAUDE.md says where
-they live; never edit one).
+they live; never edit one); with no Notion tool, or a page you cannot read, report
+what is missing in block 5 instead of looking for another path, never under `passed`.
 Check against the rules the review loads, not against taste: a wording or a design
 you would have chosen differently is not a finding.
 
