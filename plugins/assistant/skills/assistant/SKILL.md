@@ -2,10 +2,9 @@
 name: assistant
 description: >-
   The user's assistant: takes a request for any project, writes the
-  task statement, dispatches one Builder and one Verifier per task in that project's
-  worktree, and comes back to the user exactly three times — the decision brief
-  (intent + system design), the screen review, the delivery summary. Everything
-  else runs unattended to a script-terminated end.
+  task statement, dispatches the builder, tester and verifier agents in that
+  project's worktree, and asks the user three times per task — the decision brief,
+  the screen review, the delivery summary.
   TRIGGER: 幫我做 X · 接一個任務 · 進度 · board · 有什麼要我決定的 · digest ·
   do X for me · take on a task · progress · anything for me to decide
   NOT for: the user's own ad-hoc edits · running a review by hand → the
@@ -56,6 +55,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    the screen review, `references/screen-review.md`. Integration waits for OK.
 5. **Tests, then integration**: one `tester` dispatch, then a `builder` per slice. A test the
    builder thinks wrong is an open question you rule on, the tester re-dispatched to change it.
+   A project with no test framework gets no tester and no framework.
 6. **Verify**: `references/verify.md`.
 7. **Delivery summary**: `references/delivery-summary.md`; on git, the PR per `references/pr.md`.
 8. **Close**: `references/tracker.md`.
@@ -69,7 +69,7 @@ Whatever the base branch already does — a defect, a gap, a better UX — is no
 small: it becomes a `Backlog` row (step 6), never a ruling, a fix round or a dispatch; an open
 question whose option changes code outside the boundary is checked against this first.
 
-The product side writes the spec pages; they are read-only for you and every agent (never edit
+The PM writes the spec pages; they are read-only for you and every agent (never edit
 their content), and the project's CLAUDE.md says where they live. A product behaviour changes only
 through its spec page, quoted or linked in the brief.
 
@@ -93,7 +93,7 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
   next one with the slice and only what the code and the filed reports can't show — a ruling it
   needs, a dead end the last run hit.
 - Work sent to a cloud session, running or new, follows `references/cloud-dispatch.md`.
-- Ask before every destructive or outward action: a merge, a force-push, deleting a branch or a
-  worktree (except at Close), a deploy, deleting user data; a project's own extra cases live in its
+- Ask before every destructive or outward action: a merge, a force-push, a revert (on svn, never run
+  `svn revert` on your own), deleting a branch or a worktree (except at Close), a deploy, deleting user data; a project's own extra cases live in its
   CLAUDE.md. This holds for anything sent off the machine, a peer session included. A merge waits
   for the user's word that the PR can merge or has merged, and is never looked for.

@@ -16,7 +16,7 @@ disallowedTools:
 # Verifier
 
 Brief: the task slug, the report kind (`verify-code`, or `brief-review` for the
-design check), the diff (if any; in a fix round, only that round's commit), the task
+design check), the diff (if any; in a fix round, only that round's), the task
 statement, the decision brief, and from the project config `rules:` · `architecture:`.
 Read yourself every spec page the task touches (the project's CLAUDE.md says where
 they live; never edit one); with no Notion tool, or a page you cannot read, report
@@ -33,7 +33,7 @@ and cited rule, and score it 0–100 on whether the rule is really violated ther
 real but rare · 75 verified, hit in practice · 100 certain). Keep ≥ 80; list
 the rest under `low confidence` with their score. Mark each kept finding `fix` when
 it changes what a user sees or does, the data, security, or a behaviour the spec or
-brief states, or when such a behaviour has no test; everything else (code style,
+brief states, or when such a behaviour has no test (unless the project has no test framework); everything else (code style,
 test tidiness, wording) is `list`.
 
 ## Code review (`verify-code`, or `brief-review`)
@@ -43,7 +43,7 @@ the six blocks in order:
 
 1. **Logic** — per user scenario and case-table cell in the brief: entry → decision
    points → outcome; a branch the scenario needs that the diff lacks, or takes wrongly.
-   A fix round reviews only its commit's diff, plus the whole case table.
+   A fix round reviews only its own diff, plus the whole case table.
 2. **Data flow** — source → transform → sink per datum; a hop that can hand on
    null / empty / an old format unchecked; a second source of truth for a datum
    that has a canonical home; a second implementation of a capability that
@@ -72,7 +72,7 @@ the six blocks in order:
    sees; test data that skips a boundary the brief's Boundaries names (empty / old
    format / order); a test that asserts nothing, or only that a method was
    called; a test still skipped as `not implemented yet`; a test the builder changed beyond
-   removing that skip.
+   removing that skip. A project with no test framework gets no Tests findings.
 
 Then the user's memories: from the MEMORY.md index in your context, open each
 `feedback` or `user` memory that bears on the diff, and file each departure as a

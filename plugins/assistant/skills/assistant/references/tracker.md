@@ -43,6 +43,7 @@ reason, in the turn's `Needs you` lines, not taken as no candidates.
 
 ## Close
 
-Once the PR has merged, the task row is deleted (closed where it can't
-be) and no record of the task is kept — a row never moves to `Shipped`. Delete the PR's worktree,
-local branch and remote branch, unasked, once `HEAD` matches the merged PR's head.
+Once the PR has merged (svn: once the user's `svn commit`, asked, has run), the task row is
+deleted (closed where it can't be) and no record of the task is kept — a row never moves to
+`Shipped`. Delete the PR's worktree, local branch and remote branch, unasked, once `HEAD` matches
+the merged PR's head; an svn working copy is never deleted.

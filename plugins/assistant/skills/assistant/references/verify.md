@@ -32,9 +32,10 @@ Post each filed `verify-*` report to the task's PR as a comment whose first line
 
 Only a `fix` finding opens a fix round; a `list` finding, or a builder's `debt:` line, never
 opens one alone (the builder may fix it in a round that is opening anyway). The builder applies
-code fixes; a finding about a test goes to the tester. Every fix round's commit — a CI-driven
-one too (coverage gaps, mutation survivors) — goes back to the verifier for that commit's diff
-only, plus the whole case table. When you judge another round won't settle what is left, the
+code fixes; a finding about a test goes to the tester. Every fix round — a CI-driven one
+too (coverage gaps, mutation survivors) — goes back to the verifier for its own diff only (its
+commit's; on svn, the `svn diff` saved after the round against the one saved before it), plus the
+whole case table. When you judge another round won't settle what is left, the
 remaining `fix` findings become one `Needs you` line.
 
 ## Found outside the boundary

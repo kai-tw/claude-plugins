@@ -21,8 +21,9 @@ engineering call, listed for veto; the user's silence never makes it theirs).
 Every product behaviour the task adds or changes — what the user sees, or how a
 feature behaves — quotes its spec page verbatim; one the task keeps as is gets
 a link to its page section, never a restatement. A behaviour or a case-table cell the
-spec doesn't decide, or a spec that conflicts with what the code shows: first ask the
-user whether to open a question row for the product side; declined, it is a `Needs you`;
+spec doesn't decide, or a spec that conflicts with what the code shows: if the PM can see
+the tracker, first ask the user whether to open a question row for the PM; if not, or declined, it
+is a `Needs you`;
 agreed, create a tracker row without `Parent item` (a row with sub-items is never
 dispatched): Name = the comment prefix `references/notion.md` gives, plus a one-line summary of the question;
 body = a link to the spec page section, the passage quoted verbatim, then the question;
