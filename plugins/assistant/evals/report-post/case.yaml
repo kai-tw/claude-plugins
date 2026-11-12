@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; echo finding-A | asst-report put r verify-code --worktree wt >/dev/null; echo "filed=$(ls wt/.claude/.assistant/reports/r | paste -sd, -)"; echo "gh-calls=$(cat gh.log 2>/dev/null | wc -l | tr -d " ")"; s=$(tr -s "[:space:]" " " < "$root/skills/assistant/SKILL.md"); echo "post=$(grep -ciE "verify-\*. report to the task.s PR" <<<"$s")"; echo "header=$(grep -ciE "first line is .assistant-report <slug> <kind>-<n> @ <short sha>." <<<"$s")"; echo "split=$(grep -ciE "then the full report on a private repo [^.]*; on any other, only .Filed, not posted.{2}this repo is not known to be private" <<<"$s")"
+    EVAL_CMD: export EVAL_WS="$PWD" PATH="$PWD/stub:$PATH"; echo finding-A | asst-report put r verify-code --worktree wt >/dev/null; echo "filed=$(ls wt/.claude/.assistant/reports/r | paste -sd, -)"; echo "gh-calls=$(cat gh.log 2>/dev/null | wc -l | tr -d " ")"; s=$(tr -s "[:space:]" " " < "$root/skills/assistant/references/verify.md"); echo "post=$(grep -ciE "verify-\*. report to the task.s PR" <<<"$s")"; echo "header=$(grep -ciE "first line is .assistant-report <slug> <kind>-<n> @ <short sha>." <<<"$s")"; echo "split=$(grep -ciE "then the full report on a private repo [^.]*; on any other, only .Filed, not posted.{2}this repo is not known to be private" <<<"$s")"
   prompt: |
-    File a verify-code report with asst-report on a task branch where gh only logs its calls; say whether asst-report called gh, and what SKILL.md says the assistant does with a filed verify report.
+    File a verify-code report with asst-report on a task branch where gh only logs its calls; say whether asst-report called gh, and what references/verify.md says the assistant does with a filed verify report.
 context:
   scaffold_script: fixture.sh

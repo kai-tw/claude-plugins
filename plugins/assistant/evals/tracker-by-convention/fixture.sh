@@ -18,8 +18,8 @@ done
 echo "s12-hits=$hits"
 [ -e "$root/bin/asst-board" ]; echo "s12-bin=$?"
 # S13: SKILL.md — where tasks live, the vocabulary, the unblock and close-the-parent rules.
-s=$(n "$root/skills/assistant/SKILL.md")
-blk=$(awk '/^$|^#|^- |^[0-9]+\. / { if (b ~ /convention/) print b; b = "" } { b = b " " $0 } END { if (b ~ /convention/) print b }' "$root/skills/assistant/SKILL.md" | tr -s ' \n' ' ')
+s=$(n "$root/skills/assistant/references/tracker.md")
+blk=$(awk '/^$|^#|^- |^[0-9]+\. / { if (b ~ /convention/) print b; b = "" } { b = b " " $0 } END { if (b ~ /convention/) print b }' "$root/skills/assistant/references/tracker.md" | tr -s ' \n' ' ')
 t() { echo "s13-$1=$(grep -ciE -- "$2" <<<"$blk")"; }
 t claude-md 'CLAUDE\.md'; t ask '\bask'; t once '\bonce\b'; t write '\bwrit(e|es|ing)\b[^.]{0,80}CLAUDE\.md'
 miss=

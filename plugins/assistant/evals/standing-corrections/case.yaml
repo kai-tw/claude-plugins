@@ -8,8 +8,8 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/pr.md skills/assistant/references/screen-review.md agents/builder.md agents/verifier.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/pr.md skills/assistant/references/screen-review.md skills/assistant/references/tracker.md skills/assistant/references/verify.md skills/assistant/references/brief.md agents/builder.md agents/verifier.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
   prompt: |
-    Print the assistant skill, its PR and screen-review references and the builder and verifier, one file per line.
+    Print the assistant skill, its PR, screen-review, tracker, verify and brief references and the builder and verifier, one file per line.
 context:
   scaffold_script: fixture.sh

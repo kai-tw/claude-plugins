@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: assistant-investigates
-description: The assistant runs the investigation itself and files it with asst-report put <slug> investigation; agents/builder.md has no investigation phase and SKILL.md dispatches the builder only for ui, integration and fix. When a behaviour depends on several interleaving conditions the investigation lists every combination as a case table (base-branch behaviour with file:line, the spec's rule, the behaviour after the change) and the brief carries it (SKILL.md and references/brief.md). agents/tester.md writes at least one test per case-table cell; agents/verifier.md checks every fix round against the whole case table.
+description: The assistant runs the investigation itself and files it with asst-report put <slug> investigation; agents/builder.md has no investigation phase and SKILL.md dispatches the builder only for ui, integration and fix. When a behaviour depends on several interleaving conditions the investigation lists every combination as a case table (base-branch behaviour with file:line, the spec's rule, the behaviour after the change) and the brief carries it (forms/investigation.md and references/brief.md). agents/tester.md writes at least one test per case-table cell; agents/verifier.md checks every fix round against the whole case table.
 tags: [investigation, case-table, assistant]
 plugins: ["../.."]
 runs: 1

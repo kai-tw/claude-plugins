@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^fix-rounds=every fix round.s commit — a CI-driven one too \(coverage gaps, mutation survivors\) — goes back to the verifier'
+pattern: '^fix-rounds=Every fix round.s commit — a CI-driven one too \(coverage gaps, mutation survivors\) — goes back to the verifier'
 flags: m
 arm: with-only
 ---

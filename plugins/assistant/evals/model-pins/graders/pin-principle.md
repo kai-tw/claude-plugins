@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'the smallest model and the lowest effort the work in hand allows .*starting from the agent.s own defaults'
+pattern: '^pin=Pin the smallest model and effort that can do the work'
 flags: m
 ---
-Every dispatch starts from the agent's defaults and picks the smallest model and effort the work allows.
+Every dispatch pins the smallest model and effort that can do the work; SKILL.md carries the principle, not a table or an escalation ladder.

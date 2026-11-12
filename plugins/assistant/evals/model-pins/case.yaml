@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: model-pins
-description: The leader pins the model and the effort at every dispatch, after Anthropic's guidance — the builder haiku/low for exempt or exact edits, sonnet/medium for a clear-scope phase, sonnet/high for fix, opus/high for ambiguous work or a finding a previous fix round didn't clear, one step up on the evidence; tester sonnet/medium, verifier opus/high.
+description: The leader pins the smallest model and effort that can do the work at every dispatch, after Anthropic's guidance; the agents' own defaults live in their frontmatter, not in a per-phase table in SKILL.md — builder sonnet/medium, tester sonnet/medium, verifier opus/high.
 tags: [agents]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: for a in builder tester verifier; do sed -n -e "s/^model: /$a-default=/p" -e "s/^effort: /$a-effort=/p" "$root/agents/$a.md"; done; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "Pin the model and the effort at every dispatch.*moves up an effort level\." | sed "s/^/pin=/"
+    EVAL_CMD: for a in builder tester verifier; do sed -n -e "s/^model: /$a-default=/p" -e "s/^effort: /$a-effort=/p" "$root/agents/$a.md"; done; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "Pin the smallest model and effort that can do the work" | sed "s/^/pin=/"
   prompt: |
-    Say which model and effort each assistant agent runs on by default, and how the assistant picks the model and effort at each dispatch.
+    Say which model and effort each assistant agent runs on by default, and whether the assistant pins the smallest model and effort that can do the work.
 context:
   scaffold_script: fixture.sh
