@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: tools-by-env-verifier-reads-pages
+description: [S1] The verifier reads the spec pages the task touches itself, and files code that differs from a page with Fix: change the code to match the page.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: echo "verifier-reads=$(cat "$root"/agents/verifier.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "(reads?|opens?)[^.]*spec pages?[^.]*(touch|itself)|spec pages?[^.]*(touch|itself)[^.]*reads?")"; echo "verifier-fix=$(cat "$root"/agents/verifier.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "spec page[^.]*Fix: change the code to match the page")"
+  prompt: |
+    Say whether the verifier reads the spec pages the task touches by itself, and what it files when the code differs from one.
+context:
+  scaffold_script: fixture.sh

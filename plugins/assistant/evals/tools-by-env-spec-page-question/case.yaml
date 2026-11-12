@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: tools-by-env-spec-page-question
+description: [S2][S3] With a question about a spec page, the assistant first asks the user whether to leave a comment on the selected text, which carries the 〔Claude Code｜企劃｜提問〕 prefix; when the user declines, the question goes to the brief Needs you.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: echo "ask-comment=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "spec page[^.]*ask[^.]*comment|ask[^.]*comment[^.]*spec page")"; echo "prefix=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "〔Claude Code｜企劃｜提問〕")"; echo "select=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "(select|highlight)[^.]*text")"; echo "declined=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "(declin|refus|says no|rejects)[^.]*Needs you|Needs you[^.]*(declin|refus|says no|rejects)")"
+  prompt: |
+    Say what the assistant does when a spec page raises a question: whom it asks first, where the comment sits, what prefix it carries, and where the question goes if the user declines.
+context:
+  scaffold_script: fixture.sh

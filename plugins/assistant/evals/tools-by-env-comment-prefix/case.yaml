@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: tools-by-env-comment-prefix
+description: [S4] Every Notion comment an agent leaves opens with 〔Claude Code｜<department>｜<one word>〕; the rule is stated in the skill text agents read.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: echo "prefix-form=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "〔Claude Code｜[^｜〕]+｜[^｜〕]+〕")"; echo "open-with=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "comment[^.]*(starts?|opens?|begins?|prefix)|(starts?|opens?|begins?|prefix)[^.]*comment")"
+  prompt: |
+    Say how every Notion comment the agents leave must begin, and give the form of the prefix.
+context:
+  scaffold_script: fixture.sh

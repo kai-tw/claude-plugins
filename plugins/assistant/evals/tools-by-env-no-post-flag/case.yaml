@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: tools-by-env-no-post-flag
+description: [B1] asst-report put no longer takes --no-post: it exits 2 with a usage error, and a put without the flag still files the report.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: git -C wt switch -q task/r; echo body | asst-report put r verify-code --worktree wt --no-post >/dev/null 2>&1; echo "no-post-exit=$?"; echo body | asst-report put r verify-code --worktree wt >/dev/null 2>&1; echo "plain-exit=$?"; echo "filed=$(ls wt/.claude/.assistant/reports/r 2>/dev/null | paste -sd, -)"
+  prompt: |
+    On a task branch, run asst-report put with --no-post and then without it; report each exit status and the files filed.
+context:
+  scaffold_script: fixture.sh
