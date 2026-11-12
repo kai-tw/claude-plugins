@@ -14,7 +14,8 @@ statement → Product Plan · brief → Engineering Plan · screens → Design P
 Implementation · verify → Review · deliver → QA; a tracker lacking these fields uses labels or lists.
 `Blocked by` names only the rows it waits for, and a `Next` row needs one; a row that waits on
 something outside the tracker is `Deferred`, its condition in the body. When a row closes, a
-`Next` row whose last blocker it was turns `In Progress` and starts at the investigation, and a
+`Next` row whose last blocker it was turns `In Progress`: one not yet started (a later sub-task of
+a split) starts at the investigation, one a question row blocked carries on at its `Stage`; a
 parent whose last sub-item it was closes too.
 
 The decisions you file are engineering decisions (design, structure), one entry per question, to
@@ -29,7 +30,8 @@ until no row advances — the turn ends at a `Needs you`, a blocker or a quiet t
 Close. A row's progress is what the tracker and the disk hold, not what you remember:
 `asst-report summary` shows every task's newest report of each kind; a row whose awaited report
 isn't there and has no agent of yours on it in `ListAgents` → dispatch it again. `digest` is one
-line per row.
+line per row. A spec question row is answered once the PM moves it to the tracker's done status:
+re-read its spec page, then close it (`references/brief.md`).
 
 Candidates are untracked work waiting on the user in task sources named in the project's
 CLAUDE.md like the tracker (on GitHub: assigned issues, review requests, own PRs with changes

@@ -1,6 +1,6 @@
 # Verify — step 6, and every fix round after it
 
-Read once the integration's last slice is committed, and again for each fix round.
+Read once the integration's last slice, or an `exempt` task's edit, is committed, and again for each fix round.
 
 ## The checks, in parallel on the diff
 

@@ -1,6 +1,6 @@
 # Decision brief — the one page the user approves
 
-Read at step 3. Write it from the investigation's findings and open questions, and the spec
+Read at step 3, and at step 1 to split a task. Write it from the investigation's findings and open questions, and the spec
 pages the task touches, read first. Before writing it, run `asst-cite <worktree> <investigation report path>`: re-check a FAIL row
 in the code once; still failing, it enters the brief as `unverified`. When the design hinges on
 whether a case happens and no finding shows it, measure it once in the code or by an experiment;
@@ -29,7 +29,8 @@ body = a link to the spec page section, the passage quoted verbatim, then the qu
 `Status=Deferred`, condition "the PM answers". The task row turns `Next`, `Blocked by` it;
 further discussion goes in its page comments. The PM answers there, updates the spec page
 and moves the row to the tracker's done status; the scheduler pass that sees this re-reads
-the page, then closes the question row (`references/tracker.md`). Either
+the page, then closes the question row, and the task row carries on at its `Stage`
+(`references/tracker.md`). Either
 way the spec question carries a concrete example from the code (`file:line`: what the
 app does in that case); once the page is updated, re-read it and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
