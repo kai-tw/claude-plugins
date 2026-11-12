@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: tools-by-env-spec-page-question
-description: [S2][S3] With a question about a spec page, the assistant first asks the user whether to leave a comment on the selected text, which carries the 〔Claude Code｜企劃｜提問〕 prefix; when the user declines, the question goes to the brief Needs you.
+description: "[S2][S3] With a question about a spec page, the assistant first asks the user whether to open a question row; declined, it is a Needs you. Agreed, the row is named with the 〔Claude Code｜企劃｜提問〕 prefix, its body links the spec page section and quotes the passage, it has no Parent item and Status Deferred; the task row turns Next, Blocked by it; once the PM answers, the assistant re-reads the page, then closes the row. No text anchors a comment to selected text."
 tags: [assistant]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: echo "ask-comment=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "spec page[^.]*ask[^.]*comment|ask[^.]*comment[^.]*spec page")"; echo "prefix=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "〔Claude Code｜企劃｜提問〕")"; echo "select=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "(select|highlight)[^.]*text")"; echo "declined=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "(declin|refus|says no|rejects)[^.]*Needs you|Needs you[^.]*(declin|refus|says no|rejects)")"
+    EVAL_CMD: t=$(cat "$root"/skills/assistant/SKILL.md "$root"/skills/assistant/references/*.md 2>/dev/null | tr -s "[:space:]" " "); echo "ask=$(echo "$t" | grep -ciE "ask the user whether to open a question row")"; echo "declined=$(echo "$t" | grep -ciE "(declin|refus|says no|rejects)[^.;]*Needs you")"; echo "prefix=$(echo "$t" | grep -ciE "〔Claude Code｜企劃｜提問〕")"; echo "body=$(echo "$t" | grep -ciE "link to the spec page section, the passage quoted verbatim")"; echo "noparent=$(echo "$t" | grep -ciE "without .Parent item")"; echo "deferred=$(echo "$t" | grep -ciE "Status=Deferred")"; echo "blocked=$(echo "$t" | grep -ciE "task row turns .Next., .Blocked by. it")"; echo "reread=$(echo "$t" | grep -ciE "re-reads the page, then closes the question row")"; echo "anchored=$(echo "$t" | grep -ciE "(select|highlight)[^.]*(passage|text)|comment on (that|the selected) text|selected text")"
   prompt: |
-    Say what the assistant does when a spec page raises a question: whom it asks first, where the comment sits, what prefix it carries, and where the question goes if the user declines.
+    Say what the assistant does when a spec page raises a question: whom it asks first, what the question row is named and holds, its parent and status, what happens to the task row, where the question goes if the user declines, and what it does once the PM marks the row answered.
 context:
   scaffold_script: fixture.sh
