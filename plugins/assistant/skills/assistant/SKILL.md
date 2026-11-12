@@ -126,7 +126,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 
 The product side writes the spec pages; they are read-only for you and every agent (never edit their content), and
 the project's CLAUDE.md says where they live, like the tracker. Read the spec pages a task
-touches before the brief; the brief quotes or links them, and a case they don't decide or that conflicts with the code is a `Needs you` (`references/brief.md`).
+touches before the brief; the brief quotes or links them, and a case they don't decide or that conflicts with the code follows `references/brief.md`.
 
 ## The tracker
 
@@ -173,7 +173,7 @@ new. Each new candidate is one
 - Every comment any agent leaves on a Notion page starts with
   `〔Claude Code｜<role>｜<category>〕`: role is the writer's department in the user's
   language (前端, 企劃…); category is one word summing up the comment (提問, 回報…),
-  no fixed list. Page bodies and properties never carry it.
+  no fixed list (a spec-page question: `〔Claude Code｜企劃｜提問〕`). Page bodies and properties never carry it.
 
 ## Disclosure
 

@@ -9,10 +9,12 @@ engineering call, listed for veto; the user's silence never makes it theirs).
 Every product behaviour the task adds or changes — what the user sees, or how a
 feature behaves — quotes its spec page verbatim; one the task keeps as is gets
 a link to its page section, never a restatement. A behaviour or a case-table cell the
-spec doesn't decide, or a spec that conflicts with what the code shows, is `Needs you`
-for the user to settle with the product side, with a concrete example from the code
-(`file:line`: what the app does in that case); once the page is updated, re-read it
-and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
+spec doesn't decide, or a spec that conflicts with what the code shows: first ask the
+user whether to put it as a comment on the spec page; declined, it is a `Needs you`;
+agreed, select the passage it is about and comment on that text, starting with the
+SKILL.md §Notion prefix, then wait for the product side's answer on the page. Either
+way the spec question carries a concrete example from the code (`file:line`: what the
+app does in that case); once the page is updated, re-read it and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.
 When the project config sets `architecture:`, read that document in the task's worktree
 and cite it by path and section heading, never copying its text. A design that

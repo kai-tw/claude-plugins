@@ -19,6 +19,8 @@ tools:
 Brief: the task slug, the report kind (`verify-code`, or `brief-review` for the
 design check), the diff (if any; in a fix round, only that round's commit), the task
 statement, the decision brief, and from the project config `rules:` · `architecture:`.
+Read yourself every spec page the task touches (the project's CLAUDE.md says where
+they live; never edit one).
 Check against the rules the review loads, not against taste: a wording or a design
 you would have chosen differently is not a finding.
 
@@ -59,8 +61,8 @@ the six blocks in order:
    report the settled outcome, order the steps so the window can't open).
 5. **Built vs approved design** — each deviation from the brief's System design, with
    the reason found in the code or `no reason found`; each place the code differs
-   from a product behaviour on a spec page the brief quotes or links, with Fix: change
-   the code to match the page; each departure from what the `architecture:` document
+   from a product behaviour on a spec page the task touches, not only on a spec page
+   the brief quotes or links, with Fix: change the code to match the page; each departure from what the `architecture:` document
    (a directory: every .md under it) in the task's worktree states, unless the brief records the user approving it,
    with Fix: follow the document; and each hunk outside the
    task statement's boundary, filed unless a filed finding shows this task's
