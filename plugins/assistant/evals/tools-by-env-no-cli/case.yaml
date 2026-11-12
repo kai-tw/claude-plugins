@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: tools-by-env-no-cli
+description: [S5] No agent or skill text names the gh or ntn CLIs or the asst-notion, asst-section and asst-cloud commands; those commands, the scribe skill and the gh-only disclosure hook are gone.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: echo "cli-uses=$(cat "$root"/agents/*.md "$root"/skills/*/SKILL.md "$root"/skills/*/references/*.md 2>/dev/null | grep -cE "(^|[^A-Za-z])gh [a-z]|(^|[^A-Za-z-])ntn( |$)|asst-notion|asst-section|asst-cloud")"; echo "bin=$(ls "$root/bin" | paste -sd, -)"; echo "scribe=$([ -d "$root/skills/scribe" ] && echo present || echo gone)"; echo "gh-hook=$([ -f "$root/hooks/checks/disclosure.sh" ] && echo present || echo gone)"
+  prompt: |
+    Count the lines in the plugin agent and skill text that name the gh or ntn CLI or asst-notion, asst-section or asst-cloud; list bin; say whether skills/scribe and the disclosure hook exist.
+context:
+  scaffold_script: fixture.sh

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: tools-by-env-missing-tool
+description: [F1] When the environment has no GitHub or Notion tool, the agent reports what is missing and does not look for a substitute path.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: echo "report-missing=$(cat "$root"/agents/*.md "$root"/skills/*/SKILL.md "$root"/skills/*/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "(no|without|lacks?|missing)[^.]*(GitHub|Notion)[^.]*(tool|CLI|MCP)[^.]*(report|say|name)")"; echo "no-detour=$(cat "$root"/agents/*.md "$root"/skills/*/SKILL.md "$root"/skills/*/references/*.md 2>/dev/null | tr -s "[:space:]" " " | grep -ciE "(GitHub|Notion)[^.]*(alternat|substitut|another (path|route|way)|workaround)|(alternat|substitut|another (path|route|way)|workaround)[^.]*(GitHub|Notion)")"
+  prompt: |
+    Say what an agent does when its environment has no GitHub or Notion tool.
+context:
+  scaffold_script: fixture.sh

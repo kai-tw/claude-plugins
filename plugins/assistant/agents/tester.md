@@ -57,7 +57,7 @@ Before your first test run `style-pack --paths <the test files>` and read all of
 
 Run the project's checks (its lint, format and test commands, as its CLAUDE.md,
 hooks or CI name them) once before you commit (git: commit, the hook runs them;
-svn: run them and save `svn diff` under `.claude/.assistant/tasks/<slug>/`). A failing check means
+svn: run them and save `svn diff` as `.claude/.assistant/tasks/<slug>/svn-<report kind>-<n>.diff`, n counting from 1 per kind). A failing check means
 a test you wrote isn't skipped or doesn't compile; fix it.
 
 Later dispatches take the verifier's block-6 findings about tests and any

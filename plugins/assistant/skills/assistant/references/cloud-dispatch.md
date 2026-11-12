@@ -5,7 +5,7 @@ a dispatch ID `<slug>#<n>` is itself a dispatch and does not dispatch further.
 
 | | An existing cloud session | A new cloud session |
 |---|---|---|
-| How to start it | `SendMessage`, or `claude -p "<message>" --cloud <session-id>` | `asst-cloud open --profile <name> "<task>"` |
+| How to start it | `SendMessage`, or `claude -p "<message>" --cloud <session-id>` | The environment's session tool (e.g. an MCP tool) |
 | How it comes back | It writes to the report address you name; you file it | Same |
 | What it sees | That session's own working directory and context | The GitHub remote's content on the current branch, not the local checkout |
 | Fits | Work already running, with its context | Stateless, long-running work whose output is one text report |
@@ -38,10 +38,11 @@ A dispatch message carries four things:
    in a cross-session message attaches nothing; the other side reads only the string.
 3. **The report address, exactly one**: for a task with a PR on a private repo
    (SKILL.md §Disclosure), a comment on `owner/repo#<n>`; otherwise the task's
-   Notion row (`asst-notion … --root <the root id CLAUDE.md gives>`); neither → a `Needs you` line
+   Notion row (`references/notion.md`); neither → a `Needs you` line
    for a private address. Giving both means polling both, and the report lands on
    the side you are not watching.
-4. **The report format**: first line `assistant-report <slug>#<n> <ack|done|blocked>`,
+4. **The report format**: first line `assistant-report <slug>#<n> <ack|done|blocked>`
+   (on Notion, after the comment's `〔Claude Code｜…〕` prefix, `references/notion.md`),
    then the report body, in the same format as that report kind's local one.
 
 **Ack on receipt.** The cloud's first act is to write the `ack` line at the report
@@ -51,41 +52,28 @@ write" — the latter does not change however long you wait.
 
 **Collection.** The cloud cannot write to `.claude/.assistant/`. Once `done`
 arrives, you file it locally with
-`asst-report put <slug> <kind> --worktree <worktree>` so later steps can read it,
-adding `--no-post` when the address was the PR — the cloud's report is not a
-report but its source, and one already on the PR is not posted again.
+`asst-report put <slug> <kind> --worktree <worktree>` so later steps can read it;
+one whose address was the PR is already there and is not posted again.
 
 **Cadence.** Polling folds into the existing scheduler pass: read the task's
 report address once per pass, nothing separate. One cloud session per slug
 at a time. Report address empty for a whole pass → re-dispatch under the tracker's
-missing-report rule (`SKILL.md` §The tracker); never blindly dispatch again.
+missing-report rule (`references/tracker.md`); never blindly dispatch again.
 
 ## 2. A new cloud session for long work
 
-`asst-cloud open [--profile <name>] "<task>"` opens a new cloud session that runs
-in the background and prints its session id and URL — the handle you record in
-the tracker. It runs `claude --cloud` under `script`, since `claude --cloud` refuses
-`--print` and needs a TTY. The profile sets model, effort and a preamble
-(`asst-cloud profiles` lists them): `default` is opus / high; `--model` /
-`--effort` override it. The session clones **the repo's GitHub remote on the
-current branch, not your local checkout**, so `asst-cloud` refuses an unpushed
-HEAD. Exception: when the repo has no git remote,
-or the Claude GitHub App is not installed on it, a local bundle is uploaded
-instead (with uncommitted changes to tracked files, without untracked files).
-Neither carries `.claude/.assistant/`.
+Open one with the session tool the environment has (e.g. an MCP tool), pinning
+model and effort per SKILL.md §Dispatch rules, and record the session id and URL
+it returns in the tracker. The session clones **the repo's GitHub remote on the
+current branch, not your local checkout**, so push HEAD first; it never carries
+`.claude/.assistant/`.
 
-**Each session is titled after its PR** — `PR# <n> <PR title>`, or
+**Title each session after its PR** — `PR# <n> <PR title>`, or
 `<repo> · <branch>` when the branch has none — because session lists show only
-titles. `--name <title>` overrides it; on a branch with a PR, start yours with
-`PR# <n>` too. `asst-cloud` prints the title the session actually got.
+titles.
 
-**The environment is `--env <name|id>`, or a profile's `environment:`**; neither
-means the account's default. `asst-cloud envs` lists the environments as the last
-`open` saw them (`claude` has no command that lists them), so a name works only
-after one open; an `env_…` id always works. `asst-cloud` prints the environment
-the session actually got, and exits 1 when it is not the one asked for — the
-session is open anyway, in the wrong environment: archive it, do not use it, and
-open again with an id from the list that error prints (the one claude just fetched).
+**Check the environment the session actually got** when you named one: a session
+open in the wrong environment is archived, not used, and opened again.
 
 **`Agent`'s `isolation` never moves work off this machine**: `"worktree"` is
 local by definition, and `"remote"` measured as a local worktree too
@@ -109,13 +97,13 @@ Data Retention enabled cannot use them. An ineligible one **fails on the spot an
 prints the reason**, it does not run long — do not read the failure as still
 running.
 
-## 3. When `asst-cloud` cannot open one
+## 3. When no session tool can open one
 
-`asst-cloud` exits 1 with `claude`'s own message — an ineligible account, or an
-environment with no `claude` login. Two other routes:
+The environment has none, or it fails — an ineligible account, or no login.
+Two other routes:
 
-1. **A routine's API trigger.** Model and effort come from the routine, not a
-   profile. Once, create the routine at claude.ai/code/routines and generate a token
+1. **A routine's API trigger.** Model and effort come from the routine, not the
+   dispatch. Once, create the routine at claude.ai/code/routines and generate a token
    (**the CLI can neither create nor revoke a token**; it is shown once); after
    that, any shell can open a cloud session:
 

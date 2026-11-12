@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: terms-core-no-coined-words
-description: Nothing the model reads from this plugin's core — the assistant and scribe skills, the agents, the references and the plugin description — uses the coined words that were replaced with plain ones (gate, leg, fork, wire, checkpoint, ①②③, adapter, founder, fact row, as-decided, residue, send-back, scout, charter, canon, unread, grade, mechanism…). The one line in project.md that names the old config keys so older configs keep working is left out.
+description: Nothing the model reads from this plugin's core — the assistant skill, the agents, the references and the plugin description — uses the coined words that were replaced with plain ones (gate, leg, fork, wire, checkpoint, ①②③, adapter, founder, fact row, as-decided, residue, send-back, scout, charter, canon, unread, grade, mechanism…). The one line in project.md that names the old config keys so older configs keep working is left out.
 tags: [terms]
 plugins: ["../.."]
 runs: 1
@@ -8,7 +8,7 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: cat "$root/skills/assistant/SKILL.md" "$root/skills/scribe/SKILL.md" "$root"/agents/*.md "$root"/skills/assistant/references/*.md "$root/.claude-plugin/plugin.json" > all.txt; echo "lines=$(wc -l < all.txt | tr -d " ")"; grep -v "^Older configs:" all.txt | grep -noiE "(^|[^[:alnum:]_])(gate[sd]?|gated|legs?|forks?|wire[sd]?|wiring|unwired|checkpoints?|founders?|adapters?|as-decided|as decided|send-back|residue|security floor|fact rows?|scout|recon|charter|regulation|canon|unread|absence claim|no markers|grade[sd]?|mechanisms?)([^[:alnum:]_]|$)|①|②|③" | sed "s/^/coined=/"
+    EVAL_CMD: cat "$root/skills/assistant/SKILL.md" "$root"/agents/*.md "$root"/skills/assistant/references/*.md "$root/.claude-plugin/plugin.json" > all.txt; echo "lines=$(wc -l < all.txt | tr -d " ")"; grep -v "^Older configs:" all.txt | grep -noiE "(^|[^[:alnum:]_])(gate[sd]?|gated|legs?|forks?|wire[sd]?|wiring|unwired|checkpoints?|founders?|adapters?|as-decided|as decided|send-back|residue|security floor|fact rows?|scout|recon|charter|regulation|canon|unread|absence claim|no markers|grade[sd]?|mechanisms?)([^[:alnum:]_]|$)|①|②|③" | sed "s/^/coined=/"
   prompt: |
     Print every coined word left in the assistant plugin's skills, agents, references and description.
 context:

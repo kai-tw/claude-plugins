@@ -7,13 +7,6 @@ description: |
 model: sonnet
 effort: medium
 maxTurns: 300
-tools:
-  - Bash
-  - Read
-  - Edit
-  - Write
-  - Grep
-  - Glob
 ---
 
 # Builder
@@ -42,13 +35,13 @@ Phases (run only the one named):
   never write a page of your own.
   Strings are the spec's copy from here on, in every locale — the user reads the screens
   in the locale they ship in, not in a placeholder.
-- **integration** — connect the screens to real data, until the tester's tests for this slice pass: remove
+- **integration** — connect the screens to real data, until the tester's tests for this slice pass (no tester, no test framework: the slice ends at its commit): remove
   the `not implemented yet` skip from each one your slice makes pass, and never edit
   a test otherwise — one you think wrong goes on `open questions:` with why. One
   commit, ending the slice the brief names (git: commit, the hook
-  runs the checks, then push and, when the branch has no PR yet, open one with
-  `gh pr create --draft`; svn: run them, save `svn diff` under
-  `.claude/.assistant/tasks/<slug>/`, commit nothing).
+  runs the checks, then push and, when the branch has no PR yet, open a draft one
+  with the environment's GitHub tool (none: report what is missing instead of looking for another path); svn: run them, save `svn diff` as
+  `.claude/.assistant/tasks/<slug>/svn-<report kind>-<n>.diff`, n counting from 1 per kind, commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
   a better fix of your own), except those about a test, which are the tester's; a finding you decline goes on the report's
   `declined:` line, and into the code only as an S6.5 comment when its reason is

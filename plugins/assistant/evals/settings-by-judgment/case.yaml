@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: settings-by-judgment
-description: The project config reference documents only rules and architecture; nothing the plugin ships outside evals/ names the config fields coverage or render, asst-intake or intake.sh. SKILL.md reads task sources from the project CLAUDE.md and names an unreadable one with its reason, no longer lists five fixed KB modules, says the model finds the coverage and screenshot commands itself, and with no screenshot command the builder says so and the assistant asks the user once.
+description: The project config reference documents only rules and architecture; nothing the plugin ships outside evals/ names the config fields coverage or render, asst-intake or intake.sh. references/tracker.md reads task sources from the project CLAUDE.md and names an unreadable one with its reason, SKILL.md no longer lists five fixed KB modules and says the model finds the screenshot command itself, references/verify.md says it finds the coverage command, and with no screenshot command the builder says so and the assistant asks the user once.
 tags: [config, assistant]
 plugins: ["../.."]
 runs: 1

@@ -29,7 +29,7 @@ vbrief=$(awk '/^Brief:/ { on = 1 } on && /^$/ { exit } on' "$V" | tr -s ' \n' ' 
 grep -qE '^architecture:[[:space:]].*none' "$P" && echo b1-field=1 || echo b1-field=0
 has b1-missing-none "$P" -- "$ARCH" 'missing|absent|omitted|unset|no entry|left out|without' 'none'
 has b2-directory "$P" "$K" "$BR" "$V" "$BU" "$FI" -- "$ARCH" 'director|folder' '\.md'
-has s1-brief-step "$K" -- "$ARCH"
+has s1-brief-step "$BR" -- "$ARCH" 'brief-review'
 has s1-investigation "$FI" -- "$ARCH"
 grep -E '^- Ownership:' "$BR" | grep -qiE "$ARCH|heading" && echo s1-ownership-cites=1 || echo s1-ownership-cites=0
 has s1-path-and-heading "$BR" -- 'path' 'heading'

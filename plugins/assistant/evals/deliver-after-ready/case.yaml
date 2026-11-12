@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: deliver-after-ready
-description: "The delivery summary header names the PR as ready, and SKILL.md step 7 says that on git the summary is written only once CI has passed on HEAD and every verify report is newer than HEAD."
+description: "The delivery summary header names the PR as ready, and references/pr.md, read at step 7, says that on git the summary is written only once CI has passed on HEAD and every verify report is newer than HEAD."
 tags: [assistant]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: grep -o "PR #n ready" "$root/skills/assistant/references/delivery-summary.md" | sed "s/^/header: /"; s=$(awk "/^7[.] /{f=1} /^8[.] /{f=0} f" "$root/skills/assistant/SKILL.md" | tr -s " \n" " "); echo "step7-git-ci-and-verify-before-summary=$(grep -cE "git[^.]*CI has passed on HEAD[^.]*newer than HEAD|CI has passed on HEAD[^.]*newer than HEAD[^.]*git" <<< "$s")"
+    EVAL_CMD: grep -o "PR #n ready" "$root/skills/assistant/references/delivery-summary.md" | sed "s/^/header: /"; s=$(tr -s " \n" " " < "$root/skills/assistant/references/pr.md"); echo "step7-git-ci-and-verify-before-summary=$(grep -cE "Read at step 7, before the delivery summary[.] Git only.*CI has passed on HEAD[^.]*newer than HEAD" <<< "$s")"
   prompt: |
-    Check that the delivery summary header names the PR as ready and that step 7 of SKILL.md ties the summary, on git, to CI passing on HEAD and fresh verify reports.
+    Check that the delivery summary header names the PR as ready and that references/pr.md, read at step 7, ties the summary, on git, to CI passing on HEAD and fresh verify reports.
 context:
   scaffold_script: fixture.sh

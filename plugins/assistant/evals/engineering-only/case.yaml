@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: engineering-only
-description: The assistant doesn't write product behaviour. references/kb/product.md is gone and nothing the plugin ships outside evals/ tells the assistant or an agent to create or edit a product spec page; SKILL.md says the spec pages are read-only and quoted. A case-table cell the spec doesn't decide, or a spec that conflicts with the code, becomes a `Needs you` line with a concrete example, settled with the product side, and the assistant never writes the rule. The decisions the assistant files are engineering decisions; a product behaviour changes only through the spec page.
+description: The assistant doesn't write product behaviour. references/kb/product.md is gone and nothing the plugin ships outside evals/ tells the assistant or an agent to create or edit a product spec page; SKILL.md says the spec pages are read-only and quoted. A case-table cell the spec doesn't decide, or a spec that conflicts with the code, becomes a `Needs you` line with a concrete example, settled with the PM, and the assistant never writes the rule. The decisions the assistant files are engineering decisions; a product behaviour changes only through the spec page.
 tags: [spec, kb, assistant]
 plugins: ["../.."]
 runs: 1

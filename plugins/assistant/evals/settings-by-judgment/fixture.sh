@@ -19,12 +19,14 @@ tag=s24; hits '(^|`)coverage:' '(^|`)render:'; echo "s24-hits=$h"
 tag=s25; hits 'asst-intake' 'intake\.sh'; echo "s25-hits=$h"
 [ -e "$root/bin/asst-intake" ]; echo "s25-bin=$?"
 s=$(n "$root/skills/assistant/SKILL.md")
-echo "s25-unreadable=$(grep -ciE '(source|sources)[^.]{0,120}(can.t|cannot|not) be read[^.]{0,160}reason|reason[^.]{0,120}(source|sources)[^.]{0,80}(can.t|cannot|not) be read' <<<"$s")"
-echo "s25-claude-md=$(grep -ciE 'task sources[^.]{0,200}CLAUDE\.md|CLAUDE\.md[^.]{0,200}task sources' <<<"$s")"
+tk=$(n "$root/skills/assistant/references/tracker.md")
+vf=$(n "$root/skills/assistant/references/verify.md")
+echo "s25-unreadable=$(grep -ciE '(source|sources)[^.]{0,120}(can.t|cannot|not) be read[^.]{0,160}reason|reason[^.]{0,120}(source|sources)[^.]{0,80}(can.t|cannot|not) be read' <<<"$tk")"
+echo "s25-claude-md=$(grep -ciE 'task sources[^.]{0,200}CLAUDE\.md|CLAUDE\.md[^.]{0,200}task sources' <<<"$tk")"
 # S26: SKILL.md — no fixed module list, the model finds the commands;
 # with no screenshot command the builder says so and the assistant asks once.
 echo "s26-modules=$(grep -ciE 'frontend[^.]{0,20}backend[^.]{0,20}product|five modules' <<<"$s")"
-echo "s26-coverage=$(grep -ciE 'find[^.]{0,60}coverage[^.]{0,60}command|coverage command[^.]{0,100}(find|CLAUDE\.md|CI config)' <<<"$s")"
+echo "s26-coverage=$(grep -ciE 'find[^.]{0,60}coverage[^.]{0,60}command|coverage command[^.]{0,100}(find|CLAUDE\.md|CI config)' <<<"$vf")"
 echo "s26-render=$(grep -ciE 'find[^.]{0,60}(screenshot|render)[^.]{0,60}command|(screenshot|render) command[^.]{0,100}(find|CLAUDE\.md|CI config)' <<<"$s")"
 echo "s26-nosshot-ask=$(grep -ciE 'screenshot command.{0,200}(none|no such|without one|lacks one).{0,80}ask.{0,40}once|(no|without|lacks) (a )?(screenshot|render) command.{0,120}ask.{0,40}once' <<<"$s")"
 b=$(n "$root/agents/builder.md")

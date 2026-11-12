@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: for a in builder verifier; do grep -c "return only the paths\? it prints" "$root/agents/$a.md" | sed "s/^/$a-path-only=/"; done; tr -s " \n" " " < "$root/skills/assistant/SKILL.md" | grep -o "An \`exempt\` diff skips the code review: check it yourself[^.]*" | sed "s/^/exempt=/"
+    EVAL_CMD: for a in builder verifier; do grep -c "return only the paths\? it prints" "$root/agents/$a.md" | sed "s/^/$a-path-only=/"; done; tr -s " \n" " " < "$root/skills/assistant/references/verify.md" | grep -o "An \`exempt\` diff skips the code review: check it yourself[^.]*" | sed "s/^/exempt=/"
   prompt: |
     Say what each assistant agent returns after filing a report, and who verifies an exempt diff.
 context:

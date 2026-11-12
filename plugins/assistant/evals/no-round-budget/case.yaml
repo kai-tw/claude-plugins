@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: no-round-budget
-description: Rounds aren't counted — there's no asst-budget, and nothing in the assistant's instructions calls it.
+description: Rounds aren't counted — there's no asst-budget, nothing in the assistant's instructions calls it, and no "at most two fix rounds" cap is left: the assistant judges whether the current state can be delivered (references/verify.md, SKILL.md).
 tags: [assistant]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Read, Grep, Bash]
   env:
-    EVAL_CMD: ls "$root/bin" | grep -c "^asst-budget$" | sed "s/^/budget-bin=/"; grep -rl "asst-budget" "$root/skills" "$root/agents" | wc -l | tr -d " " | sed "s/^/budget-refs=/"
+    EVAL_CMD: ls "$root/bin" | grep -c "^asst-budget$" | sed "s/^/budget-bin=/"; grep -rl "asst-budget" "$root/skills" "$root/agents" | wc -l | tr -d " " | sed "s/^/budget-refs=/"; n() { tr -s " \n" " " < "$root/skills/assistant/$1"; }; echo "round-cap=$( (n SKILL.md; n references/verify.md) | grep -ciE "at most (two|2)|(two|2) (fix )?rounds|rounds? (cap|limit|budget|ceiling)|round budget")"; echo "round-judged=$(n references/verify.md | grep -ciE "When you judge another round won.t settle what is left, the remaining .fix. findings become one .Needs you. line")$(n SKILL.md | grep -ciE "You deliver what you judge deliverable; what you can.t resolve goes to the user as a .Needs you.")"
   prompt: |
-    Say whether the assistant plugin ships a round counter, and whether its skills or agents call one.
+    Say whether the assistant plugin ships a round counter, and whether its skills or agents call one, and whether a fix round is capped or the assistant judges if the current state can be delivered.
 context:
   scaffold_script: fixture.sh
