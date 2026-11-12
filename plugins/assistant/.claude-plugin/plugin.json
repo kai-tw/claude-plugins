@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "assistant",
-  "version": "0.73.0",
+  "version": "0.74.0",
   "description": "The user's assistant: takes a request, decides, dispatches worker agents per project, and comes back to the user three times — the decision brief (intent + system design), the screen review, the delivery summary. Ships the rulebook its reviewers check against: `style-pack` (code style, core rules S1–S16 plus Dart, C# and JS).",
   "author": {
     "name": "Kai",
