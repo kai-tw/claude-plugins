@@ -34,15 +34,6 @@ claude plugin install dart-lsp@kai-tw
 | [reclaim-space](plugins/reclaim-space) | Developer-disk reclamation on macOS: regenerable build output and toolchain caches, with a free-space floor on new git worktrees |
 | [mother-tongue](plugins/mother-tongue) | Per-locale writing rules for the agent's own prose: detects the conversation's language each turn, attaches that locale's rules and the English ones for code and commits to the prompt, and blocks replies, commit messages, and comments or docs written to files that use its banned terms |
 
-## Scripts
-
-Not plugins — standalone snippets pasted into a surface that has no plugin
-mechanism at all.
-
-| Script | Where it goes |
-| --- | --- |
-| [scripts/cloud-setup.sh](scripts/cloud-setup.sh) | What a [Claude Code cloud environment](https://code.claude.com/docs/en/cloud-environments#setup-scripts) runs at setup. The environment's **Setup script** field holds only [scripts/cloud-setup-field.sh](scripts/cloud-setup-field.sh), which fetches this file from `main` — never paste this one, and after merging a change to it, bump the version line in the field script and paste that again, or the snapshot keeps the old run. Installs the pinned Flutter SDK, resolves dependencies for every Flutter repo the environment cloned, installs **every** `@kai-tw` plugin plus the plugins they depend on from other marketplaces (a missing one makes the CLI skip its dependant whole) and seeds them for later sessions, and installs `ntn` for the assistant's Notion board — a fresh container has **no marketplace registered** and **no Notion credentials**, so without this the assistant silently isn't there. One copy serves NovelGlide, CherishCRM and any environment added later, because it discovers projects and plugins instead of naming them. Its filesystem result is snapshotted, so the ~1.5 GB SDK download is paid once per cache generation, not once per session. Needs three **Environment variables** set alongside it: `CLAUDE_CODE_PLUGIN_SEED_DIR`, `NOTION_API_TOKEN`, `NOTION_WORKSPACE_ID` (the script's header says why each one cannot be an export). |
-
 ## Development
 
 After cloning, run `git config core.hooksPath .githooks` so a commit with a
