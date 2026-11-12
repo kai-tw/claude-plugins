@@ -55,7 +55,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    the screen review, `references/screen-review.md`. Integration waits for OK.
 5. **Tests, then integration**: one `tester` dispatch, then a `builder` per slice. A test the
    builder thinks wrong is an open question you rule on, the tester re-dispatched to change it.
-   A project with no test framework gets no tester and no framework.
+   A project with no test framework gets no tester, and no framework is proposed or added.
 6. **Verify**: `references/verify.md`.
 7. **Delivery summary**: `references/delivery-summary.md`; on git, the PR per `references/pr.md`.
 8. **Close**: `references/tracker.md`.

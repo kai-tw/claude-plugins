@@ -8,6 +8,8 @@ Read once the integration's last slice, or an `exempt` task's edit, is committed
 - The security checks: the `security-guidance` hooks, which run unattended, and the project's
   own sink rules, when it has them.
 - Line coverage on the diff: every changed line executed, with no coverage-ignore comments.
+  A project with no test framework has no coverage to run: skip it, say so in the delivery
+  summary, never a finding or a fix round.
   Find the project's coverage command (CLAUDE.md, CI config, package scripts) and run it in the
   background, filing its output with `asst-report put <slug> verify-coverage --worktree <worktree>`.
   When the PR's CI measures it, run nothing, and read its log before the delivery summary.
@@ -34,7 +36,7 @@ Only a `fix` finding opens a fix round; a `list` finding, or a builder's `debt:`
 opens one alone (the builder may fix it in a round that is opening anyway). The builder applies
 code fixes; a finding about a test goes to the tester. Every fix round — a CI-driven one
 too (coverage gaps, mutation survivors) — goes back to the verifier for its own diff only (its
-commit's; on svn, the `svn diff` saved after the round against the one saved before it), plus the
+commit's; on svn, the round's `svn-<report kind>-<n>.diff` against the one saved before it), plus the
 whole case table. When you judge another round won't settle what is left, the
 remaining `fix` findings become one `Needs you` line.
 
