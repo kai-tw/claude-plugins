@@ -38,11 +38,11 @@ A dispatch message carries four things:
    in a cross-session message attaches nothing; the other side reads only the string.
 3. **The report address, exactly one**: for a task with a PR on a private repo
    (SKILL.md §Disclosure), a comment on `owner/repo#<n>`; otherwise the task's
-   Notion row (SKILL.md §Notion); neither → a `Needs you` line
+   Notion row (`references/notion.md`); neither → a `Needs you` line
    for a private address. Giving both means polling both, and the report lands on
    the side you are not watching.
 4. **The report format**: first line `assistant-report <slug>#<n> <ack|done|blocked>`
-   (on Notion, after the comment's `〔Claude Code｜…〕` prefix, SKILL.md §Notion),
+   (on Notion, after the comment's `〔Claude Code｜…〕` prefix, `references/notion.md`),
    then the report body, in the same format as that report kind's local one.
 
 **Ack on receipt.** The cloud's first act is to write the `ack` line at the report
@@ -58,7 +58,7 @@ one whose address was the PR is already there and is not posted again.
 **Cadence.** Polling folds into the existing scheduler pass: read the task's
 report address once per pass, nothing separate. One cloud session per slug
 at a time. Report address empty for a whole pass → re-dispatch under the tracker's
-missing-report rule (`SKILL.md` §The tracker); never blindly dispatch again.
+missing-report rule (`references/tracker.md`); never blindly dispatch again.
 
 ## 2. A new cloud session for long work
 

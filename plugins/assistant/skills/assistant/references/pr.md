@@ -15,9 +15,7 @@ delivery summary sent while the PR is a draft tells the user it's done when it c
 be merged yet. A failed check or a stale report is unfinished work: finish it, don't
 deliver around it. Nothing waits for you: while CI is still running, schedule one
 look with `CronCreate` (`recurring: false`) and end the turn — nothing else reports
-a passing run, and you never wait in a loop.
-The merge is not looked for: it waits for the user's word that the PR can merge or
-has merged. Tasks' PRs are looked at side by side, each
+a passing run, and you never wait in a loop. Tasks' PRs are looked at side by side, each
 on its own schedule.
 
 ## Merge
