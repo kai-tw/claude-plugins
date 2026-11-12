@@ -17,7 +17,7 @@ for p in "${pats[@]}"; do
 done
 echo "s12-hits=$hits"
 [ -e "$root/bin/asst-board" ]; echo "s12-bin=$?"
-# S13: SKILL.md — where tasks live, the vocabulary, the unblock and close-the-parent rules.
+# S13: references/tracker.md — where tasks live, the vocabulary, the unblock and close-the-parent rules.
 s=$(n "$root/skills/assistant/references/tracker.md")
 blk=$(awk '/^$|^#|^- |^[0-9]+\. / { if (b ~ /convention/) print b; b = "" } { b = b " " $0 } END { if (b ~ /convention/) print b }' "$root/skills/assistant/references/tracker.md" | tr -s ' \n' ' ')
 t() { echo "s13-$1=$(grep -ciE -- "$2" <<<"$blk")"; }
@@ -27,6 +27,7 @@ for w in 'In Progress' Next Backlog Deferred 'Product Plan' 'Engineering Plan' '
   grep -qF -- "$w" <<<"$s" || miss="$miss,$w"
 done
 echo "s13-vocab-missing=${miss#,}"
+echo "s13-resume=$(grep -ciE 'question row blocked carries on at its .Stage.' <<<"$s")"
 echo "s13-unblock=$(grep -ciE 'last (open |remaining )?blocker[^.]{0,120}In Progress|In Progress[^.]{0,120}last (open |remaining )?blocker' <<<"$s")"
 echo "s13-parent=$(grep -ciE 'last (open |remaining )?(sub-item|sub-task|child)[^.]{0,120}parent|parent[^.]{0,120}last (open |remaining )?(sub-item|sub-task|child)' <<<"$s")"
 # S14 / S15: the skill and agent text together.
