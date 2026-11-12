@@ -10,10 +10,14 @@ Every product behaviour the task adds or changes — what the user sees, or how 
 feature behaves — quotes its spec page verbatim; one the task keeps as is gets
 a link to its page section, never a restatement. A behaviour or a case-table cell the
 spec doesn't decide, or a spec that conflicts with what the code shows: first ask the
-user whether to put it as a comment on the spec page; declined, it is a `Needs you`;
-agreed, select the passage it is about and comment on that text, starting with the
-SKILL.md §Notion prefix, then turn the task row `Deferred`, its body's condition
-"answer to the comment on <spec page>", until the product side answers on the page. Either
+user whether to open a question row for the product side; declined, it is a `Needs you`;
+agreed, create a tracker row without `Parent item` (a row with sub-items is never
+dispatched): Name = the SKILL.md §Notion prefix plus a one-line summary of the question;
+body = a link to the spec page section, the passage quoted verbatim, then the question;
+`Status=Deferred`, condition "the PM answers". The task row turns `Next`, `Blocked by` it;
+further discussion goes in its page comments. The PM answers there, updates the spec page
+and moves the row to the tracker's done status; the scheduler pass that sees this re-reads
+the page, then closes the question row (SKILL.md §The tracker). Either
 way the spec question carries a concrete example from the code (`file:line`: what the
 app does in that case); once the page is updated, re-read it and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
 (or B); the filed brief is the record, so a line without a choice is unfiled.

@@ -147,7 +147,7 @@ When a row closes, a `Next` row whose last blocker it was turns `In Progress` an
 starts at the investigation, and a parent whose last sub-item it was closes too.
 The decisions you file are engineering decisions (design, structure), one entry per question, to Notion's
 `decision-log`; with any other tracker, to `.claude/.assistant/kb/decisions/<slug>.md`.
-Every turn is a scheduler pass: the live rows and
+Every turn is a scheduler pass: the live rows, answered spec question rows and
 new candidates → file them → advance or
 dispatch each live row → surface new `Needs you` lines together.
 Live = `In Progress`, apart from a parent, whose sub-items are the work.
@@ -174,7 +174,8 @@ new. Each new candidate is one
 - Every comment any agent leaves on a Notion page starts with
   `〔Claude Code｜<role>｜<category>〕`: role is the writer's department in the user's
   language (前端, 企劃…); category is one word summing up the comment (提問, 回報…),
-  no fixed list (a spec-page question: `〔Claude Code｜企劃｜提問〕`). Page bodies and properties never carry it.
+  no fixed list. Of page bodies and properties, only a spec question row's Name carries it
+  (`〔Claude Code｜企劃｜提問〕<summary>`, `references/brief.md`).
 
 ## Disclosure
 
