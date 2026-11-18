@@ -168,8 +168,10 @@ LCOV=coverage/lcov.info
 # coverage — full marks over a suite that never executed. Remember the mtime and
 # require it to move; do not delete the file, because a run that then fails
 # would have destroyed the only evidence of the previous one.
+# GNU stat accepts -f but prints filesystem data, so try its -c format first;
+# BSD stat rejects -c and falls back to -f for the file modification time.
 before=0
-[ -f "$LCOV" ] && before=$(stat -f %m "$LCOV" 2>/dev/null || stat -c %Y "$LCOV" 2>/dev/null || echo 0)
+[ -f "$LCOV" ] && before=$(stat -c %Y "$LCOV" 2>/dev/null || stat -f %m "$LCOV" 2>/dev/null || echo 0)
 
 # `--coverage` is appended rather than required, because the flag belongs to
 # this check and not to the scope the caller is naming. Appending twice is
@@ -196,7 +198,7 @@ if [ "$test_rc" -ne 0 ]; then
 fi
 
 after=0
-[ -f "$LCOV" ] && after=$(stat -f %m "$LCOV" 2>/dev/null || stat -c %Y "$LCOV" 2>/dev/null || echo 0)
+[ -f "$LCOV" ] && after=$(stat -c %Y "$LCOV" 2>/dev/null || stat -f %m "$LCOV" 2>/dev/null || echo 0)
 if [ ! -f "$LCOV" ] || [ "$after" -le "$before" ]; then
   cat >&2 <<EOF
 plan-coverage: NO COVERAGE WAS WRITTEN. Nothing was measured — this is not full
