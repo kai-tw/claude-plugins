@@ -90,9 +90,7 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
   worktrees; under 30 GB free, create no worktree: run that task on a branch in the main checkout
   (`git switch -c <branch>` from the default branch, carrying any uncommitted changes over as they
   are), start no other task until it closes. Every new task measures again. Agents commit only files
-  they changed themselves; the carried-over files, named in every dispatch, stay unstaged. With 30 GB
-  or more free, a failed `git worktree add` is reported as it is, and the branch and half-made folder
-  it left are removed. A project whose CLAUDE.md forbids branches in the main checkout gets a
+  they changed themselves; the carried-over files, named in every dispatch, stay unstaged. Otherwise a failed `git worktree add` is reported as it is; delete the branch it left and move the half-made folder to the trash. A project whose CLAUDE.md forbids branches in the main checkout gets a
   `Needs you` line instead.
 - Pin the smallest model and effort that can do the work (code.claude.com/docs/en/model-config).
 - Cut `integration` and `fix` into slices — a module, a group of findings — and dispatch
