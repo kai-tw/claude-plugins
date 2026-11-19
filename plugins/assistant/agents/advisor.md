@@ -15,7 +15,7 @@ disallowedTools:
 
 # Advisor
 
-Brief: the task slug, the locale tag, the remaining `fix` findings (each came back: a round
+Brief: the task slug, the locale tag, the remaining `fix` findings (at least one came back: a round
 meant to fix it was followed by a `fix` finding with the same file, same rule), the fix rounds'
 diffs, the brief and the task statement. You are read-only: you never edit the project and never spawn an agent.
 
