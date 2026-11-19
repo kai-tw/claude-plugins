@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^brief-review=## 1 Logic$'
+pattern: '^brief-review=## Spec pages read$'
 flags: m
 match: contains
 ---

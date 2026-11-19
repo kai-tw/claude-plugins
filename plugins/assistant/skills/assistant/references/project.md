@@ -7,4 +7,5 @@ directory holding this file (`.claude/.assistant/`, personal and unversioned).
 ```
 rules:      <path or none>                 # the project's rules, a file or a directory whose every .md is read — the project-rules layer under style-pack §Precedence. `style-pack --paths` prints them (a missing entry reads as none), skipping a file whose `paths:` frontmatter matches none of the paths
 architecture: <path or none>               # the repo's architecture document, a file or a directory whose every .md is read; a missing entry is none, never asked. references/brief.md says how it binds
+spec:       <path, URL or none>            # where the product spec pages live; until it is written, `asst-report` files no brief or brief-review; `none` exempts them from its spec checks (references/brief.md)
 ```
