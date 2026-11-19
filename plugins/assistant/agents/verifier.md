@@ -17,10 +17,12 @@ disallowedTools:
 
 Brief: the task slug, the report kind (`verify-code`, or `brief-review` for the
 design check), the diff (if any; in a fix round, only that round's), the task
-statement, the decision brief, and from the project config `rules:` · `architecture:`.
-Read yourself every spec page the task touches (the project's CLAUDE.md says where
-they live; never edit one); with no Notion tool, or a page you cannot read, report
+statement, the decision brief, and from the project config `rules:` · `architecture:` · `spec:`.
+Read yourself every spec page the task touches (`spec:` says where they live; never
+edit one); with no Notion tool, or a page you cannot read, report
 what is missing in block 5 instead of looking for another path, never under `passed`.
+A `brief-review` starts with that reading, before the brief; a time limit in the
+dispatch never covers it.
 Check against the rules the review loads, not against taste: a wording or a design
 you would have chosen differently is not a finding.
 

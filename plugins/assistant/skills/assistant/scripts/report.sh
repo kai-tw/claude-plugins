@@ -9,7 +9,7 @@
 #        asst-report list   <task-slug>
 #        asst-report form   <kind>               → prints the form that kind's report fills in
 #        asst-report summary                     → per task, its newest report of each kind
-# kind: investigation · brief-review · build-<phase> · tests · verify-<review> · advise
+# kind: investigation · brief · brief-review · build-<phase> · tests · verify-<review> · advise
 # --worktree names the task's checkout when the caller is not in it.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -55,6 +55,33 @@ case "$kind" in scout) kind=investigation ;; build-wire) kind=build-integration 
 case "$kind" in investigation) old=scout ;; build-integration) old=build-wire ;; *) old="" ;; esac
 # Round numbers of <kind> (default: $kind), ascending — the n in <kind>-<n>.md.
 rounds() { ls "$dir" 2>/dev/null | sed -nE "s/^${1:-$kind}-([0-9]+)\.md$/\1/p" | sort -n; }
+# spec_check <kind> <file> — on a project whose config names a spec, a brief or a brief-review
+# is filed only once checked against it, or the user is asked what the spec already decides
+# (references/brief.md). Checks presence and shape only; prints why it refuses.
+needs_you='^[[:space:]]*[-*][[:space:]]+Needs you'
+verdict='verdict: spec (decides|silent|ambiguous)'
+spec_check() {
+  local cfg="$root/.claude/assistant.md" spec block bad b n v
+  spec=$(asst_field "$cfg" spec)
+  [ -n "$spec" ] || { echo "$cfg has no 'spec:' line — ask the user once where the product spec lives (a path, a URL, or none) and write it (references/project.md)"; return 1; }
+  [ "$spec" = none ] && return 0
+  block=$(awk '/^#+[[:space:]]+Spec pages read[[:space:]]*$/ { on = 1; next } /^#/ { on = 0 } on && NF' "$2")
+  [ -n "$block" ] || { echo "a $1 needs a '## Spec pages read' section, one '- <page> · last edited <time>' line per spec page read"; return 1; }
+  bad=$(grep -vE '^[-*] .*[^[:space:]].* · last edited [^[:space:]]' <<<"$block" | head -1)
+  [ -z "$bad" ] || { echo "under 'Spec pages read', '$bad' is not '- <page> · last edited <time>'"; return 1; }
+  if [ "$1" = brief ]; then
+    bad=$(grep -E "$needs_you" "$2" | grep -vE 'spec: ("|“|「).+("|”|」) — [^[:space:]]|spec: none in [^[:space:]]' | head -1)
+    [ -z "$bad" ] || { echo "'$bad' needs a spec field: 'spec:\"<verbatim quote>\" — <why it doesn't decide this>' or 'spec: none in <the sections checked>'"; return 1; }
+    return 0
+  fi
+  n=$(rounds brief | tail -1)
+  [ -n "$n" ] || { echo "no brief is filed for this task — file it first (asst-report put <slug> brief); the review checks the filed one"; return 1; }
+  b="$dir/brief-$n.md"
+  bad=$(grep -E 'verdict:' "$2" | grep -vE "$verdict" | head -1)
+  [ -z "$bad" ] || { echo "'$bad' — a verdict is 'spec decides', 'spec silent' or 'spec ambiguous'"; return 1; }
+  n=$(grep -cE "$needs_you" "$b"); v=$(grep -cE "$verdict" "$2")
+  [ "$n" = "$v" ] || { echo "$v verdict line(s) for the $n 'Needs you' line(s) in $b — one 'verdict:' line per 'Needs you' line, in order"; return 1; }
+}
 
 case "$op" in
   put)
@@ -74,6 +101,11 @@ case "$op" in
         rm -f "$f.partial"
         echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit or test (builder.md, tester.md)" >&2
         exit 1
+      } ;;
+    esac
+    case "$kind" in brief|brief-review)
+      why=$(spec_check "$kind" "$f.partial") || {
+        rm -f "$f.partial"; echo "asst-report: NOT FILED — $why" >&2; exit 1
       } ;;
     esac
     mv -f "$f.partial" "$f"; echo "$f" ;;

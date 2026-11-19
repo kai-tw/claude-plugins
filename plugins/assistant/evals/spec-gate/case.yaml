@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: spec-gate
+description: On a project whose config sets `spec:`, asst-report files a brief only with a `Spec pages read` section (one `- <page> · last edited <time>` line per page) and a spec field on every `Needs you` line — a verbatim quote and why it doesn't decide the case, or `spec: none in <sections>`; it files a brief-review only after the brief, with its own `Spec pages read` section and one `verdict: spec decides|silent|ambiguous` line per `Needs you` line of the filed brief. Each refusal names the offending line. `spec: none` exempts the project; a missing `spec:` line is refused until the user is asked.
+tags: [asst-report]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    File the briefs and brief reviews the workspace holds into its three projects and print each exit code, each refusal and the files filed.
+context:
+  scaffold_script: fixture.sh
