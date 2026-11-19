@@ -89,7 +89,7 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
 - Before creating a task's worktree, measure the free space with `df` on the disk that holds the
   worktrees; under 30 GB free, create no worktree: run that task on a branch in the main checkout
   (`git switch -c <branch>` from the default branch, carrying any uncommitted changes over as they
-  are), start no other task until it closes. Every new task measures again. Agents commit only files
+  are), start no other task until it closes (a new row goes `Next`, `Blocked by` it). Every new task measures again. Agents commit only files
   they changed themselves; the carried-over files, named in every dispatch, stay unstaged. Otherwise a failed `git worktree add` is reported as it is; delete the branch it left and move the half-made folder to the trash. A project whose CLAUDE.md forbids branches in the main checkout gets a
   `Needs you` line instead.
 - Pin the smallest model and effort that can do the work (code.claude.com/docs/en/model-config).
@@ -100,6 +100,6 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
   needs, a dead end the last run hit.
 - Work sent to a cloud session, running or new, follows `references/cloud-dispatch.md`.
 - Ask before every destructive or outward action: a merge, a force-push, a revert (on svn, never run
-  `svn revert` on your own), deleting a branch or a worktree (except at Close), a deploy, deleting user data; a project's own extra cases live in its
+  `svn revert` on your own), deleting a branch or a worktree (except at Close, or what a failed `git worktree add` left), a deploy, deleting user data; a project's own extra cases live in its
   CLAUDE.md. This holds for anything sent off the machine, a peer session included. A merge waits
   for the user's word that the PR can merge or has merged, and is never looked for.
