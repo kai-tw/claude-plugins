@@ -42,8 +42,7 @@ whole case table.
 A finding comes back when a round meant to fix it is followed by a `fix` finding with the same file, same rule.
 When one comes back, dispatch the `advisor` once, with the remaining `fix` findings, the fix rounds' diffs, the brief
 and the task statement; one advisor per finding, never a second for the same finding. Its `advise` report goes into the
-next builder's dispatch, which fixes as advised. What that round still leaves becomes one `Needs you` line with the
-advise report's path.
+next builder's dispatch, which fixes as advised. When the round on its advice still leaves findings, they become one `Needs you` line with the advise report's path. A new `fix` finding from that round opens a fix round as usual.
 
 ## Found outside the boundary
 
