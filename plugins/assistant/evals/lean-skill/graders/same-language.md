@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^same-language-line=3$'
+pattern: '^same-language-line=4$'
 flags: m
 match: contains
 ---
-Builder, tester and verifier load the language rules with the same sentence.
+Advisor, builder, tester and verifier load the language rules with the same sentence.
