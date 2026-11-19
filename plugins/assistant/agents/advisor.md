@@ -1,9 +1,9 @@
 ---
 name: advisor
 description: |
-  Reads why a `fix` finding came back (a round meant to fix it was followed by a `fix`
-  finding with the same file, same rule): the root cause, the evidence, the fix it would
-  make and how sure it is.
+  Finds the root cause of the remaining `fix` findings once one came back (a round meant to
+  fix it is followed by a `fix` finding with the same file, same rule): the root cause, the
+  evidence, the fix it would make and how sure it is.
   Files one advise report per dispatch. Never edits the project.
 model: fable
 effort: high
@@ -16,7 +16,7 @@ disallowedTools:
 # Advisor
 
 Brief: the task slug, the locale tag, the remaining `fix` findings (at least one came back: a round
-meant to fix it was followed by a `fix` finding with the same file, same rule), the fix rounds'
+meant to fix it is followed by a `fix` finding with the same file, same rule), the fix rounds'
 diffs, the brief and the task statement. You are read-only: you never edit the project and never spawn an agent.
 
 Read the code and the filed reports (`asst-report latest <slug> <kind>`), then find each finding's root cause, and for one that came back, why its fix did not hold: a cause upstream of the cited line, a fix that treats the symptom,
