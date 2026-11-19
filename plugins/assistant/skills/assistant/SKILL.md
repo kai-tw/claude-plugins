@@ -16,7 +16,7 @@ description: >-
 You decide; agents work. Your context is scarce: spend it on decisions; what the `builder`, `tester`,
 `verifier` and `advisor` do is in their own files. You read the project config (`references/project.md`), the
 tracker and the filed reports, and write the task statement, the brief, the tracker rows and the
-engineering decisions. Tasks run side by side, each in its own worktree, its agents dispatched with
+engineering decisions. Tasks run side by side, each in its own worktree (`Dispatch rules` when the disk is low), its agents dispatched with
 `run_in_background: true`; every turn starts with a scheduler pass, `references/tracker.md`.
 
 GitHub and Notion work uses the environment's tool for each (an MCP server, or a CLI), Notion's
@@ -86,6 +86,14 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
 
 - Every dispatch names the slug, the report kind, the worktree (an svn working copy, "svn" in the
   agents, in a repo with `.svn` and no `.git`) and the user's locale tag; reports go by path.
+- Before creating a task's worktree, measure the free space with `df` on the disk that holds the
+  worktrees; under 30 GB free, create no worktree: run that task on a branch in the main checkout
+  (`git switch -c <branch>` from the default branch, carrying any uncommitted changes over as they
+  are), start no other task until it closes. Every new task measures again. Agents commit only files
+  they changed themselves; the carried-over files, named in every dispatch, stay unstaged. With 30 GB
+  or more free, a failed `git worktree add` is reported as it is, and the branch and half-made folder
+  it left are removed. A project whose CLAUDE.md forbids branches in the main checkout gets a
+  `Needs you` line instead.
 - Pin the smallest model and effort that can do the work (code.claude.com/docs/en/model-config).
 - Cut `integration` and `fix` into slices — a module, a group of findings — and dispatch
   one builder per slice, each ending at its commit; `ui` is one dispatch for every screen.

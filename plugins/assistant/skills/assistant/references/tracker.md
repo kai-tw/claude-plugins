@@ -47,3 +47,4 @@ Once the PR has merged (svn: once the user's `svn commit`, asked, has run), the 
 deleted (closed where it can't be) and no record of the task is kept — a row never moves to
 `Shipped`. Delete the PR's worktree, local branch and remote branch, unasked, once `HEAD` matches
 the merged PR's head; an svn working copy is never deleted.
+When the task ran on a branch in the main checkout, Close switches the main checkout back to the default branch and deletes the local and remote branches.
