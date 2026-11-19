@@ -1,5 +1,5 @@
 schema_version: "1.1"
-name: spec-gate
+name: spec-check
 description: On a project whose config sets `spec:`, asst-report files a brief only with a `Spec pages read` section (one `- <page> · last edited <time>` line per page) and a spec field on every `Needs you` line — a verbatim quote and why it doesn't decide the case, or `spec: none in <sections>`; it files a brief-review only after the brief, with its own `Spec pages read` section and one `verdict: spec decides|silent|ambiguous` line per `Needs you` line of the filed brief. Each refusal names the offending line. `spec: none` exempts the project; a missing `spec:` line is refused until the user is asked.
 tags: [asst-report]
 plugins: ["../.."]
