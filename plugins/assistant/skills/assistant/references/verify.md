@@ -37,8 +37,12 @@ opens one alone (the builder may fix it in a round that is opening anyway). The 
 code fixes; a finding about a test goes to the tester. Every fix round — a CI-driven one
 too (coverage gaps, mutation survivors) — goes back to the verifier for its own diff only (its
 commit's; on svn, the round's `svn-<report kind>-<n>.diff` against the one saved before it), plus the
-whole case table. When you judge another round won't settle what is left, the
-remaining `fix` findings become one `Needs you` line.
+whole case table.
+
+A finding comes back when a round meant to fix it is followed by a `fix` finding with the same file, same rule.
+When one comes back, dispatch the `advisor` once, with the remaining `fix` findings, the fix rounds' diffs, the brief
+and the task statement; one advisor per finding, never a second for the same finding. Its `advise` report goes into the
+next builder's dispatch, which fixes as advised. When the round on its advice still leaves findings, they become one `Needs you` line with the advise report's path. A new `fix` finding from that round opens a fix round as usual.
 
 ## Found outside the boundary
 

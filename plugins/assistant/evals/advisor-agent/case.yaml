@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: advisor-agent
+description: A read-only advisor agent (model fable, effort high, Edit, Write and NotebookEdit blocked) exists; its one output is the advise form (forms/advise.md); references/verify.md dispatches it once per finding when a fix finding comes back in verify-code after the round meant to fix it (same file, same rule), before the findings that round on its advice leaves become one Needs you line with the advise report's path; the advise report is not posted to the PR.
+tags: [agents, flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Say whether the assistant has an advisor agent, which model and effort it runs on, which tools it is denied, whether it can spawn agents, which form it fills in, and quote when references/verify.md dispatches it and what happens to the findings that remain after the round on its advice.
+context:
+  scaffold_script: fixture.sh

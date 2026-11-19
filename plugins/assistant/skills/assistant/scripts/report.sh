@@ -9,7 +9,7 @@
 #        asst-report list   <task-slug>
 #        asst-report form   <kind>               → prints the form that kind's report fills in
 #        asst-report summary                     → per task, its newest report of each kind
-# kind: investigation · brief-review · build-<phase> · tests · verify-<review>
+# kind: investigation · brief-review · build-<phase> · tests · verify-<review> · advise
 # --worktree names the task's checkout when the caller is not in it.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)

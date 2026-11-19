@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: pm-svn-and-no-framework
-description: A revert is asked first (on svn, never `svn revert` unasked); Close covers svn and never deletes a working copy; a fix round's re-review on svn covers the `svn diff` saved after it against the one before; the description names the three agents; a question row opens only when the PM can see the tracker; the PM is never called the product side; a project with no test framework gets no tester and no framework, and no missing-test finding.
+description: A revert is asked first (on svn, never `svn revert` unasked); Close covers svn and never deletes a working copy; a fix round's re-review on svn covers the `svn diff` saved after it against the one before; the description names the four agents; a question row opens only when the PM can see the tracker; the PM is never called the product side; a project with no test framework gets no tester and no framework, and no missing-test finding.
 tags: [assistant, svn]
 plugins: ["../.."]
 runs: 1
