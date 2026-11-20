@@ -10,13 +10,19 @@ echo 'rules: none' > proj/.claude/assistant.md
 cat > check.sh <<'SH'
 root=$1
 cjk() { node -e 'process.stdout.write("字".repeat(+process.argv[1]))' "$1"; }
-# mk <file> <part>...: a part is a number (text of that many characters), R or U
+# mk <file> <part>...: a part is a number (text of that many characters), R or U (user
+# lines), V (user line with string content), T (5000-character thinking block), B (a 300 KB
+# attachment line), or s<n> (assistant line whose content is a string of n characters)
 mk() {
   local f=$1 p; shift; : > "$f"
   for p in "$@"; do
     case $p in
       R) echo '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t","content":"ok"}]}}' >> "$f" ;;
       U) echo '{"type":"user","message":{"content":[{"type":"text","text":"go"}]}}' >> "$f" ;;
+      V) echo '{"type":"user","message":{"content":"go"}}' >> "$f" ;;
+      T) jq -nc --arg t "$(cjk 5000)" '{type:"assistant",message:{content:[{type:"thinking",thinking:$t}]}}' >> "$f" ;;
+      B) jq -nc --arg t "$(cjk 100000)" '{type:"attachment",attachment:{content:$t}}' >> "$f" ;;
+      s*) jq -nc --arg t "$(cjk "${p#s}")" '{type:"assistant",message:{content:$t}}' >> "$f" ;;
       *) jq -nc --arg t "$(cjk "$p")" '{type:"assistant",message:{content:[{type:"text",text:$t}]}}' >> "$f" ;;
     esac
   done
@@ -39,6 +45,12 @@ mk $t;            hook s2-none        $p $t "$e" 0
 mk $t 300 R 40;   hook s4-after-result $p $t "$e" 300
 mk $t 300 U 40;   hook s4-after-user  $p $t "$e" 300
 mk $t 70 70;      hook s5-sum         $p $t "$e" 140
+mk $t 300 U B 40;  hook s9-window-short $p $t "$e" 0
+mk $t 300 U B 150; hook s9-window-long  $p $t "$e" 150
+mk $t T 40;        hook s10-thinking    $p $t "$e" 0
+mk $t 300 V T 40;  hook s10-string-user $p $t "$e" 0
+mk $t s150;        hook s10-string-text $p $t "$e" 150
+jq -e '[.hooks.PreToolUse[] | select((.matcher // "" | IN("", "*")) and any(.hooks[]; .command | contains("checks/brief-chat.sh")))] | length == 1' "$root/hooks/hooks.json" >/dev/null && echo "s11-registered=yes" || echo "s11-registered=no"
 mk $t 60 60;      hook s5-under       $p $t "$e" 120
 mk $t 300;        hook s6-noconfig    $o $t "$e" 300
 mk $t 300;        hook s7-subagent    $p $t '{"agent_id":"a1"}' 300
