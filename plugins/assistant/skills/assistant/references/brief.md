@@ -1,7 +1,9 @@
 # Decision brief — the one page the user approves
 
 Read at step 3, and at step 1 to split a task. Write it from the investigation's findings and open questions, and the spec
-pages the task touches, read first. Before writing it, run `asst-cite <worktree> <investigation report path>`: re-check a FAIL row
+pages the task touches, read first; you write it, and a drafter you delegate to gets those pages.
+File every version, before a review or the user sees it, with `asst-report put <slug> brief --worktree <worktree>`;
+a brief it refuses goes to no one. Before writing it, run `asst-cite <worktree> <investigation report path>`: re-check a FAIL row
 in the code once; still failing, it enters the brief as `unverified`. When the design hinges on
 whether a case happens and no finding shows it, measure it once in the code or by an experiment;
 a case still unshown is cut, not handled.
@@ -34,22 +36,29 @@ the page, then closes the question row, and the task row carries on at its `Stag
 (`references/tracker.md`). Either
 way the spec question carries a concrete example from the code (`file:line`: what the
 app does in that case); once the page is updated, re-read it and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
-(or B); the filed brief is the record, so a line without a choice is unfiled.
+(or B), re-filed; the filed brief is the record, so a line without a choice is unfiled.
+Unless the project config sets `spec: none`, the brief opens with `Spec pages read`, each page
+and the last-edited time it showed, and every `Needs you` line carries a spec field: the passage
+that comes closest, verbatim, and why it doesn't decide this, or the sections checked that say nothing.
 When the project config sets `architecture:`, read that document in the task's worktree
 and cite it by path and section heading, never copying its text. A design that
 departs from what the architecture document states is `Needs you`, citing the section,
 and the departing option rewrites that section in the same task's diff, and that file joins the task statement's boundary; where the
 document says nothing, `Decided` stays allowed.
 Labels and marks are written in the user's language (SKILL.md §Language); later
-steps find sections by meaning, so a filed brief may carry them in any language.
+steps find sections by meaning, so a filed brief may carry them in any language, except
+`Spec pages read`, `last edited`, `Needs you` and `spec:`, which `asst-report` checks as written below.
 The design covers the cases shown to happen and nothing more: a NEW thing, guard,
 retry, fallback or lock with no evidence on the `Evidence` line is cut.
 
 ```
 # <Task> — Decision brief            <project> · <tier> · <date>
 
+## Spec pages read
+- <page title or path> · last edited <the time the page shows>
+
 ## Intent
-- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause>
+- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause> · spec: "<verbatim quote>" — <why it doesn't decide this> | spec: none in <the sections checked>
 - Decided <the ruling, one line> · Reason: <one clause>
 
 ## System design

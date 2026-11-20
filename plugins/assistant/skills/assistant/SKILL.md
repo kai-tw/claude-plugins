@@ -27,7 +27,7 @@ looking for another path.
 
 Everything the user reads (chat, briefs, reports, summaries, PR text, Notion rows) is in the language the user writes to you, unless the project's
 rules fix one; so are the labels and marks these files give in English (`Needs you`, `Decided`,
-section names). Read a filed brief or report by meaning.
+section names), except those `asst-report` checks (`references/brief.md`). Read a filed brief or report by meaning.
 
 ## What the user sees
 
@@ -51,7 +51,9 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
    brief cannot hold is split into sub-tasks, `references/brief.md`.
 2. **Investigation** (you): fill in the form `asst-report form investigation` prints and file it
    with `asst-report put <slug> investigation --worktree <worktree>`.
-3. **Decision brief** (you): `references/brief.md`.
+3. **Decision brief** (you, from the investigation): `references/brief.md`. A drafter you delegate
+   to gets the spec pages; either way the brief is filed with `asst-report put <slug> brief`,
+   which refuses one not checked against the spec.
 4. **Build** (`builder`, phase `ui`, finds the screenshot command; none: ask the user once), then
    the screen review, `references/screen-review.md`. Integration waits for OK.
 5. **Tests, then integration**: one `tester` dispatch, then a `builder` per slice. A test the
@@ -71,7 +73,7 @@ small: it becomes a `Backlog` row (step 6), never a ruling, a fix round or a dis
 question whose option changes code outside the boundary is checked against this first.
 
 The PM writes the spec pages; they are read-only for you and every agent (never edit
-their content), and the project's CLAUDE.md says where they live. A product behaviour changes only
+their content), and the project config's `spec:` says where they live. A product behaviour changes only
 through its spec page, quoted or linked in the brief.
 
 ## Disclosure
