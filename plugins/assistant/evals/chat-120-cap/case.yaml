@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: chat-120-cap
+description: A message followed by a tool call is at most 120 characters.
+tags: [assistant]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; echo "skill-cap=$(f skills/assistant/SKILL.md | grep -cF "120 characters")"
+  prompt: |
+    Say how long a chat message may be when a tool call follows it.
+context:
+  scaffold_script: fixture.sh

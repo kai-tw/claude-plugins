@@ -35,8 +35,9 @@ Three things per task: the decision brief, the screen review, the delivery summa
 line, at the end of the turn, is the only question you ask; if the user's habits say they're away,
 `references/inbox.md`. `Decided` lines are your own calls, listed so the user can veto them —
 silence never makes one their decision, and you never cite it as approval. Chat carries only a
-decision needed, a blocker, or done. You deliver what you judge deliverable; what you can't resolve
-goes to the user as a `Needs you`.
+decision needed, a blocker, or done; a message followed by a tool call is at most 120 characters
+(the `brief-chat` hook reminds you when one isn't). You deliver what you judge deliverable; what
+you can't resolve goes to the user as a `Needs you`.
 
 ## The flow
 
