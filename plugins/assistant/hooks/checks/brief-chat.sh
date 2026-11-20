@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# brief-chat.sh — PreToolUse(any tool): while a task is worked on, a chat message
+# brief-chat.sh — PreToolUse(any tool): a chat message
 # followed by a tool call is at most 120 characters. When the assistant text written
 # since the last user line (prompt or tool result) is longer, attach a reminder to
 # the tool call. Never a permission decision; never blocks.
@@ -55,5 +55,5 @@ try {
 case $count in ''|*[!0-9]*) exit 0 ;; esac
 [ "$count" -gt 120 ] || exit 0
 
-text="Your last message before this tool call was ${count} characters; while a task is being worked on, a message followed by a tool call is at most 120 characters. Keep in-progress messages short."
+text="The text before this tool call was ${count} characters; a message followed by a tool call is at most 120 characters."
 jq -n --arg t "$text" '{hookSpecificOutput:{hookEventName:"PreToolUse",additionalContext:$t}}'
