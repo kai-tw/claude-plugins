@@ -45,8 +45,8 @@ mk $t;            hook s2-none        $p $t "$e" 0
 mk $t 300 R 40;   hook s4-after-result $p $t "$e" 300
 mk $t 300 U 40;   hook s4-after-user  $p $t "$e" 300
 mk $t 70 70;      hook s5-sum         $p $t "$e" 140
-mk $t 300 U B 40;  hook s9-window-short $p $t "$e" 0
-mk $t 300 U B 150; hook s9-window-long  $p $t "$e" 150
+mk $t U 150 B;     hook s9-spill-long  $p $t "$e" 150
+mk $t 300 U 150 B; hook s9-spill-sum   $p $t "$e" 150
 mk $t T 40;        hook s10-thinking    $p $t "$e" 0
 mk $t 300 V T 40;  hook s10-string-user $p $t "$e" 0
 mk $t s150;        hook s10-string-text $p $t "$e" 150
