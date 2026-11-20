@@ -12,6 +12,14 @@
     ],
     "PreToolUse": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/checks/brief-chat.sh"
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {
