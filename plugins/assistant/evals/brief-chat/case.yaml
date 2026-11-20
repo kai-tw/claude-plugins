@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: brief-chat
+description: "[S1-S8] The PreToolUse hook brief-chat.sh reminds the main session, through additionalContext and never a permissionDecision, when the assistant text written since the last tool result or user message is over 120 characters (counted as Unicode characters: 120 CJK characters pass, 121 get the reminder; several text lines add up; text before an earlier tool result does not count); it prints nothing for shorter or no text, outside a project with an assistant config, inside a subagent, or with a missing or unreadable transcript."
+tags: [hooks]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Feed the brief-chat hook transcripts that end with a short, a long and no assistant message before the tool call, and print its output and exit code for each.
+context:
+  scaffold_script: fixture.sh

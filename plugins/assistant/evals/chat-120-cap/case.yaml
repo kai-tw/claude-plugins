@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: chat-120-cap
-description: While a task is being worked on, every chat message the assistant writes is at most 120 characters; the decision brief, the screen review, the delivery summary and `Needs you` lines keep their own forms.
+description: A chat message the assistant writes right before a tool call is at most 120 characters; the decision brief, the screen review, the delivery summary and `Needs you` lines keep their own forms.
 tags: [assistant]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: f() { tr -s " \n" " " < "$root/$1"; }; echo "skill-cap=$(f skills/assistant/SKILL.md | grep -cF "120 characters")"
   prompt: |
-    Say how long a chat message may be while a task is being worked on.
+    Say how long a chat message may be when a tool call follows it.
 context:
   scaffold_script: fixture.sh
