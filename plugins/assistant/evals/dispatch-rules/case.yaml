@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: dispatch-rules
+description: Dispatch picks the right model, opens no session of its own and checks an agent is really alive — mechanical work gets the smallest model, architecture, cross-module, root-cause, parallel or design-judgment work at least opus/high, and a returning finding or a claim found untrue raises the next dispatch one step; a new cloud session only when the user asks, everything else to a subagent, another repo's work too, in that repo's worktree; after an interrupted turn a background agent counts as running only once its transcript shows new progress, never because `ListAgents` lists it, and no progress means dispatch again; every agent closes the browsers and servers it started before it reports, the assistant cleans up after an agent that died, and each dispatch asks one bounded question; an environment blocker is reported only after looking for a tool that clears it, and a console step is checked with a CLI before the user is asked; with the project's CI on the same machine, one test-running agent at a time.
+tags: [flow, agents]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in agents/advisor.md agents/builder.md agents/tester.md agents/verifier.md skills/assistant/SKILL.md skills/assistant/references/cloud-dispatch.md skills/assistant/references/tracker.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the advisor, builder, tester and verifier text, the assistant skill, and the cloud dispatch and tracker references, one file per line.
+context:
+  scaffold_script: fixture.sh

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # check.sh (uname faked as Darwin, so every rule applies) feeds intercept.sh trap and correct commands and prints whether the expected rule fired.
+# Expected `+` means any rule may fire (the rule id is the implementation's to name); `-` means none may.
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; mkdir -p flags fake; n=0
@@ -11,6 +12,7 @@ run() {
     | PATH="$PWD/fake:$PATH" TMPDIR=$PWD/flags bash "$root/hooks/checks/intercept.sh" 2>/dev/null \
     | jq -r '.hookSpecificOutput.additionalContext // empty' | grep -oE '⚠️  [a-z-]+' | cut -d' ' -f3 | sort -u | tr '\n' ' ')
   if [ "$2" = - ]; then [ -z "$ids" ] && v=quiet || v="noisy($ids)"
+  elif [ "$2" = + ]; then [ -n "$ids" ] && v=hit || v=miss
   else case " $ids " in *" $2 "*) v=hit ;; *) v=miss ;; esac; fi
   echo "$1=$v"
 }
@@ -27,6 +29,8 @@ run bad-restore     restore-head 'git restore lib/a.dart'
 run bad-format-dir  format-dir   'dart format lib'
 run bad-fix-bare    format-dir   'dart fix --apply'
 run bad-fix-dir     format-dir   'dart fix --apply lib && git status'
+run bad-pgrep-loop  +            'while pgrep -f "foo"; do sleep 1; done'
+run bad-pgrep-quiet +            'while pgrep -f "flutter run" >/dev/null; do sleep 2; done'
 run ok-log-head     - 'git log --oneline | head -5'
 run ok-test-verdict - 'flutter test > "$s/t.log" 2>&1; grep -E "All tests passed|Some tests failed" "$s/t.log" | tail -1'
 run ok-test-and     - 'npm test && git log --oneline | head -3'
@@ -38,5 +42,8 @@ run ok-unstage      - 'git restore --staged lib/a.dart'
 run ok-branch       - 'git checkout -b feat && git checkout main'
 run ok-format-file  - 'dart format lib/a.dart test/a_test.dart'
 run ok-fix-scoped   - 'dart fix --apply --code=unused_import lib/a.dart'
+run ok-pgrep-x      - 'pgrep -x foo'
+run ok-pgrep-grep   - 'pgrep -f foo | grep -v $$'
+run ok-pgrep-plain  - 'pgrep foo'
 run ok-last         - 'echo done'
 SH
