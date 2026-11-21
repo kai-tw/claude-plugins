@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: asking
+description: The assistant checks before it asks, asks so the question reads on its own and blocks nothing else, and treats a ruling as closed and as narrow as it was given — a `Needs you` is always asynchronous and rows that don't depend on its answer keep advancing; before a `Needs you` the brief reads the linked and adjacent spec pages, checks whether two rules together decide it, and searches the decision log, earlier briefs and tracker rows, its spec field naming the pages and records checked, and brief-review has a `spec decides (combined)` verdict; a question asked in chat opens with a concrete example (screen by route and title, or file; what happens; now; after the change), then the recommendation, in no internal term or coined word, findings in the body and the question one line; a ruled question is closed until new evidence, a picked option settles the details it names, and an agent's question list is never forwarded as it is; a `Decided` covers only its own case, a same-shape case elsewhere gets its own `Needs you`, and the decision log is searched first; an unanswered scope `Needs you` holds every dispatch under its request; a code limit, unbacked existing behaviour and a ruled-out case's UI are not asked; a second correction of the same point raises ownership or a redesign instead of rewording; reverting your own changes to what the user approved is not asked first; a user explaining how something should work is not a new task; a trade-off goes to the user now, not into another review round.
+tags: [flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/brief.md skills/assistant/forms/brief-review.md skills/assistant/references/inbox.md skills/assistant/references/tracker.md skills/assistant/references/verify.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the assistant skill, the brief, inbox, tracker and verify references and the brief-review form, one file per line.
+context:
+  scaffold_script: fixture.sh
