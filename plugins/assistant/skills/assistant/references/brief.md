@@ -55,7 +55,7 @@ retry, fallback or lock with no evidence on the `Evidence` line is cut.
 Steps the brief runs in order (a deploy, a data migration): check each step against the state the earlier steps leave and the states in which the investigation found the tool fails; a step that fails on an earlier step's state means the order is wrong.
 A deploy-time value the task adds or moves (the identity the code runs as, an environment variable, a region) cites on the `Evidence` line the `file:line` where the deploy sets it.
 A name a ruling gives a new thing (a class, an export, a file) is checked against style-pack and the project's rules before the brief goes to the tester or builder, and written in the form style-pack and the project's rules allow: where those rules forbid top-level functions, `Class.member`.
-When another of the user's projects already made the same choice, recommend the same and cite where it was made, unless a fact shows it cannot work here. That other project's choice is written only in the brief, never in a public repo's commit, PR or issue.
+When another of the user's projects already made the same choice, recommend the same and cite where it was made, unless a fact shows it cannot work here. Citing it follows SKILL.md §Disclosure.
 When the lower layer can be built first, build the lower layer first, never an interim bridge.
 
 ```
