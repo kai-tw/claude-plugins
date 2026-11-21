@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: design-fit
-description: the assistant skill chooses a design by four criteria in order, not by an unmeasured "not smaller" — the brief reference lists spec and rulings, ownership, project conventions (a rule beats a pattern, patterns cited at two file:line sites) and simplest, requires each rejected alternative to name its failed criterion and evidence, lets criterion 4 decide between designs that pass 1-3 and keeps Needs you for what the user sees, waits for or pays for, with Fit and Rejected alternatives lines in the template (D1); the brief review files a missing Fit evidence, an unevidenced rejection, a Needs you that criterion 4 could decide and a reviewer's pick between two user-visible options (D2); the investigation asks two independent file:line sites for the closest existing feature and the rulings and scheduled rows that change the same data (D3); a third design version or a second fix round still finding logic errors stops dispatch, rechecks who owns the data and goes to the user as Needs you (D4).
+description: the assistant skill chooses a design by four criteria in order, not by an unmeasured "not smaller" — the brief reference lists spec and rulings, ownership, project conventions (a rule beats a pattern, patterns cited at two file:line sites) and simplest, requires each rejected alternative to name its failed criterion and evidence, lets criterion 4 decide between designs that pass 1-3 and keeps Needs you for what the user sees, waits for or pays for, with Fit and Rejected alternatives lines in the template (D1); the brief review files a missing Fit evidence, an unevidenced rejection, a Needs you that criterion 4 could decide and a reviewer's pick between two user-visible options (D2); the investigation asks two independent file:line sites for the closest existing feature and the rulings and scheduled rows that change the same data (D3); a third design version or a second fix round still finding logic errors stops dispatch, rechecks who owns the data and goes to the user as Needs you (D4); verify.md opens a new fix round unless that stop rule applies and sends to the user only a trade-off the brief reference leaves to them (R1, R2); the Fit checks sit inside Proportion, which names criterion 4 and a Decided line that picks (R3); the Needs you template carries a measured cost per option (R4).
 tags: [flow]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/brief.md skills/assistant/forms/brief-review.md skills/assistant/forms/investigation.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/brief.md skills/assistant/references/verify.md skills/assistant/forms/brief-review.md skills/assistant/forms/investigation.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
   prompt: |
-    Print the assistant skill text, the brief reference, and the brief-review and investigation forms, one file per line.
+    Print the assistant skill text, the brief and verify references, and the brief-review and investigation forms, one file per line.
 context:
   scaffold_script: fixture.sh

@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/SKILL\.md: .*((third|3rd|second|2nd).*(who owns|owner)[^.]*(data|datum).*Needs you)'
+pattern: '^skills/assistant/SKILL\.md: .*stop dispatch([^.]|\.md)*who owns the data([^.]|\.md)*Needs you'
 flags: mi
 ---
-[D4] SKILL.md: recheck who owns the data and tell the user with Needs you.
+[D4] SKILL.md: stop dispatching, recheck who owns the data and tell the user with Needs you.
