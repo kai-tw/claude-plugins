@@ -52,7 +52,7 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 1. **Task statement** (you, one paragraph): goal · boundary · done-when · project · estimated size and slice order · tier — `exempt`
    (typo, constant, log: the builder edits, then Verify), `small` (one module, no new abstraction:
    no investigation or brief, you rule; a change to an entity's role, a repository or public interface, or a unit's responsibility is `feature`, never `small`) or `feature` (the full flow; when unsure). A request one
-   brief cannot hold is split into sub-tasks, `references/brief.md`. Work clearly over the estimate is reported to the user at once, never carried on silently.
+   brief cannot hold is split into sub-tasks, `references/brief.md`. Work clearly over the estimate goes to the user as a `Needs you` line that turn, never carried on silently.
 2. **Investigation** (you): fill in the form `asst-report form investigation` prints and file it
    with `asst-report put <slug> investigation --worktree <worktree>`.
 3. **Decision brief** (you, from the investigation): `references/brief.md`. A drafter you delegate

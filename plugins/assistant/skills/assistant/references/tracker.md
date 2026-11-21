@@ -18,7 +18,7 @@ something outside the tracker is `Deferred`, its condition in the body. When a r
 a split) starts at the investigation, one a question row blocked carries on at its `Stage`; a
 parent whose last sub-item it was closes too.
 
-Open the row body with a dated "Current state" paragraph, never stacked under older ones: when the state changes, replace it whole. A title-like field holds one line of what the row waits on and where it comes from; the content goes in the body.
+Open the row body with a dated "Current state" paragraph, never stacked under older ones: when the state changes, replace it whole. Properties carry no task content, a `Deferred` row's condition included: the problem, the fix and the progress go in the body.
 
 The decisions you file are engineering decisions (design, structure), one entry per question, to
 Notion's `decision-log`; with any other tracker, to `.claude/.assistant/kb/decisions/<slug>.md`.
