@@ -94,7 +94,7 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
 - Every dispatch names the slug, the report kind, the worktree (an svn working copy, "svn" in the
   agents, in a repo with `.svn` and no `.git`) and the user's locale tag; reports go by path.
 - Every dispatch states the project's exact check commands (lint, format, test), from its CLAUDE.md, hooks or CI.
-- A verifier dispatch carries the builder report paths, so a deviation on a builder's `fixed (base branch)` line reads as explained.
+- A verifier dispatch carries the builder and tester report paths, so a deviation on a builder's `fixed (base branch)` line reads as explained.
 - Before creating a task's worktree, measure the free space with `df` on the disk that holds the
   worktrees; under 30 GB free, create no worktree: run that task on a branch in the main checkout
   (`git switch -c <branch>` from the default branch, carrying any uncommitted changes over as they

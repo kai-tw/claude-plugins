@@ -39,7 +39,7 @@ too (coverage gaps, mutation survivors) — goes back to the verifier for its ow
 commit's; on svn, the round's `svn-<report kind>-<n>.diff` against the one saved before it), plus the
 whole case table.
 
-When the task had a fix round or merged its base, run `verify-code` once more before the PR goes ready, on the whole task's diff (`origin/<base>...HEAD`), plus the whole case table.
+When the task had a fix round or merged its base, run `verify-code` once more before the PR goes ready, on the whole task's diff (`origin/<base>...HEAD`; on svn, `svn diff` against the revision the task started from, saved like the round diffs), plus the whole case table.
 
 A `low confidence` finding about the design rather than a single line, is never silently dropped: it goes on the delivery summary.
 

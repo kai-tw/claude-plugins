@@ -17,7 +17,7 @@ disallowedTools:
 
 Brief: the task slug, the report kind (`verify-code`, or `brief-review` for the
 design check), the diff (if any; in a fix round, only that round's), the builder
-report paths, the task statement, the decision brief, and from the project config `rules:` · `architecture:` · `spec:`.
+and tester report paths, the task statement, the decision brief, and from the project config `rules:` · `architecture:` · `spec:`.
 Read yourself every spec page the task touches (`spec:` says where they live; never
 edit one); with no Notion tool, or a page you cannot read, report
 what is missing in block 5 instead of looking for another path, never under `passed`.

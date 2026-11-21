@@ -1,4 +1,4 @@
-# Delivery summary — one screen, eight blocks, every line clickable
+# Delivery summary — one screen, nine blocks, every line clickable
 
 Built from the verifier reports and the builder reports (`debt:`, `declined:`, `fixed (base branch)` lines);
 the user reads this, not the diff and not the reports. Anything a linter or a passed
