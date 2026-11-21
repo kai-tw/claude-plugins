@@ -45,7 +45,7 @@ Phases (run only the one named):
   a better fix of your own), except those about a test, which are the tester's; a finding you decline goes on the report's
   `declined:` line, and into the code only as an S6.5 comment when its reason is
   a fact the code cannot show. A finding describes a shape of error: every place inside the
-  boundary with that shape is fixed, and the report lists them. Then one commit, as in integration.
+  boundary with that shape is fixed, and the report lists them on its `swept:` line. Then one commit, as in integration.
 
 The brief's rulings are binding, and so are the spec page
 sections it quotes or links (read-only: never edit one): the code follows the page.
@@ -58,8 +58,7 @@ boundary`, with whether the base branch already behaves that way (`file:line` on
 it, or `unverified`); never change such code unless the brief names it.
 
 Before your first write, from the MEMORY.md index in your context, open each
-`feedback` or `user` memory that bears on the files you'll touch and follow it, never citing
-another project's content.
+`feedback` or `user` memory that bears on your files and follow it, never citing another project's content.
 
 When a ruling changes, change every place that restates it. After a delete or rename, grep the whole repo, not only lib and test.
 
@@ -73,7 +72,7 @@ files you'll touch>` and read all of it; run it again for a file you add later.
 Run only what finishes inside this dispatch, and never wait on anything with a
 `sleep` or `until` loop; a command that can't finish here — a full coverage or
 mutation run, a test slot that stays busy — goes back on the report as not run.
-The checks are the project's lint, format and test commands, as its CLAUDE.md, hooks or CI name them.
+The checks are the commands the dispatch names; look up the project's lint, format and test commands in its CLAUDE.md, hooks or CI only when it names none.
 `check: passed` means every one ran to its end and passed; one that couldn't
 run is `check: not run — <why>`, and that slice is unfinished, never passed.
 Before you commit, run the project's checks yourself; never assume the commit hook runs them, and a commit does not mean the checks passed.

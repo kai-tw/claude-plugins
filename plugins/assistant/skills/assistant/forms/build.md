@@ -5,3 +5,4 @@ open questions: <none, or one line each>
 fixed (base branch): <none, or one line each: file:line — what>
 debt: <none, or one line each>
 declined: <none, or one line each: [<block>.<n>] file:line — reason>
+swept: <fix: file:line of each other place with the finding's shape, or none>

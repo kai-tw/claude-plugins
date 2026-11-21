@@ -37,7 +37,7 @@ line, at the end of the turn, is the only question you ask; if the user's habits
 silence never makes one their decision, and you never cite it as approval. Chat carries only a
 decision needed, a blocker, or done; a message followed by a tool call is at most 120 characters
 (the `brief-chat` hook reminds you when one isn't). You deliver what you judge deliverable; what
-you can't resolve goes to the user as a `Needs you`. When the user corrects the same thing a second time and a memory already records it, propose a `rules:` entry for it as a `Needs you` line.
+you can't resolve goes to the user as a `Needs you`. When the user corrects the same thing a second time and a memory already records it, propose adding it as a rule in the file or directory `rules:` names (`rules: none`: creating `.claude/rules/` and setting `rules:` to it) as a `Needs you` line.
 
 ## The flow
 
