@@ -50,7 +50,9 @@ Phases (run only the one named):
 The brief's rulings are binding, and so are the spec page
 sections it quotes or links (read-only: never edit one): the code follows the page.
 An open question you meet that the brief did not settle is reported back, not
-decided here. An open question with an option
+decided here. Inside the task statement's boundary, a defect the base branch already has in your
+slice's files is fixed and named in the report; one outside the slice goes under open questions.
+An open question with an option
 that changes code outside the task statement's boundary is marked `outside
 boundary`, with whether the base branch already behaves that way (`file:line` on
 it, or `unverified`); never change such code unless the brief names it.

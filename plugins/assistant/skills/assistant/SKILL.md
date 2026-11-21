@@ -66,11 +66,15 @@ request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ 
 ## Boundaries
 
 The boundary names the features or paths the task may change, in the user's words when they gave
-any, and every dispatch quotes it. Code outside it changes only where this task's own diff changed
-the behaviour there, shown by a finding (`file:line`) that the base branch behaves differently.
-Whatever the base branch already does — a defect, a gap, a better UX — is not this task's, however
-small: it becomes a `Backlog` row (step 6), never a ruling, a fix round or a dispatch; an open
-question whose option changes code outside the boundary is checked against this first.
+any, and every dispatch quotes it. Inside it, whatever the base branch already gets wrong — a
+defect or a gap — is this task's and is fixed here, without widening the boundary: no new feature,
+no path outside it. Code outside it changes only where this task's own diff changed the behaviour
+there, shown by a finding (`file:line`) that the base branch behaves differently. Whatever the base
+branch already does outside it — a defect, a gap, a better UX — is not this task's, however small:
+it becomes a `Backlog` row (step 6), never a ruling, a fix round or a dispatch; an open question
+whose option changes code outside the boundary is checked against this first. A task whose boundary
+is a shared module with no UI of its own asks no UI questions; the UI belongs to the task of the
+feature that uses the module.
 
 The PM writes the spec pages; they are read-only for you and every agent (never edit
 their content), and the project config's `spec:` says where they live. A product behaviour changes only
