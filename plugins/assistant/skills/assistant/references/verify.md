@@ -48,6 +48,8 @@ When one comes back, dispatch the `advisor` once, with the remaining `fix` findi
 and the task statement; one advisor per finding, never a second for the same finding. Its `advise` report goes into the
 next builder's dispatch, which fixes as advised. When the round on its advice still leaves findings, they become one `Needs you` line with the advise report's path. A new `fix` finding from that round opens a fix round as usual.
 
+A trade-off goes to the user now as a `Needs you`, never into another review round.
+
 ## Found outside the boundary
 
 Anything found outside the task's boundary (SKILL.md §Boundaries) is never fixed here: create a

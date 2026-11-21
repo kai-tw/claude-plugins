@@ -2,8 +2,8 @@
 Read before the brief; both spec sections stay in English and are left out when the project config sets `spec: none`.
 - <page title or path> · last edited <the time the page shows>
 ## Spec verdicts
-One line per `Needs you` line of the filed brief, in order. `spec decides` is also filed under 5 with Fix: drop that `Needs you`, quote the page.
-- <the question, a few words> · verdict: spec decides "<quote>" | spec silent | spec ambiguous "<the passages>"
+One line per `Needs you` line of the filed brief, in order. `spec decides` and `spec decides (combined)` are also filed under 5 with Fix: drop that `Needs you`, quote the page.
+- <the question, a few words> · verdict: spec decides "<quote>" | spec decides (combined) "<the passages>" | spec silent | spec ambiguous "<the passages>"
 ## 1 Logic
 [1.<n>] <brief section> — what is wrong · failure scenario · Fix: <the change>
 ## 2 Data flow

@@ -37,9 +37,11 @@ the page, then closes the question row, and the task row carries on at its `Stag
 way the spec question carries a concrete example from the code (`file:line`: what the
 app does in that case); once the page is updated, re-read it and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
 (or B), re-filed; the filed brief is the record, so a line without a choice is unfiled.
+Before writing a `Needs you`, check it: read the linked pages and the spec pages adjacent to them; see whether two rules together already decide it; search the decision log, earlier briefs and tracker rows for it.
+A limit of the code is not a spec question: it goes in the brief's design. Existing behaviour no spec page backs is not a precedent, and is not asked about either. A case the user has ruled out gets no question about its UI.
 Unless the project config sets `spec: none`, the brief opens with `Spec pages read`, each page
 and the last-edited time it showed, and every `Needs you` line carries a spec field: the passage
-that comes closest, verbatim, and why it doesn't decide this, or the sections checked that say nothing.
+that comes closest, verbatim, and why it doesn't decide this, or the sections checked that say nothing, then the pages and records checked.
 When the project config sets `architecture:`, read that document in the task's worktree
 and cite it by path and section heading, never copying its text. A design that
 departs from what the architecture document states is `Needs you`, citing the section,
@@ -58,7 +60,7 @@ retry, fallback or lock with no evidence on the `Evidence` line is cut.
 - <page title or path> · last edited <the time the page shows>
 
 ## Intent
-- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause> · spec: "<verbatim quote>" — <why it doesn't decide this> | spec: none in <the sections checked>
+- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause> · spec: "<verbatim quote>" — <why it doesn't decide this> | spec: none in <the sections checked> · checked: <pages and records>
 - Decided <the ruling, one line> · Reason: <one clause>
 
 ## System design
