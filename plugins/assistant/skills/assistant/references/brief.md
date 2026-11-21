@@ -18,7 +18,7 @@ A product behaviour a later round needs changed is a spec question asked as belo
 changes once you've re-read the updated page.
 
 One page the user reads in one sitting, the case table aside. Every other line is a decision, never a description. Two marks:
-`Needs you` (intent: scope, a trade-off, product behaviour) · `Decided` (your own
+`Needs you` (intent: scope, a trade-off §Choosing the design leaves to the user, product behaviour) · `Decided` (your own
 engineering call, listed for veto; the user's silence never makes it theirs).
 Every product behaviour the task adds or changes — what the user sees, or how a
 feature behaves — quotes its spec page verbatim; one the task keeps as is gets
@@ -65,7 +65,7 @@ When the lower layer can be built first, build the lower layer first, never an i
 - <page title or path> · last edited <the time the page shows>
 
 ## Intent
-- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause> · spec: "<verbatim quote>" — <why it doesn't decide this> | spec: none in <the sections checked> · checked: <pages and records>
+- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause> · Measured cost (a choice between designs): A: <…> / B: <…> · spec: "<verbatim quote>" — <why it doesn't decide this> | spec: none in <the sections checked> · checked: <pages and records>
 - Decided <the ruling, one line> · Reason: <one clause>
 
 ## System design
