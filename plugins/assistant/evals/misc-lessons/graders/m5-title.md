@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/references/tracker.md: (title|heading)[^.]*(one line|single line|one-line)[^.]*(condition|waiting|waits)[^.]*(body|content)|(waiting|waits)[^.]*(from where|where it comes from|source|comes from)[^.]*(body|content)'
+pattern: '^skills/assistant/references/tracker\.md: .*propert(y|ies)[^.]*(no|not|never)[^.]*content[^.]*(Deferred|condition)[^.]*body'
 flags: mi
 ---
-[M5] tracker.md: title-like fields hold one line of condition (what is awaited, from where); the content goes in the body.
+[M5] tracker.md: properties carry no task content, a Deferred row's condition included; the problem, the fix and the progress go in the body.
