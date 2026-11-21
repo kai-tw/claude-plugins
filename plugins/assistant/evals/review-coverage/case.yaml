@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: review-coverage
+description: Review covers the whole PR and every claim carries its evidence — after a fix round or a base merge, `verify-code` runs once more on the whole task's diff (`origin/<base>...HEAD`) with the whole case table before ready; the PR goes ready only once HEAD contains the current base and CI and the checks ran after that merge; a change to an entity's role, a repository or public interface, or a unit's responsibility is `feature`, never `small`; a low-confidence finding about the design rather than a single line reaches the delivery summary; the verifier's blocks 1 and 2 judge each touched file's whole shape, not only its hunks; a claim in the builder or tester report form that a command has run or been verified carries the actual output or its file path, or counts as not run, and the verifier re-runs at least one such claim per report; on svn that whole-task diff is plain `svn diff` against BASE, and pr.md words the condition exactly as verify.md does.
+tags: [flow, agents]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in agents/builder.md agents/tester.md agents/verifier.md skills/assistant/SKILL.md skills/assistant/references/verify.md skills/assistant/references/pr.md skills/assistant/references/delivery-summary.md skills/assistant/forms/build.md skills/assistant/forms/tests.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the builder, tester, verifier, assistant skill, verify, PR and delivery summary reference text and the build and tests report forms, one file per line.
+context:
+  scaffold_script: fixture.sh

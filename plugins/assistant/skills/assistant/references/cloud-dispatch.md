@@ -8,7 +8,9 @@ a dispatch ID `<slug>#<n>` is itself a dispatch and does not dispatch further.
 | How to start it | `SendMessage`, or `claude -p "<message>" --cloud <session-id>` | The environment's session tool (e.g. an MCP tool) |
 | How it comes back | It writes to the report address you name; you file it | Same |
 | What it sees | That session's own working directory and context | The GitHub remote's content on the current branch, not the local checkout |
-| Fits | Work already running, with its context | Stateless, long-running work whose output is one text report |
+| Fits | Work already running, with its context | Stateless work whose output is one text report, when the user asks for a session |
+
+Work in another repo follows the another-repo rule in `SKILL.md` §Dispatch rules.
 
 One thing both routes share: **the other side cannot ask you**. Settle every
 open question before dispatch; a question that surfaces after dispatch can only
@@ -60,9 +62,10 @@ report address once per pass, nothing separate. One cloud session per slug
 at a time. Report address empty for a whole pass → re-dispatch under the tracker's
 missing-report rule (`references/tracker.md`); never blindly dispatch again.
 
-## 2. A new cloud session for long work
+## 2. A new cloud session
 
-Open one with the session tool the environment has (e.g. an MCP tool), pinning
+Open a new session only when the user asks for one. Everything else goes to a subagent,
+another repo's work too, in that repo's worktree. Open it with the session tool the environment has (e.g. an MCP tool), pinning
 model and effort per SKILL.md §Dispatch rules, and record the session id and URL
 it returns in the tracker. The session clones **the repo's GitHub remote on the
 current branch, not your local checkout**, so push HEAD first; it never carries

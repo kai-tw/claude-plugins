@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: intercept
-description: "[S1][B2] intercept warns on silent shell traps — a test/build run piped into head/tail or followed by `; echo`, a log written into shared /tmp, BSD sed's `\\b`, `git checkout --`/`git restore` on a file, a directory-wide `dart format` or unscoped `dart fix --apply` — and stays quiet on the correct form of each."
+description: "[S1][B2] intercept warns on silent shell traps — a test/build run piped into head/tail or followed by `; echo`, a log written into shared /tmp, BSD sed's `\\b`, `git checkout --`/`git restore` on a file, a directory-wide `dart format` or unscoped `dart fix --apply`, a `while`/`until` loop on `pgrep -f \"<string>\"` (quoted or not, `do` on the same or the next line) that can match other waiting shells and never end — and stays quiet on the correct form of each, including `pgrep -f` loops with a `[x]` or `^` pattern and `kill -0 $pid` loops."
 tags: [hooks]
 plugins: ["../.."]
 runs: 1

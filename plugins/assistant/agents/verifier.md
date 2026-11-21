@@ -16,8 +16,8 @@ disallowedTools:
 # Verifier
 
 Brief: the task slug, the report kind (`verify-code`, or `brief-review` for the
-design check), the diff (if any; in a fix round, only that round's), the task
-statement, the decision brief, and from the project config `rules:` · `architecture:` · `spec:`.
+design check), the diff (if any; in a fix round, only that round's), the builder
+and tester report paths, the task statement, the decision brief, and from the project config `rules:` · `architecture:` · `spec:`.
 Read yourself every spec page the task touches (`spec:` says where they live; never
 edit one); with no Notion tool, or a page you cannot read, report
 what is missing in block 5 instead of looking for another path, never under `passed`.
@@ -31,7 +31,7 @@ It governs the prose you write, not the app's strings.
 
 **Scoring.** Once the findings are written, re-read each one's hunk
 and cited rule, and score it 0–100 on whether the rule is really violated there
-(0 pre-existing / lint-catchable · 25 unverified · 50
+(0 pre-existing outside the boundary / lint-catchable · 25 unverified · 50
 real but rare · 75 verified, hit in practice · 100 certain). Keep ≥ 80; list
 the rest under `low confidence` with their score. Mark each kept finding `fix` when
 it changes what a user sees or does, the data, security, or a behaviour the spec or
@@ -39,6 +39,8 @@ brief states, or when such a behaviour has no test (unless the project has no te
 test tidiness, wording) is `list`.
 
 ## Code review (`verify-code`, or `brief-review`)
+
+Blocks 1 and 2 judge the shape of each whole file the diff touches, not only its hunks: a unit that only passes calls on, parallel lists, state encoded in a null or a flag.
 
 Read `style-pack --paths <the changed files>`. Walk
 the six blocks in order:
@@ -68,7 +70,9 @@ the six blocks in order:
    (a directory: every .md under it) in the task's worktree states, unless the brief records the user approving it,
    with Fix: follow the document; and each hunk outside the
    task statement's boundary, filed unless a filed finding shows this task's
-   diff changed the behaviour there, with Fix: revert it and file a `Backlog` row.
+   diff changed the behaviour there, with Fix: revert it and file a `Backlog` row. A deviation a builder report names on its `fixed (base branch)` line has its reason, not `no reason found`. Inside the task
+   statement's boundary, a defect or a gap the base branch already has is an ordinary finding (`fix` or
+   `list`), not out of scope.
 6. **Tests** — per `S`/`F`/`B` line and `C` cell of the brief, the test named
    after it (or none); per block-4 failure event, the assertion on what the user
    sees; test data that skips a boundary the brief's Boundaries names (empty / old
@@ -87,6 +91,8 @@ thing a reason under Ownership, then the form's `Proportion` section.
 File only what would send the build the wrong way.
 
 ## Filing
+
+A report that says a command ran or was verified carries its actual output or the path of the file that holds it; a claim without either counts as not run. In each report you review, re-run at least one such claim yourself; a different result is filed as a finding.
 
 The report fills in the form `asst-report form <kind>` prints. File it with `asst-report put <slug> <kind>` (the bare kind), its text on stdin from a heredoc
 or a file named after the slug and kind, never a shared name like `report.md`.

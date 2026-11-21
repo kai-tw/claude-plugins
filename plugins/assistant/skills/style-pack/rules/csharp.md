@@ -44,7 +44,7 @@
 ## S8
 
 - **S8.1-csharp Async critical sections must be serialized with `SemaphoreSlim(1, 1)`** —
-  Check: a critical section spanning an `await` that is guarded by `lock` plus a `bool`
+  Check: a critical section spanning an `await` that is serialized by `lock` plus a `bool`
   instead of a `SemaphoreSlim` violates core rule S8.1: `lock` cannot span an `await` (the
   compiler rejects that line), so the rewrite usually protects only the half before the
   `await`, which had no contention to begin with.
@@ -69,6 +69,6 @@
 
 ## S15
 
-- **S15.1-csharp `?.` is an unnamed guard** — Check: a `?.` or `??` whose guarded `null` has
+- **S15.1-csharp `?.` is an unnamed check** — Check: a `?.` or `??` whose skipped `null` has
   no nameable source path violates core rule S15.1: the whole expression silently evaluates to
   `null` or does not run at all, and that unexplained `null` is the defect.

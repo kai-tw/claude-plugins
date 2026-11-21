@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # check.sh (uname faked as Darwin, so every rule applies) feeds intercept.sh trap and correct commands and prints whether the expected rule fired.
+# Expected `-` means no rule may fire.
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; mkdir -p flags fake; n=0
@@ -27,7 +28,14 @@ run bad-restore     restore-head 'git restore lib/a.dart'
 run bad-format-dir  format-dir   'dart format lib'
 run bad-fix-bare    format-dir   'dart fix --apply'
 run bad-fix-dir     format-dir   'dart fix --apply lib && git status'
-run ok-log-head     - 'git log --oneline | head -5'
+run bad-pgrep-loop  pgrep-f-wait 'while pgrep -f "foo"; do sleep 1; done'
+run bad-pgrep-quiet pgrep-f-wait 'while pgrep -f "flutter run" >/dev/null; do sleep 2; done'
+run bad-pgrep-until pgrep-f-wait 'until ! pgrep -fl x.json; do sleep 1; done'
+run bad-pgrep-bare  pgrep-f-wait 'while pgrep -f foo; do sleep 1; done'
+run bad-pgrep-nextline pgrep-f-wait 'while pgrep -f foo
+do sleep 1; done'
+run bad-pgrep-appear pgrep-f-wait 'until pgrep -f "flutter run"; do sleep 2; done'
+run ok-log-head    - 'git log --oneline | head -5'
 run ok-test-verdict - 'flutter test > "$s/t.log" 2>&1; grep -E "All tests passed|Some tests failed" "$s/t.log" | tail -1'
 run ok-test-and     - 'npm test && git log --oneline | head -3'
 run ok-scratch-log  - 'flutter test > /private/tmp/claude-501/x/scratchpad/t.log 2>&1'
@@ -38,5 +46,9 @@ run ok-unstage      - 'git restore --staged lib/a.dart'
 run ok-branch       - 'git checkout -b feat && git checkout main'
 run ok-format-file  - 'dart format lib/a.dart test/a_test.dart'
 run ok-fix-scoped   - 'dart fix --apply --code=unused_import lib/a.dart'
+run ok-pgrep-bracket - 'while pgrep -f "[x].json"; do sleep 1; done'
+run ok-pgrep-anchor  - 'while pgrep -f "^node server.js"; do sleep 1; done'
+run ok-pgrep-fx      - 'while pgrep -fx "node server.js"; do sleep 1; done'
+run ok-pgrep-pid    - 'while kill -0 $pid; do sleep 1; done'
 run ok-last         - 'echo done'
 SH

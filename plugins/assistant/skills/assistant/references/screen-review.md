@@ -7,6 +7,8 @@ Read at step 4, once the builder's `ui` report is filed.
 Open every image and read every string in every locale, beside the existing screen
 that does the same job. What breaks a rule or departs from the spec's copy goes back to the builder, and
 every open question it reports that changes what the user sees is a `Needs you`.
+Check every claim the screen copy makes (a rule, a fact, a time) against the code: it is a rule the code enforces or a fact that was measured, and an estimate is never worded as a promise.
+When a state changes, its new text replaces the cell's old text, never a separate block that repeats the same information.
 
 ## Publishing the page
 

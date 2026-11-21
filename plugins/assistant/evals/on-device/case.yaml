@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: on-device
+description: references/on-device.md holds the on-device test lessons, and verify.md's on-device line points at it. Before a run, confirm the device is unlocked and never sleeps, since a locked screen hangs the tests or fails them without an error; find out what the command does to the installed app and its data, since an integration test may uninstall the app and clear its data, and ask before running on the user's own phone, as a Needs you with the platform waiting, named, until the user answers; state how long the run should take, and past that time report it and first check whether it is stuck, never treat it as just slow; after the run restore every state it changed, paid features first, then settings and test accounts, confirmed by the actual state, not the exit code; create the test data yourself with fixtures or a seed, never ask the user to prepare it; an agent running tests never triggers a paid request, such as a real purchase or a paid API; tested on device means operating the real app, a widget test does not count; a full disk can produce a build that reports success but is the old version, so run df before calling what the device shows a defect.
+tags: [flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in skills/assistant/references/on-device.md skills/assistant/references/verify.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the assistant skill's on-device and verify references, one file per line.
+context:
+  scaffold_script: fixture.sh

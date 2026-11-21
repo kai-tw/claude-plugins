@@ -95,3 +95,7 @@
   component's built-in spacing, accessibility or tap feedback. Project design tokens are no
   reason to hand-build: the component's override hooks exist precisely for them. Hand-assembly
   may be used only when no framework component fits the shape.
+- **S16.2-dart Value equality comes from `Equatable`** — Check: a class that overrides
+  `operator ==` and `hashCode` by hand instead of extending `Equatable` violates this rule.
+- **S16.3-dart Asynchronous flow uses `async` / `await`** — Check: a `Future` chained with
+  `.then` violates this rule; write it with `async` / `await`.

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: git-hygiene
+description: Worktree, branch and commit hygiene. A task's worktree is made after a fetch, from origin/<default>, never from a local branch that may be stale, and the low-disk branch starts there too; the builder's ui phase ends at a commit; Close retargets PRs stacked on a merged PR's branch to that PR's base before deleting it, runs git fetch --prune and deletes local branches whose upstream is gone, whose PR shows merged and whose tip is that PR's head, judging merged by the PR's state, not merge-base, since a squash-merged branch is no ancestor of the base; before a destructive git command in a shared checkout (reset, checkout of files, restore, switch --discard-changes, stash drop, clean) git diff HEAD and the untracked file list are saved to the scratchpad; after a scripted bulk edit the builder reads what was committed with git show HEAD:<path> and confirms every place changed; a PR split moves files byte for byte and puts errors found in the PR body, never fixing them in the move; work in another repo reads its CLAUDE.md and its visibility first, goes in its worktree as a PR or as its CLAUDE.md says, and becomes a patch, sent only once the user agrees, for a session already working there; before checks or a push the builder checks pwd and git status again, and pushes only when the remote branch has no commit its HEAD lacks, reporting one that it has. brief-review's Ownership check matches brief.md's Ownership line word for word, the G3 sentence names its subject, and another project's choice stays in the brief, never in a public repo's commit, PR or issue.
+tags: [flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/tracker.md skills/assistant/references/pr.md skills/assistant/references/cloud-dispatch.md agents/builder.md skills/assistant/references/brief.md skills/assistant/forms/brief-review.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the assistant skill, its tracker, PR, cloud dispatch and brief references, the brief-review form and the builder agent, one file per line.
+context:
+  scaffold_script: fixture.sh

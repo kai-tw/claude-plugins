@@ -37,9 +37,11 @@ the page, then closes the question row, and the task row carries on at its `Stag
 way the spec question carries a concrete example from the code (`file:line`: what the
 app does in that case); once the page is updated, re-read it and quote it — never write the rule yourself, in the brief, a `Decided` line or a decision. Once answered, each `Needs you` line ends with `Picked A`
 (or B), re-filed; the filed brief is the record, so a line without a choice is unfiled.
+Before writing a `Needs you`, check it: read the linked pages and the spec pages adjacent to them; see whether two rules together already decide it; search the decision log, earlier briefs and tracker rows for it.
+A limit of the code is not a spec question: it goes in the brief's design. Existing behaviour no spec page backs is not a precedent, and is not asked about either. A case the user has ruled out gets no question about its UI.
 Unless the project config sets `spec: none`, the brief opens with `Spec pages read`, each page
 and the last-edited time it showed, and every `Needs you` line carries a spec field: the passage
-that comes closest, verbatim, and why it doesn't decide this, or the sections checked that say nothing.
+that comes closest, verbatim, and why it doesn't decide this, or the sections checked that say nothing, then the pages and records checked.
 When the project config sets `architecture:`, read that document in the task's worktree
 and cite it by path and section heading, never copying its text. A design that
 departs from what the architecture document states is `Needs you`, citing the section,
@@ -48,8 +50,13 @@ document says nothing, `Decided` stays allowed.
 Labels and marks are written in the user's language (SKILL.md §Language); later
 steps find sections by meaning, so a filed brief may carry them in any language, except
 `Spec pages read`, `last edited`, `Needs you` and `spec:`, which `asst-report` checks as written below.
-The design covers the cases shown to happen and nothing more: a NEW thing, guard,
+The design covers the cases shown to happen and nothing more: a NEW thing, check,
 retry, fallback or lock with no evidence on the `Evidence` line is cut.
+Steps the brief runs in order (a deploy, a data migration): check each step against the state the earlier steps leave and the states in which the investigation found the tool fails; a step that fails on an earlier step's state means the order is wrong.
+A deploy-time value the task adds or moves (the identity the code runs as, an environment variable, a region) cites on the `Evidence` line the `file:line` where the deploy sets it.
+A name a ruling gives a new thing (a class, an export, a file) is checked against style-pack and the project's rules before the brief goes to the tester or builder, and written in the form style-pack and the project's rules allow: where those rules forbid top-level functions, `Class.member`.
+When another of the user's projects already made the same choice, recommend the same and cite where it was made, unless a fact shows it cannot work here. That other project's choice is written only in the brief, never in a public repo's commit, PR or issue.
+When the lower layer can be built first, build the lower layer first, never an interim bridge.
 
 ```
 # <Task> — Decision brief            <project> · <tier> · <date>
@@ -58,17 +65,17 @@ retry, fallback or lock with no evidence on the `Evidence` line is cut.
 - <page title or path> · last edited <the time the page shows>
 
 ## Intent
-- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause> · spec: "<verbatim quote>" — <why it doesn't decide this> | spec: none in <the sections checked>
+- Needs you  <the open question, one line> — A: <option> / B: <option> · Recommend <A|B>: <why, one clause> · Cost of the wrong pick: <one clause> · spec: "<verbatim quote>" — <why it doesn't decide this> | spec: none in <the sections checked> · checked: <pages and records>
 - Decided <the ruling, one line> · Reason: <one clause>
 
 ## System design
 ```mermaid
 flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 ```
-- Ownership: <each NEW thing — why new, which layer, who owns its state, the architecture section it follows (path § heading)>
+- Ownership: <each NEW thing — the closest existing units and why each can't be reused, why new, which layer, who owns its state, the architecture section it follows (path § heading)>
 - Data flow and state: <source → sink; shared state: who writes, does order matter>
 - Boundaries: <persisted format / schema / API touched? old version behaviour> or none
-- Evidence: <each NEW thing, guard, retry, fallback or lock → the case it handles · where that case is shown to happen (file:line · experiment · issue)>
+- Evidence: <each NEW thing, check, retry, fallback or lock → the case it handles · where that case is shown to happen (file:line · experiment · issue)>
 - Rejected alternatives: <the simplest design that could work, and the evidenced case it fails; any other, one line + its cost>
 
 ## Scenarios

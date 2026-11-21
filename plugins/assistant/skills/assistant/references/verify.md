@@ -13,7 +13,7 @@ Read once the integration's last slice, or an `exempt` task's edit, is committed
   Find the project's coverage command (CLAUDE.md, CI config, package scripts) and run it in the
   background, filing its output with `asst-report put <slug> verify-coverage --worktree <worktree>`.
   When the PR's CI measures it, run nothing, and read its log before the delivery summary.
-- On-device tests, when the project has them: you run them the project's way; a platform with
+- On-device tests, when the project has them: you run them the project's way, following `references/on-device.md`; a platform with
   no phone connected waits, named.
 
 Mutation runs only in the PR's CI. A failed verify is reported as failed.
@@ -39,10 +39,16 @@ too (coverage gaps, mutation survivors) — goes back to the verifier for its ow
 commit's; on svn, the round's `svn-<report kind>-<n>.diff` against the one saved before it), plus the
 whole case table.
 
+When the task had a fix round or merged its base, run `verify-code` once more before the PR goes ready, on the whole task's diff (`origin/<base>...HEAD`; on svn, plain `svn diff`, against BASE: the task never commits, so it holds the whole task and no upstream commit; saved like the round diffs), plus the whole case table.
+
+A `low confidence` finding about the design rather than a single line, is never silently dropped: it goes on the delivery summary.
+
 A finding comes back when a round meant to fix it is followed by a `fix` finding with the same file, same rule.
 When one comes back, dispatch the `advisor` once, with the remaining `fix` findings, the fix rounds' diffs, the brief
 and the task statement; one advisor per finding, never a second for the same finding. Its `advise` report goes into the
 next builder's dispatch, which fixes as advised. When the round on its advice still leaves findings, they become one `Needs you` line with the advise report's path. A new `fix` finding from that round opens a fix round as usual.
+
+A trade-off goes to the user now as a `Needs you`, never into another review round.
 
 ## Found outside the boundary
 

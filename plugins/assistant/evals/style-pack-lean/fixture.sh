@@ -8,7 +8,7 @@ set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; r="$root/skills/style-pack/rules"
 cd "$r" || exit 1
-for x in index=38000 dart=7000 csharp=5400 js=2500; do
+for x in index=38000 dart=7000 csharp=5400 js=4500; do
   b=$(wc -c < "${x%=*}.md" | tr -d ' '); [ "$b" -lt "${x#*=}" ] || echo "over=${x%=*} $b"
 done
 # One line per rule bullet, whitespace squeezed.

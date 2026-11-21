@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: claims-screens
+description: An investigation scopes every claim — a count or scope claim comes from a complete run, never a head or tail, with its command and total; a claim that holds only under a condition names that condition; a "cannot" claim names whom it limits and whether the limit is structural or only missing from a dependency's version, with that version; an experiment says whether it went through the app's real call path, else it is marked not the app's real path; before a design it lists the dependency's own API and what the codebase already provides. The screen review checks every claim in the screen copy against the code (a rule the code enforces or a measured fact, an estimate never worded as a promise) and a state change replaces the cell's text instead of adding a block that repeats it. The builder's ui phase renders screens in the app's real navigation stack (framework default widgets such as the back arrow come from it, never drawn), starts copy the spec doesn't give from an existing string with the same job, and leaves a field the spec doesn't have optional instead of inventing copy for it.
+tags: [flow, agents]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in skills/assistant/forms/investigation.md skills/assistant/references/screen-review.md agents/builder.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the investigation form, the screen review reference and the builder agent, one file per line.
+context:
+  scaffold_script: fixture.sh

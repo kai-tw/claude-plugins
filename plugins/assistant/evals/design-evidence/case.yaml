@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: design-evidence
-description: A brief designs only for cases shown to happen — each NEW thing, guard, retry, fallback or lock cites its evidence; the assistant measures an unshown case once, then cuts it; the investigation answers whether a case happens with a reaching file:line or an experiment run; brief-review files anything without evidence, or a simpler design that covers every evidenced case.
+description: A brief designs only for cases shown to happen — each NEW thing, check, retry, fallback or lock cites its evidence; the assistant measures an unshown case once, then cuts it; the investigation answers whether a case happens with a reaching file:line or an experiment run; brief-review files anything without evidence, or a simpler design that covers every evidenced case.
 tags: [assistant]
 plugins: ["../.."]
 runs: 1

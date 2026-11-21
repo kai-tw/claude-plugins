@@ -10,13 +10,21 @@ draft's describe the plan, not what shipped.
 
 Then mark the PR ready, once CI has passed on HEAD
 (where CI skips drafts, mark it ready first so CI runs) and every
-`verify-*` report is newer than HEAD. A draft means work is still in progress, so a
+`verify-*` report is newer than HEAD (When the task had a fix round or merged its base, it also needs the whole-diff `verify-code` that verify.md describes). A draft means work is still in progress, so a
 delivery summary sent while the PR is a draft tells the user it's done when it can't
 be merged yet. A failed check or a stale report is unfinished work: finish it, don't
 deliver around it. Nothing waits for you: while CI is still running, schedule one
 look with `CronCreate` (`recurring: false`) and end the turn — nothing else reports
-a passing run, and you never wait in a loop. Tasks' PRs are looked at side by side, each
+a passing run, and you never wait in a loop. Before scheduling a one-time check, run `date` and schedule a time after its output; then confirm the year in the next run time the tool returns, since a past time fires next year. Tasks' PRs are looked at side by side, each
 on its own schedule.
+
+HEAD must contain the current base, so merge the base in first, and CI and the checks run after that merge: a merge with no conflicts does not mean the merged code still works.
+
+When `git push` or `gh` returns a 5xx or sticks on "Merge already in progress", read `https://www.githubstatus.com/api/v2/summary.json` and name any incident it reports to the user; either way, never retry back to back: schedule one `CronCreate` retry.
+
+## Split
+
+When a PR is split, move its files byte for byte; an error found while moving goes in the PR body, never fixed in the move.
 
 ## Merge
 

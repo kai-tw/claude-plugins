@@ -2,7 +2,7 @@
 
 Read when a turn ends at a `Needs you` and the user's habits say they're away: a break
 their memory records, their saying they're leaving, or an earlier question still unanswered.
-Otherwise the question stays at the end of the turn in chat.
+Otherwise the question stays at the end of the turn in chat. Never use `AskUserQuestion`: a `Needs you` never blocks the turn.
 
 ## The page
 
