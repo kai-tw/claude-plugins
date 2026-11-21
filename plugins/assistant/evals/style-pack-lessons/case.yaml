@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: style-pack-lessons
+description: style-pack extends its existing rules with the style corrections two projects collected — in the core rules, null standing for one specific result is an enum (S2 or S3), a type with only static members used as a namespace and a wrapper called once are boundaries S16 refuses, a bool parameter switching between two behaviors is two entry points (S16), stale async work is cancelled instead of filtered by a token, a counter or a timestamp (S8), a try covers only what throws (S7), a value is not held in a root or base type when its concrete type is known (S2), a helper that only wraps a callback is gone and a flow reads straight-line (S16), generated files stay out of version control and their generator runs in CI and in worktree setup (S4 or S10), a persisted write is atomic (S4), money moves exactly once on a recorded fact, an endpoint does one thing and a recovery flow assumes the client may lie (S11 or S16), and S16.2's example builds no package exception just to reach an error mapping but adds a lookup by key; S15 keeps its number with check wording, and no tracked file under skills/, agents/ or hooks/ says guard; in js.md an enum replaces a union of string literals, a named class an inline object type, null an undefined empty value, a variable the state read back from a DOM class, and async/await a .then chain; in dart.md Equatable gives object equality and async/await replaces .then.
+tags: [style-pack]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Print every rule heading and rule bullet of style-pack's index.md, dart.md and js.md, one per line, then every line under skills/, agents/ and hooks/ that says guard.
+context:
+  scaffold_script: fixture.sh
