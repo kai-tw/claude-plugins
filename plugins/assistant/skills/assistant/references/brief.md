@@ -52,6 +52,11 @@ steps find sections by meaning, so a filed brief may carry them in any language,
 `Spec pages read`, `last edited`, `Needs you` and `spec:`, which `asst-report` checks as written below.
 The design covers the cases shown to happen and nothing more: a NEW thing, guard,
 retry, fallback or lock with no evidence on the `Evidence` line is cut.
+Steps the brief runs in order (a deploy, a data migration): check each step against the state the earlier steps leave and the states in which the investigation found the tool fails; a step that fails on an earlier step's state means the order is wrong.
+A deploy-time value the task adds or moves (the identity the code runs as, an environment variable, a region) cites on the `Evidence` line the `file:line` where the deploy sets it.
+A name a ruling gives a new thing (a class, an export, a file) is checked against style-pack and the project's rules before the brief goes to the tester or builder, and written in the form they allow: where they forbid top-level functions, `Class.member`.
+When another of the user's projects already made the same choice, recommend the same and cite where it was made, unless a fact shows it cannot work here.
+When the lower layer can be built first, build the lower layer first, never an interim bridge.
 
 ```
 # <Task> — Decision brief            <project> · <tier> · <date>
@@ -67,7 +72,7 @@ retry, fallback or lock with no evidence on the `Evidence` line is cut.
 ```mermaid
 flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 ```
-- Ownership: <each NEW thing — why new, which layer, who owns its state, the architecture section it follows (path § heading)>
+- Ownership: <each NEW thing — the closest existing units and why each can't be reused, why new, which layer, who owns its state, the architecture section it follows (path § heading)>
 - Data flow and state: <source → sink; shared state: who writes, does order matter>
 - Boundaries: <persisted format / schema / API touched? old version behaviour> or none
 - Evidence: <each NEW thing, guard, retry, fallback or lock → the case it handles · where that case is shown to happen (file:line · experiment · issue)>

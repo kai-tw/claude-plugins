@@ -4,7 +4,7 @@ A negative claim (only / none / all, in any language) needs a second method besi
 A count or scope claim ("N files", "every caller") comes from a complete run, never only its head or tail, and quotes the command and the total.
 A claim that holds only under a condition names that condition.
 A claim that something cannot be done names whom it limits and whether the limit is structural or only missing from a dependency's version, with that version.
-An experiment says whether it went through the app's real call path; one that did not is marked `stand-in`.
+An experiment says whether it went through the app's real call path; one that did not is marked `not the app's real path`.
 Before proposing a design, list the dependency's own API and what this codebase already provides.
 Each `file:line` is relative to the worktree root and is checked by `asst-cite` (its header states the test), so put the thing a finding cites in backticks.
 | # | Claim | Evidence (file:line · experiment: <cmd> → <obs> · unverified) |

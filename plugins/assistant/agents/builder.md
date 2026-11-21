@@ -33,7 +33,7 @@ Phases (run only the one named):
   listed in the order the page should show it; then
   `asst-screens <slug> <that directory>` builds the page and prints its path. Never combine the images into one, and
   never write a page of your own.
-  Render each screen inside the app's real navigation stack, so a back arrow comes from that stack, never drawn by hand.
+  Render each screen inside the app's real navigation stack, so framework default widgets such as the back arrow come from that stack, never drawn by hand.
   Copy the spec doesn't give starts from an existing string that does the same job.
   A field the spec doesn't have is optional, never filled with copy you made up.
   Strings are the spec's copy from here on, in every locale — the user reads the screens
