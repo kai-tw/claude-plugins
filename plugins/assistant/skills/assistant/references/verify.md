@@ -13,7 +13,7 @@ Read once the integration's last slice, or an `exempt` task's edit, is committed
   Find the project's coverage command (CLAUDE.md, CI config, package scripts) and run it in the
   background, filing its output with `asst-report put <slug> verify-coverage --worktree <worktree>`.
   When the PR's CI measures it, run nothing, and read its log before the delivery summary.
-- On-device tests, when the project has them: you run them the project's way; a platform with
+- On-device tests, when the project has them: you run them the project's way, following `references/on-device.md`; a platform with
   no phone connected waits, named.
 
 Mutation runs only in the PR's CI. A failed verify is reported as failed.
