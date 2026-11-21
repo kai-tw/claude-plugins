@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: brief-checks
+description: Before a brief is settled it runs more checks. Steps it runs in order (a deploy, a data migration) are each checked against the state the earlier steps leave and the states in which the investigation found the tool fails, and a step that fails on an earlier step's state means the order is wrong; a deploy-time value the task adds or moves (the identity the code runs as, an environment variable, a region) cites on the Evidence line the file:line where the deploy sets it; a name a ruling gives a new thing is checked against style-pack and the project's rules before the tester or builder gets it, in the form they allow; when another of the user's projects already made the same choice, the brief recommends the same and cites where, unless a fact shows it cannot work here; when the lower layer can be built first, it is built first, never an interim bridge; Ownership lists for each NEW thing the closest existing units and why each can't be reused. The investigation form marks an experiment that skipped the app's real call path in plain words, and the builder's ui phase gets framework default widgets such as the back arrow from the real navigation stack.
+tags: [flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in skills/assistant/references/brief.md skills/assistant/forms/investigation.md agents/builder.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the brief reference, the investigation form and the builder agent, one file per line.
+context:
+  scaffold_script: fixture.sh
