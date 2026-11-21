@@ -43,7 +43,7 @@ whose ref already ends a row `Name`, any status, is not new. Each new candidate 
 `Status=Backlog`) — so a ref is asked once. A source that can't be read is named, with the
 reason, in the turn's `Needs you` lines, not taken as no candidates.
 
-Delete without asking a row whose subject is gone (code removed, reported failure vanished) once source or CI confirms it, and say what you checked. Never delete a row that only looks affected by someone else's open ruling.
+Delete without asking a row whose subject is gone (code removed, reported failure vanished) once source or CI confirms it, and say what you checked. A row that only looks affected by someone else's open ruling is not deleted.
 
 While a request has a scope `Needs you` unanswered, nothing under it is dispatched.
 
