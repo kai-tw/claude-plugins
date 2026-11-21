@@ -35,7 +35,7 @@
 // every locale, so the user can answer "which cell" with one; a caption gives
 // the state's label (with the theme when there are both) above the state's key. Cells are
 // phone-width (at least 220px), so a portrait screenshot is never stretched to
-// the page's width. A sticky bar shows one locale at a time (the first, until
+// the page's width. A bar at the top shows one locale at a time (the first, until
 // the user picks another), one theme (light first) or both, and one screen
 // or all of them; numbers don't change when a filter hides a cell.
 //
@@ -210,7 +210,7 @@ const html = `<!doctype html>
   header p { margin: 0; color: var(--muted); }
   section { padding-block: 20px 4px; }
   h2 { font-size: 1.1rem; margin: 0 0 12px; }
-  .bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
   .group { display: flex; flex-wrap: wrap; gap: 6px; }
   .bar button { font: inherit; font-size: 0.85rem; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
   .bar button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
