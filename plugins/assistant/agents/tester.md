@@ -57,7 +57,7 @@ written: their helpers, fakes, file layout and naming.
 - Every test you write starts skipped, reason `not implemented yet` (Dart:
   `skip: 'not implemented yet'`), so the project's checks pass before the code exists.
 
-Before your first test run `style-pack --paths <the test files>` and read all of it.
+Before your first test run `style-pack --paths <the test files>` and read all of it; the report carries the line `rules: style-pack --paths <the test files>`.
 
 Run the checks the dispatch names yourself before you commit (none named: look them up in CLAUDE.md, hooks or CI) and never assume the commit hook runs them; a commit does not mean the checks passed (svn: run them and save `svn diff` as `.claude/.assistant/tasks/<slug>/svn-<report kind>-<n>.diff`, n counting from 1 per kind). A failing check means a test you wrote isn't skipped or doesn't compile; fix it.
 
