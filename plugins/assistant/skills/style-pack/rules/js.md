@@ -11,6 +11,8 @@
   given) or a key the object simply lacks (this path was never taken); collapsing them
   together with `== null` or optional chaining without justifying that the three are
   equivalent violates this rule.
+- **S3.3-js An empty value is `null`** — Check: a value declared or set empty with `undefined`
+  instead of `null` violates this rule.
 
 ## S4
 
@@ -35,3 +37,21 @@
   caught is an error this place can recover from and throwing the rest, violates core rule
   S7.3: programming errors like `TypeError` and `ReferenceError` land in the same block as
   expected environmental errors, and S7 requires the former to propagate.
+
+## S10
+
+- **S10.1-js A finite set is an `enum`** — Check: in TypeScript, a union of string literals
+  used as a finite set violates this rule; declare an `enum`.
+- **S10.2-js A shape is a named class** — Check: in TypeScript, an inline object type in a
+  signature or a field violates this rule; declare a named class.
+
+## S11
+
+- **S11.1-js State lives in a variable, not in the DOM** — Check: reading a component's state
+  back from an element's CSS class (`classList.contains`) violates this rule; keep the state
+  in a variable and render the class from it.
+
+## S16
+
+- **S16.1-js Asynchronous flow uses `async` / `await`** — Check: a promise chained with
+  `.then` violates this rule; write it with `async` / `await`.

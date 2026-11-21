@@ -90,6 +90,9 @@ in its name.
   in another, multi-line data tables, or enumerations another unit reads may stay named with
   one use site. A store's S4.2 codes are outside this rule: they are written once, in the
   mapping, and not following a rename is their purpose.
+- **S2.11 A declaration states the concrete type** — Check: a variable, field or parameter
+  whose concrete type is known but is declared with the root type or a base exception type
+  violates this rule.
 
 ## S3 — Every collapse must be justified at each use site
 
@@ -121,6 +124,8 @@ comment does not justify a collapse.
   or more states expressed with flags violate this rule: either a state is missing or it is
   assembled from several flags, and flags admit combinations that are not real states. An
   enum makes impossible states unwritable.
+- **S3.6 A specific result is an enum member, not `null`** — Check: a `null` that stands for
+  one specific result (not found, cancelled) instead of an enum member violates this rule.
 
 ## S4 — A persisted value's meaning must not depend on position or manual upkeep
 
@@ -156,6 +161,12 @@ data just comes to mean something else.
 - **S4.5 A shipped migration step is frozen** — Check: a migration step that imports today's
   types or routes through a shared helper violates this rule: its job is to turn an old
   format into **that year's** next version, and today's types and helpers change under it.
+- **S4.6 Generated files are built, not committed** — Check: generated files committed to
+  version control violate this rule; the generator must run in CI and in every worktree
+  setup.
+- **S4.7 A persisted write is atomic** — Check: a write to persisted data that a crash or a
+  kill can leave half-written violates this rule; write a temporary copy and rename it over
+  the original, or use the store's transaction.
 
 ## S5 — A failure must not be dropped silently
 
@@ -233,17 +244,19 @@ handling that is silent is checked separately under S5.
 - **S7.6 Log level is decided by "should this be tracked as its own fault", not by
   recoverability** — Check: a level chosen by whether the failure is recoverable, instead of
   by whether it needs its own category in crash reporting, violates this rule.
+- **S7.7 A `try` covers only what throws** — Check: a `try` block that also wraps statements
+  that cannot throw violates this rule.
 
 ## S8 — Coordination must not rest on "usually right"
 
-**Principle:** A critical section made from a `bool` flag and waiting a fixed duration for
+**Principle:** A critical section made from a boolean flag and waiting a fixed duration for
 async completion are two faces of one disease: an approximation that **usually holds** in
 place of a mechanism that **holds by construction**.
 
 - **S8.1 Critical sections must be serialized by a mechanism that queues** — Check: an async
-  critical section (re-entrant sync, single-writer file or network mutation) guarded by a
-  hand-rolled `bool` flag instead of a queuing mutex violates this rule. A state flag that
-  only drives display is not a critical-section guard and is outside this rule.
+  critical section (re-entrant sync, single-writer file or network mutation) serialized by a
+  hand-rolled boolean flag instead of a queuing mutex violates this rule. A state flag that
+  only drives display is not a critical-section lock and is outside this rule.
 - **S8.2 Waiting for completion must be tied to a real signal** — Check: a fixed-duration
   timer as the **primary** path for waiting on async completion or an animation's end,
   instead of a real signal (callback, completer, stream event, awaitable value), violates
@@ -262,6 +275,9 @@ place of a mechanism that **holds by construction**.
   source), with no one reading it, registered with lazy construction violates this rule,
   always proposed CRITICAL: if nobody resolves it, construction never runs and the feature is
   dead on device while unit tests stay green (S13.2). The tell is "no consumer can be found".
+- **S8.7 Stale async work must be cancelled, not filtered** — Check: async work whose result
+  is no longer wanted (a superseded request, a load for a screen already left) that keeps
+  running and is filtered on arrival by a token, a counter or a timestamp violates this rule.
 
 ## S9 — Resources must be bounded, and the bound stated when written
 
@@ -286,12 +302,12 @@ error.
 ## S10 — A set recorded at compile time must not be bypassed by runtime lookup
 
 **Principle:** Once the type system records a finite set (enum, closed type, named
-constants), accessing it through string keys, `map` lookups or "skip unless X" guards trades
+constants), accessing it through string keys, `map` lookups or "skip unless X" checks trades
 the compiler's exhaustiveness check for a runtime query: a later member then gets no compiler
 pointer to the sites to update.
 
 - **S10.1 Every member must have its branch** — Check: branching over the finite set must give
-  every member its own branch; a "return unless X" guard in their place violates this rule.
+  every member its own branch; a "return unless X" early exit in their place violates this rule.
 - **S10.2 Several branches sharing one body discard the type's distinction** — Check: several
   branches with identical bodies violate this rule; merge those branches or extract a shared
   function, and do not disguise them as distinct by listing them side by side.
@@ -320,6 +336,11 @@ source, not measured while debugging.
   expected result written before the write completes) whose failure path does not restore
   the original value (or reread) violates this rule. The rollback must be in the same method
   as the optimistic update.
+- **S11.5 Money moves exactly once, on a recorded fact** — Check: a balance change made on
+  anything but a recorded fact (a payment the provider confirmed, an order the store
+  recorded), or made a second time for the same fact, violates this rule.
+- **S11.6 Recovery assumes the client may lie** — Check: a recovery flow that trusts what the
+  client reports instead of the server's record violates this rule.
 
 ## S12 — Optional parameters must not replace the caller's thinking
 
@@ -364,27 +385,28 @@ name the premises it depends on and verify them in the new place.
   it an allowed shape. Copy instead the precedent in the same place that is that way because
   it is **correct**.
 
-## S15 — A guard must name the state it guards against; the number of guards is a design symptom
+## S15 — A check must name the state it checks for; the number of checks is a design symptom
 
-**Principle:** Guards come in three kinds that look alike, and only one is a defect.
-**Precondition guards** (empty collection, not logged in) express a real domain state and are
-normal control flow. **Lifecycle guards** (closed, unmounted) exist because the runtime really
-does deliver callbacks after teardown, and are necessary. The third is the **defensive guard
-added "after it broke once"**. What tells them apart is **naming which state it guards
-against, and why that state is reachable**.
+**Principle:** In this rule, a **check** is a condition that returns early, skips the work or
+refuses the call when a state holds. Checks come in three kinds that look alike, and only one
+is a defect. **Precondition checks** (empty collection, not logged in) express a real domain
+state and are normal control flow. **Lifecycle checks** (closed, unmounted) exist because the
+runtime really does deliver callbacks after teardown, and are necessary. The third is the
+**defensive check added "after it broke once"**. What tells them apart is **naming which
+state it checks for, and why that state is reachable**.
 
-- **S15.1 A guard must name the state it guards against and how that state is reached** —
-  Check: a guard whose state, or the path by which that state is reached, cannot be named
-  violates this rule. Find the path; if it is confirmed unreachable, delete the guard and let
+- **S15.1 A check must name the state it checks for and how that state is reached** —
+  Check: a check whose state, or the path by which that state is reached, cannot be named
+  violates this rule. Find the path; if it is confirmed unreachable, delete the check and let
   it break.
-- **S15.2 Guarding the same state repeatedly in one flow is a sign of too many entry points** —
-  Check: where the same state is guarded more than once in one flow, count the flow's entry
-  points and await points and eliminate guards by **reducing entry points**; eliminating the
-  symptom by adding guards violates this rule.
-- **S15.3 Lifecycle guards are not subject to minimization** — Check: a guard against a
-  callback the runtime really does deliver after teardown is outside S15.2's minimization —
-  the guard is necessary, and its count is set by the number of await points; reduce await
-  points per S15.2, and do not delete the guards.
+- **S15.2 Checking the same state repeatedly in one flow is a sign of too many entry points** —
+  Check: where the same state is checked more than once in one flow, count the flow's entry
+  points and await points and eliminate checks by **reducing entry points**; eliminating the
+  symptom by adding checks violates this rule.
+- **S15.3 Lifecycle checks are not subject to minimization** — Check: a check for a callback
+  the runtime really does deliver after teardown is outside S15.2's minimization — the check
+  is necessary, and its count is set by the number of await points; reduce await points per
+  S15.2, and do not delete the checks.
 
 ## S16 — An object owns one capability, and its interface is the only boundary
 
@@ -398,12 +420,14 @@ capability goes through its interface, never building a second one or reaching a
   divergence) that can be named; removing a situation that does not exist yet does not
   count. If, once the unit is inlined, readers need to know the same things, it is an
   indirection rather than an abstraction and falls under this rule; so does an extracted
-  unit re-checking a condition the caller already checked.
+  unit re-checking a condition the caller already checked. A type with only static members
+  serving as a namespace violates this rule, and so does a wrapper called from only one site.
 - **S16.2 A capability must be used through the entry point its owner declares** — Check:
   rebuilding a mechanism the framework or this project already provides, in full or
   simplified, instead of using its entry point violates this rule. Obtaining something from another
   boundary through an implicit channel, when that boundary has a named entry point, violates
-  it too.
+  it too. Example: constructing a package's exception by hand only to run it through the
+  error mapping, instead of adding a lookup by key to that mapping.
 - **S16.3 A fact or a derivation has exactly one declaration site** — Check: a value,
   collection or derivation with a second copy elsewhere violates this rule. Re-deriving at a
   call site a value the owner already provides violates this rule; two collections that
@@ -415,13 +439,18 @@ capability goes through its interface, never building a second one or reaching a
   types, intermediate states) instead of the operations it promises, or reaches into another
   unit's internals, violates this rule. So does a shared unit that knows any of its users'
   types, state or entities — it is not shared, it belongs to that user; the data and actions
-  it needs must go in and out through parameters.
-- **S16.6 A fix lands in the unit that is wrong; a removal takes its guards along** — Check:
+  it needs must go in and out through parameters. A boolean parameter that switches a unit
+  between two behaviors violates this rule too; split it into two entry points.
+- **S16.6 A fix lands in the unit that is wrong; a removal takes its checks along** — Check:
   code that would not need to exist if the unit it calls behaved correctly is a fix of that
   unit, and placing it outside that unit violates this rule. When the unit's source is under
   this project's owner, in any repository, the fix lands there; when it is not, it lands
   once, in the single adapter this project calls the unit through. When a unit is removed,
-  every guard inside it (precondition, idempotency short-circuit, dedup, rate limit) must
+  every check inside it (precondition, idempotency short-circuit, dedup, rate limit) must
   have somewhere to go; if the answer is "nowhere", the removal is not yet valid. Example:
   every caller checks an input's size before handing it to a decoder, because the decoder
   itself sets no limit.
+- **S16.7 A flow reads straight-line** — Check: a helper that only wraps a callback around
+  the caller's code violates this rule; the flow must read as straight-line code.
+- **S16.8 An endpoint does one thing** — Check: an endpoint that performs more than one
+  operation (charging and also granting, reading and also repairing) violates this rule.
