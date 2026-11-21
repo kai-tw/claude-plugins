@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/references/delivery-summary\.md: .*low confidence[^.]*finding (on|about|that touches) (a )?mechanism or (a )?design'
+pattern: '^skills/assistant/references/delivery-summary\.md: .*low confidence[^.]*finding about the design rather than a single line'
 flags: m
 ---
-[B4] delivery-summary.md has a line for each low-confidence finding about a mechanism or a design.
+[B4] delivery-summary.md has a line for each low-confidence finding about the design rather than a single line.
