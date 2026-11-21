@@ -41,7 +41,7 @@ whole case table.
 
 When the task had a fix round or merged its base, run `verify-code` once more before the PR goes ready, on the whole task's diff (`origin/<base>...HEAD`), plus the whole case table.
 
-A `low confidence` finding about a mechanism or a design, not a single line, is never silently dropped: it goes on the delivery summary.
+A `low confidence` finding about the design rather than a single line, is never silently dropped: it goes on the delivery summary.
 
 A finding comes back when a round meant to fix it is followed by a `fix` finding with the same file, same rule.
 When one comes back, dispatch the `advisor` once, with the remaining `fix` findings, the fix rounds' diffs, the brief

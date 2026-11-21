@@ -23,7 +23,7 @@ check already settled is one line.
 ## On device
 - <platform>: <passed | failed | not run — why> on <phone>   (or none: the project has no on-device tests)
 ## Low confidence, design-level
-- <file> — <a `low confidence` finding about a mechanism or design, with its score>   (or none)
+- <file> — <a `low confidence` finding about the design rather than a single line, with its score>   (or none)
 ## Listed, not fixed
 - <file:line> — <the `list` finding or the builder's `debt:` line in one line>   (or none)
 
