@@ -76,7 +76,8 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 - Data flow and state: <source → sink; shared state: who writes, does order matter>
 - Boundaries: <persisted format / schema / API touched? old version behaviour> or none
 - Evidence: <each NEW thing, check, retry, fallback or lock → the case it handles · where that case is shown to happen (file:line · experiment · issue)>
-- Rejected alternatives: <the simplest design that could work, and the evidenced case it fails; any other, one line + its cost>
+- Fit: <the chosen design against criteria 1–3, each with its evidence>
+- Rejected alternatives: <each one: the criterion it fails · the evidence>
 
 ## Scenarios
 - S<n> <what the user does> → <what they see or keep>
@@ -92,6 +93,18 @@ flowchart LR   %% only cross-layer edges; new nodes marked (NEW)
 ## Debt
 - Known debt: <none, or one line each>
 ```
+
+## Choosing the design
+
+A design fits when it passes all four, checked in this order:
+
+1. Spec and rulings. It does what the spec page says, agrees with the user's rulings, and doesn't build on a data shape that a ruling or a scheduled tracker row will replace.
+2. Ownership. Each piece of data is held by the layer that produces it and can keep it valid. No other layer keeps a copy that goes stale when the owner changes.
+3. Project conventions. Both kinds: written rules (the files `rules:` and `architecture:` name, and style-pack); codebase patterns (how the closest existing features already do the same kind of thing, cited at `file:line`: two independent sites, or one and say it's the only one). When a written rule and a pattern disagree, the rule wins. A pattern built on a shape that criterion 1 replaces doesn't count.
+4. Simplest. Among designs that pass 1–3, the one with the fewest new concepts (types, states, counters, conversions), then the fewest files touched.
+
+Every rejected alternative names the criterion it fails and the evidence: a spec quote, `file:line`, or a measurement. "Not smaller" or "more work" without a measurement is not evidence.
+When two alternatives both pass 1–3, criterion 4 decides, with a measurement when size or speed is the difference. It's a `Needs you` only when they'd change what the user sees, waits for or pays for, or when no measurement can separate them; the question then states each one's measured cost.
 
 ## A request split into sub-tasks
 
