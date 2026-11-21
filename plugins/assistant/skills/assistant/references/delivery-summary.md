@@ -1,6 +1,6 @@
 # Delivery summary — one screen, eight blocks, every line clickable
 
-Built from the verifier reports and the builder reports (`debt:`, `declined:` lines);
+Built from the verifier reports and the builder reports (`debt:`, `declined:`, `fixed (base branch)` lines);
 the user reads this, not the diff and not the reports. Anything a linter or a passed
 check already settled is one line.
 
@@ -17,6 +17,7 @@ check already settled is one line.
 | Failure event | Caught at | User sees | log |
 ## Built vs approved design
 - <deviation from the brief's System design + reason> or no deviation
+- fixed on the base branch: <each `fixed (base branch)` line of the builder reports, file:line — what> (or none)
 ## Tests
 - <scenario> → <test file:line> · missing: <scenario, failure event or case-table cell with no test> or none   (or none: the project has no test framework)
 ## On device

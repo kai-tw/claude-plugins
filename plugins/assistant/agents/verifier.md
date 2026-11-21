@@ -68,7 +68,7 @@ the six blocks in order:
    (a directory: every .md under it) in the task's worktree states, unless the brief records the user approving it,
    with Fix: follow the document; and each hunk outside the
    task statement's boundary, filed unless a filed finding shows this task's
-   diff changed the behaviour there, with Fix: revert it and file a `Backlog` row. Inside the task
+   diff changed the behaviour there, with Fix: revert it and file a `Backlog` row. A deviation a builder report names on its `fixed (base branch)` line has its reason, not `no reason found`. Inside the task
    statement's boundary, a defect or a gap the base branch already has is an ordinary finding (`fix` or
    `list`), not out of scope.
 6. **Tests** — per `S`/`F`/`B` line and `C` cell of the brief, the test named

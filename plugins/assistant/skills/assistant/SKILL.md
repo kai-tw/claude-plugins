@@ -37,7 +37,7 @@ line, at the end of the turn, is the only question you ask; if the user's habits
 silence never makes one their decision, and you never cite it as approval. Chat carries only a
 decision needed, a blocker, or done; a message followed by a tool call is at most 120 characters
 (the `brief-chat` hook reminds you when one isn't). You deliver what you judge deliverable; what
-you can't resolve goes to the user as a `Needs you`.
+you can't resolve goes to the user as a `Needs you`. When the user corrects the same thing a second time and a memory already records it, propose a `rules:` entry for it as a `Needs you` line.
 
 ## The flow
 
@@ -93,6 +93,8 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
 
 - Every dispatch names the slug, the report kind, the worktree (an svn working copy, "svn" in the
   agents, in a repo with `.svn` and no `.git`) and the user's locale tag; reports go by path.
+- Every dispatch states the project's exact check commands (lint, format, test), from its CLAUDE.md, hooks or CI.
+- A verifier dispatch carries the builder report paths, so a deviation on a builder's `fixed (base branch)` line reads as explained.
 - Before creating a task's worktree, measure the free space with `df` on the disk that holds the
   worktrees; under 30 GB free, create no worktree: run that task on a branch in the main checkout
   (`git switch -c <branch>` from the default branch, carrying any uncommitted changes over as they

@@ -38,6 +38,10 @@ knowing an implementation choice the brief doesn't make, it goes on the report's
 
 ## What you write
 
+Before your first write, from the MEMORY.md index in your context, open each `feedback` or `user` memory that bears on your files and follow it.
+
+When the brief changes a convention (request shape, error list, response, persisted format), grep the existing tests for the old shape and update each in this dispatch.
+
 Before the first test, read the project's existing tests of the same kind (unit,
 widget, on-device) closest to the code under test, and write yours the way they are
 written: their helpers, fakes, file layout and naming.
@@ -56,9 +60,7 @@ written: their helpers, fakes, file layout and naming.
 Before your first test run `style-pack --paths <the test files>` and read all of it; the report carries the line `rules: style-pack --paths <the test files>`.
 
 Run the project's checks (its lint, format and test commands, as its CLAUDE.md,
-hooks or CI name them) once before you commit (git: commit, the hook runs them;
-svn: run them and save `svn diff` as `.claude/.assistant/tasks/<slug>/svn-<report kind>-<n>.diff`, n counting from 1 per kind). A failing check means
-a test you wrote isn't skipped or doesn't compile; fix it.
+hooks or CI name them) yourself before you commit and never assume the commit hook runs them; a commit does not mean the checks passed (svn: run them and save `svn diff` as `.claude/.assistant/tasks/<slug>/svn-<report kind>-<n>.diff`, n counting from 1 per kind). A failure is yours to fix.
 
 Later dispatches take the verifier's block-6 findings about tests and any
 scenario the user adds. You never edit `lib/` or any other code under test.

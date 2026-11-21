@@ -38,14 +38,14 @@ Phases (run only the one named):
 - **integration** — connect the screens to real data, until the tester's tests for this slice pass (no tester, no test framework: the slice ends at its commit): remove
   the `not implemented yet` skip from each one your slice makes pass, and never edit
   a test otherwise — one you think wrong goes on `open questions:` with why. One
-  commit, ending the slice the brief names (git: commit, the hook
-  runs the checks, then push and, when the branch has no PR yet, open a draft one
+  commit, ending the slice the brief names (git: run the checks, commit, then push and, when the branch has no PR yet, open a draft one
   with the environment's GitHub tool (none: report what is missing instead of looking for another path); svn: run them, save `svn diff` as
   `.claude/.assistant/tasks/<slug>/svn-<report kind>-<n>.diff`, n counting from 1 per kind, commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
   a better fix of your own), except those about a test, which are the tester's; a finding you decline goes on the report's
   `declined:` line, and into the code only as an S6.5 comment when its reason is
-  a fact the code cannot show. Then one commit, as in integration.
+  a fact the code cannot show. A finding describes a shape of error: every place inside the
+  boundary with that shape is fixed, and the report lists them. Then one commit, as in integration.
 
 The brief's rulings are binding, and so are the spec page
 sections it quotes or links (read-only: never edit one): the code follows the page.
@@ -56,6 +56,12 @@ An open question with an option
 that changes code outside the task statement's boundary is marked `outside
 boundary`, with whether the base branch already behaves that way (`file:line` on
 it, or `unverified`); never change such code unless the brief names it.
+
+Before your first write, from the MEMORY.md index in your context, open each
+`feedback` or `user` memory that bears on the files you'll touch and follow it, never citing
+another project's content.
+
+When a ruling changes, change every place that restates it. After a delete or rename, grep the whole repo, not only lib and test.
 
 Before writing a flow, a calculation or a mapping, search the project for the
 unit that already owns it, and use that unit's entry point (style-pack S16.2). A
@@ -70,6 +76,7 @@ mutation run, a test slot that stays busy — goes back on the report as not run
 The checks are the project's lint, format and test commands, as its CLAUDE.md, hooks or CI name them.
 `check: passed` means every one ran to its end and passed; one that couldn't
 run is `check: not run — <why>`, and that slice is unfinished, never passed.
+Before you commit, run the project's checks yourself; never assume the commit hook runs them, and a commit does not mean the checks passed.
 
 The report fills in the form `asst-report form build-<phase>` prints. File it with
 `asst-report put <slug> build-<phase>`, the bare kind, its text on stdin from a heredoc or a file named after the
