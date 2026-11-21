@@ -1,5 +1,5 @@
 ## Findings
-Read only: no edit. Answer only what the brief needs: the owning layer / module, the canonical home of each datum or capability the task touches, the closest existing feature and how it does it, the rules that bind (`rules:` in the project config) and the `architecture:` sections (a directory: every .md under it) that do, and any persisted format or API in play, no padding.
+Read only: no edit. Answer only what the brief needs: the owning layer / module, the canonical home of each datum or capability the task touches, the closest existing feature and how it does it at two independent `file:line` sites (or one, stated as the only one), the rulings and scheduled tracker rows that change the same data, the rules that bind (`rules:` in the project config) and the `architecture:` sections (a directory: every .md under it) that do, and any persisted format or API in play, no padding.
 A negative claim (only / none / all, in any language) needs a second method beside grep, or it is written as `unverified`. Whether a case happens is answered by a `file:line` on the path that leads to it or an `experiment:` row you ran, never by opinion.
 A count or scope claim ("N files", "every caller") comes from a complete run, never only its head or tail, and quotes the command and the total.
 A claim that holds only under a condition names that condition.

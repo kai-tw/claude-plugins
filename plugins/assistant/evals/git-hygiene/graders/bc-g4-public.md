@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/references/brief\.md: .*(another|other)[^.]*projects?[^.]*((only|just) in the brief[^.]*(never|not)[^.]*public repo[^.]*(commit|PR|issue)|(never|not)[^.]*public repo[^.]*(commit|PR|issue)[^.]*(only|just) in the brief)'
+pattern: '^skills/assistant/references/brief\.md: .*(another|other)[^.]*projects?[^§]*cit(e|es|ing)[^§]*SKILL\.md §Disclosure'
 flags: mi
 ---
-[BC] brief.md: another project's choice is written only in the brief, never in a public repo's commit, PR or issue.
+[BC] brief.md: citing another project's choice follows SKILL.md §Disclosure.

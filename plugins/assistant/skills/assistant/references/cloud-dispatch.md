@@ -65,7 +65,7 @@ missing-report rule (`references/tracker.md`); never blindly dispatch again.
 ## 2. A new cloud session
 
 Open a new session only when the user asks for one. Everything else goes to a subagent,
-another repo's work too, in that repo's worktree. Open it with the session tool the environment has (e.g. an MCP tool), pinning
+another repo's work too, under the another-repo rule above. Open it with the session tool the environment has (e.g. an MCP tool), pinning
 model and effort per SKILL.md §Dispatch rules, and record the session id and URL
 it returns in the tracker. The session clones **the repo's GitHub remote on the
 current branch, not your local checkout**, so push HEAD first; it never carries
