@@ -1,4 +1,4 @@
-phase: <name> · commits: <sha … | diff path> · check: <passed|n failing|not run — why>
+phase: <name> · commits: <sha … | diff path> · check: <passed|n failing|not run — why; a command said to have passed or been verified carries its actual output or the path of the file that holds it, and a claim without either counts as not run>
 rules: style-pack --paths <the files>
 screens: <ui: the path asst-screens printed; other phases: none>
 open questions: <none, or one line each>

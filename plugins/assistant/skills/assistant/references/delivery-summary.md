@@ -22,6 +22,8 @@ check already settled is one line.
 - <scenario> → <test file:line> · missing: <scenario, failure event or case-table cell with no test> or none   (or none: the project has no test framework)
 ## On device
 - <platform>: <passed | failed | not run — why> on <phone>   (or none: the project has no on-device tests)
+## Low confidence, design-level
+- <file> — <a `low confidence` finding about a mechanism or design, with its score>   (or none)
 ## Listed, not fixed
 - <file:line> — <the `list` finding or the builder's `debt:` line in one line>   (or none)
 

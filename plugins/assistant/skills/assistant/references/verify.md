@@ -39,6 +39,10 @@ too (coverage gaps, mutation survivors) — goes back to the verifier for its ow
 commit's; on svn, the round's `svn-<report kind>-<n>.diff` against the one saved before it), plus the
 whole case table.
 
+When the task had a fix round or merged its base, run `verify-code` once more before the PR goes ready, on the whole task's diff (`origin/<base>...HEAD`), plus the whole case table.
+
+A `low confidence` finding about a mechanism or a design, not a single line, is never silently dropped: it goes on the delivery summary.
+
 A finding comes back when a round meant to fix it is followed by a `fix` finding with the same file, same rule.
 When one comes back, dispatch the `advisor` once, with the remaining `fix` findings, the fix rounds' diffs, the brief
 and the task statement; one advisor per finding, never a second for the same finding. Its `advise` report goes into the

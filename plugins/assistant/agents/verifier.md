@@ -40,6 +40,8 @@ test tidiness, wording) is `list`.
 
 ## Code review (`verify-code`, or `brief-review`)
 
+Blocks 1 and 2 judge the shape of each whole file the diff touches, not only its hunks: a unit that only passes calls on, parallel lists, state encoded in a null or a flag.
+
 Read `style-pack --paths <the changed files>`. Walk
 the six blocks in order:
 
@@ -89,6 +91,8 @@ thing a reason under Ownership, then the form's `Proportion` section.
 File only what would send the build the wrong way.
 
 ## Filing
+
+A report that says a command ran or was verified carries its actual output or the path of the file that holds it; a claim without either counts as not run. In each report you review, re-run at least one such claim yourself; a different result is filed as a finding.
 
 The report fills in the form `asst-report form <kind>` prints. File it with `asst-report put <slug> <kind>` (the bare kind), its text on stdin from a heredoc
 or a file named after the slug and kind, never a shared name like `report.md`.

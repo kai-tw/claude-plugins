@@ -18,6 +18,8 @@ look with `CronCreate` (`recurring: false`) and end the turn — nothing else re
 a passing run, and you never wait in a loop. Tasks' PRs are looked at side by side, each
 on its own schedule.
 
+HEAD must contain the current base, so merge the base in first, and CI and the checks run after that merge: a merge with no conflicts does not mean the merged code still works.
+
 ## Merge
 
 Merging or asking for changes is the user's. A request for changes re-enters step 5,
