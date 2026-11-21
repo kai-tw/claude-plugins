@@ -99,12 +99,13 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
   agents, in a repo with `.svn` and no `.git`) and the user's locale tag; reports go by path.
 - Every dispatch states the project's exact check commands (lint, format, test), from its CLAUDE.md, hooks or CI.
 - A verifier dispatch carries the builder and tester report paths, so a deviation on a builder's `fixed (base branch)` line reads as explained.
-- Before creating a task's worktree, measure the free space with `df` on the disk that holds the
+- Before creating a task's worktree, run `git fetch`, then measure the free space with `df` on the disk that holds the
   worktrees; under 30 GB free, create no worktree: run that task on a branch in the main checkout
-  (`git switch -c <branch>` from the default branch, carrying any uncommitted changes over as they
+  (`git switch -c <branch> origin/<default>`, carrying any uncommitted changes over as they
   are), start no other task until it closes (a new row goes `Next`, `Blocked by` it). Every new task measures again. Agents commit only files
   they changed themselves; the carried-over files, named in every dispatch, stay unstaged. Otherwise a failed `git worktree add` is reported as it is; delete the branch it left and move the half-made folder to the trash. A project whose CLAUDE.md forbids branches in the main checkout gets a
   `Needs you` line instead.
+- Every worktree and branch starts from `origin/<default>`, never from a local branch that may be stale.
 - Pin the model and effort per dispatch (code.claude.com/docs/en/model-config). Mechanical work gets the smallest model and effort that can do it. Architecture, cross-module, root-cause, parallel or design-judgment work gets at least `opus` with `high` effort. When a slice's finding comes back, or a claim in a report proves untrue, the next dispatch goes one step up, in model or effort.
 - Every dispatch tells the agent to close the browsers, servers and other processes it started before it reports, and asks one bounded question. When an agent dies, clean up the processes it left behind.
 - Before reporting an environment blocker, look for a tool that clears it: deferred tools, installed CLIs. Before asking the user to work in a console, check it with a CLI first.
@@ -115,6 +116,8 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
   next one with the slice and only what the code and the filed reports can't show — a ruling it
   needs, a dead end the last run hit.
 - Work sent to a cloud session, running or new, follows `references/cloud-dispatch.md`.
+- Before a destructive git command in a shared checkout (`git reset`, `git checkout -- <file>`, `git stash drop`, `git clean`), save `git diff` and the untracked file list to the scratchpad; asking, below, is still required.
+- Work in another repo first reads its CLAUDE.md and whether it is public or private, then goes in that repo's worktree as a PR, or as its CLAUDE.md says; when another session is already working there, send that session a patch instead of editing it yourself.
 - Ask before every destructive or outward action: a merge, a force-push, a revert (on svn, never run
   `svn revert` on your own) except your own changes back to what the user approved, undone by an edit, never by `svn revert`, deleting a branch or a worktree (except at Close, or what a failed `git worktree add` left), a deploy, deleting user data; a project's own extra cases live in its
   CLAUDE.md. This holds for anything sent off the machine, a peer session included. A merge waits

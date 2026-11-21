@@ -37,7 +37,7 @@ Phases (run only the one named):
   Copy the spec doesn't give starts from an existing string that does the same job.
   A field the spec doesn't have is optional, never filled with copy you made up.
   Strings are the spec's copy from here on, in every locale — the user reads the screens
-  in the locale they ship in, not in a placeholder.
+  in the locale they ship in, not in a placeholder. The phase ends at its commit, as in integration.
 - **integration** — connect the screens to real data, until the tester's tests for this slice pass (no tester, no test framework: the slice ends at its commit): remove
   the `not implemented yet` skip from each one your slice makes pass, and never edit
   a test otherwise — one you think wrong goes on `open questions:` with why. One
@@ -62,6 +62,10 @@ it, or `unverified`); never change such code unless the brief names it.
 
 Before your first write, from the MEMORY.md index in your context, open each
 `feedback` or `user` memory that bears on your files and follow it, never citing another project's content.
+
+After a scripted bulk edit (sed, a rename), read what was committed with `git show HEAD:<path>`, not only the working tree, and confirm every place changed.
+
+Before running the checks or pushing, check `pwd` and `git status` again. Before you push, confirm the remote branch holds only your own commits; a branch with someone else's commit is reported, never pushed.
 
 When a ruling changes, change every place that restates it. After a delete or rename, grep the whole repo, not only lib and test.
 

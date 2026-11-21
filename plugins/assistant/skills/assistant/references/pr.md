@@ -20,6 +20,10 @@ on its own schedule.
 
 HEAD must contain the current base, so merge the base in first, and CI and the checks run after that merge: a merge with no conflicts does not mean the merged code still works.
 
+## Split
+
+When a PR is split, move its files byte for byte; an error found while moving goes in the PR body, never fixed in the move.
+
 ## Merge
 
 Merging or asking for changes is the user's. A request for changes re-enters step 5,
