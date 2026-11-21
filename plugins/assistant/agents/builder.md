@@ -65,7 +65,7 @@ Before your first write, from the MEMORY.md index in your context, open each
 
 After a scripted bulk edit (sed, a rename), read what was committed with `git show HEAD:<path>`, not only the working tree, and confirm every place changed.
 
-Before running the checks or pushing, check `pwd` and `git status` again. Before you push, confirm the remote branch holds only your own commits; a branch with someone else's commit is reported, never pushed.
+Before running the checks or pushing, check `pwd` and `git status` again. Before you push, run `git fetch` and check that the remote branch has no commit your HEAD lacks (`git log HEAD..origin/<branch>` is empty). If it has one, someone pushed from elsewhere: put it on `open questions:`, and never pull it in or force-push over it. Commits by earlier agents on the same branch are fine.
 
 When a ruling changes, change every place that restates it. After a delete or rename, grep the whole repo, not only lib and test.
 

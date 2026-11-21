@@ -10,7 +10,7 @@ a dispatch ID `<slug>#<n>` is itself a dispatch and does not dispatch further.
 | What it sees | That session's own working directory and context | The GitHub remote's content on the current branch, not the local checkout |
 | Fits | Work already running, with its context | Stateless work whose output is one text report, when the user asks for a session |
 
-Work in another repo first reads its CLAUDE.md and whether it is public or private, then goes in that repo's worktree as a PR, or by its own rules. When another session is already working in that repo, send that session a patch instead of editing it yourself.
+Work in another repo follows the another-repo rule in `SKILL.md` §Dispatch rules.
 
 One thing both routes share: **the other side cannot ask you**. Settle every
 open question before dispatch; a question that surfaces after dispatch can only

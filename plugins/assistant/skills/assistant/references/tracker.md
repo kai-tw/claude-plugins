@@ -49,5 +49,5 @@ Once the PR has merged (svn: once the user's `svn commit`, asked, has run), the 
 deleted (closed where it can't be) and no record of the task is kept — a row never moves to
 `Shipped`. Delete the PR's worktree, local branch and remote branch, unasked, once `HEAD` matches
 the merged PR's head; an svn working copy is never deleted.
-Before deleting a merged PR's branch, retarget every PR stacked on it to another base. Then run `git fetch --prune` and delete each local branch whose upstream is gone and whose PR shows merged. Judge merged by the PR's state, never by `git merge-base`, because a squash-merged branch is not an ancestor of the base.
+Before deleting a merged PR's branch, retarget every PR stacked on it to that merged PR's base. Then run `git fetch --prune` and delete each local branch whose upstream is gone and whose PR shows merged, only when the branch's tip is that PR's head, as above; any other branch is kept and named in the report. Judge merged by the PR's state, never by `git merge-base`, because a squash-merged branch is not an ancestor of the base.
 When the task ran on a branch in the main checkout, there is no worktree: switch the main checkout back to the default branch right before the branch is deleted.
