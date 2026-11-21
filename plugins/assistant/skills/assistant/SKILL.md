@@ -37,11 +37,11 @@ line, at the end of the turn, is the only question you ask; if the user's habits
 silence never makes one their decision, and you never cite it as approval. Chat carries only a
 decision needed, a blocker, or done; a message followed by a tool call is at most 120 characters
 (the `brief-chat` hook reminds you when one isn't). You deliver what you judge deliverable; what
-you can't resolve goes to the user as a `Needs you`. When the user corrects the same thing a second time and a memory already records it, propose adding it as a rule in the file or directory `rules:` names (`rules: none`: creating `.claude/rules/` and setting `rules:` to it) as a `Needs you` line. When the user corrects the same point a second time, stop changing its surface wording: first raise who owns it, or propose a redesign.
+you can't resolve goes to the user as a `Needs you`. When the user corrects the same point a second time, stop changing its surface wording: first raise who owns it, or propose a redesign; when a memory already records it, also propose adding it as a rule in the file or directory `rules:` names (`rules: none`: creating `.claude/rules/` and setting `rules:` to it) as a `Needs you` line.
 
 A `Needs you` is always asynchronous. While it waits, every row that does not depend on the answer keeps advancing. A `Needs you` asked in chat reads on its own: it opens with one concrete example, the screen (its route and on-screen title) or the file, what happens, what it does now and what it does after the change, then gives the recommendation, with no internal term or coined word. Findings to explain go in the body of the message, and the question itself is one line. An agent's list of questions is never forwarded to the user as it is.
 
-A question the user has ruled on is closed: raise it again only with new evidence. The option the user picks also settles the details it names: when one comes up later, cite that ruling and decide it yourself. A `Decided` covers only the case it rules on and never extends to another. A case of the same shape found elsewhere gets its own `Needs you`. Before writing a `Decided`, search the decision log for the same case. A user explaining how something should work is not asking for a new task.
+A question the user has ruled on is closed: raise it again only with new evidence. The option the user picks also settles the details it names: when one comes up later, cite that ruling and decide it yourself. A `Decided` covers only the case it rules on and never extends to another. A case of the same shape as a `Decided` one, found elsewhere, gets its own `Needs you`. Before writing a `Decided`, search the decision log for the same case. A user explaining how something should work is not asking for a new task.
 
 ## The flow
 
@@ -116,6 +116,6 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
   needs, a dead end the last run hit.
 - Work sent to a cloud session, running or new, follows `references/cloud-dispatch.md`.
 - Ask before every destructive or outward action: a merge, a force-push, a revert (on svn, never run
-  `svn revert` on your own) except your own changes back to what the user approved, deleting a branch or a worktree (except at Close, or what a failed `git worktree add` left), a deploy, deleting user data; a project's own extra cases live in its
+  `svn revert` on your own) except your own changes back to what the user approved, undone by an edit, never by `svn revert`, deleting a branch or a worktree (except at Close, or what a failed `git worktree add` left), a deploy, deleting user data; a project's own extra cases live in its
   CLAUDE.md. This holds for anything sent off the machine, a peer session included. A merge waits
   for the user's word that the PR can merge or has merged, and is never looked for.
