@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: agent-inputs
+description: The user's corrections and the project's checks reach every agent that writes — builder and tester open the user's feedback and user memories before their first write; a second correction of the same thing becomes a rules proposal; the tester updates tests built on a changed convention; the builder fixes every place with a finding's shape and every restatement of a changed ruling and greps the whole repo after a delete or rename; builder and tester run the project's checks themselves before committing; every dispatch names the exact check command; the delivery summary lists the `fixed (base branch)` line and the verifier does not call those fixes "no reason found".
+tags: [flow, agents]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in agents/builder.md agents/tester.md agents/verifier.md skills/assistant/SKILL.md skills/assistant/references/delivery-summary.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the builder, tester, verifier, assistant skill and delivery summary text, one file per line.
+context:
+  scaffold_script: fixture.sh
