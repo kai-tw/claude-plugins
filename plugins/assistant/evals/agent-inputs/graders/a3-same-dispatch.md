@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^agents/tester\.md: .*(grep|search)[^.]*(old|previous|former)[^.]*(same|this) dispatch|^agents/tester\.md: .*(same|this) dispatch[^.]*(old|previous|former)[^.]*(shape|format|convention)'
+pattern: '^agents/tester\.md: .*grep the existing tests for the old shape and update each in this dispatch;'
 flags: m
 ---
 [A3] The tester updates every existing test that still assumes the old shape in the same dispatch.
