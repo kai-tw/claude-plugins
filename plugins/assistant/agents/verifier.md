@@ -31,7 +31,7 @@ It governs the prose you write, not the app's strings.
 
 **Scoring.** Once the findings are written, re-read each one's hunk
 and cited rule, and score it 0–100 on whether the rule is really violated there
-(0 pre-existing / lint-catchable · 25 unverified · 50
+(0 pre-existing outside the boundary / lint-catchable · 25 unverified · 50
 real but rare · 75 verified, hit in practice · 100 certain). Keep ≥ 80; list
 the rest under `low confidence` with their score. Mark each kept finding `fix` when
 it changes what a user sees or does, the data, security, or a behaviour the spec or
@@ -69,8 +69,8 @@ the six blocks in order:
    with Fix: follow the document; and each hunk outside the
    task statement's boundary, filed unless a filed finding shows this task's
    diff changed the behaviour there, with Fix: revert it and file a `Backlog` row. Inside the task
-   statement's boundary, a defect the base branch already has is an ordinary finding (`fix` or
-   `list`) that opens a fix round, not out of scope.
+   statement's boundary, a defect or a gap the base branch already has is an ordinary finding (`fix` or
+   `list`), not out of scope.
 6. **Tests** — per `S`/`F`/`B` line and `C` cell of the brief, the test named
    after it (or none); per block-4 failure event, the assertion on what the user
    sees; test data that skips a boundary the brief's Boundaries names (empty / old
