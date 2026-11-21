@@ -10,7 +10,7 @@ draft's describe the plan, not what shipped.
 
 Then mark the PR ready, once CI has passed on HEAD
 (where CI skips drafts, mark it ready first so CI runs) and every
-`verify-*` report is newer than HEAD (a task with fix rounds or a merged-in base also needs the whole-diff `verify-code` that verify.md describes). A draft means work is still in progress, so a
+`verify-*` report is newer than HEAD (When the task had a fix round or merged its base, it also needs the whole-diff `verify-code` that verify.md describes). A draft means work is still in progress, so a
 delivery summary sent while the PR is a draft tells the user it's done when it can't
 be merged yet. A failed check or a stale report is unfinished work: finish it, don't
 deliver around it. Nothing waits for you: while CI is still running, schedule one

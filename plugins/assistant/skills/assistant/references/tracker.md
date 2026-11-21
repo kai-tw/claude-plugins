@@ -29,7 +29,7 @@ from a parent, whose sub-items are the work. A Close changes the tracker, so the
 until no row advances — the turn ends at a `Needs you`, a blocker or a quiet tracker, never at a
 Close. A row's progress is what the tracker and the disk hold, not what you remember:
 `asst-report summary` shows every task's newest report of each kind; a row whose awaited report
-isn't there and has no agent of yours on it in `ListAgents` → dispatch it again. `digest` is one
+isn't there and has no agent of yours on it in `ListAgents` → dispatch it again. After an interrupted turn a background agent may already be dead: before calling it still running, check its transcript for new progress; being in `ListAgents` alone does not count, and no new progress means dispatch it again. `digest` is one
 line per row. A spec question row is answered once the PM moves it to the tracker's done status:
 re-read its spec page, then close it (`references/brief.md`).
 

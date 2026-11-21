@@ -101,7 +101,10 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
   are), start no other task until it closes (a new row goes `Next`, `Blocked by` it). Every new task measures again. Agents commit only files
   they changed themselves; the carried-over files, named in every dispatch, stay unstaged. Otherwise a failed `git worktree add` is reported as it is; delete the branch it left and move the half-made folder to the trash. A project whose CLAUDE.md forbids branches in the main checkout gets a
   `Needs you` line instead.
-- Pin the smallest model and effort that can do the work (code.claude.com/docs/en/model-config).
+- Pin the model and effort per dispatch (code.claude.com/docs/en/model-config). Mechanical work gets the smallest model and effort that can do it. Architecture, cross-module, root-cause, parallel or design-judgment work gets at least `opus` with `high` effort. When a slice's finding comes back, or a claim in a report proves untrue, the next dispatch goes one step up, in model or effort.
+- Every dispatch tells the agent to close the browsers, servers and other processes it started before it reports, and asks one bounded question. When an agent dies, clean up the processes it left behind.
+- Before reporting an environment blocker, look for a tool that clears it: deferred tools, installed CLIs. Before asking the user to work in a console, check it with a CLI first.
+- When the project's CI runs on the same machine, dispatch one agent that runs tests at a time.
 - Cut `integration` and `fix` into slices — a module, a group of findings — and dispatch
   one builder per slice, each ending at its commit; `ui` is one dispatch for every screen.
   Never resume a builder, whether its slice finished or it came back marked partial. Brief the
