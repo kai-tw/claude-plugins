@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/(SKILL|references/cloud-dispatch)\.md: .*(another|other|a different) session[^.]*(works?|working|running|active)[^.]*(send|hand|give|pass)[^.]*patch[^.]*(instead of|rather than|never|not)[^.]*(edit|chang|writ|commit)'
+pattern: '^skills/assistant/SKILL\.md: .*When another session, the user.s own peer sessions included, is already working there, send that session a patch instead of editing it yourself; sending it is asked first'
 flags: mi
 ---
-[H7] SKILL.md or cloud-dispatch.md: when another session already works there, send it a patch, never edit it yourself.
+[H7] SKILL.md: a session already working there, a peer session included, gets a patch, never an edit; sending it is asked first.

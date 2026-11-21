@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/SKILL\.md: .*(reset[^.]*checkout[^.]*stash drop[^.]*clean[^.]*git diff[^.]*untracked|git diff[^.]*untracked[^.]*reset[^.]*checkout[^.]*stash drop[^.]*clean)'
+pattern: '^skills/assistant/SKILL\.md: .*\(.git reset.?, .git checkout -- <file>.?, .git restore.?, .git switch --discard-changes.?, .git stash drop.?, .git clean.?\)'
 flags: mi
 ---
-[H4] SKILL.md: that sentence names reset, a checkout of files, stash drop and clean.
+[H4] SKILL.md: that sentence names reset, checkout of files, restore, switch --discard-changes, stash drop and clean.
