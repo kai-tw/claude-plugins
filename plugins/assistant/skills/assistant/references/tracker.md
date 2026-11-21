@@ -18,6 +18,8 @@ something outside the tracker is `Deferred`, its condition in the body. When a r
 a split) starts at the investigation, one a question row blocked carries on at its `Stage`; a
 parent whose last sub-item it was closes too.
 
+Open the row body with a dated "Current state" paragraph, never stacked under older ones: when the state changes, replace it whole. A title-like field holds one line of what the row waits on and where it comes from; the content goes in the body.
+
 The decisions you file are engineering decisions (design, structure), one entry per question, to
 Notion's `decision-log`; with any other tracker, to `.claude/.assistant/kb/decisions/<slug>.md`.
 
@@ -40,6 +42,8 @@ whose ref already ends a row `Name`, any status, is not new. Each new candidate 
 `Needs you` line — take it (task statement, row `Status=In Progress`) or pass (row
 `Status=Backlog`) — so a ref is asked once. A source that can't be read is named, with the
 reason, in the turn's `Needs you` lines, not taken as no candidates.
+
+Delete without asking a row whose subject is gone (code removed, reported failure vanished) once source or CI confirms it, and say what you checked. Never delete a row that only looks affected by someone else's open ruling.
 
 While a request has a scope `Needs you` unanswered, nothing under it is dispatched.
 

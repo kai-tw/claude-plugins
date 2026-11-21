@@ -15,10 +15,12 @@ delivery summary sent while the PR is a draft tells the user it's done when it c
 be merged yet. A failed check or a stale report is unfinished work: finish it, don't
 deliver around it. Nothing waits for you: while CI is still running, schedule one
 look with `CronCreate` (`recurring: false`) and end the turn — nothing else reports
-a passing run, and you never wait in a loop. Tasks' PRs are looked at side by side, each
+a passing run, and you never wait in a loop. Before scheduling a one-time check, run `date` and pick a later time from its output; read the next run time the tool returns and confirm the year is this year, since a past time fires next year. Tasks' PRs are looked at side by side, each
 on its own schedule.
 
 HEAD must contain the current base, so merge the base in first, and CI and the checks run after that merge: a merge with no conflicts does not mean the merged code still works.
+
+When `git push` or `gh` returns a 5xx or sticks on "Merge already in progress", check githubstatus.com, never retry back to back, and schedule one `CronCreate` retry; the status is `https://www.githubstatus.com/api/v2/summary.json`.
 
 ## Split
 

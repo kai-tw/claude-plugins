@@ -5,6 +5,7 @@
   A decision is a `decision-log` row: Name = the question, Context · Decision ·
   Consequence, `Task` = the task row, `Status=Active`, `Decided` = today. Close = trash the row.
 - A query reads every page of results (Notion paginates).
+- Replacing a page's whole body sends its child pages to the trash: when it has child pages, edit only the blocks that change.
 - A `|` inside a table cell is written `\|`.
 - Every comment any agent leaves on a Notion page starts with
   `〔Claude Code｜<role>｜<category>〕`: role is the writer's department in the user's

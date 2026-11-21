@@ -49,10 +49,10 @@ A question the user has ruled on is closed: raise it again only with new evidenc
 request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ Build ─▶ screen review ─▶ Tests ─▶ Integration ─▶ Verify ─▶ delivery summary ─▶ Close
 ```
 
-1. **Task statement** (you, one paragraph): goal · boundary · done-when · project · tier — `exempt`
+1. **Task statement** (you, one paragraph): goal · boundary · done-when · project · estimated size and slice order · tier — `exempt`
    (typo, constant, log: the builder edits, then Verify), `small` (one module, no new abstraction:
    no investigation or brief, you rule; a change to an entity's role, a repository or public interface, or a unit's responsibility is `feature`, never `small`) or `feature` (the full flow; when unsure). A request one
-   brief cannot hold is split into sub-tasks, `references/brief.md`.
+   brief cannot hold is split into sub-tasks, `references/brief.md`. Work clearly over the estimate is reported to the user at once, never carried on silently.
 2. **Investigation** (you): fill in the form `asst-report form investigation` prints and file it
    with `asst-report put <slug> investigation --worktree <worktree>`.
 3. **Decision brief** (you, from the investigation): `references/brief.md`. A drafter you delegate
@@ -109,6 +109,7 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
 - Pin the model and effort per dispatch (code.claude.com/docs/en/model-config). Mechanical work gets the smallest model and effort that can do it. Architecture, cross-module, root-cause, parallel or design-judgment work gets at least `opus` with `high` effort. When a slice's finding comes back, or a claim in a report proves untrue, the next dispatch goes one step up, in model or effort.
 - Every dispatch tells the agent to close the browsers, servers and other processes it started before it reports, and asks one bounded question. When an agent dies, clean up the processes it left behind.
 - Before reporting an environment blocker, look for a tool that clears it: deferred tools, installed CLIs. Before asking the user to work in a console, check it with a CLI first.
+- Before creating a cloud resource (anything billed), look up its price, take the free tier or the cheapest setup that meets the need, and report the estimated monthly cost, or say none was found. Watch the costs that accrue quietly: key versions, retained images, minimum instances, backups, log retention.
 - When the project's CI runs on the same machine, dispatch one agent that runs tests at a time.
 - Cut `integration` and `fix` into slices — a module, a group of findings — and dispatch
   one builder per slice, each ending at its commit; `ui` is one dispatch for every screen.
