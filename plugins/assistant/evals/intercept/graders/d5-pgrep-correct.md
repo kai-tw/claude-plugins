@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-[D5] `pgrep -x foo`, `pgrep -f foo | grep -v $$` and a plain `pgrep foo` get no warning.
+[D5] Loops on `pgrep -f "[x].json"` and `pgrep -f "^node server.js"`, and `while kill -0 $pid`, get no warning.

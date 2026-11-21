@@ -5,4 +5,4 @@ flags: m
 match: not_contains
 arm: with-only
 ---
-[D5] Both `while pgrep -f` loops are flagged, with or without output redirected.
+[D5] Every `while`/`until` `pgrep -f` loop is flagged: with or without redirected output, with `until ! pgrep -fl`, unquoted, and with `do` on the next line.
