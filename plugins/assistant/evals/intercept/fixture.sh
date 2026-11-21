@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # check.sh (uname faked as Darwin, so every rule applies) feeds intercept.sh trap and correct commands and prints whether the expected rule fired.
-# Expected `+` means any rule may fire (the rule id is the implementation's to name); `-` means none may.
+# Expected `-` means no rule may fire.
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; mkdir -p flags fake; n=0
@@ -12,7 +12,6 @@ run() {
     | PATH="$PWD/fake:$PATH" TMPDIR=$PWD/flags bash "$root/hooks/checks/intercept.sh" 2>/dev/null \
     | jq -r '.hookSpecificOutput.additionalContext // empty' | grep -oE '⚠️  [a-z-]+' | cut -d' ' -f3 | sort -u | tr '\n' ' ')
   if [ "$2" = - ]; then [ -z "$ids" ] && v=quiet || v="noisy($ids)"
-  elif [ "$2" = + ]; then [ -n "$ids" ] && v=hit || v=miss
   else case " $ids " in *" $2 "*) v=hit ;; *) v=miss ;; esac; fi
   echo "$1=$v"
 }
@@ -35,7 +34,8 @@ run bad-pgrep-until pgrep-f-wait 'until ! pgrep -fl x.json; do sleep 1; done'
 run bad-pgrep-bare  pgrep-f-wait 'while pgrep -f foo; do sleep 1; done'
 run bad-pgrep-nextline pgrep-f-wait 'while pgrep -f foo
 do sleep 1; done'
-run ok-log-head     - 'git log --oneline | head -5'
+run bad-pgrep-appear pgrep-f-wait 'until pgrep -f "flutter run"; do sleep 2; done'
+run ok-log-head    - 'git log --oneline | head -5'
 run ok-test-verdict - 'flutter test > "$s/t.log" 2>&1; grep -E "All tests passed|Some tests failed" "$s/t.log" | tail -1'
 run ok-test-and     - 'npm test && git log --oneline | head -3'
 run ok-scratch-log  - 'flutter test > /private/tmp/claude-501/x/scratchpad/t.log 2>&1'
@@ -48,6 +48,7 @@ run ok-format-file  - 'dart format lib/a.dart test/a_test.dart'
 run ok-fix-scoped   - 'dart fix --apply --code=unused_import lib/a.dart'
 run ok-pgrep-bracket - 'while pgrep -f "[x].json"; do sleep 1; done'
 run ok-pgrep-anchor  - 'while pgrep -f "^node server.js"; do sleep 1; done'
-run ok-pgrep-pid     - 'while kill -0 $pid; do sleep 1; done'
+run ok-pgrep-fx      - 'while pgrep -fx "node server.js"; do sleep 1; done'
+run ok-pgrep-pid    - 'while kill -0 $pid; do sleep 1; done'
 run ok-last         - 'echo done'
 SH
