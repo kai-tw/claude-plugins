@@ -310,8 +310,8 @@ done <<< "$files"
 # test that only imports the absent files, run under coverage. A file still
 # absent there has no executable line, so it is NO-CODE and does not block.
 # Flutter packages only, since that test runs `flutter test` itself, whatever
-# the test command was: keyed on that command's first word, it was silently
-# skipped for a wrapper command such as `-- run-suite <scope>`. A `part of`
+# the test command was, so a wrapper command such as `-- run-suite <scope>`
+# does not change whether it runs. A `part of`
 # file cannot be imported and stays NOT-LOADED, as does everything when the
 # import-only test is skipped or fails to run, and either is said on stderr.
 nocode=""

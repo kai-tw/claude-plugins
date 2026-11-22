@@ -24,9 +24,9 @@ runner, adding `--labels flutter` to `config.sh`).
 
 Keep each repo's runner up in its own terminal tab with
 `~/actions-runners/<dir>/run.sh`. While it's down, a PR's jobs wait queued on
-GitHub. An idle runner takes about 60 MB of memory and no CPU. `dart_mutants`
-keeps its own machine-wide slots. Only use it on a private repo: a
-public repo's workflows can be made to run a stranger's code on it.
+GitHub. An idle runner takes about 60 MB of memory and no CPU. Only use the
+runner on a private repo: a public repo's workflows can be made to run a
+stranger's code on it.
 
 ## The workflow
 
