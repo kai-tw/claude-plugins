@@ -66,12 +66,18 @@
 #   `--coverage --branch-coverage` is appended for you where absent. Run this
 #   from the repo root — the test command runs in the CALLER's working directory.
 #
+#   The test command waits for a machine-wide test slot, so concurrent runs from
+#   several sessions cannot exhaust memory: TEST_QUEUE_SLOTS sets the slot count
+#   and TEST_QUEUE_WAIT the seconds to wait (`test_queue.sh` has the rest).
+#
 # EXIT
 #   0  every changed line executed
 #   1  at least one unexecuted line or branch, a changed file no test loaded at
 #      all, a changed file carrying a coverage pragma, or an unmeasurable throw
 #   2  nothing was measured (no repo, no base ref, no lcov, the run did not
 #      happen)
+#   75 no test slot came free within TEST_QUEUE_WAIT — busy, not broken; nothing
+#      ran, and the refusal names who holds which slot
 #
 #   Scope is taken against `origin/<default branch>` when that ref exists, and
 #   the base used is printed in the report header. The LOCAL branch of the same
@@ -79,6 +85,7 @@
 
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+ORIG_ARGS=("$@")
 
 EXPLICIT_FILES=""
 DIFF_BASE=""
@@ -91,7 +98,7 @@ while [ $# -gt 0 ]; do
               [ "${1:-}" = "--" ] && shift ;;
     --diff)   DIFF_BASE="${2:?--diff needs a ref}"; shift 2 ;;
     --)       shift; break ;;
-    -h|--help) sed -n '2,64p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,84p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # A flag this script does not know is never forwarded silently. Measured on
     # an earlier launcher: an unrecognised flag fell through into the test
     # command, the run widened to the whole suite, and the score looked normal.
@@ -149,6 +156,16 @@ fi
 files=$(printf '%s\n' "$files" | grep -v '^$' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)
 [ -n "$files" ] || { echo "plan-coverage: no changed lib/**.dart files — nothing to measure."; exit 0; }
 count_files=$(printf '%s\n' "$files" | grep -c .)
+
+# --- queue ------------------------------------------------------------------
+# A test slot is taken only now that there is something to run, so a change
+# with no Dart file passes without waiting for one: taken first, a CI run
+# that changed only a workflow failed whenever local sessions held every slot.
+# test_queue.sh runs this script again inside the slot, with TEST_QUEUE_SLOT_HELD
+# set, and exits 75 when no slot comes free.
+if [ -z "${TEST_QUEUE_SLOT_HELD:-}" ]; then
+  exec bash "$here/test_queue.sh" --exec bash "$here/coverage.sh" "${ORIG_ARGS[@]}"
+fi
 
 # --- run --------------------------------------------------------------------
 LCOV=coverage/lcov.info

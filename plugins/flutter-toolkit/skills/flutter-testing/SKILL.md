@@ -29,6 +29,10 @@ allowed-tools:
   `--diff <ref>` measures the lines changed since `<ref>` — a PR's base, in CI. It
   runs the test command only once a changed Dart file needs measuring; a change with
   none passes without running it.
+  The test command queues for a machine-wide slot (`$TEST_QUEUE_SLOTS`, default by
+  RAM) so concurrent sessions cannot exhaust memory. After `$TEST_QUEUE_WAIT` seconds
+  (default 120) with none free it exits 75 without running, naming each holder; narrow
+  the scope or run again later.
 - Mutation: Dart → `dart run dart_mutants` (flags in its `--help`; `--test-command` is
   required; needs `dart_mutants` in `dev_dependencies`), JS/TS → `npx stryker run`, each with its own reports.
   dart_mutants keeps its own machine-wide slots (`$DART_MUTANTS_SLOTS`,
