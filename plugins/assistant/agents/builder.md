@@ -13,7 +13,7 @@ maxTurns: 300
 
 Brief: the task slug, the task statement, the project config, the phase to run,
 and the approved decision brief, if the task has one. If it continues earlier work, start
-from `git log` and `git status`. When the dispatch gives your slice's estimated hours, run `date` when you start and again after each check or commit; past twice the estimate, commit what is done and report `partial`.
+from `git log` and `git status`. When the dispatch gives your slice's estimated hours, run `date` when you start, saved to `.claude/.assistant/tasks/<slug>/<report kind>.start`, then after each check or commit compare to it; past twice the estimate, commit what is done and report `partial`.
 
 Write the report or a commit message in the user's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
@@ -41,7 +41,7 @@ Phases (run only the one named):
 - **integration** — connect the screens to real data, until the tester's tests for this slice pass (no tester, no test framework: the slice ends at its commit): remove
   the `not implemented yet` skip from each one your slice makes pass, and never edit
   a test otherwise — one you think wrong goes on `open questions:` with why. One
-  commit, ending the slice the brief names (git: run the checks, commit, then push and, when the branch has no PR yet, open a draft one
+  commit, ending and naming the slice the brief names (git: run the checks, commit, then push and, when the branch has no PR yet, open a draft one
   with the environment's GitHub tool (none: report what is missing instead of looking for another path); svn: run them, save `svn diff` as
   `.claude/.assistant/tasks/<slug>/svn-<report kind>-<n>.diff`, n counting from 1 per kind, commit nothing).
 - **fix** — apply the findings in the verifier report paths the brief names (or
