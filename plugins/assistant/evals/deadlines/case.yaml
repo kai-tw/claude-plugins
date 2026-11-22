@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: deadlines
+description: the assistant skill tracks deadlines — a date the user states goes into the tracker row date column, the file board Due, never a GitHub milestone (S1, C1, C3); each scheduler pass reads the row date and compares remaining slice hours with the time left (S2, C2); with one task at a time the earliest Due goes In Progress and the others become Blocked by it (S3); a deadline that cannot be met is a Needs you line that turn with an estimated finish date and what can be cut (S4); a builder past twice its slice estimate commits what is done and reports partial (F1); an old board without Due reads as no deadline and gains the column on first write (B1); no deadline changes nothing (B2, C4).
+tags: [flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/tracker.md agents/builder.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the assistant skill text, the tracker reference and the builder agent text, one file per line.
+context:
+  scaffold_script: fixture.sh
