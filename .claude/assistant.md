@@ -2,4 +2,5 @@
 
 ```
 rules:      .claude/rules
+spec:       none
 ```
