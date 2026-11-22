@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: deadlines
-description: the assistant skill tracks deadlines — a date the user states goes into the tracker row date column, the file board Due, never a GitHub milestone (S1, C1, C3); each scheduler pass reads the row date and compares remaining slice hours with the time left (S2, C2); with one task at a time the earliest Due goes In Progress and the others become Blocked by it (S3); a deadline that cannot be met is a Needs you line that turn with an estimated finish date and what can be cut, and any cut to scope or checks is asked, never taken (S4); a builder past twice its slice estimate commits what is done and reports partial (F1); an old board without Due reads as no deadline and gains the column on first write (B1); after the assistant conversation is compressed the next pass reads hours per slice from the row body and done slices from git log or, on svn, the filed builder reports (B3); after the builder conversation is compressed its start-time file, named by report kind and slice, still gives the two-times rule its start (B4); no deadline changes nothing (B2, C4).
+description: the assistant skill tracks deadlines and keeps each builder slice's state on the tracker only — a date the user states goes into the row date column, the file board Due, on GitHub a Deadline line in the issue's Current state, never a milestone, and the user's latest word wins (S1, C1, C3); each pass reads the row date (S2, C2); with one task at a time the earliest Due among task rows goes first (S3); remaining hours are the open slice rows' estimates, an In Progress one minus the time since its start, and a deadline they miss is a Needs you line that turn, sped up but any cut asked (S4); once the brief is approved each slice is a sub-item row `<slug>/<n> <what>` with its hours in the body, Next, In Progress at dispatch with the start time in Current state, deleted when done, a GitHub checklist item, and the task statement carries no hours (S5); slice rows skip task-row transitions, and the split-parent rules hold only for a split's parent; a builder past twice its estimate reports partial, its row kept with the hours left and a Needs you line (F1); a board without Due reads as no deadline (B1); the next pass reads it all back from the tracker, never from git log, svn reports or a start file (B2); the task row stays open when its slices are gone (B3); a filed report naming an In Progress slice row stops a re-dispatch (B4); no deadline still gets slice rows, only the late check is skipped (C4).
 tags: [flow]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 2
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/tracker.md agents/builder.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+    EVAL_CMD: for f in skills/assistant/SKILL.md skills/assistant/references/tracker.md skills/assistant/references/brief.md agents/builder.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
   prompt: |
-    Print the assistant skill text, the tracker reference and the builder agent text, one file per line.
+    Print the assistant skill text, the tracker and brief references and the builder agent text, one file per line.
 context:
   scaffold_script: fixture.sh

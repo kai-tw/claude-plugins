@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^agents/builder\.md: .*its first line naming your slice after the phase'
+pattern: '^agents/builder\.md: .*first line[^.]*(slice(.s)? row|<slug>/<n>)|^agents/builder\.md: .*first line[^.]*(slice[^.]*Name|Name[^.]*slice)'
 flags: mi
 ---
-[B4] the builder report's first line names its slice, which the svn done-check reads.
+[B4] the builder report's first line is its slice row's Name.
