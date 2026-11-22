@@ -4,7 +4,8 @@
 # (lib/shade.dart, no executable line) and edits lib/count.dart. dart/ is a pure
 # Dart package with the same change. fake/flutter stands in for `flutter test`:
 # the suite's lcov records lib/count.dart only, and the import-only test's lcov records
-# nothing, as a real run does for a declaration-only file.
+# nothing, as a real run does for a declaration-only file. fake/run-suite is a test
+# command that starts with neither flutter nor dart.
 set -euo pipefail
 mkdir -p fake
 cat > fake/flutter <<'F'
@@ -18,6 +19,8 @@ case "$out" in
 esac
 F
 chmod +x fake/flutter
+printf '#!/usr/bin/env bash\nexec flutter test "$@"\n' > fake/run-suite
+chmod +x fake/run-suite
 for p in app dart; do
   mkdir -p "$p/lib" "$p/test"
   if [ $p = app ]; then

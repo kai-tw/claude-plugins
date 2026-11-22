@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export PLAN_TEST_DIR="$PWD/s" PLAN_TEST_WAIT=0 PLAN_QA_REPORT_DIR="$PWD"; plan-coverage --files lib/rows.dart lib/shadow.dart lib/hidden.dart -- bash fake_test.sh 2>&1; echo "rc=$?"
+    EVAL_CMD: export PLAN_QA_REPORT_DIR="$PWD"; plan-coverage --files lib/rows.dart lib/shadow.dart lib/hidden.dart -- bash fake_test.sh 2>&1; echo "rc=$?"
   prompt: |
     Run plan-coverage over three files that each declare a class extending Table, with a fake test command that writes a fixed lcov. Print the output and exit code.
 context:

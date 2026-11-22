@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: no-plan-test
+description: The plugin has no plan-test command, no hook that blocks a bare flutter test, and no PLAN_TEST variable or test slot in any file; plan-coverage runs the test command without taking a slot and leaves a slot directory an older version made as it was.
+tags: [plan-coverage, hooks, launchers]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Search the plugin for plan-test, PLAN_TEST and test slots; check its bin/ for a plan-test command and feed each PreToolUse hook a bare flutter test. Then, with an old slot directory in HOME, run plan-coverage on one file and print whether the test ran, which slots existed during the run and what is left afterwards.
+context:
+  scaffold_script: fixture.sh

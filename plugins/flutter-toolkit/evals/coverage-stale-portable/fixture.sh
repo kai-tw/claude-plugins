@@ -16,7 +16,7 @@ cat > run_cases.sh <<'SH'
 #!/usr/bin/env bash
 set -u
 original_path="$PATH"
-export PLAN_TEST_SLOT_HELD=1 PLAN_QA_REPORT_DIR="$PWD/report"
+export PLAN_QA_REPORT_DIR="$PWD/report"
 mkdir -p "$PLAN_QA_REPORT_DIR"
 for mode in native bsd; do
   for kind in stale fresh; do
