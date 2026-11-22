@@ -19,11 +19,12 @@
 # WHY THE KERNEL HOLDS THE SLOT
 #   A slot is an exclusive `flock` on the file `slot-<k>` in TEST_QUEUE_DIR. The
 #   lock is taken on a descriptor without close-on-exec, and this process then
-#   execs into the test command, so the test process itself holds the slot, and
-#   so does any child that inherits the descriptor. The kernel drops the lock
-#   when the last of them exits, however it exits, SIGKILL included — nothing
-#   here releases a slot, so nothing can leave one behind. Perl takes the lock
-#   because `flock(1)` is missing on macOS and `lockf(1)` on Linux.
+#   execs, by way of bash, into the test command, so the test process itself
+#   holds the slot, and so does any child that inherits the descriptor. The
+#   kernel drops the lock when the last of them exits, however it exits, SIGKILL
+#   included — nothing here releases a slot, so nothing can leave one behind.
+#   Perl takes the lock because `flock(1)` is missing on macOS and `lockf(1)` on
+#   Linux.
 #
 #   Once locked, the slot file is rewritten with `name=`, `pid=`, `started=`
 #   (epoch seconds) and `cmd=` lines, for the refusal below to show. Content in
@@ -72,10 +73,13 @@ use File::Path qw(make_path);
 my ($dir, $slots, $wait, $name, @cmd) = @ARGV;
 my $poll = 3;
 
+# Through the exec builtin of bash, not the execvp perl uses: execvp hands a
+# script with no shebang line to /bin/sh, which is dash on Ubuntu; bash runs it
+# under bash.
 sub run_command {
   no warnings "exec";
-  exec { $cmd[0] } @cmd;
-  print STDERR "test_queue.sh: cannot run $cmd[0]: $!\n";
+  exec { "bash" } "bash", "-c", q{exec "$@"}, "plan-coverage", @cmd;
+  print STDERR "test_queue.sh: cannot run bash: $!\n";
   exit 127;
 }
 
@@ -104,7 +108,12 @@ while (1) {
   for my $k (1 .. $slots) {
     my $path = "$dir/slot-$k";
     sysopen(my $fh, $path, O_RDWR | O_CREAT) or run_unthrottled($path, "$!");
-    next unless flock($fh, LOCK_EX | LOCK_NB);
+    # Only a lock someone holds means busy; any other failure, such as a
+    # filesystem without flock, is a queue that cannot be used.
+    unless (flock($fh, LOCK_EX | LOCK_NB)) {
+      next if $!{EWOULDBLOCK};
+      run_unthrottled($path, "cannot lock it: $!");
+    }
     $held = [$fh, $path];
     last;
   }

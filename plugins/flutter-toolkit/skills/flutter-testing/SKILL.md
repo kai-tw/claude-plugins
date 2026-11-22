@@ -14,8 +14,8 @@ allowed-tools:
 
 - `plan-coverage -- <scoped test command>` — per **line**, not per percent: each
   changed `lib/**.dart` line is executed. No `coverage:ignore` comments: a changed
-  file carrying `// coverage:ignore-*` (or the retired `// coverage-ignore:`) is
-  blocked too.
+  file carrying `// coverage:ignore-*` (or `// coverage-ignore:`, which exempts
+  nothing) is blocked too.
   Two exceptions are built in, and the report counts the lines each leaves out:
   drift table definitions (column getters of a class extending drift's `Table`),
   and const constructor declarations with no logic, whose line the VM records or
@@ -29,11 +29,11 @@ allowed-tools:
   `--diff <ref>` measures the lines changed since `<ref>` — a PR's base, in CI. It
   runs the test command only once a changed Dart file needs measuring; a change with
   none passes without running it.
-  The test command queues for a machine-wide slot (`$TEST_QUEUE_SLOTS`, default by
-  RAM) so concurrent sessions cannot exhaust memory. The slot is held while the test
-  process lives and freed when it exits, however it exits. After `$TEST_QUEUE_WAIT` seconds
-  (default 120) with none free it exits 75 without running, naming each holder; narrow
-  the scope or run again later.
+  The test command, and the import-only test after it, queue for a machine-wide slot
+  (`$TEST_QUEUE_SLOTS`, default by RAM) so concurrent sessions cannot exhaust memory.
+  The slot is held while the test process lives and freed when it exits, however it
+  exits. After `$TEST_QUEUE_WAIT` seconds (default 120) with none free it exits 75 with
+  no verdict, naming each holder; narrow the scope or run again later.
 - Mutation: Dart → `dart run dart_mutants` (flags in its `--help`; `--test-command` is
   required; needs `dart_mutants` in `dev_dependencies`), JS/TS → `npx stryker run`, each with its own reports.
   dart_mutants keeps its own machine-wide slots (`$DART_MUTANTS_SLOTS`,

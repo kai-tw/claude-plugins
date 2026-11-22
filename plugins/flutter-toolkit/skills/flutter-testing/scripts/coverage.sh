@@ -16,16 +16,15 @@
 #   lines, and the pass condition is that there are none.
 #
 # THERE IS NO ESCAPE HATCH
-#   An earlier version accepted `// coverage-ignore: <reason>` on or above an
-#   unexecuted line. It was retired because it was abused: the reason became
-#   the thing written instead of the test. An unexecuted changed line is now
-#   either tested or reported — the report is the honest record, not a comment.
+#   No comment exempts an unexecuted line: a reason written beside one becomes
+#   the thing written instead of the test. An unexecuted changed line is either
+#   tested or reported — the report is the honest record, not a comment.
 #
 #   The toolchain's own pragmas are closed for the same reason. `flutter test`
 #   drops lines under `// coverage:ignore-line` / `-start` … `-end` / `-file`
 #   from `lcov.info` before this script reads it, so an unexecuted line under
 #   one looks exactly like an executed one. Any changed file that carries such
-#   a pragma — or a leftover `// coverage-ignore:` comment, which now exempts
+#   a pragma — or a `// coverage-ignore: <reason>` comment, which exempts
 #   nothing and only claims to — blocks until it is removed. Generated files
 #   are excluded by name below and never get to that check.
 #
@@ -66,11 +65,12 @@
 #   `--coverage --branch-coverage` is appended for you where absent. Run this
 #   from the repo root — the test command runs in the CALLER's working directory.
 #
-#   The test command waits for a machine-wide test slot, so concurrent runs from
-#   several sessions cannot exhaust memory: TEST_QUEUE_SLOTS sets the slot count
-#   and TEST_QUEUE_WAIT the seconds to wait (`test_queue.sh` has the rest). The
-#   slot is held while the test process lives and freed when it exits, however
-#   it exits; the work after the run holds none.
+#   The test command and the import-only test each wait for a machine-wide test
+#   slot, so concurrent runs from several sessions cannot exhaust memory:
+#   TEST_QUEUE_SLOTS sets the slot count and TEST_QUEUE_WAIT the seconds to wait
+#   (`test_queue.sh` has the rest). A slot is held while the test process lives
+#   and freed when it exits, however it exits; the work after the run holds
+#   none.
 #
 # EXIT
 #   0  every changed line executed
@@ -78,8 +78,9 @@
 #      all, a changed file carrying a coverage pragma, or an unmeasurable throw
 #   2  nothing was measured (no repo, no base ref, no lcov, the run did not
 #      happen)
-#   75 no test slot came free within TEST_QUEUE_WAIT — busy, not broken; nothing
-#      ran, and the refusal names who holds which slot
+#   75 no test slot came free within TEST_QUEUE_WAIT, for the test command or
+#      for the import-only test after it — busy, not broken; no file gets a
+#      verdict, and the refusal names who holds which slot
 #   130 / 143  stopped by INT / TERM; a running test command is sent TERM and
 #      waited for first
 #
@@ -105,8 +106,7 @@ run_queued() {
   trap 'stop_queued 130' INT
   trap 'stop_queued 143' TERM
   bash "$here/test_queue.sh" --exec "$@" <&0 &
-  queued_pid=$!
-  wait "$queued_pid"
+  wait "$!"
   rc=$?
   trap - INT TERM
   return "$rc"
@@ -114,10 +114,13 @@ run_queued() {
 
 # A second signal is ignored rather than trapped again: a trap re-entered here
 # would interrupt the `wait` and exit while the test command is still shutting down.
+# The queue is found with `jobs -p`, not a saved pid: bash runs a trap between
+# any two commands, so the signal can arrive before the queue starts or before
+# `$!` is read.
 stop_queued() {
   trap '' INT TERM
-  kill -TERM "$queued_pid" 2>/dev/null
-  while kill -0 "$queued_pid" 2>/dev/null; do wait "$queued_pid"; done
+  kill -TERM $(jobs -p) 2>/dev/null
+  wait
   exit "$1"
 }
 
@@ -132,10 +135,10 @@ while [ $# -gt 0 ]; do
               [ "${1:-}" = "--" ] && shift ;;
     --diff)   DIFF_BASE="${2:?--diff needs a ref}"; shift 2 ;;
     --)       shift; break ;;
-    -h|--help) sed -n '2,88p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    # A flag this script does not know is never forwarded silently. Measured on
-    # an earlier launcher: an unrecognised flag fell through into the test
-    # command, the run widened to the whole suite, and the score looked normal.
+    -h|--help) sed -n '2,89p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    # A flag this script does not know is never forwarded silently: passed on
+    # into the test command, it widens the run to the whole suite while the
+    # score looks normal.
     -*)       echo "plan-coverage: unknown flag '$1'. The test command goes after \`--\`." >&2
               echo "  usage: plan-coverage [--diff <ref> | --files a.dart …] -- <test-command…>" >&2
               exit 2 ;;
@@ -215,9 +218,8 @@ case " $* " in *" --branch-coverage "*) ;; *) set -- "$@" --branch-coverage ;; e
 echo "plan-coverage: ${count_files} changed file(s); every line must be executed, drift table definitions and logic-free const constructors aside."
 echo "plan-coverage: running — $*"
 started=$(date +%s)
-# A test slot is taken only here, once there is something to run, so a change
-# with no Dart file passes without waiting for one: taken first, a CI run that
-# changed only a workflow failed whenever local sessions held every slot.
+# A test slot is taken only here, once there is something to run: a change with
+# no Dart file passes without waiting for one, even while every slot is held.
 run_queued "$@"
 test_rc=$?
 elapsed=$(( $(date +%s) - started ))
@@ -359,6 +361,7 @@ done <<< "$files"
 # does not change whether it runs. A `part of`
 # file cannot be imported and stays NOT-LOADED, as does everything when the
 # import-only test is skipped or fails to run, and either is said on stderr.
+# With no test slot free for it, nothing gets a verdict: busy exits 75.
 nocode=""
 is_flutter=""
 grep -qE '^[[:space:]]*sdk:[[:space:]]*flutter[[:space:]]*$' pubspec.yaml 2>/dev/null && is_flutter=1
@@ -381,17 +384,24 @@ if [ -n "$unloaded" ] && [ -n "$is_flutter" ]; then
     done <<< "$unloaded"
     printf "void main() => test('plan-coverage import-only test', () {});\n"
   } > "$probe_dir/probe_test.dart"
-  if [ -n "$probed" ] && run_queued flutter test "$probe_dir/probe_test.dart" --coverage \
-       --coverage-path "$probe_dir/lcov.info" > "$probe_dir/log" 2>&1; then
-    loaded=$(sed -n 's/^SF://p' "$probe_dir/lcov.info" | sed "s|^$root/||")
-    while IFS= read -r f; do
-      [ -n "$f" ] || continue
-      printf '%s\n' "$loaded" | grep -qxF "$f" || nocode="${nocode}${f}"$'\n'
-    done <<< "$probed"
-    unloaded=$(printf '%s' "$unloaded" | grep -vxF -f <(printf '%s' "$nocode") || true)
-    [ -n "$unloaded" ] && unloaded="${unloaded}"$'\n'
-  elif [ -n "$probed" ]; then
-    echo "plan-coverage: the import-only test did not run ($probe_dir/log), so every absent file stays NOT-LOADED." >&2
+  if [ -n "$probed" ]; then
+    run_queued flutter test "$probe_dir/probe_test.dart" --coverage \
+      --coverage-path "$probe_dir/lcov.info" > "$probe_dir/log" 2>&1
+    probe_rc=$?
+    if [ "$probe_rc" -eq 75 ]; then
+      cat "$probe_dir/log" >&2
+      exit 75
+    elif [ "$probe_rc" -eq 0 ]; then
+      loaded=$(sed -n 's/^SF://p' "$probe_dir/lcov.info" | sed "s|^$root/||")
+      while IFS= read -r f; do
+        [ -n "$f" ] || continue
+        printf '%s\n' "$loaded" | grep -qxF "$f" || nocode="${nocode}${f}"$'\n'
+      done <<< "$probed"
+      unloaded=$(printf '%s' "$unloaded" | grep -vxF -f <(printf '%s' "$nocode") || true)
+      [ -n "$unloaded" ] && unloaded="${unloaded}"$'\n'
+    else
+      echo "plan-coverage: the import-only test did not run ($probe_dir/log), so every absent file stays NOT-LOADED." >&2
+    fi
   fi
 fi
 
