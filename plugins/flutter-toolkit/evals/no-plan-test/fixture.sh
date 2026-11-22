@@ -3,8 +3,9 @@
 # home/ holds the slot directory an older version left behind, with a holder that
 # is long dead. fake_test.sh stands in for `flutter test`: it records what it can
 # see while it runs, then writes a fully executed lcov. check.sh prints what the
-# case grades; hooks are read from hooks.json, never named, so the case checks any
-# version's files rather than finding none.
+# case grades, among it the root README.md and the plugin's marketplace entry; hooks
+# are read from hooks.json, never named, so the case checks any version's files
+# rather than finding none.
 set -euo pipefail
 git init -q
 mkdir -p lib home/.claude/.flutter-toolkit/slots/slot-9
@@ -21,8 +22,14 @@ printf 'SF:lib/a.dart\nDA:1,1\nend_of_record\n' > coverage/lcov.info
 SH
 cat > check.sh <<'SH'
 root=$1
-left=$( { grep -rIliE 'plan-test|plan_test|PLAN_TEST|test slots?' "$root" --exclude-dir=evals
-          find "$root" -iname '*plan*test*' -not -path '*/evals/*'; } | sort -u)
+pat='plan-test|plan_test|PLAN_TEST|test slots?'
+repo=$(cd "$root/../.." && pwd)
+left=$( { grep -rIliE "$pat" "$root" --exclude-dir=evals
+          find "$root" -iname '*plan*test*' -not -path '*/evals/*'
+          grep -qiE "$pat" "$repo/README.md" && echo "$repo/README.md"
+          jq -c '.plugins[] | select(.name == "flutter-toolkit")' "$repo/.claude-plugin/marketplace.json" \
+            | grep -qiE "$pat" && echo "$repo/.claude-plugin/marketplace.json"; } | sort -u)
+echo "repo-files=$(ls "$repo/README.md" "$repo/.claude-plugin/marketplace.json" 2>/dev/null | wc -l | tr -d ' ')"
 printf '%s\n' "$left" | grep -v '^$' | sed 's/^/left: /'
 echo "left-count=$(printf '%s\n' "$left" | grep -vc '^$')"
 if [ -e "$root/bin/plan-test" ]; then echo "plan-test=present"; else echo "plan-test=gone"; fi

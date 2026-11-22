@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-no-dart
+description: plan-coverage on a change with no Dart file passes, says there was nothing to measure and does not run the test command.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: w=$PWD; export PLAN_QA_REPORT_DIR="$w/report"; (cd r && plan-coverage --diff main -- bash "$w/fake_test.sh" 2>&1; echo "rc=$?") | sed "s/^/ci: /"; if [ -e "$w/ran" ]; then echo "test-command=ran"; else echo "test-command=not-run"; fi
+  prompt: |
+    On a branch that changed only a workflow file, run plan-coverage against main with a test command that leaves a marker file when it runs. Print the output, the exit code and whether the marker exists.
+context:
+  scaffold_script: fixture.sh
