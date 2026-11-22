@@ -49,10 +49,10 @@ A question the user has ruled on is closed: raise it again only with new evidenc
 request ─▶ task statement ─▶ Investigation ─▶ decision brief ─▶ Build ─▶ screen review ─▶ Tests ─▶ Integration ─▶ Verify ─▶ delivery summary ─▶ Close
 ```
 
-1. **Task statement** (you, one paragraph): goal · boundary · done-when · project · estimated size (hours per slice) and slice order · tier — `exempt`
+1. **Task statement** (you, one paragraph): goal · boundary · done-when · project · estimated size and slice order · tier — `exempt`
    (typo, constant, log: the builder edits, then Verify), `small` (one module, no new abstraction:
    no investigation or brief, you rule; a change to an entity's role, a repository or public interface, or a unit's responsibility is `feature`, never `small`) or `feature` (the full flow; when unsure). A request one
-   brief cannot hold is split into sub-tasks, `references/brief.md`. Work clearly over the estimate goes to the user as a `Needs you` line that turn, never carried on silently. A deadline stays in the tracker row, never the statement (`references/tracker.md`).
+   brief cannot hold is split into sub-tasks, `references/brief.md`. Work clearly over the estimate, a builder's `partial` report included, goes to the user as a `Needs you` line that turn, never carried on silently. A deadline stays in the tracker row, never the statement (`references/tracker.md`).
 2. **Investigation** (you): fill in the form `asst-report form investigation` prints and file it
    with `asst-report put <slug> investigation --worktree <worktree>`.
 3. **Decision brief** (you, from the investigation): `references/brief.md`. A drafter you delegate
@@ -98,7 +98,7 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
 - Every dispatch names the slug, the report kind, the worktree (an svn working copy, "svn" in the
   agents, in a repo with `.svn` and no `.git`) and the user's locale tag; reports go by path.
 - Every dispatch states the project's exact check commands (lint, format, test), from its CLAUDE.md, hooks or CI.
-- A builder dispatch carries its slice's name and estimated hours as the task statement gives them, never the task's deadline.
+- A builder dispatch carries its slice row's Name, estimated hours and start time, never the task's deadline.
 - A verifier dispatch carries the builder and tester report paths, so a deviation on a builder's `fixed (base branch)` line reads as explained.
 - Before creating a task's worktree, run `git fetch` (every worktree and branch starts from `origin/<default>`, a stacked
   PR's from the branch it stacks on, never from a local branch that may be stale), then measure the free space with `df` on the disk that holds the
@@ -113,7 +113,7 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
 - Before creating a cloud resource (anything billed), look up its price, take the free tier or the cheapest setup that meets the need, and report the estimated monthly cost, or say none was found. Watch the costs that accrue quietly: key versions, retained images, minimum instances, backups, log retention.
 - When the project's CI runs on the same machine, dispatch one agent that runs tests at a time.
 - Cut `integration` and `fix` into slices — a module, a group of findings — and dispatch
-  one builder per slice, each ending at its commit; `ui` is one dispatch for every screen.
+  one builder per slice, each ending at its commit and tracked as a slice row (`references/tracker.md`); `ui` is one dispatch for every screen.
   Never resume a builder, whether its slice finished or it came back marked partial. Brief the
   next one with the slice and only what the code and the filed reports can't show — a ruling it
   needs, a dead end the last run hit.

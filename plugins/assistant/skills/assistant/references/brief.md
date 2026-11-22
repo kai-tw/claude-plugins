@@ -26,8 +26,8 @@ a link to its page section, never a restatement. A behaviour or a case-table cel
 spec doesn't decide, or a spec that conflicts with what the code shows: if the PM can see
 the tracker, first ask the user whether to open a question row for the PM; if not, or declined, it
 is a `Needs you`;
-agreed, create a tracker row without `Parent item` (a row with sub-items is never
-dispatched): Name = the comment prefix `references/notion.md` gives, plus a one-line summary of the question;
+agreed, create a tracker row without `Parent item` (a row with sub-items other than slice rows is a split's
+parent, never dispatched): Name = the comment prefix `references/notion.md` gives, plus a one-line summary of the question;
 body = a link to the spec page section, the passage quoted verbatim, then the question;
 `Status=Deferred`, condition "the PM answers". The task row turns `Next`, `Blocked by` it;
 further discussion goes in its page comments. The PM answers there, updates the spec page
