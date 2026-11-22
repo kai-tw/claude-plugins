@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: coverage-queue-term-running
-description: Sent TERM while the test command runs inside its slot, plan-coverage passes the signal on so the test command stops early, keeps the slot until the test command has exited, then releases it and exits non-zero.
+description: Sent TERM while the test command runs inside its slot, plan-coverage passes the signal on so the test command stops early, keeps the slot until the test command has exited, then releases it and exits 143.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1

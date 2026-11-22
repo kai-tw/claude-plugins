@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: coverage-queue-term-waiting
-description: Sent TERM while it waits for a test slot held by a live process, plan-coverage stops waiting and exits non-zero without running the test command, and leaves no slot of its own behind, even once the holder's slot comes free.
+description: Sent TERM while it waits for a test slot held by a live process, plan-coverage stops waiting and exits 143 without running the test command, and leaves no slot of its own behind, even once the holder's slot comes free.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1
