@@ -9,7 +9,7 @@ and `tasks/<slug>/brief.md`. None found: ask the user once and write the answer 
 
 ## Rows
 
-One row per task: Status is In Progress · Next · Backlog · Deferred, `Stage` mapped as: task
+One row per task (slice rows, below, are not tasks and carry no `Stage`): Status is In Progress · Next · Backlog · Deferred, `Stage` mapped as: task
 statement → Product Plan · brief → Engineering Plan · screens → Design Plan · build →
 Implementation · verify → Review · deliver → QA; a tracker lacking these fields uses labels or lists.
 `Blocked by` names only the rows it waits for, and a `Next` row needs one; a row that waits on
@@ -25,9 +25,9 @@ Notion's `decision-log`; with any other tracker, to `.claude/.assistant/kb/decis
 
 ## Slices
 
-Once the brief is approved (a `small` task: once you rule it), each builder slice gets its own slice row, and a `fix` slice gets one when it is cut: a sub-item of the task row, `Name` `<slug>/<n> <what it does>`, `Status=Next`, where the `/` tells a slice row apart from a split's sub-task. The slice row's body holds its estimated hours, their only home: the task statement carries none. Slices that must run in order are chained by `Blocked by`; ones that can run in parallel are not. A slice row skips what a task row does on its own: a `Next` one needs no `Blocked by`, closing one never turns the next `In Progress`, none starts at the investigation, and none counts in the earliest-`Due` order.
+Once the brief is approved (a `small` task: once you rule it), each builder slice gets its own slice row, and a `fix` slice gets one when it is cut: a sub-item of the task row, `Name` `<slug>/<n> <what it does>`, `Status=Next`, where a Name that starts with its parent's slug, a `/` and a number tells a slice row apart from a split's sub-task, whose Name may hold a `/` of its own. The slice row's body holds its estimated hours as an `Estimate: <n>h` line outside Current state, their only home: the task statement carries none; carry that line into every rewrite of the body. Slices that must run in order are chained by `Blocked by`; ones that can run in parallel are not. A slice row skips what a task row does on its own: a `Next` one needs no `Blocked by`, closing one never turns the next `In Progress`, none starts at the investigation, and none counts in the earliest-`Due` order.
 
-Dispatching a slice's builder turns its row `In Progress`, the start date and time in its Current state. After a builder's `partial` report the slice row stays, its estimate rewritten as the hours left. Once its builder commits and the checks pass, delete the slice row, as you do a slice the user agreed to cut; when the task row closes, its slice rows are deleted with it.
+Dispatching a slice's builder turns its row `In Progress`, the start date and time in its Current state. After a builder's `partial` report the slice row stays, back to `Next` with the start time cleared from its Current state and its `Estimate:` line rewritten as the hours left. Once its builder commits and the checks pass, delete the slice row, as you do a slice the user agreed to cut; when the task row closes, its slice rows are deleted with it.
 
 A task row with slice rows is still the task: the brief, screen review, verify and PR run on it, and its slices share its worktree. Once its last slice row is deleted, the task row stays open for verify and the PR.
 
@@ -41,8 +41,8 @@ from a split's parent, whose sub-items are the work. A Close changes the tracker
 until no row advances — the turn ends at a `Needs you`, a blocker or a quiet tracker, never at a
 Close. A row's progress is what the tracker and the disk hold, not what you remember:
 `asst-report summary` shows every task's newest report of each kind; a row whose awaited report
-isn't there and has no agent of yours on it in `ListAgents` → dispatch it again. An `In Progress` slice row that a filed builder report names on its first line is updated from that report, never dispatched again. After an interrupted turn a background agent may already be dead: before calling it still running, check its transcript for new progress; being in `ListAgents` alone does not count, and no new progress means dispatch it again. `digest` is one
-line per row. A spec question row is answered once the PM moves it to the tracker's done status:
+isn't there and has no agent of yours on it in `ListAgents` → dispatch it again. An `In Progress` slice row that a filed builder report names on its first line is updated from that report, never dispatched again; only a report filed after the row's start time counts. After an interrupted turn a background agent may already be dead: before calling it still running, check its transcript for new progress; being in `ListAgents` alone does not count, and no new progress means dispatch it again. `digest` is one
+line per task row, slice rows set aside. A spec question row is answered once the PM moves it to the tracker's done status:
 re-read its spec page, then close it (`references/brief.md`).
 
 Candidates are untracked work waiting on the user in task sources named in the project's
@@ -59,7 +59,7 @@ While a request has a scope `Needs you` unanswered, nothing under it is dispatch
 
 ## Deadlines
 
-A row's deadline is its date column (Notion's Due, a file board's `Due`, on GitHub the user's date in the issue's Current state, else the milestone's date; there it is the `Deadline: YYYY-MM-DD` line, never the paragraph's own date). Every pass, run `date` and read each row's deadline from the row, so a date the PM changed counts from the next pass. A board without a `Due` column reads as no deadline; add the column on its first write. A task with no deadline still gets its slice rows but skips the late check.
+A row's deadline is its date column (Notion's Due, a file board's `Due`, on GitHub the user's date in the issue's Current state, else the milestone's date; there it is the `Deadline: YYYY-MM-DD` line, never the paragraph's own date). Every pass, run `date` and read each row's deadline from the row, so a date the PM changed counts from the next pass. A board without a `Due` column (Notion: a date property) reads as no deadline; add the `Due` column only to a file board, on its first write, and never change a Notion database's schema. A task with no deadline still gets its slice rows but skips the late check.
 
 When the user gives a deadline, write it in the row's date column; when it differs from the date the row holds, the user's latest word replaces the row's date. A GitHub milestone is shared by many issues, so never edit it: write the user's date as that line in the issue's Current state, which wins over the milestone, and carry it into every rewrite of Current state.
 

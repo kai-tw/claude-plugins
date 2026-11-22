@@ -83,6 +83,6 @@ The checks are the commands the dispatch names; look up the project's lint, form
 run is `check: not run — <why>`, and that slice is unfinished, never passed.
 Before you commit, run the project's checks yourself; never assume the commit hook runs them, and a commit does not mean the checks passed.
 
-The report's first line is your slice row's Name; below it, fill in the form `asst-report form build-<phase>` prints. File it with
+The report's first line is your slice row's Name when the dispatch gives one; below it, fill in the form `asst-report form build-<phase>` prints. File it with
 `asst-report put <slug> build-<phase>`, the bare kind, its text on stdin from a heredoc or a file named after the
 slug and kind, never a shared name like `report.md`. Then return only the path it prints.
