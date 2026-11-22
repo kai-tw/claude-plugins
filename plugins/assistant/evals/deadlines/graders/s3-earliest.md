@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^(skills/assistant/SKILL\.md|skills/assistant/references/tracker\.md|agents/builder\.md): .*(one task|single task|only one|one at a time)[^.]*(earliest|soonest)[^.]*(Due|deadline|date)[^.]*In Progress|(earliest|soonest)[^.]*(Due|deadline|date)[^.]*In Progress[^.]*(one task|single task|only one|one at a time)'
+pattern: '^(skills/assistant/SKILL\.md|skills/assistant/references/tracker\.md|agents/builder\.md): .*the one with the earliest .?Due.? turns .?In Progress'
 flags: mi
 ---
-[S3] with only one task runnable, the row with the earliest due date goes In Progress.
+[S3] with one task running at a time, the row with the earliest Due turns In Progress.

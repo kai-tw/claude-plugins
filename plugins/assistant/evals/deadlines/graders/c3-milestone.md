@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^(skills/assistant/SKILL\.md|skills/assistant/references/tracker\.md|agents/builder\.md): .*milestone[^.]*(never|not|do not|don.t)[^.]*(change|edit|modif|write)[^.]*Current state|Current state[^.]*(date|deadline)[^.]*milestone'
+pattern: '^(skills/assistant/SKILL\.md|skills/assistant/references/tracker\.md|agents/builder\.md): .*milestone[^.]*never edit[^.]*Current state, which wins over the milestone'
 flags: mi
 ---
-[C3] a GitHub milestone is never edited; the user's date goes in the issue row's Current state and wins over the milestone.
+[C3] a GitHub milestone is never edited; the user's date goes in the issue's Current state and wins over the milestone.

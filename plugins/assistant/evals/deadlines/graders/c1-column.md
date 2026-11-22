@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/references/tracker\.md: .*\|[^|]*\bDue\b|^skills/assistant/references/tracker\.md: .*`Due`[^.]*(column|YYYY-MM-DD)|^skills/assistant/references/tracker\.md: .*Due[^.]*YYYY-MM-DD'
+pattern: '^skills/assistant/references/tracker\.md: .*columns[^.]*.?Due.? \(YYYY-MM-DD or blank\).*When the user gives a deadline, write it in the row.s date column'
 flags: mi
 ---
-[C1] the file board gains a Due column (YYYY-MM-DD or blank) that holds the date the request gave.
+[C1] the file board has a Due column (YYYY-MM-DD or blank) and the date the user gives is written into it.
