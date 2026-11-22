@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: coverage-import-test-any-command
-description: plan-coverage runs its import-only test in any Flutter package, whatever the test command starts with, so a declaration-only file tested through `-- run-suite <scope>` is NO-CODE, not NOT-LOADED; outside a Flutter package it says on stderr that the import-only test did not run.
+description: plan-coverage runs its import-only test in any Flutter package, whatever the test command starts with, so a declaration-only file tested through `-- run-suite <scope>` is NO-CODE, not NOT-LOADED, and the import-only test runs inside a test slot; outside a Flutter package it says on stderr that the import-only test did not run.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1
@@ -8,8 +8,8 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export TEST_QUEUE_DIR="$PWD/s" TEST_QUEUE_WAIT=0; w=$PWD; PATH="$w/fake:$PATH"; (cd app && plan-coverage --diff main -- run-suite test/ 2>&1; echo "rc=$?") | sed "s/^/app: /"; (cd dart && plan-coverage --diff main -- bash fake_test.sh 2>&1; echo "rc=$?") | sed "s/^/dart: /"
+    EVAL_CMD: export TEST_QUEUE_DIR="$PWD/s" TEST_QUEUE_SLOTS=1 TEST_QUEUE_WAIT=0; w=$PWD; PATH="$w/fake:$PATH"; (cd app && plan-coverage --diff main -- run-suite test/ 2>&1; echo "rc=$?") | sed "s/^/app: /"; (cd dart && plan-coverage --diff main -- bash fake_test.sh 2>&1; echo "rc=$?") | sed "s/^/dart: /"; echo "import-slot=$(cat import-slot.txt 2>/dev/null || echo not-run)"
   prompt: |
-    In a Flutter package whose change adds an enum file, run plan-coverage with a wrapper script as the test command; then in a pure Dart package with the same change. Print each report and exit code.
+    In a Flutter package whose change adds an enum file, run plan-coverage with a wrapper script as the test command; then in a pure Dart package with the same change. Print each report and exit code, and whether the only test slot was held while the import-only test ran.
 context:
   scaffold_script: fixture.sh
