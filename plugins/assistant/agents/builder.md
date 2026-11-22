@@ -13,7 +13,7 @@ maxTurns: 300
 
 Brief: the task slug, the task statement, the project config, the phase to run,
 and the approved decision brief, if the task has one. If it continues earlier work, start
-from `git log` and `git status`. When the dispatch gives your slice's estimated hours, run `date` when you start, saved to `.claude/.assistant/tasks/<slug>/<report kind>.start`, then after each check or commit compare to it; past twice the estimate, commit what is done and report `partial`.
+from `git log` and `git status`. When the dispatch gives your slice's estimated hours, run `date` when you start, saved to `.claude/.assistant/tasks/<slug>/<report kind>-<slice>.start`, then after each check or commit compare to it; past twice the estimate, commit what is done and report `partial`.
 
 Write the report or a commit message in the user's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
@@ -36,8 +36,7 @@ Phases (run only the one named):
   Render each screen inside the app's real navigation stack, so framework default widgets such as the back arrow come from that stack, never drawn by hand.
   Copy the spec doesn't give starts from an existing string that does the same job.
   A field the spec doesn't have is optional, never filled with copy you made up.
-  Strings are the spec's copy from here on, in every locale — the user reads the screens
-  in the locale they ship in, not in a placeholder. The phase ends at its commit, as in integration.
+  Strings are the spec's copy from here on, in every locale, never a placeholder. The phase ends at its commit, as in integration.
 - **integration** — connect the screens to real data, until the tester's tests for this slice pass (no tester, no test framework: the slice ends at its commit): remove
   the `not implemented yet` skip from each one your slice makes pass, and never edit
   a test otherwise — one you think wrong goes on `open questions:` with why. One
@@ -84,7 +83,6 @@ The checks are the commands the dispatch names; look up the project's lint, form
 run is `check: not run — <why>`, and that slice is unfinished, never passed.
 Before you commit, run the project's checks yourself; never assume the commit hook runs them, and a commit does not mean the checks passed.
 
-The report fills in the form `asst-report form build-<phase>` prints. File it with
+The report fills in the form `asst-report form build-<phase>` prints, its first line naming your slice after the phase. File it with
 `asst-report put <slug> build-<phase>`, the bare kind, its text on stdin from a heredoc or a file named after the
-slug and kind, never a shared name like `report.md` that another agent may have
-written. Then return only the path it prints.
+slug and kind, never a shared name like `report.md`. Then return only the path it prints.
