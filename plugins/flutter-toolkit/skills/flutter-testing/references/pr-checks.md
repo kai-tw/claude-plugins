@@ -24,12 +24,8 @@ runner, adding `--labels flutter` to `config.sh`).
 
 Keep each repo's runner up in its own terminal tab with
 `~/actions-runners/<dir>/run.sh`. While it's down, a PR's jobs wait queued on
-GitHub. An idle runner takes about 60 MB of memory and no CPU. `plan-coverage`
-takes this machine's test slots like any other run, so CI and local sessions
-share the same concurrency limit; `dart_mutants` keeps its own slots. A local session gives up after 120
-seconds without a slot, because the Bash tool stops a call at 10 minutes; CI has
-no such limit, so the workflow sets `PLAN_TEST_WAIT` to wait an hour instead of
-failing a check that measured nothing. Only use it on a private repo: a
+GitHub. An idle runner takes about 60 MB of memory and no CPU. `dart_mutants`
+keeps its own machine-wide slots. Only use it on a private repo: a
 public repo's workflows can be made to run a stranger's code on it.
 
 ## The workflow
@@ -51,8 +47,6 @@ concurrency:
 jobs:
   coverage:
     runs-on: [self-hosted, flutter]
-    env:
-      PLAN_TEST_WAIT: 3600
     steps:
       - uses: actions/checkout@v4
         with:

@@ -23,7 +23,7 @@
     },
     {
       "name": "flutter-toolkit",
-      "description": "Flutter testing on a shared machine — plan-test concurrency limit, line coverage over the diff",
+      "description": "plan-coverage runs a Flutter test command and checks that every changed line was executed",
       "source": "./plugins/flutter-toolkit",
       "category": "development",
       "author": {
