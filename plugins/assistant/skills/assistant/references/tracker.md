@@ -49,11 +49,11 @@ While a request has a scope `Needs you` unanswered, nothing under it is dispatch
 
 ## Deadlines
 
-A row's deadline is its date column only (Notion's Due, a file board's `Due`, on GitHub the milestone's date), never the task statement's. Every pass, run `date` and read each row's deadline from the row, so a date the PM changed counts from the next pass. A board without a `Due` column reads as no deadline; add the column on its first write. A task with no deadline behaves as before.
+A row's deadline is its date column (Notion's Due, a file board's `Due`, on GitHub the user's date in the issue's Current state, else the milestone's date). Every pass, run `date` and read each row's deadline from the row, so a date the PM changed counts from the next pass. A board without a `Due` column reads as no deadline; add the column on its first write. A task with no deadline behaves as if this section were absent.
 
-When the user gives a deadline, write it in the row's date column; when it differs from the date the row holds, the user's latest word replaces the row's date. A GitHub milestone is shared by many issues, so never edit it: write the user's date in the issue row's Current state, which wins over the milestone.
+When the user gives a deadline, write it in the row's date column; when it differs from the date the row holds, the user's latest word replaces the row's date. A GitHub milestone is shared by many issues, so never edit it: write the user's date in the issue's Current state, which wins over the milestone, and carry it into every rewrite of Current state.
 
-When a row's remaining hours (the estimates of its slices not yet committed) exceed the hours left before the end of its deadline day, that turn gets one `Needs you` line with the estimated finish date and the scope that can be cut. Speed up first what leaves the deliverable whole (a higher model or effort, slices in parallel); any cut to its scope or checks is asked, never taken. After a builder's `partial` report, re-estimate what is left and run this check again.
+When a row's remaining hours (the estimates of its slices not yet committed) exceed the hours left before the end of its deadline day, that turn gets one `Needs you` line with the estimated finish date and the scope that can be cut. Speed up first what leaves the deliverable whole (reordering the schedule, a higher model or effort, slices in parallel); any cut to its scope or checks is asked, never taken. After a builder's `partial` report, re-estimate what is left and run this check again.
 
 ## Close
 
