@@ -12,10 +12,4 @@ set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 impl="$here/../skills/flutter-testing/scripts/coverage.sh"
 
-# `flutter test --coverage` is the slow way to run the suite (measured ~20 min
-# vs ~4 min plain on NovelGlide), and this script types it INSIDE itself where
-# the require-plan-test hook — which only sees the top-level Bash command —
-# cannot. It goes through a plan-test slot so it never runs without taking one.
-# The script takes the slot itself, once it knows a Dart file changed: help, a
-# usage error and a change with no Dart file never wait for one.
 exec bash "$impl" "$@"

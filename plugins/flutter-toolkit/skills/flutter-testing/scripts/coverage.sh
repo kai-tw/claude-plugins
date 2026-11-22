@@ -79,7 +79,6 @@
 
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-ORIG_ARGS=("$@")
 
 EXPLICIT_FILES=""
 DIFF_BASE=""
@@ -150,14 +149,6 @@ fi
 files=$(printf '%s\n' "$files" | grep -v '^$' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)
 [ -n "$files" ] || { echo "plan-coverage: no changed lib/**.dart files — nothing to measure."; exit 0; }
 count_files=$(printf '%s\n' "$files" | grep -c .)
-
-# A test slot is taken only now that there is something to run, so a change
-# with no Dart file passes without waiting for one: taken first, a CI run
-# that changed only a workflow failed whenever local sessions held every slot.
-# plan-test runs this script again inside the slot, with PLAN_TEST_SLOT_HELD set.
-if [ -z "${PLAN_TEST_SLOT_HELD:-}" ]; then
-  exec bash "$here/plan_test.sh" --exec bash "$here/coverage.sh" "${ORIG_ARGS[@]}"
-fi
 
 # --- run --------------------------------------------------------------------
 LCOV=coverage/lcov.info
@@ -320,7 +311,7 @@ done <<< "$files"
 # absent there has no executable line, so it is NO-CODE and does not block.
 # Flutter packages only, since that test runs `flutter test` itself, whatever
 # the test command was: keyed on that command's first word, it was silently
-# skipped for `-- plan-test <scope>`, as a consumer's docs recommend. A `part of`
+# skipped for a wrapper command such as `-- run-suite <scope>`. A `part of`
 # file cannot be imported and stays NOT-LOADED, as does everything when the
 # import-only test is skipped or fails to run, and either is said on stderr.
 nocode=""
