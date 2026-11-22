@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-int-waiting
+description: Sent INT the way a terminal sends Ctrl-C, to its whole process group, while it waits for a test slot another process has locked, plan-coverage stops waiting and exits 130 without running the test command, leaves no process behind, and once the holder ends, nothing of its own takes, writes or holds the slot.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    With the machine's only test slot locked by a process that ends 8 seconds later and a wait of 30 seconds, start plan-coverage on one file in a process group of its own with INT handled as a terminal would; once it says it is waiting, send INT to that process group, and stop the group after 20 seconds if plan-coverage is still running. Then end the holder and wait 3 seconds. Print whether it stopped, its exit code, whether the test command ran, whether the slot is free afterwards, whose name its slot file carries and how many processes are left.
+context:
+  scaffold_script: fixture.sh

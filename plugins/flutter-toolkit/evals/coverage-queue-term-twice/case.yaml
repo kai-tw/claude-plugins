@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: coverage-queue-term-twice
-description: Sent TERM twice, 0.3 seconds apart, while the test command runs inside its slot and takes a second to shut down, plan-coverage stops the test command, exits 143 and has released its slot by the time it exits.
+description: Sent TERM twice, 0.3 seconds apart, while the test command runs inside its slot and takes a second to shut down, plan-coverage stops the test command, exits 143, and its slot is free by the time it exits.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh
   prompt: |
-    With one free test slot, run plan-coverage on one file with a 10-second test command that takes a second to shut down on TERM; once the test command has started, send plan-coverage TERM, then TERM again 0.3 seconds later, and stop it after 20 seconds if it is still running. Print whether it stopped, its exit code, whether the test command finished or was cut short, the slots the test command saw as it shut down, the slots left right after plan-coverage exited and how many processes are left.
+    With one free test slot, run plan-coverage on one file with a 10-second test command that takes a second to shut down on TERM; once the test command has started, send plan-coverage TERM, then TERM again 0.3 seconds later, and stop it after 20 seconds if it is still running. Print whether it stopped, its exit code, whether the test command finished or was cut short, whether its slot was still locked as the test command shut down, whether the slot was free right after plan-coverage exited and how many processes are left.
 context:
   scaffold_script: fixture.sh

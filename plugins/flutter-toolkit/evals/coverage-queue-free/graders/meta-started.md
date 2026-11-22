@@ -4,4 +4,4 @@ pattern: '^meta-started=recent$'
 flags: m
 arm: with-only
 ---
-The slot carries the epoch second the run started.
+The slot file carries the epoch second the run started.

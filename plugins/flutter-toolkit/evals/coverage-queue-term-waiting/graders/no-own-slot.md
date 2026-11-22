@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^own-slot=$'
+pattern: '^slot-content=name=other-repo$'
 flags: m
 arm: with-only
 ---
-No slot names it as its holder afterwards.
+It never took the slot: the slot file still names the other holder.

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: coverage-queue-no-slot-dir
-description: With TEST_QUEUE_DIR at a path where no directory can be made, plan-coverage warns once that it runs without a test slot, runs the test command exactly once and passes, and finishes instead of running itself again without end.
+description: With TEST_QUEUE_DIR at a path where no directory can be made, or at a directory where no lock file can be made, plan-coverage warns once that it runs without a test slot, runs the test command exactly once, passes and finishes on its own.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh
   prompt: |
-    Point TEST_QUEUE_DIR under /dev/null and run plan-coverage on one file, stopping it after 15 seconds if it is still running. Print whether it finished, its exit code, how many times the test command ran, how many WARNING lines it printed and whether any of its processes is left running.
+    Run plan-coverage on one file twice, first with TEST_QUEUE_DIR under /dev/null, then with it at an empty directory nobody can write to, stopping each run after 15 seconds if it is still running. For each, print whether it finished, its exit code, how many times the test command ran, how many WARNING lines it printed and whether any of its processes is left running.
 context:
   scaffold_script: fixture.sh

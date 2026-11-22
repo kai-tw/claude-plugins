@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^plan-coverage: WARNING .*cannot use /dev/null/slots.*WITHOUT a test slot'
+pattern: '^dev-null: plan-coverage: WARNING .*cannot use /dev/null/slots.*WITHOUT a test slot'
 flags: m
 arm: with-only
 ---

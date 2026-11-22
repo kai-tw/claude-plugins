@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^slots-after=slot-1 name=other-repo$'
+pattern: '^slot-after=free$'
 flags: m
 arm: with-only
 ---
-The only slot left is the one the other holder had before it.
+Nothing holds the slot once the holder has ended: plan-coverage left no waiter behind to take it.

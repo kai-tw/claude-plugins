@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^holder-at-term=alive$'
+pattern: '^slot-at-term=held$'
 flags: m
 arm: with-only
 ---
-The slot is held by a live process when TERM arrives.
+The slot is locked by another process when TERM arrives.

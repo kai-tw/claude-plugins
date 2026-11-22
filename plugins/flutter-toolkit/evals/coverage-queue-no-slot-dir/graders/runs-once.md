@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^runs=1$'
+pattern: '^dev-null: runs=1$'
 flags: m
 arm: with-only
 ---

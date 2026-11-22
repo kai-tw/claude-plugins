@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: coverage-queue-term-waiting
-description: Sent TERM while it waits for a test slot held by a live process, plan-coverage stops waiting and exits 143 without running the test command, and leaves no slot of its own behind, even once the holder's slot comes free.
+description: Sent TERM while it waits for a test slot another process has locked, plan-coverage stops waiting and exits 143 without running the test command, and once the holder ends, nothing of its own takes, writes or holds the slot.
 tags: [plan-coverage]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh
   prompt: |
-    With the machine's only test slot held by a live process that ends 8 seconds later and a wait of 30 seconds, run plan-coverage on one file, send it TERM once it says it is waiting, and stop it after 20 seconds if it is still running. Print whether it stopped, its exit code, whether the test command ran and the slots left afterwards.
+    With the machine's only test slot locked by a process that ends 8 seconds later and a wait of 30 seconds, run plan-coverage on one file, send it TERM once it says it is waiting, and stop it after 20 seconds if it is still running. Then end the holder and wait 3 seconds. Print whether it stopped, its exit code, whether the test command ran, whether the slot is free afterwards and whose name its slot file carries.
 context:
   scaffold_script: fixture.sh

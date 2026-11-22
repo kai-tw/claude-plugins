@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^finished=yes$'
+pattern: '^dev-null: finished=yes$'
 flags: m
 arm: with-only
 ---

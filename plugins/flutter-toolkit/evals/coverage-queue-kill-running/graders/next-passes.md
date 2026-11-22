@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^dead: rc=0$'
+pattern: '^next-rc=0$'
 flags: m
 arm: with-only
 ---
-And the run passes.
+The next run passes.

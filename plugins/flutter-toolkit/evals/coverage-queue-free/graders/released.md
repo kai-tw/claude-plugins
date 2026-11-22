@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^slots-after=slot-1 name=other-repo$'
+pattern: '^slots-after=held,free$'
 flags: m
 arm: with-only
 ---
-Its slot is released afterwards, and the other holder keeps its own.
+Its slot is free afterwards, and the other holder still holds its own.

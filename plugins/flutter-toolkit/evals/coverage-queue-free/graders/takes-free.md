@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^slots-during=slot-1,slot-2$'
+pattern: '^slots-during=held,held$'
 flags: m
 arm: with-only
 ---
-The test command runs inside the free slot.
+The test command runs inside the free slot while the other holder keeps its own.

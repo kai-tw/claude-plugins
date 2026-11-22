@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^slots-after=$'
+pattern: '^slot-after=free$'
 flags: m
 arm: with-only
 ---
-No slot is left in the slots directory when plan-coverage exits, without waiting for another run to reclaim it.
+Its slot is free once plan-coverage has exited.

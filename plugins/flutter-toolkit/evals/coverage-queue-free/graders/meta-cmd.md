@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^meta-cmd=.+'
+pattern: '^meta-cmd=.*fake_test\.sh'
 flags: m
 arm: with-only
 ---
-The slot carries the command it runs.
+The slot file carries the command it runs.

@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^left-running=0$'
+pattern: '^dev-null: left-running=0$'
 flags: m
 arm: with-only
 ---
