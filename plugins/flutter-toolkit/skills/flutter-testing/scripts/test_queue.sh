@@ -52,6 +52,8 @@
 #   TEST_QUEUE_WAIT   seconds to wait (default: 120)
 #   TEST_QUEUE_DIR    slot directory  (default: $HOME/.claude/.flutter-toolkit/queue)
 #   TEST_QUEUE_NAME   holder name     (default: the working directory's name)
+#   TEST_QUEUE_NOTICE_FD  descriptor for the waiting and refusal lines, when the
+#                     command's own stderr goes elsewhere (default: stderr)
 set -uo pipefail
 
 if [ "${1:-}" != "--exec" ] || [ $# -lt 2 ]; then
@@ -69,9 +71,19 @@ use strict;
 use warnings;
 use Fcntl qw(:flock O_RDWR O_CREAT F_SETFD);
 use File::Path qw(make_path);
+use IO::Handle;
 
 my ($dir, $slots, $wait, $name, @cmd) = @ARGV;
 my $poll = 3;
+
+# The waiting and refusal lines reach the screen even when the command
+# runs with its output in a log.
+my $notice = \*STDERR;
+if (($ENV{TEST_QUEUE_NOTICE_FD} // "") =~ /^\d+$/) {
+  my $fd;
+  open($fd, ">&=", $ENV{TEST_QUEUE_NOTICE_FD}) and $notice = $fd;
+}
+$notice->autoflush(1);
 
 # Through the exec builtin of bash, not the execvp perl uses: execvp hands a
 # script with no shebang line to /bin/sh, which is dash on Ubuntu; bash runs it
@@ -120,19 +132,19 @@ while (1) {
   last if $held;
   if (time >= $deadline) {
     my $now = time;
-    print STDERR "plan-coverage: REFUSED — none of $slots test slots free after ${wait}s.\n\nHolding now:\n";
+    print $notice "plan-coverage: REFUSED — none of $slots test slots free after ${wait}s.\n\nHolding now:\n";
     for my $k (1 .. $slots) {
       my %f = fields("$dir/slot-$k");
       my $for = $f{started} && $f{started} =~ /^\d+$/
         ? sprintf("%dm%02ds", ($now - $f{started}) / 60, ($now - $f{started}) % 60) : "?";
-      printf STDERR "  slot-%d  %-24s pid=%-7s %s\n      %s\n",
+      printf $notice "  slot-%d  %-24s pid=%-7s %s\n      %s\n",
         $k, $f{name} // "?", $f{pid} // "?", $for, $f{cmd} // "?";
     }
-    print STDERR "\nThis machine cannot run more test suites at once without exhausting\n",
+    print $notice "\nThis machine cannot run more test suites at once without exhausting\n",
                  "memory. Narrow your scope, wait for a holder to finish, or ask them.\n";
     exit 75;
   }
-  print STDERR "plan-coverage: all $slots test slots are held — waiting up to ${wait}s...\n" unless $announced++;
+  print $notice "plan-coverage: all $slots test slots are held — waiting up to ${wait}s...\n" unless $announced++;
   sleep $poll;
 }
 

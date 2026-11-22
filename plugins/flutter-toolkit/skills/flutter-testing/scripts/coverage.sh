@@ -385,11 +385,10 @@ if [ -n "$unloaded" ] && [ -n "$is_flutter" ]; then
     printf "void main() => test('plan-coverage import-only test', () {});\n"
   } > "$probe_dir/probe_test.dart"
   if [ -n "$probed" ]; then
-    run_queued flutter test "$probe_dir/probe_test.dart" --coverage \
-      --coverage-path "$probe_dir/lcov.info" > "$probe_dir/log" 2>&1
+    TEST_QUEUE_NOTICE_FD=3 run_queued flutter test "$probe_dir/probe_test.dart" --coverage \
+      --coverage-path "$probe_dir/lcov.info" 3>&2 > "$probe_dir/log" 2>&1
     probe_rc=$?
     if [ "$probe_rc" -eq 75 ]; then
-      cat "$probe_dir/log" >&2
       exit 75
     elif [ "$probe_rc" -eq 0 ]; then
       loaded=$(sed -n 's/^SF://p' "$probe_dir/lcov.info" | sed "s|^$root/||")
@@ -467,7 +466,7 @@ fi
 
 if [ "$n_prag" -gt 0 ]; then
   echo
-  echo "Coverage pragmas (each hides lines from the measurement, or claims a retired exemption):"
+  echo "Coverage pragmas (each hides lines from the measurement, or claims an exemption that does not exist):"
   printf '%b' "$pragmas" | while IFS=$'\t' read -r loc src; do
     [ -n "$loc" ] && printf '  • %s  %s\n' "$loc" "$src"
   done
@@ -542,7 +541,7 @@ plan-coverage: BLOCKED.
 $( [ "$n_unloaded" -gt 0 ] && printf '\n  %s changed file(s) appear NOWHERE in the coverage report — no test imports them.\n  That is not a low score; it is an unmeasured file, and mutation cannot see it\n  either (an unexecuted line produces no mutant to survive).\n' "$n_unloaded" )
 $( [ "$n_gaps" -gt 0 ] && printf '\n  %s unexecuted line(s). Add the test that runs each one. A line no test can\n  execute is a design finding — put it behind a seam a test can drive — and\n  no comment makes it pass. Before calling a gap a miscount, find how other\n  files cover the same kind of line; a line no test can execute by\n  construction is fixed in plan-coverage, never by reshaping the code.\n' "$n_gaps" )
 $( [ "$n_unmeas" -gt 0 ] && printf '\n  %s throw(s) inside ?? / ?: that no coverage record can see. Rewrite each as a\n  statement (`if (x == null) throw …;`) so branch coverage measures it, then\n  test it.\n' "$n_unmeas" )
-$( [ "$n_prag" -gt 0 ] && printf '\n  %s coverage pragma(s) in changed files. `coverage:ignore-*` removes lines from\n  the measurement before this check reads it; `coverage-ignore:` is retired.\n  Remove them and let those lines be measured.\n' "$n_prag" )
+$( [ "$n_prag" -gt 0 ] && printf '\n  %s coverage pragma(s) in changed files. `coverage:ignore-*` removes lines from\n  the measurement before this check reads it; `coverage-ignore:` exempts nothing.\n  Remove them and let those lines be measured.\n' "$n_prag" )
 EOF
   exit 1
 fi
