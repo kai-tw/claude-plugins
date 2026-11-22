@@ -37,7 +37,9 @@
 #
 # EXIT
 #   the command's own exit code; 75 (EX_TEMPFAIL — busy, not broken) when no slot
-#   came free within the wait, so retrying later is valid; 2 for a usage error.
+#   came free within the wait, so retrying later is valid; 2 for a usage error;
+#   130 / 143 on INT / TERM: while waiting, at once; while running, once the
+#   command has exited, and only then is the slot released.
 #
 # Env:
 #   TEST_QUEUE_SLOTS  slot count      (default: max(1, (RAM_GB - 8) / 4))
@@ -45,6 +47,8 @@
 #   TEST_QUEUE_DIR    slot directory  (default: $HOME/.claude/.flutter-toolkit/slots)
 #   TEST_QUEUE_NAME   holder name     (default: the working directory's name)
 set -uo pipefail
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+. "$here/stoppable.sh"
 
 SLOT_DIR="${TEST_QUEUE_DIR:-$HOME/.claude/.flutter-toolkit/slots}"
 WAIT_S="${TEST_QUEUE_WAIT:-120}"
@@ -123,7 +127,9 @@ release() {
   [ -n "$HELD" ] && [ "$(slot_field "$HELD" pid)" = "$$" ] && rm -rf "$HELD"
   HELD=""
 }
-trap release EXIT INT TERM
+trap release EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # ------------------------------------------------------------------ command
 
@@ -138,6 +144,7 @@ shift
 # helper could stop every test run.
 if ! mkdir -p "$SLOT_DIR" 2>/dev/null; then
   echo "plan-coverage: WARNING — cannot use $SLOT_DIR; running WITHOUT a test slot." >&2
+  export TEST_QUEUE_SLOT_HELD=none
   exec "$@"
 fi
 
@@ -167,5 +174,5 @@ echo "plan-coverage: test slot ${HELD##*/} · $*" >&2
 # Marks the child as already inside a slot, so a nested call runs through
 # instead of blocking on a semaphore this process holds.
 export TEST_QUEUE_SLOT_HELD="$HELD"
-"$@"
+run_stoppable "$@"
 exit $?

@@ -78,6 +78,8 @@
 #      happen)
 #   75 no test slot came free within TEST_QUEUE_WAIT — busy, not broken; nothing
 #      ran, and the refusal names who holds which slot
+#   130 / 143  stopped by INT / TERM; a running test command is stopped first,
+#      and its test slot is released once it has exited
 #
 #   Scope is taken against `origin/<default branch>` when that ref exists, and
 #   the base used is printed in the report header. The LOCAL branch of the same
@@ -85,6 +87,7 @@
 
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+. "$here/stoppable.sh"
 ORIG_ARGS=("$@")
 
 EXPLICIT_FILES=""
@@ -98,7 +101,7 @@ while [ $# -gt 0 ]; do
               [ "${1:-}" = "--" ] && shift ;;
     --diff)   DIFF_BASE="${2:?--diff needs a ref}"; shift 2 ;;
     --)       shift; break ;;
-    -h|--help) sed -n '2,84p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,86p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # A flag this script does not know is never forwarded silently. Measured on
     # an earlier launcher: an unrecognised flag fell through into the test
     # command, the run widened to the whole suite, and the score looked normal.
@@ -191,7 +194,7 @@ case " $* " in *" --branch-coverage "*) ;; *) set -- "$@" --branch-coverage ;; e
 echo "plan-coverage: ${count_files} changed file(s); every line must be executed, drift table definitions and logic-free const constructors aside."
 echo "plan-coverage: running — $*"
 started=$(date +%s)
-"$@"
+run_stoppable "$@"
 test_rc=$?
 elapsed=$(( $(date +%s) - started ))
 
@@ -353,7 +356,7 @@ if [ -n "$unloaded" ] && [ -n "$is_flutter" ]; then
     done <<< "$unloaded"
     printf "void main() => test('plan-coverage import-only test', () {});\n"
   } > "$probe_dir/probe_test.dart"
-  if [ -n "$probed" ] && flutter test "$probe_dir/probe_test.dart" --coverage \
+  if [ -n "$probed" ] && run_stoppable flutter test "$probe_dir/probe_test.dart" --coverage \
        --coverage-path "$probe_dir/lcov.info" > "$probe_dir/log" 2>&1; then
     loaded=$(sed -n 's/^SF://p' "$probe_dir/lcov.info" | sed "s|^$root/||")
     while IFS= read -r f; do

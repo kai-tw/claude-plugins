@@ -7,7 +7,8 @@ checks where the plan allows it.
   line the PR changed isn't executed by any test. It queues the test run for a
   machine-wide slot (`TEST_QUEUE_SLOTS`) and exits 75 if none frees within
   `TEST_QUEUE_WAIT` seconds, so a runner shared with local sessions can fail
-  the job as busy: set a longer `TEST_QUEUE_WAIT` in the job's `env`.
+  the job as busy. The job below sets `TEST_QUEUE_WAIT: 3600` in its `env`:
+  CI has no 10-minute tool limit, so it can wait longer.
 - **Mutation, scoped after Google's practice.** `dart run dart_mutants --diff
   <PR base> --test-command "flutter test"` mutates only the lines the PR
   changed, one mutant a line, and the job fails while any mutant survives on
@@ -50,6 +51,8 @@ concurrency:
 jobs:
   coverage:
     runs-on: [self-hosted, flutter]
+    env:
+      TEST_QUEUE_WAIT: 3600
     steps:
       - uses: actions/checkout@v4
         with:
