@@ -4,7 +4,7 @@
 
 Where tasks live follows the project's convention, read from its CLAUDE.md: Notion
 (`references/notion.md`); GitHub or any other through the environment's tool; a file board by
-editing `.claude/.assistant/board.md` (columns Slug, Name, Status, Stage, Blocked by, Parent item)
+editing `.claude/.assistant/board.md` (columns Slug, Name, Status, Stage, Blocked by, `Due` (YYYY-MM-DD or blank), Parent item)
 and `tasks/<slug>/brief.md`. None found: ask the user once and write the answer into its CLAUDE.md.
 
 ## Rows
@@ -16,9 +16,9 @@ Implementation · verify → Review · deliver → QA; a tracker lacking these f
 something outside the tracker is `Deferred`, its condition in the body. When a row closes, a
 `Next` row whose last blocker it was turns `In Progress`: one not yet started (a later sub-task of
 a split) starts at the investigation, one a question row blocked carries on at its `Stage`; a
-parent whose last sub-item it was closes too.
+parent whose last sub-item it was closes too. When only one task runs at a time (`Dispatch rules`, low disk) and several `Next` rows come free together, the one with the earliest `Due` turns `In Progress` and the others become `Blocked by` it; a row with no deadline goes last, the same date in creation order.
 
-Open the row body with a dated "Current state" paragraph, never stacked under older ones: when the state changes, replace it whole. Properties carry no task content, a `Deferred` row's condition included: the problem, the fix and the progress go in the body.
+Open the row body with a dated "Current state" paragraph, never stacked under older ones: when the state changes, replace it whole. Properties carry no task content (`Blocked by` and `Due` only order the schedule), a `Deferred` row's condition included: the problem, the fix and the progress go in the body.
 
 The decisions you file are engineering decisions (design, structure), one entry per question, to
 Notion's `decision-log`; with any other tracker, to `.claude/.assistant/kb/decisions/<slug>.md`.
@@ -46,6 +46,14 @@ reason, in the turn's `Needs you` lines, not taken as no candidates.
 Delete without asking a row whose subject is gone (code removed, reported failure vanished) once source or CI confirms it, and say what you checked. A row that only looks affected by someone else's open ruling is not deleted.
 
 While a request has a scope `Needs you` unanswered, nothing under it is dispatched.
+
+## Deadlines
+
+A row's deadline is its date column only (Notion's Due, a file board's `Due`, on GitHub the milestone's date), never the task statement's. Every pass, run `date` and read each row's deadline from the row, so a date the PM changed counts from the next pass. A board without a `Due` column reads as no deadline; add the column on its first write. A task with no deadline behaves as before.
+
+When the user gives a deadline, write it in the row's date column; when it differs from the date the row holds, the user's latest word replaces the row's date. A GitHub milestone is shared by many issues, so never edit it: write the user's date in the issue row's Current state, which wins over the milestone.
+
+When a row's remaining hours (the estimates of its slices not yet committed) exceed the hours left before the end of its deadline day, that turn gets one `Needs you` line with the estimated finish date and the scope that can be cut. Speed up first what leaves the deliverable whole (a higher model or effort, slices in parallel); any cut to its scope or checks is asked, never taken. After a builder's `partial` report, re-estimate what is left and run this check again.
 
 ## Close
 

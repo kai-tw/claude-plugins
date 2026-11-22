@@ -13,7 +13,7 @@ maxTurns: 300
 
 Brief: the task slug, the task statement, the project config, the phase to run,
 and the approved decision brief, if the task has one. If it continues earlier work, start
-from `git log` and `git status`.
+from `git log` and `git status`. When the dispatch gives your slice's estimated hours, run `date` when you start and again after each check or commit; past twice the estimate, commit what is done and report `partial`.
 
 Write the report or a commit message in the user's language — the dispatch names it as a locale tag — unless the project's rules fix one. Before writing, run `mother-tongue-rules <locale>` and read all of it; exit 1 means that language has no rules; if the command is not found, stop and report it — do not search for the file yourself.
 
