@@ -4,4 +4,4 @@ pattern: '^rc=0$'
 flags: m
 arm: with-only
 ---
-And it passes.
+The run passes.

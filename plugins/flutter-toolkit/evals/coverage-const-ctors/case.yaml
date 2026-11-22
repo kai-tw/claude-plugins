@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export PLAN_QA_REPORT_DIR="$PWD"; plan-coverage --files lib/cc.dart -- bash fake_test.sh 2>&1; echo "rc=$?"
+    EVAL_CMD: export TEST_QUEUE_DIR="$PWD/s" TEST_QUEUE_WAIT=0 PLAN_QA_REPORT_DIR="$PWD"; plan-coverage --files lib/cc.dart -- bash fake_test.sh 2>&1; echo "rc=$?"
   prompt: |
     Run plan-coverage on lib/cc.dart with a test run that records every constructor line unexecuted, and print the report and exit code.
 context:

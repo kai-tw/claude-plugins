@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: export PLAN_QA_REPORT_DIR="$PWD"; plan-coverage --files lib/a.dart lib/b.dart lib/c.dart -- bash fake_test.sh; echo "rc=$?"; rm -rf coverage; plan-coverage --files lib/c.dart -- bash fake_test.sh; echo "clean=$?"
+    EVAL_CMD: export TEST_QUEUE_DIR="$PWD/s" TEST_QUEUE_WAIT=0 PLAN_QA_REPORT_DIR="$PWD"; plan-coverage --files lib/a.dart lib/b.dart lib/c.dart -- bash fake_test.sh; echo "rc=$?"; rm -rf coverage; plan-coverage --files lib/c.dart -- bash fake_test.sh; echo "clean=$?"
   prompt: |
     Run plan-coverage with a fake test command that writes a fixed lcov: first measure three files, then only the fully executed lib/c.dart. Print both outputs and exit codes.
 context:

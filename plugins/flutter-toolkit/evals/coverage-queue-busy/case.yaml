@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-busy
+description: With every test slot held, plan-coverage on a change with no Dart file still passes at once with nothing to measure, while one with a Dart file waits TEST_QUEUE_WAIT seconds, runs nothing and refuses with 75, naming the holder and how long it has held the slot.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    With the machine's only test slot held by another repo and a wait of 5 seconds, run plan-coverage against main on a branch that changed only a workflow file, then on one that changed a Dart file. Print each output, exit code, the seconds it took and whether the test command ran.
+context:
+  scaffold_script: fixture.sh

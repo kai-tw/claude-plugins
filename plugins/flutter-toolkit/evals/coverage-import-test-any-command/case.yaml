@@ -8,7 +8,7 @@ execution:
   max_turns: 4
   allowed_tools: [Bash]
   env:
-    EVAL_CMD: w=$PWD; PATH="$w/fake:$PATH"; (cd app && plan-coverage --diff main -- run-suite test/ 2>&1; echo "rc=$?") | sed "s/^/app: /"; (cd dart && plan-coverage --diff main -- bash fake_test.sh 2>&1; echo "rc=$?") | sed "s/^/dart: /"
+    EVAL_CMD: export TEST_QUEUE_DIR="$PWD/s" TEST_QUEUE_WAIT=0; w=$PWD; PATH="$w/fake:$PATH"; (cd app && plan-coverage --diff main -- run-suite test/ 2>&1; echo "rc=$?") | sed "s/^/app: /"; (cd dart && plan-coverage --diff main -- bash fake_test.sh 2>&1; echo "rc=$?") | sed "s/^/dart: /"
   prompt: |
     In a Flutter package whose change adds an enum file, run plan-coverage with a wrapper script as the test command; then in a pure Dart package with the same change. Print each report and exit code.
 context:

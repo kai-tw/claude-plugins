@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-free
+description: With one of two test slots free, plan-coverage takes it without waiting, runs the test command inside it, writes the slot in the 7.x format (a live pid, TEST_QUEUE_NAME, the start time, the command) so a 7.x plan-test counts it, and releases it afterwards while the other holder keeps its own.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    With two test slots and slot-1 held by another repo, run plan-coverage on one file with a test command that records the slots and the new slot's meta fields while it runs. Print the exit code, what it recorded and the slots left afterwards.
+context:
+  scaffold_script: fixture.sh
