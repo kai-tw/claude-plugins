@@ -30,7 +30,8 @@ allowed-tools:
   runs the test command only once a changed Dart file needs measuring; a change with
   none passes without running it.
   The test command queues for a machine-wide slot (`$TEST_QUEUE_SLOTS`, default by
-  RAM) so concurrent sessions cannot exhaust memory. After `$TEST_QUEUE_WAIT` seconds
+  RAM) so concurrent sessions cannot exhaust memory. The slot is held while the test
+  process lives and freed when it exits, however it exits. After `$TEST_QUEUE_WAIT` seconds
   (default 120) with none free it exits 75 without running, naming each holder; narrow
   the scope or run again later.
 - Mutation: Dart → `dart run dart_mutants` (flags in its `--help`; `--test-command` is

@@ -68,7 +68,9 @@
 #
 #   The test command waits for a machine-wide test slot, so concurrent runs from
 #   several sessions cannot exhaust memory: TEST_QUEUE_SLOTS sets the slot count
-#   and TEST_QUEUE_WAIT the seconds to wait (`test_queue.sh` has the rest).
+#   and TEST_QUEUE_WAIT the seconds to wait (`test_queue.sh` has the rest). The
+#   slot is held while the test process lives and freed when it exits, however
+#   it exits; the work after the run holds none.
 #
 # EXIT
 #   0  every changed line executed
@@ -78,8 +80,8 @@
 #      happen)
 #   75 no test slot came free within TEST_QUEUE_WAIT — busy, not broken; nothing
 #      ran, and the refusal names who holds which slot
-#   130 / 143  stopped by INT / TERM; a running test command is stopped first,
-#      and its test slot is released once it has exited
+#   130 / 143  stopped by INT / TERM; a running test command is sent TERM and
+#      waited for first
 #
 #   Scope is taken against `origin/<default branch>` when that ref exists, and
 #   the base used is printed in the report header. The LOCAL branch of the same
@@ -87,8 +89,37 @@
 
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-. "$here/stoppable.sh"
-ORIG_ARGS=("$@")
+
+# `run_queued <cmd...>` runs a test command in a test slot and returns its exit
+# code, 75 when no slot came free. INT or TERM sent to this script sends the
+# command TERM, waits for it to exit, then exits 130 / 143; the slot does not
+# depend on that, the kernel frees it when the test process exits.
+#
+# Bash holds a trapped signal until a foreground command finishes, so the queue
+# runs in the background and the shell waits on it. Without job control, bash
+# starts a background command with INT ignored, and a script cannot un-ignore it;
+# that is why the stop is always passed on as TERM. `<&0` keeps the caller's
+# stdin, which a background command would otherwise lose to /dev/null.
+run_queued() {
+  local rc
+  trap 'stop_queued 130' INT
+  trap 'stop_queued 143' TERM
+  bash "$here/test_queue.sh" --exec "$@" <&0 &
+  queued_pid=$!
+  wait "$queued_pid"
+  rc=$?
+  trap - INT TERM
+  return "$rc"
+}
+
+# A second signal is ignored rather than trapped again: a trap re-entered here
+# would interrupt the `wait` and exit while the test command is still shutting down.
+stop_queued() {
+  trap '' INT TERM
+  kill -TERM "$queued_pid" 2>/dev/null
+  while kill -0 "$queued_pid" 2>/dev/null; do wait "$queued_pid"; done
+  exit "$1"
+}
 
 EXPLICIT_FILES=""
 DIFF_BASE=""
@@ -101,7 +132,7 @@ while [ $# -gt 0 ]; do
               [ "${1:-}" = "--" ] && shift ;;
     --diff)   DIFF_BASE="${2:?--diff needs a ref}"; shift 2 ;;
     --)       shift; break ;;
-    -h|--help) sed -n '2,86p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,88p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     # A flag this script does not know is never forwarded silently. Measured on
     # an earlier launcher: an unrecognised flag fell through into the test
     # command, the run widened to the whole suite, and the score looked normal.
@@ -160,16 +191,6 @@ files=$(printf '%s\n' "$files" | grep -v '^$' | while IFS= read -r f; do [ -f "$
 [ -n "$files" ] || { echo "plan-coverage: no changed lib/**.dart files — nothing to measure."; exit 0; }
 count_files=$(printf '%s\n' "$files" | grep -c .)
 
-# --- queue ------------------------------------------------------------------
-# A test slot is taken only now that there is something to run, so a change
-# with no Dart file passes without waiting for one: taken first, a CI run
-# that changed only a workflow failed whenever local sessions held every slot.
-# test_queue.sh runs this script again inside the slot, with TEST_QUEUE_SLOT_HELD
-# set, and exits 75 when no slot comes free.
-if [ -z "${TEST_QUEUE_SLOT_HELD:-}" ]; then
-  exec bash "$here/test_queue.sh" --exec bash "$here/coverage.sh" "${ORIG_ARGS[@]}"
-fi
-
 # --- run --------------------------------------------------------------------
 LCOV=coverage/lcov.info
 
@@ -194,9 +215,13 @@ case " $* " in *" --branch-coverage "*) ;; *) set -- "$@" --branch-coverage ;; e
 echo "plan-coverage: ${count_files} changed file(s); every line must be executed, drift table definitions and logic-free const constructors aside."
 echo "plan-coverage: running — $*"
 started=$(date +%s)
-run_stoppable "$@"
+# A test slot is taken only here, once there is something to run, so a change
+# with no Dart file passes without waiting for one: taken first, a CI run that
+# changed only a workflow failed whenever local sessions held every slot.
+run_queued "$@"
 test_rc=$?
 elapsed=$(( $(date +%s) - started ))
+[ "$test_rc" -eq 75 ] && exit 75
 
 # A FAILING SUITE GIVES NO LINE COVERAGE.
 # Same reasoning as for an aborted mutation engine: a failing test may
@@ -356,7 +381,7 @@ if [ -n "$unloaded" ] && [ -n "$is_flutter" ]; then
     done <<< "$unloaded"
     printf "void main() => test('plan-coverage import-only test', () {});\n"
   } > "$probe_dir/probe_test.dart"
-  if [ -n "$probed" ] && run_stoppable flutter test "$probe_dir/probe_test.dart" --coverage \
+  if [ -n "$probed" ] && run_queued flutter test "$probe_dir/probe_test.dart" --coverage \
        --coverage-path "$probe_dir/lcov.info" > "$probe_dir/log" 2>&1; then
     loaded=$(sed -n 's/^SF://p' "$probe_dir/lcov.info" | sed "s|^$root/||")
     while IFS= read -r f; do

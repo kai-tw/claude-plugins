@@ -5,7 +5,8 @@ checks where the plan allows it.
 
 - **Line coverage.** `plan-coverage --diff <PR base>` fails the job when a
   line the PR changed isn't executed by any test. It queues the test run for a
-  machine-wide slot (`TEST_QUEUE_SLOTS`) and exits 75 if none frees within
+  machine-wide slot (`TEST_QUEUE_SLOTS`), held while the test process lives and
+  freed when it exits however it exits, and exits 75 if none frees within
   `TEST_QUEUE_WAIT` seconds, so a runner shared with local sessions can fail
   the job as busy. The job below sets `TEST_QUEUE_WAIT: 3600` in its `env`:
   CI has no 10-minute tool limit, so it can wait longer.
