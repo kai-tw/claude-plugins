@@ -34,11 +34,17 @@ has s1-investigation "$FI" -- "$ARCH"
 grep -E '^- Ownership:' "$BR" | grep -qiE "$ARCH|heading" && echo s1-ownership-cites=1 || echo s1-ownership-cites=0
 has s1-path-and-heading "$BR" -- 'path' 'heading'
 has s1-no-copy "$BR" -- 'heading' '(never|not|no|without)[^.]*(cop|quot|restat|reproduc|paste)'
-grep -qi "$ARCH" "$BR" && has s2-needs-you "$BR" -- 'depart|deviat|violat|contradict|conflict|break|against|differ' 'Needs you' || echo s2-needs-you=0
-has s3-brief-review-files "$FBR" "$V" -- "$ARCH|depart|deviat|violat|contradict|conflict" 'Needs you'
+grep -qi "$ARCH" "$BR" && has s2-decided "$BR" -- '(depart|deviat|differ)[^.;]*Decided|Decided[^.;]*(depart|deviat|differ)' || echo s2-decided=0
+grep -qi "$ARCH" "$BR" && has s2-needs-you "$BR" -- '(depart|deviat|violat|contradict|conflict|differ)[^.;]*(is|as|becomes|make it)( a)? .?Needs you' || echo s2-needs-you=0
+has s3-rewrite-fix "$FBR" -- "$ARCH" '(depart|deviat|differ)' 'Fix: [^.]*rewrite[^.]*same diff'
+has s3-needs-you "$FBR" -- "$ARCH" '(depart|deviat|violat|contradict|conflict|differ)[^.;]*Fix: (make|move) it[^.;]*Needs you'
 grep -qi "$ARCH" <<<"$block5" && echo s4-block5=1 || echo s4-block5=0
 grep -qi "$ARCH" <<<"$vbrief" && echo s4-verifier-input=1 || echo s4-verifier-input=0
-grep -qi "$ARCH" <<<"$block5" && grep -qiE 'approv|picked|ruled|chose|Needs you' <<<"$block5" && echo s5-approved-exempt=1 || echo s5-approved-exempt=0
+# Block 5's clause on the architecture document: block 5 split at `;`.
+arch5=$(tr ';' '\n' <<<"$block5" | grep -i "$ARCH")
+grep -qiE 'unless[^.]*Decided[^.]*rewrites? (that|the) section' <<<"$arch5" && echo s5-approved-exempt=1 || echo s5-approved-exempt=0
+grep -qiE 'Fix: follow the document or rewrite[^.]*same diff' <<<"$arch5" && echo s5-fix-rewrite=1 || echo s5-fix-rewrite=0
+grep -qiE 'user approv' <<<"$arch5" && echo s5-user-approval=1 || echo s5-user-approval=0
 has s5-doc-in-diff "$P" "$K" "$BR" "$V" "$BU" -- "$ARCH" 'diff|\bPR\b|pull request|edits|updates|rewrites'
 s6a=$(has x "$K" -- 'brief-review' "$ARCH"); s6b=$(has x "$K" "$V" "$FBR" -- "$ARCH" 'every|each|always' 'brief')
 [ "$s6a" = x=1 ] || [ "$s6b" = x=1 ] && echo s6-every-brief=1 || echo s6-every-brief=0

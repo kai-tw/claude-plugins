@@ -42,11 +42,11 @@ A limit of the code is not a spec question: it goes in the brief's design. Exist
 Unless the project config sets `spec: none`, the brief opens with `Spec pages read`, each page
 and the last-edited time it showed, and every `Needs you` line carries a spec field: the passage
 that comes closest, verbatim, and why it doesn't decide this, or the sections checked that say nothing, then the pages and records checked.
+When a spec sentence states the case's result (where the user ends up, what happens to the data) and only how to reach it is open, it isn't a question: write a `Decided` that quotes the sentence and takes the simplest design that reaches that result. A rule's stated purpose ("an export never overwrites an existing file") decides the cases it doesn't name. "It sets the result but not how" is never a reason on a `spec:` field. A passage applies only to the operation it's written for (its section, or the state it names), so one written for another operation leaves the case to the passages that cover it.
+Architecture choices (which layer owns which data) follow the project conventions as a `Decided`.
 When the project config sets `architecture:`, read that document in the task's worktree
-and cite it by path and section heading, never copying its text. A design that
-departs from what the architecture document states is `Needs you`, citing the section,
-and the departing option rewrites that section in the same task's diff, and that file joins the task statement's boundary; where the
-document says nothing, `Decided` stays allowed.
+and cite it by path and section heading, never copying its text. A design that departs from the document is a `Decided` citing the section,
+and it rewrites that section in the same task's diff, and that file joins the task statement's boundary.
 Labels and marks are written in the user's language (SKILL.md §Language); later
 steps find sections by meaning, so a filed brief may carry them in any language, except
 `Spec pages read`, `last edited`, `Needs you` and `spec:`, which `asst-report` checks as written below.

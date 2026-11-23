@@ -34,6 +34,11 @@ f=review-ok.md;          mk "$pages" '## Spec verdicts' "$v1" "$v2" "$tail"
 f=review-no-pages.md;    mk '## Spec verdicts' "$v1" "$v2" "$tail"
 f=review-short.md;       mk "$pages" '## Spec verdicts' "$v1" "$tail"
 f=review-bad-verdict.md; mk "$pages" '## Spec verdicts' "$v1" '- Toast or dialog · verdict: unclear' "$tail"
+v3='- Keep the old file · verdict: spec decides the result "Exports land in the Downloads folder."'
+v4='- Toast or dialog · verdict: case unshown "only a second export within one second shows it"'
+f=review-result.md;      mk "$pages" '## Spec verdicts' "$v3" "$v4" "$tail"
+f=review-result-long.md; mk "$pages" '## Spec verdicts' "$v3" "$v4" "$v1" "$tail"
+f=review-case-bad.md;    mk "$pages" '## Spec verdicts' "$v3" '- Toast or dialog · verdict: case unclear "rare"' "$tail"
 
 cat > check.sh <<'SH'
 ws=$PWD
@@ -56,4 +61,9 @@ put review-short    wt         x brief-review review-short.md
 put review-bad      wt         x brief-review review-bad-verdict.md
 put review-ok       wt         x brief-review review-ok.md
 echo "filed=$(cd wt && asst-report list x | paste -sd, -)"
+put ok-r            wt         r brief       brief-ok.md
+put result-long     wt         r brief-review review-result-long.md
+put case-bad        wt         r brief-review review-case-bad.md
+put result          wt         r brief-review review-result.md
+echo "filed-r=$(cd wt && asst-report list r | paste -sd, -)"
 SH

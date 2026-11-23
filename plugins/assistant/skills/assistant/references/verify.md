@@ -46,7 +46,7 @@ A `low confidence` finding about the design rather than a single line, is never 
 A finding comes back when a round meant to fix it is followed by a `fix` finding with the same file, same rule.
 When one comes back, dispatch the `advisor` once, with the remaining `fix` findings, the fix rounds' diffs, the brief
 and the task statement; one advisor per finding, never a second for the same finding. Its `advise` report goes into the
-next builder's dispatch, which fixes as advised. When the round on its advice still leaves findings, they become one `Needs you` line with the advise report's path. A new `fix` finding from that round opens a fix round as usual, unless SKILL.md's stop rule applies (a second fix round still turning up a new logic error).
+next builder's dispatch, which fixes as advised. When the round on its advice still leaves findings, they become one `Needs you` line with the advise report's path. A new `fix` finding from that round opens a fix round as usual; a second fix round still turning up a new logic error first gets SKILL.md's architecture check.
 
 A trade-off between designs follows `references/brief.md` §Choosing the design; one it leaves to the user goes to them now as a `Needs you`, never into another review round.
 

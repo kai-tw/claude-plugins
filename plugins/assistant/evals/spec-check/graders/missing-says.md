@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'has no 'spec:' line — ask the user once where the product spec lives'
+pattern: 'has no .spec:. line — ask the user once where the product spec lives'
 flags: m
 arm: with-only
 ---

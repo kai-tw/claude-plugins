@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: spec-result-decides
+description: A spec that sets a case's result but leaves only the method open decides the case. brief.md makes such a case a `Decided` that quotes the sentence and takes the simplest design reaching that result, lets a rule's stated purpose decide cases it doesn't name, applies a passage only to the operation it's written for, and never accepts "it sets the result but not how" as the reason on a `spec:` field (G1); brief-review adds the verdicts `spec decides the result "<quote>"` and `case unshown "<the evidence>"`, both filed under 5, and keeps `spec ambiguous` for readings that change what the user sees or which data is kept (G2).
+tags: [flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 2
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: for f in skills/assistant/references/brief.md skills/assistant/forms/brief-review.md; do tr -s " \n" " " < "$root/$f" | sed "s|^|$f: |"; echo; done
+  prompt: |
+    Print the brief reference and the brief-review form, one file per line.
+context:
+  scaffold_script: fixture.sh
