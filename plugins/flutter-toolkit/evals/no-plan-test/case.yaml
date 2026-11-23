@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: no-plan-test
+description: The plugin has no plan-test command, no hook that blocks a bare flutter test, and no plan-test, plan_test or PLAN_TEST in any file, the root README.md and its marketplace entry included.
+tags: [hooks, launchers]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Search the plugin, the root README.md and the plugin's marketplace entry for plan-test, plan_test and PLAN_TEST; check its bin/ for a plan-test command and feed each PreToolUse hook a bare flutter test.
+context:
+  scaffold_script: fixture.sh

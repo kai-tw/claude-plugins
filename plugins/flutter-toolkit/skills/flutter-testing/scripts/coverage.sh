@@ -16,16 +16,15 @@
 #   lines, and the pass condition is that there are none.
 #
 # THERE IS NO ESCAPE HATCH
-#   An earlier version accepted `// coverage-ignore: <reason>` on or above an
-#   unexecuted line. It was retired because it was abused: the reason became
-#   the thing written instead of the test. An unexecuted changed line is now
-#   either tested or reported — the report is the honest record, not a comment.
+#   No comment exempts an unexecuted line: a reason written beside one becomes
+#   the thing written instead of the test. An unexecuted changed line is either
+#   tested or reported — the report is the honest record, not a comment.
 #
 #   The toolchain's own pragmas are closed for the same reason. `flutter test`
 #   drops lines under `// coverage:ignore-line` / `-start` … `-end` / `-file`
 #   from `lcov.info` before this script reads it, so an unexecuted line under
 #   one looks exactly like an executed one. Any changed file that carries such
-#   a pragma — or a leftover `// coverage-ignore:` comment, which now exempts
+#   a pragma — or a `// coverage-ignore: <reason>` comment, which exempts
 #   nothing and only claims to — blocks until it is removed. Generated files
 #   are excluded by name below and never get to that check.
 #
@@ -66,12 +65,24 @@
 #   `--coverage --branch-coverage` is appended for you where absent. Run this
 #   from the repo root — the test command runs in the CALLER's working directory.
 #
+#   The test command and the import-only test each wait for a machine-wide test
+#   slot, so concurrent runs from several sessions cannot exhaust memory:
+#   TEST_QUEUE_SLOTS sets the slot count and TEST_QUEUE_WAIT the seconds to wait
+#   (`test_queue.sh` has the rest). A slot is held while the test process lives
+#   and freed when it exits, however it exits; the work after the run holds
+#   none.
+#
 # EXIT
 #   0  every changed line executed
 #   1  at least one unexecuted line or branch, a changed file no test loaded at
 #      all, a changed file carrying a coverage pragma, or an unmeasurable throw
 #   2  nothing was measured (no repo, no base ref, no lcov, the run did not
 #      happen)
+#   75 no test slot came free within TEST_QUEUE_WAIT, for the test command or
+#      for the import-only test after it — busy, not broken; no file gets a
+#      verdict, and the refusal names who holds which slot
+#   130 / 143  stopped by INT / TERM; a running test command is sent TERM and
+#      waited for first
 #
 #   Scope is taken against `origin/<default branch>` when that ref exists, and
 #   the base used is printed in the report header. The LOCAL branch of the same
@@ -79,7 +90,39 @@
 
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-ORIG_ARGS=("$@")
+
+# `run_queued <cmd...>` runs a test command in a test slot and returns its exit
+# code, 75 when no slot came free. INT or TERM sent to this script sends the
+# command TERM, waits for it to exit, then exits 130 / 143; the slot does not
+# depend on that, the kernel frees it when the test process exits.
+#
+# Bash holds a trapped signal until a foreground command finishes, so the queue
+# runs in the background and the shell waits on it. Without job control, bash
+# starts a background command with INT ignored, and a script cannot un-ignore it;
+# that is why the stop is always passed on as TERM. `<&0` keeps the caller's
+# stdin, which a background command would otherwise lose to /dev/null.
+run_queued() {
+  local rc
+  trap 'stop_queued 130' INT
+  trap 'stop_queued 143' TERM
+  bash "$here/test_queue.sh" --exec "$@" <&0 &
+  wait "$!"
+  rc=$?
+  trap - INT TERM
+  return "$rc"
+}
+
+# A second signal is ignored rather than trapped again: a trap re-entered here
+# would interrupt the `wait` and exit while the test command is still shutting down.
+# The queue is found with `jobs -p`, not a saved pid: bash runs a trap between
+# any two commands, so the signal can arrive before the queue starts or before
+# `$!` is read.
+stop_queued() {
+  trap '' INT TERM
+  kill -TERM $(jobs -p) 2>/dev/null
+  wait
+  exit "$1"
+}
 
 EXPLICIT_FILES=""
 DIFF_BASE=""
@@ -92,10 +135,10 @@ while [ $# -gt 0 ]; do
               [ "${1:-}" = "--" ] && shift ;;
     --diff)   DIFF_BASE="${2:?--diff needs a ref}"; shift 2 ;;
     --)       shift; break ;;
-    -h|--help) sed -n '2,64p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    # A flag this script does not know is never forwarded silently. Measured on
-    # an earlier launcher: an unrecognised flag fell through into the test
-    # command, the run widened to the whole suite, and the score looked normal.
+    -h|--help) sed -n '2,89p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    # A flag this script does not know is never forwarded silently: passed on
+    # into the test command, it widens the run to the whole suite while the
+    # score looks normal.
     -*)       echo "plan-coverage: unknown flag '$1'. The test command goes after \`--\`." >&2
               echo "  usage: plan-coverage [--diff <ref> | --files a.dart …] -- <test-command…>" >&2
               exit 2 ;;
@@ -151,14 +194,6 @@ files=$(printf '%s\n' "$files" | grep -v '^$' | while IFS= read -r f; do [ -f "$
 [ -n "$files" ] || { echo "plan-coverage: no changed lib/**.dart files — nothing to measure."; exit 0; }
 count_files=$(printf '%s\n' "$files" | grep -c .)
 
-# A test slot is taken only now that there is something to run, so a change
-# with no Dart file passes without waiting for one: taken first, a CI run
-# that changed only a workflow failed whenever local sessions held every slot.
-# plan-test runs this script again inside the slot, with PLAN_TEST_SLOT_HELD set.
-if [ -z "${PLAN_TEST_SLOT_HELD:-}" ]; then
-  exec bash "$here/plan_test.sh" --exec bash "$here/coverage.sh" "${ORIG_ARGS[@]}"
-fi
-
 # --- run --------------------------------------------------------------------
 LCOV=coverage/lcov.info
 
@@ -183,9 +218,12 @@ case " $* " in *" --branch-coverage "*) ;; *) set -- "$@" --branch-coverage ;; e
 echo "plan-coverage: ${count_files} changed file(s); every line must be executed, drift table definitions and logic-free const constructors aside."
 echo "plan-coverage: running — $*"
 started=$(date +%s)
-"$@"
+# A test slot is taken only here, once there is something to run: a change with
+# no Dart file passes without waiting for one, even while every slot is held.
+run_queued "$@"
 test_rc=$?
 elapsed=$(( $(date +%s) - started ))
+[ "$test_rc" -eq 75 ] && exit 75
 
 # A FAILING SUITE GIVES NO LINE COVERAGE.
 # Same reasoning as for an aborted mutation engine: a failing test may
@@ -319,10 +357,11 @@ done <<< "$files"
 # test that only imports the absent files, run under coverage. A file still
 # absent there has no executable line, so it is NO-CODE and does not block.
 # Flutter packages only, since that test runs `flutter test` itself, whatever
-# the test command was: keyed on that command's first word, it was silently
-# skipped for `-- plan-test <scope>`, as a consumer's docs recommend. A `part of`
+# the test command was, so a wrapper command such as `-- run-suite <scope>`
+# does not change whether it runs. A `part of`
 # file cannot be imported and stays NOT-LOADED, as does everything when the
 # import-only test is skipped or fails to run, and either is said on stderr.
+# With no test slot free for it, nothing gets a verdict: busy exits 75.
 nocode=""
 is_flutter=""
 grep -qE '^[[:space:]]*sdk:[[:space:]]*flutter[[:space:]]*$' pubspec.yaml 2>/dev/null && is_flutter=1
@@ -345,17 +384,23 @@ if [ -n "$unloaded" ] && [ -n "$is_flutter" ]; then
     done <<< "$unloaded"
     printf "void main() => test('plan-coverage import-only test', () {});\n"
   } > "$probe_dir/probe_test.dart"
-  if [ -n "$probed" ] && flutter test "$probe_dir/probe_test.dart" --coverage \
-       --coverage-path "$probe_dir/lcov.info" > "$probe_dir/log" 2>&1; then
-    loaded=$(sed -n 's/^SF://p' "$probe_dir/lcov.info" | sed "s|^$root/||")
-    while IFS= read -r f; do
-      [ -n "$f" ] || continue
-      printf '%s\n' "$loaded" | grep -qxF "$f" || nocode="${nocode}${f}"$'\n'
-    done <<< "$probed"
-    unloaded=$(printf '%s' "$unloaded" | grep -vxF -f <(printf '%s' "$nocode") || true)
-    [ -n "$unloaded" ] && unloaded="${unloaded}"$'\n'
-  elif [ -n "$probed" ]; then
-    echo "plan-coverage: the import-only test did not run ($probe_dir/log), so every absent file stays NOT-LOADED." >&2
+  if [ -n "$probed" ]; then
+    TEST_QUEUE_NOTICE_FD=3 run_queued flutter test "$probe_dir/probe_test.dart" --coverage \
+      --coverage-path "$probe_dir/lcov.info" 3>&2 > "$probe_dir/log" 2>&1
+    probe_rc=$?
+    if [ "$probe_rc" -eq 75 ]; then
+      exit 75
+    elif [ "$probe_rc" -eq 0 ]; then
+      loaded=$(sed -n 's/^SF://p' "$probe_dir/lcov.info" | sed "s|^$root/||")
+      while IFS= read -r f; do
+        [ -n "$f" ] || continue
+        printf '%s\n' "$loaded" | grep -qxF "$f" || nocode="${nocode}${f}"$'\n'
+      done <<< "$probed"
+      unloaded=$(printf '%s' "$unloaded" | grep -vxF -f <(printf '%s' "$nocode") || true)
+      [ -n "$unloaded" ] && unloaded="${unloaded}"$'\n'
+    else
+      echo "plan-coverage: the import-only test did not run ($probe_dir/log), so every absent file stays NOT-LOADED." >&2
+    fi
   fi
 fi
 
@@ -421,7 +466,7 @@ fi
 
 if [ "$n_prag" -gt 0 ]; then
   echo
-  echo "Coverage pragmas (each hides lines from the measurement, or claims a retired exemption):"
+  echo "Coverage pragmas (each hides lines from the measurement, or claims an exemption that does not exist):"
   printf '%b' "$pragmas" | while IFS=$'\t' read -r loc src; do
     [ -n "$loc" ] && printf '  • %s  %s\n' "$loc" "$src"
   done
@@ -496,7 +541,7 @@ plan-coverage: BLOCKED.
 $( [ "$n_unloaded" -gt 0 ] && printf '\n  %s changed file(s) appear NOWHERE in the coverage report — no test imports them.\n  That is not a low score; it is an unmeasured file, and mutation cannot see it\n  either (an unexecuted line produces no mutant to survive).\n' "$n_unloaded" )
 $( [ "$n_gaps" -gt 0 ] && printf '\n  %s unexecuted line(s). Add the test that runs each one. A line no test can\n  execute is a design finding — put it behind a seam a test can drive — and\n  no comment makes it pass. Before calling a gap a miscount, find how other\n  files cover the same kind of line; a line no test can execute by\n  construction is fixed in plan-coverage, never by reshaping the code.\n' "$n_gaps" )
 $( [ "$n_unmeas" -gt 0 ] && printf '\n  %s throw(s) inside ?? / ?: that no coverage record can see. Rewrite each as a\n  statement (`if (x == null) throw …;`) so branch coverage measures it, then\n  test it.\n' "$n_unmeas" )
-$( [ "$n_prag" -gt 0 ] && printf '\n  %s coverage pragma(s) in changed files. `coverage:ignore-*` removes lines from\n  the measurement before this check reads it; `coverage-ignore:` is retired.\n  Remove them and let those lines be measured.\n' "$n_prag" )
+$( [ "$n_prag" -gt 0 ] && printf '\n  %s coverage pragma(s) in changed files. `coverage:ignore-*` removes lines from\n  the measurement before this check reads it; `coverage-ignore:` exempts nothing.\n  Remove them and let those lines be measured.\n' "$n_prag" )
 EOF
   exit 1
 fi

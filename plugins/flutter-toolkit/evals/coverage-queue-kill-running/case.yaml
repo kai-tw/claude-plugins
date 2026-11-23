@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-kill-running
+description: When plan-coverage's whole process group is killed with KILL while the test command runs inside its slot, so no cleanup of its own can run, the slot is free within a second, before any later run touches the queue, and the next run takes it without waiting and passes.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    With one free test slot, start plan-coverage on one file in a process group of its own with a 10-second test command; once the test command has started, check the slot's lock, send KILL to that process group and check the slot's lock again within a second. Then run plan-coverage once more with no wait. Print whether the slot was locked before and free after the kill, whether the test command finished, how many processes of the group are left, the second run's exit code, whether its test command ran and how many processes are left.
+context:
+  scaffold_script: fixture.sh

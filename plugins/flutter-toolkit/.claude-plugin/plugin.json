@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "flutter-toolkit",
-  "version": "7.0.1",
-  "description": "Flutter test checks for a shared machine: plan-test (a machine-wide concurrency limit for test runs) and plan-coverage (line coverage of the changed lines).",
+  "version": "8.0.0",
+  "description": "plan-coverage runs a Flutter test command and checks that every changed line was executed; a Stop hook updates the plugin when its installed copy is behind the marketplace.",
   "author": {
     "name": "Kai",
     "url": "https://github.com/kai-tw"

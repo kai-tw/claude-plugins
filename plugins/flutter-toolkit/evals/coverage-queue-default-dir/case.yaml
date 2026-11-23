@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-default-dir
+description: With TEST_QUEUE_DIR unset, plan-coverage queues in $HOME/.claude/.flutter-toolkit/queue, locking slot-1 there while the test command runs, and a 7.x slots directory beside it (a slot-9 directory with its meta file) neither stops it nor makes it warn, and is left exactly as it was.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    With HOME at a directory that holds a 7.x slots directory and TEST_QUEUE_DIR unset, run plan-coverage on one file with a test command that checks whether slot-1 under $HOME/.claude/.flutter-toolkit/queue is locked. Print the exit code, what the test command found, how many WARNING lines plan-coverage printed and whether the 7.x slots directory changed.
+context:
+  scaffold_script: fixture.sh

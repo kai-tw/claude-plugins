@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-busy-import-test
+description: When another session locks the only test slot the moment plan-coverage's test command exits, so the import-only test finds no slot free within TEST_QUEUE_WAIT, plan-coverage refuses with 75 and names the holder on stderr, the way a busy main run does, instead of reporting the change BLOCKED.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    In a Flutter package whose change adds an enum file, run plan-coverage with one test slot and a wait of 1 second; the moment its test command exits, have another session lock that slot and keep it. Print plan-coverage's stdout and stderr apart, its exit code, whether the other session got the slot and whether any process is left running.
+context:
+  scaffold_script: fixture.sh

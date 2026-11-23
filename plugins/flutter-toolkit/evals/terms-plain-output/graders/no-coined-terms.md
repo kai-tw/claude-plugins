@@ -5,4 +5,4 @@ flags: mi
 match: not_contains
 arm: with-only
 ---
-None of the coined words appears in the skill, its references, the plugin description or the hook's block message.
+None of the coined words appears in the skill, its references or the plugin description.

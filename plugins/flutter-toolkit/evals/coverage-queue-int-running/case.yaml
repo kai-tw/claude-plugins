@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-int-running
+description: Sent INT the way a terminal sends Ctrl-C, to its whole process group, while the test command runs inside its slot, plan-coverage stops the test command early, its slot stays locked until the test command has exited and is free once plan-coverage exits 130, leaving no process behind.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    With one free test slot, start plan-coverage on one file in a process group of its own with INT handled as a terminal would, using a 10-second test command that takes a second to shut down when stopped; send INT to that process group once the test command has started, and stop the group after 20 seconds if plan-coverage is still running. Print whether it stopped, its exit code, whether the test command finished or was cut short, whether its slot was still locked as the test command shut down, whether the slot is free afterwards and how many processes are left.
+context:
+  scaffold_script: fixture.sh

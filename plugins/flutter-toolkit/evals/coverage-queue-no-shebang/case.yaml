@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-no-shebang
+description: A test command that is an executable script with no shebang line runs under bash inside its test slot, so a script that uses bash-only syntax such as an array works and plan-coverage passes, whatever /bin/sh is on the machine.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    Run plan-coverage on one file with a test command that is an executable script without a shebang line, which records whether bash runs it and writes the lcov through a bash array. Print the exit code, what the script recorded and whether any process is left running.
+context:
+  scaffold_script: fixture.sh

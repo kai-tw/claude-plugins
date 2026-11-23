@@ -1,5 +1,5 @@
 ---
 type: llm
 ---
-PASS if two help lines print, one per command, and none is a shell 'No such file' error.
+PASS if a help line prints and it is not a shell 'No such file' error.
 FAIL otherwise.

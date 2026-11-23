@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-term-running
+description: Sent TERM while the test command runs inside its slot, plan-coverage passes the signal on so the test command stops early, its slot stays locked until the test command has exited and is free once plan-coverage exits 143.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    With one free test slot, run plan-coverage on one file with a 10-second test command that takes a second to shut down on TERM, send plan-coverage TERM once the test command has started, and stop it after 20 seconds if it is still running. Print whether it stopped, its exit code, whether the test command finished or was cut short, whether its slot was still locked as the test command shut down and whether the slot is free afterwards.
+context:
+  scaffold_script: fixture.sh

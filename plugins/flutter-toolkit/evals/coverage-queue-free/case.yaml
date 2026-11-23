@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: coverage-queue-free
+description: With slot-1 of two test slots locked by another repo and slot-2 unlocked but holding a finished run's content, plan-coverage takes slot-2 without waiting, locks it for as long as the test command runs and writes its name, pid, start time and command into it; a second run meanwhile refuses with 75, naming both holders, the pid and the commands; afterwards slot-2 is free and the other holder keeps its own.
+tags: [plan-coverage]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    With two test slots, slot-1 locked by another repo and slot-2 unlocked with a finished run's content, run plan-coverage on one file with a test command that records slot-2's fields and waits; while it runs, check both slots' locks and run plan-coverage a second time. Print both exit codes, what the second run printed about the holders, what the test command recorded and the slots' locks afterwards.
+context:
+  scaffold_script: fixture.sh

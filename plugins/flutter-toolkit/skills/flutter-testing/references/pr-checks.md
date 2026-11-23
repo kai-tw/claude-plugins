@@ -4,7 +4,12 @@ Two checks on every PR, on a self-hosted runner. Make both jobs required
 checks where the plan allows it.
 
 - **Line coverage.** `plan-coverage --diff <PR base>` fails the job when a
-  line the PR changed isn't executed by any test.
+  line the PR changed isn't executed by any test. It queues the test run for a
+  machine-wide slot (`TEST_QUEUE_SLOTS`), held while the test process lives and
+  freed when it exits however it exits, and exits 75 if none frees within
+  `TEST_QUEUE_WAIT` seconds, so a runner shared with local sessions can fail
+  the job as busy. The job below sets `TEST_QUEUE_WAIT: 3600` in its `env`:
+  CI has no 10-minute tool limit, so it can wait longer.
 - **Mutation, scoped after Google's practice.** `dart run dart_mutants --diff
   <PR base> --test-command "flutter test"` mutates only the lines the PR
   changed, one mutant a line, and the job fails while any mutant survives on
@@ -24,13 +29,9 @@ runner, adding `--labels flutter` to `config.sh`).
 
 Keep each repo's runner up in its own terminal tab with
 `~/actions-runners/<dir>/run.sh`. While it's down, a PR's jobs wait queued on
-GitHub. An idle runner takes about 60 MB of memory and no CPU. `plan-coverage`
-takes this machine's test slots like any other run, so CI and local sessions
-share the same concurrency limit; `dart_mutants` keeps its own slots. A local session gives up after 120
-seconds without a slot, because the Bash tool stops a call at 10 minutes; CI has
-no such limit, so the workflow sets `PLAN_TEST_WAIT` to wait an hour instead of
-failing a check that measured nothing. Only use it on a private repo: a
-public repo's workflows can be made to run a stranger's code on it.
+GitHub. An idle runner takes about 60 MB of memory and no CPU. Only use the
+runner on a private repo: a public repo's workflows can be made to run a
+stranger's code on it.
 
 ## The workflow
 
@@ -52,7 +53,7 @@ jobs:
   coverage:
     runs-on: [self-hosted, flutter]
     env:
-      PLAN_TEST_WAIT: 3600
+      TEST_QUEUE_WAIT: 3600
     steps:
       - uses: actions/checkout@v4
         with:
