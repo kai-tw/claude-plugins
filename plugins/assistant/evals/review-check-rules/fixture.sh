@@ -33,4 +33,12 @@ has r2-every-version "$K" "$BR" -- 'brief-review' '(every|each)[^.]*version' '(f
 has r2-old-condition "$K" "$BR" "$V" "$FBR" -- 'brief-review' '(class|dependency|persisted format)'
 has r2-arch-condition "$K" "$BR" -- 'brief-review' '(when|if|unless|only)[^.]*architecture'
 has r3-small-exempt "$K" "$BR" "$BU" -- 'small' 'exempt' "(brief-review|$CHECK|review check|no brief)"
+has b2-advisor "$BU" -- 'only' 'brief' 'finding' 'advi(c|s)'
+has b4-no-other-path "$BU" -- 'report' 'missing' '(instead of|rather than|never|not)[^.]*(another|other|different|alternative) (path|route|way)'
+# One condition in three files: a design or ruling a builder needs after approval that the
+# newest brief doesn't hold is filed as a new brief version first.
+for f in K:"$K" BR:"$BR" BU:"$BU"; do
+  has "r5-same-condition-${f%%:*}" "${f#*:}" -- 'approv' 'design' 'ruling' '(newest|latest)[^.]*brief' "(doesn.t|does not|not) hold" 'new (brief )?version'
+done
+has r5-behaviour-only "$K" "$BR" "$BU" -- 'ruling' 'that change[sd]? behaviou?r'
 SH
