@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
+# One project with `spec: none` and a git worktree of it; check.sh files briefs and
+# brief-reviews per slug in a set order, stamps each file one minute after the last (round
+# numbers order reports only within a kind), then runs the review check and prints
+# `<case>=<exit code>` and each output line as `<case>: <line>`.
+set -euo pipefail
+git init -q wt
+mkdir -p wt/.claude
+printf 'spec: none\n' > wt/.claude/assistant.md
+git -C wt -c user.name=e -c user.email=e@e commit -q --allow-empty -m init
+git -C wt worktree add -q ../tree
+printf '# Export — Decision brief            demo · feature · 2026-11-20\n- Decided  Stream the file · Reason: size\n' > brief.md
+printf '## 1 Logic\npassed: 1 2 5\n' > review.md
+
+cat > check.sh <<'SH'
+ws=$PWD; m=0
+# The subcommand the usage text lists besides the five asst-report already had.
+sub=$(asst-report 2>&1 | sed -nE 's/.*asst-report[[:space:]]+([a-z][a-z-]*).*/\1/p' \
+  | grep -vxE 'put|latest|list|form|summary' | head -1)
+echo "sub=${sub:--}"
+file() { # file <slug> <kind…> — files each kind in order, one minute apart
+  local s=$1 k f; shift
+  for k in "$@"; do
+    [ "$k" = brief ] && f=brief.md || f=review.md
+    p=$(cd "$ws/wt" && asst-report put "$s" "$k" < "$ws/$f") || { echo "file $s $k failed"; continue; }
+    m=$((m + 1)); touch -t "2026112010$(printf %02d "$m")" "$p"
+  done
+}
+run() { # run <case> <dir> <slug> [--worktree <dir>]
+  local c=$1 d=$2 s=$3; shift 3
+  [ -n "$sub" ] || return
+  ( cd "$d" && asst-report "$sub" "$s" "$@" ) >"$ws/out" 2>&1
+  echo "$c=$?"; sed "s/^/$c: /" "$ws/out"
+}
+file reviewed   brief brief-review
+file unreviewed brief
+file stale      brief brief-review brief
+file again      brief brief-review brief brief-review
+file late       brief brief brief-review
+run reviewed       "$ws/wt"   reviewed
+run unreviewed     "$ws/wt"   unreviewed
+run stale          "$ws/wt"   stale
+run again          "$ws/wt"   again
+run late           "$ws/wt"   late
+run tree-reviewed  "$ws/tree" reviewed
+run tree-stale     "$ws/tree" stale
+run flag-reviewed  "$ws"      reviewed --worktree "$ws/wt"
+run flag-stale     "$ws"      stale    --worktree "$ws/wt"
+SH

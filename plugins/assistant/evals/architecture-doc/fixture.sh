@@ -29,7 +29,8 @@ vbrief=$(awk '/^Brief:/ { on = 1 } on && /^$/ { exit } on' "$V" | tr -s ' \n' ' 
 grep -qE '^architecture:[[:space:]].*none' "$P" && echo b1-field=1 || echo b1-field=0
 has b1-missing-none "$P" -- "$ARCH" 'missing|absent|omitted|unset|no entry|left out|without' 'none'
 has b2-directory "$P" "$K" "$BR" "$V" "$BU" "$FI" -- "$ARCH" 'director|folder' '\.md'
-has s1-brief-step "$BR" -- "$ARCH" 'brief-review'
+s1a=$(has x "$BR" -- "brief-review" "(every|each)[^.]*version"); s1b=$(has x "$BR" -- "brief-review" "(when|if|unless|only)[^.]*$ARCH")
+[ "$s1a" = x=1 ] && [ "$s1b" = x=0 ] && echo s1-brief-step=1 || echo s1-brief-step=0
 has s1-investigation "$FI" -- "$ARCH"
 grep -E '^- Ownership:' "$BR" | grep -qiE "$ARCH|heading" && echo s1-ownership-cites=1 || echo s1-ownership-cites=0
 has s1-path-and-heading "$BR" -- 'path' 'heading'
@@ -46,6 +47,6 @@ grep -qiE 'unless[^.]*Decided[^.]*rewrites? (that|the) section' <<<"$arch5" && e
 grep -qiE 'Fix: follow the document or rewrite[^.]*same diff' <<<"$arch5" && echo s5-fix-rewrite=1 || echo s5-fix-rewrite=0
 grep -qiE 'user approv' <<<"$arch5" && echo s5-user-approval=1 || echo s5-user-approval=0
 has s5-doc-in-diff "$P" "$K" "$BR" "$V" "$BU" -- "$ARCH" 'diff|\bPR\b|pull request|edits|updates|rewrites'
-s6a=$(has x "$K" -- 'brief-review' "$ARCH"); s6b=$(has x "$K" "$V" "$FBR" -- "$ARCH" 'every|each|always' 'brief')
-[ "$s6a" = x=1 ] || [ "$s6b" = x=1 ] && echo s6-every-brief=1 || echo s6-every-brief=0
+s6a=$(has x "$K" "$BR" -- "brief-review" "(every|each)[^.]*version"); s6b=$(has x "$K" "$BR" "$V" "$FBR" -- "brief-review" "(class|dependency|persisted format)")
+[ "$s6a" = x=1 ] && [ "$s6b" = x=0 ] && echo s6-every-brief=1 || echo s6-every-brief=0
 SH

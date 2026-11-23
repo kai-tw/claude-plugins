@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: review-check-rules
+description: The builder implements only reviewed designs. Before the integration and fix phases it runs the asst-report review check; when the check fails it does not start and reports `blocked` with the check's output. It implements only the newest filed brief and the verifier's findings, and reports `blocked` when the dispatch carries a design or ruling the brief doesn't hold (B1-B3). SKILL.md and references/brief.md file a design decision made after approval as a new brief version, never as a design file of its own or only in chat; every brief version a builder implements gets a fresh verifier brief-review, with no condition on a new class, dependency, persisted format or `architecture:`; tiers `small` and `exempt` have no brief and are outside the check (R1-R4).
+tags: [flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Say when the builder checks that its brief was reviewed, what it does when the check fails, and when the assistant files a new brief version and a brief-review.
+context:
+  scaffold_script: fixture.sh
