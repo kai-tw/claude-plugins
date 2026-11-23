@@ -2,16 +2,13 @@
 # Scaffold for the eval workspace. Runs only under --scaffold / evals/run.sh.
 # check.sh prints `<id>=1` when the plugin's text carries a behaviour, `<id>=0` when not.
 # Matching is by sentence and keyword, never by a whole sentence, so the wording stays the
-# author's. The review check is found by name in the asst-report usage text.
+# author's. The review check is `asst-report reviewed`.
 set -euo pipefail
 cat > check.sh <<'SH'
 root=$1; a="$root/skills/assistant"
 K="$a/SKILL.md"; BR="$a/references/brief.md"; BU="$root/agents/builder.md"
 V="$root/agents/verifier.md"; FBR="$a/forms/brief-review.md"
-# The subcommand the usage text lists besides the five asst-report already had.
-sub=$(PATH="$root/bin:$PATH" asst-report 2>&1 | sed -nE 's/.*asst-report[[:space:]]+([a-z][a-z-]*).*/\1/p' \
-  | grep -vxE 'put|latest|list|form|summary' | head -1)
-CHECK="asst-report ${sub:-NO-SUBCOMMAND}"
+CHECK="asst-report reviewed"
 # One sentence per line: split at blank lines, list items and `. `.
 sent() {
   perl -0777 -ne 's/\r//g; for (split /\n\s*\n|\n(?=\s*(?:- |\d+\. |#))|(?<=\.)\s+(?=[A-Z`*])/) { s/\s+/ /g; print "$_\n" if /\S/ }' "$@"
@@ -27,6 +24,7 @@ has() {
 has b1-before-phases "$BU" -- "$CHECK" 'integration' 'fix'
 has b1-fails-blocked "$BU" -- '(fail|non-zero|refus)' '`?blocked`?' 'output'
 has b1-fails-no-start "$BU" -- '(fail|non-zero|refus)' '`?blocked`?' "(don.t|do not|never|not) (start|begin|edit|write|touch|change)|without (starting|editing)|stop"
+has b1-feature-only "$BU" -- 'dispatch' 'tier' '`?feature`?' '(only|when|if)'
 has b2-only-brief "$BU" -- 'only' '(newest|latest|last)[^.]*brief' 'finding'
 has b3-dispatch-blocked "$BU" -- 'dispatch' '(design|ruling)' 'brief' '`?blocked`?'
 has r1-new-version "$K" "$BR" -- 'approv' '(design|decision|ruling)' 'new (brief )?version|new brief|asst-report put [^ ]+ brief'

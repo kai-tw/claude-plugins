@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '^sub=[a-z]'
+pattern: '^usage=1$'
 flags: m
 arm: with-only
 ---
-[G1] The usage text of asst-report lists a subcommand besides put, latest, list, form and summary: the review check.
+[G1] The usage text of asst-report lists `asst-report reviewed <slug>`, the review check.

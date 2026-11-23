@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: review-check
-description: asst-report has a subcommand, named in its usage text, that a builder runs before the integration and fix phases. It exits 0 when the task's newest brief has a brief-review filed after it, and non-zero (never 2, the usage exit), naming the newest brief's version, when no review is filed or the only review was filed before that brief (brief-1, brief-review-1, brief-2). A review filed after the newest brief passes even when its number is lower (brief-1, brief-2, brief-review-1). Filing order is file modification time, since round numbers order reports only within one kind. It reads the reports from inside a git worktree of the project and from elsewhere with --worktree.
+description: asst-report has the subcommand `reviewed <slug> [--worktree <path>]`, listed in its usage text, that a builder runs before the integration and fix phases. It exits 0 when the task's newest brief has a brief-review filed after it, and non-zero (never 2, the usage exit), naming the newest brief's version, when no review is filed or the only review was filed before that brief (brief-1, brief-review-1, brief-2). A review filed after the newest brief passes even when its number is lower (brief-1, brief-2, brief-review-1). Filing order is file modification time, since round numbers order reports only within one kind. A task with no brief at all fails, saying there is no brief, even when other reports or free-form files exist. `put` accepts a build report whose rules line is `rules: none — blocked before any change`. It reads the reports from inside a git worktree of the project and from elsewhere with --worktree.
 tags: [asst-report]
 plugins: ["../.."]
 runs: 1
@@ -10,6 +10,6 @@ execution:
   env:
     EVAL_CMD: bash check.sh
   prompt: |
-    Find the asst-report subcommand that checks a brief has been reviewed, run it on each task the workspace holds, and print each exit code and message.
+    Run `asst-report reviewed <slug>` on each task the workspace holds, and print each exit code and message.
 context:
   scaffold_script: fixture.sh

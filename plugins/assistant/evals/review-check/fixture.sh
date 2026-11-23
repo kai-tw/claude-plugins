@@ -15,10 +15,8 @@ printf '## 1 Logic\npassed: 1 2 5\n' > review.md
 
 cat > check.sh <<'SH'
 ws=$PWD; m=0
-# The subcommand the usage text lists besides the five asst-report already had.
-sub=$(asst-report 2>&1 | sed -nE 's/.*asst-report[[:space:]]+([a-z][a-z-]*).*/\1/p' \
-  | grep -vxE 'put|latest|list|form|summary' | head -1)
-echo "sub=${sub:--}"
+sub=reviewed
+if asst-report 2>&1 | grep -qE 'asst-report[[:space:]]+reviewed[[:space:]]+<slug>'; then echo "usage=1"; else echo "usage=0"; fi
 file() { # file <slug> <kind…> — files each kind in order, one minute apart
   local s=$1 k f; shift
   for k in "$@"; do
@@ -29,7 +27,6 @@ file() { # file <slug> <kind…> — files each kind in order, one minute apart
 }
 run() { # run <case> <dir> <slug> [--worktree <dir>]
   local c=$1 d=$2 s=$3; shift 3
-  [ -n "$sub" ] || return
   ( cd "$d" && asst-report "$sub" "$s" "$@" ) >"$ws/out" 2>&1
   echo "$c=$?"; sed "s/^/$c: /" "$ws/out"
 }
@@ -38,13 +35,21 @@ file unreviewed brief
 file stale      brief brief-review brief
 file again      brief brief-review brief brief-review
 file late       brief brief brief-review
+# No brief at all: another report and a free-form design file only.
+file nobrief    notes
+printf 'design\n' > "$(dirname "$(cd "$ws/wt" && asst-report latest nobrief notes)")/design.md"
 run reviewed       "$ws/wt"   reviewed
 run unreviewed     "$ws/wt"   unreviewed
 run stale          "$ws/wt"   stale
 run again          "$ws/wt"   again
 run late           "$ws/wt"   late
+run nobrief        "$ws/wt"   nobrief
 run tree-reviewed  "$ws/tree" reviewed
 run tree-stale     "$ws/tree" stale
 run flag-reviewed  "$ws"      reviewed --worktree "$ws/wt"
 run flag-stale     "$ws"      stale    --worktree "$ws/wt"
+# A build report filed before any change has no paths to give style-pack.
+( cd "$ws/wt" && printf 'blocked: brief not reviewed\nrules: none — blocked before any change\n' \
+  | asst-report put rulesnone build-integration ) >"$ws/out" 2>&1
+echo "rules-none=$?"; sed "s/^/rules-none: /" "$ws/out"
 SH
