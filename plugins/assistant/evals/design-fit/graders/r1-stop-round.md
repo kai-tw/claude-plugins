@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/references/verify\.md: .*new `fix` finding[^.]*opens a fix round as usual, unless ([^.]|\.md)*stop rule([^.]|\.md)*(second|2nd) (fix )?round[^.]*new[^.]*logic'
+pattern: '^skills/assistant/references/verify\.md: .*(second|2nd) (fix )?round([^.]|\.md)*logic error([^.]|\.md)*architecture'
 flags: mi
 ---
-[R1] verify.md: a new fix finding opens a fix round unless SKILL.md's stop rule for a second fix round applies.
+[R1] verify.md: a second fix round still turning up a new logic error rechecks the architecture (SKILL.md's rule) before another fix round.

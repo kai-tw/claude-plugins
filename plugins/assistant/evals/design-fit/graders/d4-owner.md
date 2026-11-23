@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/SKILL\.md: .*stop dispatch([^.]|\.md)*who owns the data([^.]|\.md)*Needs you'
+pattern: '^skills/assistant/SKILL\.md: .*(third|3rd) (design )?version([^.]|\.md)*(\.([^.]|\.md)*)?(adjust|chang|rework|rewrit|revis)([^.]|\.md)*Decided'
 flags: mi
 ---
-[D4] SKILL.md: stop dispatching, recheck who owns the data and tell the user with Needs you.
+[D4] SKILL.md: when the architecture causes it, the assistant adjusts the architecture as a `Decided`.

@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: ''- Export' is not '- <page> · last edited <time>''
+pattern: '.- Export. is not .- <page> · last edited <time>.'
 flags: m
 arm: with-only
 ---
