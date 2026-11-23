@@ -59,7 +59,7 @@ rounds() { ls "$dir" 2>/dev/null | sed -nE "s/^${1:-$kind}-([0-9]+)\.md$/\1/p" |
 # is filed only once checked against it, or the user is asked what the spec already decides
 # (references/brief.md). Checks presence and shape only; prints why it refuses.
 needs_you='^[[:space:]]*[-*][[:space:]]+Needs you'
-verdict='verdict: spec (decides|silent|ambiguous)'
+verdict='verdict: (spec (decides|silent|ambiguous)|case unshown)'
 spec_check() {
   local cfg="$root/.claude/assistant.md" spec block bad b n v
   spec=$(asst_field "$cfg" spec)
@@ -78,7 +78,7 @@ spec_check() {
   [ -n "$n" ] || { echo "no brief is filed for this task — file it first (asst-report put <slug> brief); the review checks the filed one"; return 1; }
   b="$dir/brief-$n.md"
   bad=$(grep -E 'verdict:' "$2" | grep -vE "$verdict" | head -1)
-  [ -z "$bad" ] || { echo "'$bad' — a verdict is 'spec decides', 'spec silent' or 'spec ambiguous'"; return 1; }
+  [ -z "$bad" ] || { echo "'$bad' — a verdict is 'spec decides', 'spec decides the result', 'spec decides (combined)', 'case unshown', 'spec silent' or 'spec ambiguous'"; return 1; }
   n=$(grep -cE "$needs_you" "$b"); v=$(grep -cE "$verdict" "$2")
   [ "$n" = "$v" ] || { echo "$v verdict line(s) for the $n 'Needs you' line(s) in $b — one 'verdict:' line per 'Needs you' line, in order"; return 1; }
 }
