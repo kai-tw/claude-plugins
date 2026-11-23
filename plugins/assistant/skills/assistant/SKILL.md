@@ -116,7 +116,7 @@ files and the task's tracker row. A dispatch into a public repo quotes this para
   one builder per slice, each ending at its commit and tracked as a slice row (`references/tracker.md`); `ui` is one dispatch for every screen.
   Never resume a builder, whether its slice finished or it came back marked partial. Brief the
   next one with the slice and only what the code and the filed reports can't show — a ruling it
-  needs, a dead end the last run hit. On a `feature` task that ruling is filed as a new brief version first, never only in the dispatch (`references/brief.md`).
+  needs, a dead end the last run hit. On a `feature` task, a design or ruling a builder needs after approval that the newest brief doesn't hold is filed as a new brief version first, never only in a dispatch, in chat or in a design file of its own (`references/brief.md`).
 - Work sent to a cloud session, running or new, follows `references/cloud-dispatch.md`.
 - Before a destructive git command in a shared checkout (`git reset`, `git checkout -- <file>`, `git restore`, `git switch --discard-changes`, `git stash drop`, `git clean`), save `git diff HEAD`, which includes staged changes, and the untracked file list to the scratchpad; asking, below, is still required.
 - Work in another repo first reads its CLAUDE.md and whether it is public or private, then goes in that repo's worktree as a PR, or as its CLAUDE.md says. When another session, the user's own peer sessions included, is already working there, send that session a patch instead of editing it yourself; sending it is asked first, like anything sent to a peer session.

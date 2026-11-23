@@ -15,7 +15,7 @@ Review the draft before the user sees it, so the user is asked once, all
 approved, append the brief to the task row's body — the approved design every later step reads
 without your context — and file each answered engineering question as a decision (Context ·
 Decision · Consequence, the rejected option and its cost in Consequence; `references/tracker.md`).
-A design decision made after approval (a slice design, a redesign, a ruling that changes behaviour) is filed as a new brief version, never as a design file of its own or only in chat.
+A design or ruling a builder needs after approval that the newest brief doesn't hold is filed as a new brief version first, never only in a dispatch, in chat or in a design file of its own.
 A product behaviour a later round needs changed is a spec question asked as below, and the code
 changes once you've re-read the updated page.
 
