@@ -46,9 +46,7 @@ A `low confidence` finding about the design rather than a single line, is never 
 A finding comes back when a round meant to fix it is followed by a `fix` finding with the same file, same rule.
 When one comes back, dispatch the `advisor` once, with the remaining `fix` findings, the fix rounds' diffs, the brief
 and the task statement; one advisor per finding, never a second for the same finding. Its `advise` report goes into the
-next builder's dispatch, which fixes as advised. When the round on its advice still leaves findings, they become one `Needs you` line with the advise report's path. A new `fix` finding from that round opens a fix round as usual.
-
-SKILL.md's architecture check fires once per task on each of two conditions: (a) the 2nd brief version filed after the first `build-*` report, and (b) the first verify-code report after the 2nd build-fix round has a `[1.n] fix` finding in its Logic block; on either, dispatch the `advisor` with the triggering report's path to check whether the architecture causes it, before another builder. `build-*` is build-ui, build-integration (its older name too) or build-fix; consecutive build-fix reports with no verify-code between them are one round; reports are ordered by modification time. An architecture check dispatch needs no `fix` finding and is outside "never a second for the same finding".
+next builder's dispatch, which fixes as advised. When the round on its advice still leaves findings, they become one `Needs you` line with the advise report's path. A new `fix` finding from that round opens a fix round as usual; a second fix round still turning up a new logic error first gets SKILL.md's architecture check.
 
 A trade-off between designs follows `references/brief.md` §Choosing the design; one it leaves to the user goes to them now as a `Needs you`, never into another review round.
 

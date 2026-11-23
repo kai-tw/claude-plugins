@@ -11,7 +11,7 @@
 #        asst-report summary                  → per task, its newest report of each kind
 #        asst-report reviewed <slug> [--worktree <dir>]
 #                             → exit 0 when the newest brief has a brief-review filed after
-#                               it and the architecture check holds; exit 1 naming what is missing
+#                               it; exit 1 naming the brief that has none, or saying there is none
 # kind: investigation · brief · brief-review · build-<phase> · tests · verify-<review> · advise
 # --worktree names the task's code worktree when the caller is not in it; reports live in the main checkout's root from every worktree.
 set -uo pipefail
@@ -62,44 +62,6 @@ rounds() { ls "$dir" 2>/dev/null | sed -nE "s/^${1:-$kind}-([0-9]+)\.md$/\1/p" |
 newest_brief() {
   n=$(rounds brief | tail -1); b="$dir/brief-$n.md"
   [ -n "$n" ] || { why="no brief is filed for $slug in $dir — a feature task's design is filed as a brief first (asst-report put $slug brief), then reviewed"; return 1; }
-}
-# The architecture check (references/verify.md): each condition fires once per task, and only an
-# advise report filed after the triggering report with an Architecture check clears it.
-cond_a='the 2nd brief version filed after the first build-* report'
-cond_b='the first verify-code report after the 2nd build-fix round has a [1.n] fix finding in its Logic block'
-# arch_check — fails and sets why when a condition fired and no such advise report follows it.
-arch_check() {
-  local files=() k r f built=0 briefs=0 fix_rounds=0 in_round=0 b_seen=0 trigger="" cond=""
-  for k in brief build-ui build-integration build-fix build-wire verify-code advise; do
-    for r in $(rounds "$k"); do files+=("$dir/$k-$r.md"); done
-  done
-  [ ${#files[@]} -gt 0 ] || return 0
-  while IFS= read -r f; do
-    k=$(basename "$f" .md); k=${k%-*}
-    case "$k" in
-      build-*)
-        built=1
-        if [ "$k" = build-fix ] && [ $in_round = 0 ]; then fix_rounds=$((fix_rounds + 1)); in_round=1; fi ;;
-      brief)
-        [ $built = 1 ] || continue
-        briefs=$((briefs + 1))
-        if [ $briefs = 2 ]; then trigger=$f; cond=$cond_a; fi ;;
-      verify-code)
-        in_round=0
-        if [ $fix_rounds = 2 ] && [ $b_seen = 0 ]; then
-          b_seen=1
-          if awk '/^#/ { on = /^#+[[:space:]]*1[[:space:]]+Logic/; next } on && /^\[1\.[0-9]+\] fix /' "$f" | grep -q .; then
-            trigger=$f; cond=$cond_b
-          fi
-        fi ;;
-      advise)
-        if awk '/^## Architecture check[[:space:]]*$/ { on = 1; next } on && NF { sub(/[[:space:]]+$/, ""); print; exit }' "$f" \
-          | grep -qxE 'Root cause: (not )?architecture'; then trigger=""; fi ;;
-    esac
-  done < <(ls -tr -- "${files[@]}")
-  [ -z "$trigger" ] && return 0
-  why="architecture not checked — $trigger: $cond; no advise report filed after it has a '## Architecture check' section whose first line is 'Root cause: architecture' or 'Root cause: not architecture' — dispatch the advisor for an architecture check with that report's path first (references/verify.md)"
-  return 1
 }
 # spec_check <kind> <file> — on a project whose config names a spec, a brief or a brief-review
 # is filed only once checked against it, or the user is asked what the spec already decides
@@ -165,9 +127,7 @@ case "$op" in
   reviewed)
     newest_brief || { echo "asst-report: $why" >&2; exit 1; }
     for m in $(rounds brief-review); do
-      [ "$dir/brief-review-$m.md" -nt "$b" ] || continue
-      arch_check || { echo "asst-report: $why" >&2; exit 1; }
-      echo "brief-$n reviewed by brief-review-$m"; exit 0
+      [ "$dir/brief-review-$m.md" -nt "$b" ] && { echo "brief-$n reviewed by brief-review-$m"; exit 0; }
     done
     echo "asst-report: brief-$n in $dir has no brief-review filed after it — a verifier reviews this version before a builder implements it (references/brief.md)" >&2
     exit 1 ;;
