@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/SKILL\.md: .*(2nd|second) brief version filed after the first .?build-\*.? report([^.]|\.[^ ])*(stop dispatch|Needs you)'
+pattern: '^skills/assistant/SKILL\.md: .*(third|3rd) (design )?version([^.]|\.md)*(stop dispatch|Needs you)'
 flags: mi
 match: not_contains
 ---

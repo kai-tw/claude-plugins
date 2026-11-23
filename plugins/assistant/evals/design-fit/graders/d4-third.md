@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^skills/assistant/SKILL\.md: .*(2nd|second) brief version filed after the first .?build-\*.? report([^.]|\.[^ ])*architecture([^.]|\.[^ ])*(caus|behind|source|root)'
+pattern: '^skills/assistant/SKILL\.md: .*(third|3rd) (design )?version([^.]|\.md)*architecture([^.]|\.md)*(caus|cause|behind|source|root)'
 flags: mi
 ---
-[D4] SKILL.md: the 2nd brief version filed after the first build-* report first rechecks whether the architecture causes it.
+[D4] SKILL.md: a design reaching its third version first rechecks whether the architecture causes it.
