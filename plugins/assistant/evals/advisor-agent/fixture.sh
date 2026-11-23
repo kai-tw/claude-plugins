@@ -15,7 +15,8 @@ echo "advisor-form-line=$(grep -c 'asst-report form advise' "$a" 2>/dev/null || 
 echo "advisor-read-only=$(n "$a" | grep -ciE 'read-only|never edits the project' || true)"
 f="$root/skills/assistant/forms/advise.md"
 test -f "$f" && echo "form-file=present" || echo "form-file=missing"
-echo "form-fields=$(n "$f" | grep -oE 'Root cause|Evidence|Suggested fix|Confidence' | paste -sd, -)"
+# Fields of the per-finding section only; the Architecture check section has its own first line.
+echo "form-fields=$(awk '/^## Architecture check/ {on=0; next} /^## / {on=1; next} on && /^[A-Z][A-Za-z ]*:/ {sub(/:.*/, ""); print}' "$f" | paste -sd, -)"
 v=$(n "$root/skills/assistant/references/verify.md")
 echo "dispatch-before-needs=$(grep -ciE 'dispatch the .advisor. once' <<< "${v%%Needs you*}" || true)"
 echo "same-finding=$(grep -ciE 'same file, same rule' <<< "$v" || true)"

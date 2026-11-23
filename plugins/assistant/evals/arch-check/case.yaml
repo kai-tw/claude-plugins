@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: arch-check
+description: "`asst-report reviewed` also refuses a builder when the task's architecture was not checked after one of two conditions, each firing once per task (filing order is modification time): (a) the 2nd brief version filed after the first build-* report (build-ui, build-integration, build-fix, or an old build-wire file) (A1-A3); (b) the first verify-code report after the 2nd build-fix round has a `[1.n] fix` finding in its Logic block, where consecutive build-fix reports with no verify-code between them are one round, so a review of an integration slice between rounds or a second slice of one round does not count (V1, V2, V6, V7). It passes once an advise report filed after the triggering report has a `## Architecture check` section whose first line is exactly `Root cause: architecture` or `Root cause: not architecture`, and the newest brief has a brief-review after it (A4, A7, V3); an advise report filed before the trigger, one with only per-finding sections, or one with another first line does not clear it (A5, V4). The refusal names the condition, the triggering report and that the advisor must do an architecture check first (A1, V1). A 3rd brief version after the build, or the review after the 3rd fix round, does not fire again (A6, V5)."
+tags: [asst-report]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Bash]
+  env:
+    EVAL_CMD: bash check.sh
+  prompt: |
+    Run `asst-report reviewed <slug>` on each task the workspace holds, and print each exit code and message.
+context:
+  scaffold_script: fixture.sh

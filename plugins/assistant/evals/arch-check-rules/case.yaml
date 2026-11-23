@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: arch-check-rules
+description: "Every advise report has a `## Architecture check` section whose first line is exactly `Root cause: architecture` or `Root cause: not architecture`, judged by the Ownership criterion of references/brief.md §Choosing the design quoted word for word; per-finding sections no longer start a line with `Root cause:` (F1-F3). advisor.md describes the architecture-check dispatch, which carries the triggering report and needs no `fix` finding, and its section rule covers that section (D1, D2). builder.md does not implement advice whose advise report says `Root cause: architecture` (U1). report.sh's message, SKILL.md and verify.md state both conditions in the same words: (a) the 2nd brief version filed after the first build-* report; (b) the first verify-code report after the 2nd build-fix round has a `[1.n] fix` finding in its Logic block (K1, K2); verify.md exempts the architecture-check dispatch from never a second for the same finding (K3)."
+tags: [flow]
+plugins: ["../.."]
+runs: 1
+execution:
+  max_turns: 4
+  allowed_tools: [Read, Grep, Bash]
+  env:
+    EVAL_CMD: bash check.sh "$root"
+  prompt: |
+    Say when the assistant dispatches the advisor for an architecture check, what the advise report records, and what the builder does with advice whose root cause is architecture.
+context:
+  scaffold_script: fixture.sh
