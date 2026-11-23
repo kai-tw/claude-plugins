@@ -8,12 +8,14 @@ in the code once; still failing, it enters the brief as `unverified`. When the d
 whether a case happens and no finding shows it, measure it once in the code or by an experiment;
 a case still unshown is cut, not handled.
 
-When the design adds a class, a dependency or a persisted format, or the project config sets
-`architecture:`, one `verifier` `brief-review` on the draft first, so the user is asked once, all
-`Needs you` in one message — a question is never marked `Decided` for lack of room. Once
+Every brief version a builder implements, the one re-filed with the user's picks included, gets a fresh
+`verifier` `brief-review` filed after it, which `asst-report reviewed <slug>` checks before integration and fix.
+Review the draft before the user sees it, so the user is asked once, all
+`Needs you` in one message — a question is never marked `Decided` for lack of room. Tiers `small` and `exempt` have no brief and are outside the review check. Once
 approved, append the brief to the task row's body — the approved design every later step reads
 without your context — and file each answered engineering question as a decision (Context ·
 Decision · Consequence, the rejected option and its cost in Consequence; `references/tracker.md`).
+A design or ruling a builder needs after approval that the newest brief doesn't hold is filed as a new brief version first, never only in a dispatch, in chat or in a design file of its own.
 A product behaviour a later round needs changed is a spec question asked as below, and the code
 changes once you've re-read the updated page.
 

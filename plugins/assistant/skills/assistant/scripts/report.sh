@@ -3,19 +3,22 @@
 # assistant's context gets compacted, and a report held only there is lost with it;
 # a row waiting on a lost report waits forever.
 #
-# Usage: asst-report put    <task-slug> <kind> [--worktree <dir>]
-#                           (report on stdin) → prints the path
-#        asst-report latest <task-slug> <kind>   → prints the newest path; exit 1 if none
-#        asst-report list   <task-slug>
-#        asst-report form   <kind>               → prints the form that kind's report fills in
-#        asst-report summary                     → per task, its newest report of each kind
+# Usage: asst-report put      <slug> <kind> [--worktree <dir>]
+#                             (report on stdin) → prints the path
+#        asst-report latest   <slug> <kind>   → prints the newest path; exit 1 if none
+#        asst-report list     <slug>
+#        asst-report form     <kind>          → prints the form that kind's report fills in
+#        asst-report summary                  → per task, its newest report of each kind
+#        asst-report reviewed <slug> [--worktree <dir>]
+#                             → exit 0 when the newest brief has a brief-review filed after
+#                               it; exit 1 naming the brief that has none, or saying there is none
 # kind: investigation · brief · brief-review · build-<phase> · tests · verify-<review> · advise
-# --worktree names the task's checkout when the caller is not in it.
+# --worktree names the task's code worktree when the caller is not in it; reports live in the main checkout's root from every worktree.
 set -uo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$here/root.sh"
 op="${1:-}"; slug="${2:-}"; kind="${3:-}"
-usage() { sed -n '6,12p' "$0" >&2; exit 2; }
+usage() { sed -n '/^# Usage:/,/^# --worktree/p' "$0" >&2; exit 2; }
 # One form per report kind, the only copy of its shape; the agents print it here.
 if [ "$op" = form ]; then
   k=${slug:-}; case "$k" in build-*) k=build ;; esac
@@ -37,8 +40,8 @@ if [ "$op" = summary ]; then
 fi
 [ -n "$op" ] && [ -n "$slug" ] || usage
 wt=$PWD
-if [ "$op" = put ]; then
-  shift 3 2>/dev/null
+if [ "$op" = put ] || [ "$op" = reviewed ]; then
+  if [ "$op" = put ]; then shift 3 2>/dev/null; else kind=""; shift 2; fi
   while [ $# -gt 0 ]; do
     case "$1" in
       --worktree) wt="${2:-}"; shift 2 ;;
@@ -55,6 +58,11 @@ case "$kind" in scout) kind=investigation ;; build-wire) kind=build-integration 
 case "$kind" in investigation) old=scout ;; build-integration) old=build-wire ;; *) old="" ;; esac
 # Round numbers of <kind> (default: $kind), ascending — the n in <kind>-<n>.md.
 rounds() { ls "$dir" 2>/dev/null | sed -nE "s/^${1:-$kind}-([0-9]+)\.md$/\1/p" | sort -n; }
+# newest_brief — sets n to the newest brief's round and b to its path; with none, sets why and fails.
+newest_brief() {
+  n=$(rounds brief | tail -1); b="$dir/brief-$n.md"
+  [ -n "$n" ] || { why="no brief is filed for $slug in $dir — a feature task's design is filed as a brief first (asst-report put $slug brief), then reviewed"; return 1; }
+}
 # spec_check <kind> <file> — on a project whose config names a spec, a brief or a brief-review
 # is filed only once checked against it, or the user is asked what the spec already decides
 # (references/brief.md). Checks presence and shape only; prints why it refuses.
@@ -74,9 +82,7 @@ spec_check() {
     [ -z "$bad" ] || { echo "'$bad' needs a spec field: 'spec:\"<verbatim quote>\" — <why it doesn't decide this>' or 'spec: none in <the sections checked>'"; return 1; }
     return 0
   fi
-  n=$(rounds brief | tail -1)
-  [ -n "$n" ] || { echo "no brief is filed for this task — file it first (asst-report put <slug> brief); the review checks the filed one"; return 1; }
-  b="$dir/brief-$n.md"
+  newest_brief || { echo "$why"; return 1; }
   bad=$(grep -E 'verdict:' "$2" | grep -vE "$verdict" | head -1)
   [ -z "$bad" ] || { echo "'$bad' — a verdict is 'spec decides', 'spec decides the result', 'spec decides (combined)', 'case unshown', 'spec silent' or 'spec ambiguous'"; return 1; }
   n=$(grep -cE "$needs_you" "$b"); v=$(grep -cE "$verdict" "$2")
@@ -95,11 +101,11 @@ case "$op" in
       rm -f "$f.partial"; echo "asst-report: empty report on stdin — nothing filed" >&2; exit 1
     fi
     # A builder or tester that never loaded the style pack writes code the verifier then
-    # checks against rules it never saw.
+    # checks against rules it never saw. A builder blocked before its first edit has no file to name.
     case "$kind" in build-ui|build-integration|build-fix|tests)
-      grep -q '^rules: style-pack --paths ' "$f.partial" || {
+      grep -qE '^rules: (style-pack --paths |none — blocked before any change$)' "$f.partial" || {
         rm -f "$f.partial"
-        echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit or test (builder.md, tester.md)" >&2
+        echo "asst-report: NOT FILED — a $kind report needs the line 'rules: style-pack --paths <the files you touched>', naming the run you made before your first edit or test (builder.md, tester.md), or 'rules: none — blocked before any change'" >&2
         exit 1
       } ;;
     esac
@@ -116,5 +122,14 @@ case "$op" in
     [ -n "$n" ] || { echo "asst-report: no $kind report for $slug" >&2; exit 1; }
     echo "$dir/$k-$n.md" ;;
   list) ls "$dir" 2>/dev/null ;;
+  # Filing order across kinds is modification time: round numbers order reports only within
+  # one kind, and the reports directory is outside git, so no checkout resets it.
+  reviewed)
+    newest_brief || { echo "asst-report: $why" >&2; exit 1; }
+    for m in $(rounds brief-review); do
+      [ "$dir/brief-review-$m.md" -nt "$b" ] && { echo "brief-$n reviewed by brief-review-$m"; exit 0; }
+    done
+    echo "asst-report: brief-$n in $dir has no brief-review filed after it — a verifier reviews this version before a builder implements it (references/brief.md)" >&2
+    exit 1 ;;
   *) usage ;;
 esac
